@@ -13,8 +13,7 @@ function LoginPage() {
     password: "",
   });
 
- // login อยู่แล้ว ไม่ให้เข้าหน้า Login
-  useEffect(() => {
+  useEffect(() => { //back to login , no have token
     if (token && user) {
       if (user.role === "admin") {
         navigate("/admin", { replace: true });
@@ -24,10 +23,6 @@ function LoginPage() {
     }
   }, [token, user, navigate]);
 
-  const clearStorageAndLogout = () => {
-    useBmrStore.persist.clearStorage(); // ลบ localStorage
-    useBmrStore.getState().logout();    // ล้าง store
-  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -63,7 +58,7 @@ function LoginPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="w-full max-w-md shadow-lg bg-white p-8 rounded-xl">
           <h1 className="text-3xl font-semibold text-center my-6 text-gray-700">
-            Login
+            BMR
           </h1>
 
           <form onSubmit={handleSubmit}>
@@ -98,23 +93,6 @@ function LoginPage() {
                 className="w-full py-3 bg-indigo-600 text-white rounded-lg shadow-md hover:bg-indigo-700 transition duration-300"
               >
                 Login
-              </button>
-
-              {/* Additional Actions */}
-              <div className="flex justify-end mt-4">
-                <a
-                  href="/register"
-                  className="text-indigo-600 hover:text-indigo-700 text-sm"
-                >
-                  Create an Account
-                </a>
-              </div>
-              <button
-                type="button"
-                onClick={clearStorageAndLogout}
-                className="w-full py-3 mt-4 bg-red-600 text-white rounded-lg shadow-md hover:bg-red-700 transition duration-300"
-              >
-                Clear
               </button>
             </div>
           </form>

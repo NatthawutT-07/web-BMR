@@ -1,11 +1,10 @@
 import React from 'react'
+import Station from '../../components/user/Station'
 
 const Home = () => {
   return (
     <div>
-      <h1 className="text-3xl font-bold underline">
-        Hello world!
-      </h1>
+      <Station/>
     </div>
   )
 }
