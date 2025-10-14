@@ -42,30 +42,30 @@ const SiderbarAdmin = ({ isExpanded, toggleSidebar }) => {
           label="Dashboard"
           expanded={isExpanded}
         />
-        <SidebarItem
+        {/* <SidebarItem
           to="manage"
           icon={<UserCog size={20} />}
           label="Manage User"
           expanded={isExpanded}
-        />
-        <SidebarItem
+        /> */}
+        {/* <SidebarItem
           to="partner"
           icon={<Handshake size={20} />}
           label="Partner"
           expanded={isExpanded}
-        />
-        <SidebarItem
+        /> */}
+        {/* <SidebarItem
           to="product"
           icon={<PackageSearch size={20} />}
           label="List of Item Hold"
           expanded={isExpanded}
-        />
-        <SidebarItem
+        /> */}
+        {/* <SidebarItem
           to="station"
           icon={<Store size={20} />}
           label="Station"
           expanded={isExpanded}
-        />
+        /> */}
         <SidebarItem
           to="edit-station"
           icon={<MonitorCog size={20} />}

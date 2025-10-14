@@ -11,8 +11,8 @@ import Manage from '../pages/admin/Manage'
 import Partner from '../pages/admin/Partner'
 import Product from '../pages/admin/Product'
 import ShowStation from '../components/admin/ShowStation'
-import EditStation from '../pages/admin/EditStation'
 import Upload from '../pages/admin/Upload'
+import Tamplate from '../pages/admin/Tamplate'
 
 const router = createBrowserRouter([
     {
@@ -31,7 +31,7 @@ const router = createBrowserRouter([
             { path: "partner", element: <Partner /> },
             { path: "product", element: <Product /> },
             { path: "station", element: <ShowStation /> },
-            { path: "edit-station", element: <EditStation /> },
+            { path: "edit-station", element: <Tamplate /> },
             // {path : "stock" , element : </>},
             { path: "upload", element: <Upload /> }
 

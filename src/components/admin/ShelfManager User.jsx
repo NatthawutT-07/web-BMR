@@ -150,109 +150,115 @@ const ShelfManager = () => {
 
         return (
           <div key={template.id} className="border rounded shadow-md p-4 mb-6 bg-white">
-            <h2 className="text-lg font-semibold mb-4">
-              Shelf: {template.shelfCode} - {template.fullName} ({template.rowQty} Rows)
-            </h2>
-
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-lg font-semibold">
+                Shelf: {template.shelfCode} - {template.fullName} ({template.rowQty} Rows)
+              </h2>
+              <button className="bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1 rounded">
+                + Edit Shelf-{template.shelfCode}
+              </button>
+            </div>
             {shelfProducts.length > 0 ? (
-              <table className="w-full text-left border text-gray-700 border-gray-300 text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="border px-2 py-1 text-center">ID</th>
-                    <th className="border px-2 py-1 text-center">Code</th>
-                    <th className="border px-2 py-1 text-center">Name</th>
-                    <th className="border px-2 py-1 text-center">Brand</th>
-                    <th className="border px-2 py-1 text-center">ShelfLife</th>
-                    <th className="border px-2 py-1 text-center">RSP</th>
-                    <th className="border px-2 py-1 text-center">SalesQty</th>
-                    <th className="border px-2 py-1 text-center">Wd Qty</th>
-                    <th className="border px-2 py-1 text-center">MIN</th>
-                    <th className="border px-2 py-1 text-center">MAX</th>
-                    <th className="border px-2 py-1 text-center">StockQty</th>
-                    <th className="border px-2 py-1 text-center">UnitCost</th>
-                    <th className="border px-2 py-1 text-center">StockCost</th>
-                    <th className="border px-2 py-1 text-center">SalesAmount</th>
-                    <th className="border px-2 py-1 text-center">Wd Amount</th>
-                    <th className="border px-2 py-1 text-center">Delete</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {[...Array(template.rowQty)].map((_, rowIndex) => {
-                    const rowNo = rowIndex + 1;
-                    const rowProducts = shelfProducts.filter((p) => p.rowNo === rowNo);
+              <div className="overflow-x-auto">
+                <table className="min-w-[1200px] w-full text-left border text-gray-700 border-gray-300 text-sm">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="border px-2 py-1 text-center">ID</th>
+                      <th className="border px-2 py-1 text-center">Code</th>
+                      <th className="border px-2 py-1 text-center">Name</th>
+                      <th className="border px-2 py-1 text-center">Brand</th>
+                      <th className="border px-2 py-1 text-center">ShelfLife</th>
+                      <th className="border px-2 py-1 text-center">RSP</th>
+                      <th className="border px-2 py-1 text-center">SalesQty</th>
+                      <th className="border px-2 py-1 text-center">Wd Qty</th>
+                      <th className="border px-2 py-1 text-center">MIN</th>
+                      <th className="border px-2 py-1 text-center">MAX</th>
+                      <th className="border px-2 py-1 text-center">StockQty</th>
+                      <th className="border px-2 py-1 text-center">UnitCost</th>
+                      <th className="border px-2 py-1 text-center">StockCost</th>
+                      <th className="border px-2 py-1 text-center">SalesAmount</th>
+                      <th className="border px-2 py-1 text-center">Wd Amount</th>
+                      <th className="border px-2 py-1 text-center">Delete</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...Array(template.rowQty)].map((_, rowIndex) => {
+                      const rowNo = rowIndex + 1;
+                      const rowProducts = shelfProducts.filter((p) => p.rowNo === rowNo);
 
-                    let totalSalesRow = 0;
-                    let totalWithdrawRow = 0;
+                      let totalSalesRow = 0;
+                      let totalWithdrawRow = 0;
 
-                    return (
-                      <React.Fragment key={rowNo}>
-                        {/* Row header */}
-                        <tr className="bg-blue-50">
-                          <td className="p-2 border font-semibold italic text-gray-700" colSpan={16}>
-                            ➤ Row: {rowNo}
-                          </td>
-                        </tr>
-
-                        {/* ถ้ามี product ใน row */}
-                        {rowProducts.length > 0 ? (
-                          rowProducts.map((prod) => {
-                            const sales = Number(prod?.salesTotalPrice ?? 0);
-                            const withdraw = Number(prod?.withdrawValue ?? 0);
-                            totalSalesRow += sales;
-                            totalWithdrawRow += withdraw;
-
-                            totalSalesShelf += sales;
-                            totalWithdrawShelf += withdraw;
-
-                            const stockCost = (prod?.stockQuantity && prod?.purchasePriceExcVAT)
-                              ? prod.stockQuantity * prod.purchasePriceExcVAT
-                              : 0;
-
-                            return (
-                              <tr key={prod.codeProduct}>
-                                <td className="p-2 border text-center">{prod.index}</td>
-                                <td className="p-2 border">{String(prod.codeProduct).padStart(5, '0')}</td>
-                                <td className="p-2 border">{prod?.nameProduct ?? '-'}</td>
-                                <td className="p-2 border">{prod?.nameBrand ?? '-'}</td>
-                                <td className="p-2 border text-center">{prod?.shelfLife ?? '-'}</td>
-                                <td className="p-2 border text-center">{prod?.salesPriceIncVAT ?? '-'}</td>
-                                <td className="p-2 border text-center">{prod?.salesQuantity ?? '-'}</td>
-                                <td className="p-2 border text-center">{prod?.withdrawQuantity ?? '-'}</td>
-                                <td className="p-2 border text-center">{prod?.minStore ?? '-'}</td>
-                                <td className="p-2 border text-center">{prod?.maxStore ?? '-'}</td>
-                                <td className="p-2 border text-center">{prod?.stockQuantity ?? '-'}</td>
-                                <td className="p-2 border text-right">{(prod?.purchasePriceExcVAT).toFixed(2) ?? '-'}</td>
-                                <td className="p-2 border text-right">{stockCost ? stockCost.toFixed(2) : '-'}</td>
-                                <td className="p-2 border text-right">{prod?.salesTotalPrice ?? '-'}</td>
-                                <td className="p-2 border text-right">{prod?.withdrawValue ?? '-'}</td>
-                                <td className="border px-2 text-center">
-                                  <button className="text-red-600 hover:text-red-800">Delete</button>
-                                </td>
-                              </tr>
-                            );
-                          })
-                        ) : (
-                          <tr>
-                            <td className="p-2 border text-center text-gray-500 italic" colSpan={16}>
-                              No products in this Row
+                      return (
+                        <React.Fragment key={rowNo}>
+                          {/* Row header */}
+                          <tr className="bg-blue-50">
+                            <td className="p-2 border font-semibold italic text-gray-700" colSpan={16}>
+                              ➤ Row: {rowNo}
                             </td>
                           </tr>
-                        )}
 
-                        {/* Total per row */}
-                        <tr className="bg-gray-100 font-semibold">
-                          <td className="p-2 border" colSpan={11}></td>
-                          <td className="p-2 border text-right" colSpan={2}>Total for Row {rowNo}</td>
-                          <td className="p-2 border text-green-700  text-right">{totalSalesRow.toFixed(2)}</td>
-                          <td className="p-2 border text-orange-600  text-right">{totalWithdrawRow.toFixed(2)}</td>
-                          <td className="p-2 border" />
-                        </tr>
-                      </React.Fragment>
-                    );
-                  })}
+                          {/* ถ้ามี product ใน row */}
+                          {rowProducts.length > 0 ? (
+                            rowProducts.map((prod) => {
+                              const sales = Number(prod?.salesTotalPrice ?? 0);
+                              const withdraw = Number(prod?.withdrawValue ?? 0);
+                              totalSalesRow += sales;
+                              totalWithdrawRow += withdraw;
 
-                </tbody>
-              </table>
+                              totalSalesShelf += sales;
+                              totalWithdrawShelf += withdraw;
+
+                              const stockCost = (prod?.stockQuantity && prod?.purchasePriceExcVAT)
+                                ? prod.stockQuantity * prod.purchasePriceExcVAT
+                                : 0;
+
+                              return (
+                                <tr key={prod.codeProduct}>
+                                  <td className="p-2 border text-center">{prod.index}</td>
+                                  <td className="p-2 border">{String(prod.codeProduct).padStart(5, '0')}</td>
+                                  <td className="p-2 border">{prod?.nameProduct ?? '-'}</td>
+                                  <td className="p-2 border">{prod?.nameBrand ?? '-'}</td>
+                                  <td className="p-2 border text-center">{prod?.shelfLife ?? '-'}</td>
+                                  <td className="p-2 border text-center">{prod?.salesPriceIncVAT ?? '-'}</td>
+                                  <td className="p-2 border text-center">{prod?.salesQuantity ?? '-'}</td>
+                                  <td className="p-2 border text-center">{prod?.withdrawQuantity ?? '-'}</td>
+                                  <td className="p-2 border text-center">{prod?.minStore ?? '-'}</td>
+                                  <td className="p-2 border text-center">{prod?.maxStore ?? '-'}</td>
+                                  <td className="p-2 border text-center">{prod?.stockQuantity ?? '-'}</td>
+                                  <td className="p-2 border text-right">{(prod?.purchasePriceExcVAT).toFixed(2) ?? '-'}</td>
+                                  <td className="p-2 border text-right">{stockCost ? stockCost.toFixed(2) : '-'}</td>
+                                  <td className="p-2 border text-right">{prod?.salesTotalPrice ?? '-'}</td>
+                                  <td className="p-2 border text-right">{prod?.withdrawValue ?? '-'}</td>
+                                  <td className="border px-2 text-center">
+                                    <button className="text-red-600 hover:text-red-800">Delete</button>
+                                  </td>
+                                </tr>
+                              );
+                            })
+                          ) : (
+                            <tr>
+                              <td className="p-2 border text-center text-gray-500 italic" colSpan={16}>
+                                No products in this Row
+                              </td>
+                            </tr>
+                          )}
+
+                          {/* Total per row */}
+                          <tr className="bg-gray-100 font-semibold">
+                            <td className="p-2 border" colSpan={11}></td>
+                            <td className="p-2 border text-right" colSpan={2}>Total for Row {rowNo}</td>
+                            <td className="p-2 border text-green-700  text-right">{totalSalesRow.toFixed(2)}</td>
+                            <td className="p-2 border text-orange-600  text-right">{totalWithdrawRow.toFixed(2)}</td>
+                            <td className="p-2 border" />
+                          </tr>
+                        </React.Fragment>
+                      );
+                    })}
+
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <p className="text-gray-500 italic">No products in this shelf.</p>
             )}

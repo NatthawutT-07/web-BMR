@@ -13,7 +13,8 @@ function LoginPage() {
     password: "",
   });
 
-  useEffect(() => { //back to login , no have token
+  // login อยู่แล้ว ไม่ให้เข้าหน้า Login
+  useEffect(() => {
     if (token && user) {
       if (user.role === "admin") {
         navigate("/admin", { replace: true });
@@ -23,6 +24,10 @@ function LoginPage() {
     }
   }, [token, user, navigate]);
 
+  const clearStorageAndLogout = () => {
+    useBmrStore.persist.clearStorage(); // ลบ localStorage
+    useBmrStore.getState().logout();    // ล้าง store
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -55,12 +60,17 @@ function LoginPage() {
 
   return (
     <div className="login-container">
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="w-full max-w-md shadow-lg bg-white p-8 rounded-xl">
-          <h1 className="text-3xl font-semibold text-center my-6 text-gray-700">
-            BMR
-          </h1>
-
+      <div
+        className="min-h-screen relative flex items-center justify-center bg-cover bg-center"
+        style={{ backgroundImage: "url('/bg.png')" }}
+      >
+        <div className="absolute inset-0 bg-black opacity-40 z-0"></div>
+        <div className="relative z-10 w-full max-w-md shadow-lg bg-white p-8 rounded-xl">
+          <img
+            src="/Bringmindlogo.png"
+            alt="Logo"
+            className="mx-auto h-60"
+          />
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               {/* Email Input */}
@@ -94,6 +104,23 @@ function LoginPage() {
               >
                 Login
               </button>
+
+              {/* Additional Actions */}
+              {/* <div className="flex justify-end mt-4">
+                <a
+                  href="/register"
+                  className="text-indigo-600 hover:text-indigo-700 text-sm"
+                >
+                  Create an Account
+                </a>
+              </div> */}
+              {/* <button
+                type="button"
+                onClick={clearStorageAndLogout}
+                className="w-full py-3 mt-4 bg-red-600 text-white rounded-lg shadow-md hover:bg-red-700 transition duration-300"
+              >
+                Clear
+              </button> */}
             </div>
           </form>
         </div>
