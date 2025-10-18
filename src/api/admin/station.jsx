@@ -36,8 +36,11 @@ export const updateStation = async (token, station) => {
         const res = await axios.put(
             `${import.meta.env.VITE_API_URL}/api/station-update/${station.id}`,
             {
-                stationId: station.stationId,
-                station: station.station,
+                id: station.id,
+                codeSAP: station.codeSAP,
+                codeADA: station.codeADA,
+                codeBMX: station.codeBMX,
+                adaStore: station.adaStore,
             },
             {
                 headers: {
@@ -51,4 +54,5 @@ export const updateStation = async (token, station) => {
         throw error;
     }
 };
+
 

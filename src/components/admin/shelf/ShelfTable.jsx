@@ -150,14 +150,14 @@ const AddProductModal = ({
 };
 
 
-const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode }) => {
+const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoading }) => {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, product: null });
   const [addModal, setAddModal] = useState({ isOpen: false, rowNo: null });
   const [branchCode, setBranchCode] = useState("");
 
-  if (!shelfProducts || shelfProducts.length === 0) {
-    return <p className="text-gray-500 italic">No products in this shelf.</p>;
-  }
+  // if (!shelfProducts || shelfProducts.length === 0) {
+  //   return <p className="text-gray-500 italic">No products in this shelf.</p>;
+  // }
 
   // 🆕 
   const handleAddClick = (rowNo) => {
@@ -243,7 +243,7 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode }) => {
           </thead>
 
           <tbody>
-            {[...Array(rows)].map((_, rowIndex) => {
+            {[...Array(Number(rows) || 0)].map((_, rowIndex) => {
               const rowNo = rowIndex + 1;
               const rowProducts = shelfProducts.filter((p) => p.rowNo === rowNo);
               const totalSalesRow = calcTotalSales(rowProducts);
@@ -310,6 +310,7 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode }) => {
                               className="text-red-600 hover:text-red-800 hover:underline transition"
                             >
                               Delete
+                              {/* {actionLoading ? "loading..." : "Delete"} */}
                             </button>
                           </td>
                         </tr>

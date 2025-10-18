@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-export const getTamplate = async (token) => {
+export const getTemplate = async (token) => {
     try {
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/shelf-tamplate`, {
             headers: {

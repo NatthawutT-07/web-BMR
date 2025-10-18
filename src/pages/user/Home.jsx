@@ -1,10 +1,10 @@
 import React from 'react'
-import Station from '../../components/user/Station'
+import Template from '../../components/user/Template'
 
 const Home = () => {
   return (
     <div>
-      <Station/>
+      <Template/>
     </div>
   )
 }

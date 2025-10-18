@@ -1,107 +1,156 @@
 import React, { useState } from 'react';
 import {
+  uploadSalesDayCSV,
+  uploadSalesMonthCSV,
+  uploadWithdrawCSV,
+  uploadStockCSV,
+  uploadTamplateCSV,
+  uploadItemSearchCSV,
+  uploadStationCSV,
   uploadItemCSV,
   uploadMasterItemCSV,
   uploadPartnersCSV,
-  uploadSalesCSV,
-  uploadStationCSV,
-  uploadStockCSV,
-  uploadWithdrawCSV,
-  uploadTamplateCSV,
-  uploadItemSearchCSV
 } from '../../api/admin/upload';
 import useBmrStore from '../../store/bmr_store';
 import { toast } from 'react-toastify';
+import { FaSpinner } from 'react-icons/fa'; // ใช้ไอคอน FaSpinner
 
 const UploadCSV = () => {
-  const [files, setFiles] = useState({
-    station: null,
-    item: null,
-    masterItem: null,
-    partner: null,
-    sales: null,
-    stock: null,
-    withdraw: null,
-    tamplate: null,
-    itemSearch: null,
-  });
+  const [selectedFileType, setSelectedFileType] = useState(null);
+  const [uploadType, setUploadType] = useState('day'); // 'day' for daily, 'month' for monthly
+  const [files, setFiles] = useState([]); // เก็บไฟล์ทั้งหมดที่เลือก
   const [loading, setLoading] = useState(false);
+  const [currentFileIndex, setCurrentFileIndex] = useState(0); // ติดตามไฟล์ที่กำลังอัปโหลดอยู่
   const token = useBmrStore((state) => state.token);
 
-  const handleFileChange = (key) => (e) => {
-    const file = e.target.files[0] || null;
-    setFiles(prev => ({ ...prev, [key]: file }));
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files) || [];
+    setFiles(selectedFiles);
   };
 
-  const handleFileUpload = async (key, uploadFn, label) => {
-    const file = files[key];
-    if (!file) {
-      toast.error(`Please select a ${label} file`);
+  const handleFileUpload = async (uploadFn, label) => {
+    if (files.length === 0) {
+      toast.error(`Please select ${label} files`);
       return;
     }
+
     setLoading(true);
     try {
-      const response = await uploadFn(file, token);
-      toast.success(`Upload ${label} succeeded`);
-      // ถ้าต้องการ ล้างไฟล์หลัง upload สำเร็จ:
-      setFiles(prev => ({ ...prev, [key]: null }));
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        await uploadFn(file, token, uploadType);
+        setCurrentFileIndex(i + 1); // อัปเดตไฟล์ที่กำลังอัปโหลด
+        toast.success(`Uploaded ${file.name} successfully!`);
+      }
+      toast.success(`${label} files uploaded successfully!`);
+      setFiles([]); // รีเซ็ตไฟล์หลังจากอัปโหลดเสร็จ
     } catch (err) {
       toast.error(`Upload ${label} failed: ${err.message}`);
     } finally {
       setLoading(false);
+      setCurrentFileIndex(0); // รีเซ็ตการติดตามไฟล์
     }
   };
 
-  const renderUploadSection = (key, label, uploadFn, btnColor = 'green') => {
-    const file = files[key];
+  const renderFileUploadForm = (fileType) => {
+    const labels = {
+      sales: 'Sales CSV',
+      withdraw: 'Withdraw CSV',
+      stock: 'Stock CSV',
+      tamplate: 'Tamplate CSV',
+      itemDetail: 'ItemDetail CSV',
+      station: 'Station CSV',
+      item: 'ItemMinMax CSV',
+      masterItem: 'MasterItem CSV',
+      partner: 'Partner CSV',
+    };
+
+    const uploadFunctions = {
+      sales: uploadType === 'day' ? uploadSalesDayCSV : uploadSalesMonthCSV,
+      withdraw: uploadWithdrawCSV,
+      stock: uploadStockCSV,
+      tamplate: uploadTamplateCSV,
+      itemDetail: uploadItemSearchCSV,
+      station: uploadStationCSV,
+      item: uploadItemCSV,
+      masterItem: uploadMasterItemCSV,
+      partner: uploadPartnersCSV,
+    };
+
     return (
-      <div className="border rounded-md p-4 bg-gray-50">
-        <h3 className="text-lg font-semibold text-gray-700 mb-2">{label}</h3>
-        <div className="flex items-center space-x-2">
+      <div className="border rounded-md p-4 bg-gray-50 mt-6">
+        <h3 className="text-lg font-semibold text-gray-700 mb-2">{labels[fileType]}</h3>
+
+        {/* แสดง dropdown เลือกประเภทอัพโหลดสำหรับ Sales */}
+        {fileType === 'sales' && (
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">Select Upload Type</label>
+            <select
+              className="block w-full p-2 border border-gray-300 rounded-md"
+              value={uploadType}
+              onChange={(e) => setUploadType(e.target.value)}
+            >
+              <option value="day">Daily Sales</option>
+              <option value="month">Monthly Sales</option>
+            </select>
+          </div>
+        )}
+
+        <div className="bg-white border border-gray-300 rounded p-3 mb-3 text-sm overflow-x-auto">
+          <label className="font-medium text-gray-700 mb-1">Choose Files</label>
           <input
             type="file"
             accept=".csv"
-            onChange={handleFileChange(key)}
+            onChange={handleFileChange}
+            multiple
             disabled={loading}
-            className="flex-1 border rounded px-2 py-1 bg-white"
+            className="w-full p-2 border border-gray-300 rounded-md"
           />
-          {file && (
-            <span className="text-sm text-gray-600 italic truncate max-w-xs">
-              {file.name}
-            </span>
-          )}
         </div>
+
         <button
-          onClick={() => handleFileUpload(key, uploadFn, label)}
+          onClick={() => handleFileUpload(uploadFunctions[fileType], labels[fileType])}
           disabled={loading}
-          className={`mt-3 w-full py-2 text-white rounded ${
-            btnColor === 'green'
-              ? 'bg-green-600 hover:bg-green-700'
-              : btnColor === 'red'
-              ? 'bg-red-600 hover:bg-red-700'
-              : 'bg-blue-600 hover:bg-blue-700'
-          } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          className={`mt-4 w-full py-2 text-white rounded ${loading ? 'opacity-50 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
         >
-          {loading ? 'Uploading...' : `Upload ${label}`}
+          {loading ? (
+            <div className="flex justify-center items-center">
+              <FaSpinner className="animate-spin mr-2" /> Uploading {currentFileIndex}/{files.length}...
+            </div>
+          ) : (
+            `Upload ${labels[fileType]}`
+          )}
         </button>
       </div>
     );
   };
 
   return (
-    <div className="p-6 max-w-2xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Upload CSV Files</h2>
+    <div className="p-6 max-w-xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Choose File Type to Upload</h2>
 
-      <div className="space-y-6">
-        {renderUploadSection('station', 'Station CSV', uploadStationCSV, 'blue')}
-        {renderUploadSection('item', 'ItemMinMax CSV', uploadItemCSV, 'green')}
-        {renderUploadSection('masterItem', 'MasterItem CSV', uploadMasterItemCSV, 'purple')}
-        {renderUploadSection('partner', 'Partner CSV', uploadPartnersCSV, 'green')}
-        {renderUploadSection('sales', 'Sales CSV', uploadSalesCSV, 'blue')}
-        {renderUploadSection('stock', 'Stock CSV', uploadStockCSV, 'blue')}
-        {renderUploadSection('withdraw', 'Withdraw CSV', uploadWithdrawCSV, 'orange')}
-        {renderUploadSection('tamplate', 'Tamplate CSV', uploadTamplateCSV, 'red')}
-        {renderUploadSection('itemSearch', 'ItemSearch CSV', uploadItemSearchCSV, 'red')}
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Select File Type</label>
+          <select
+            className="block w-full p-2 border border-gray-300 rounded-md"
+            value={selectedFileType || ''}
+            onChange={(e) => setSelectedFileType(e.target.value)}
+          >
+            <option value="">-- Select --</option>
+            <option value="sales">Sales CSV</option>
+            <option value="withdraw">Withdraw CSV</option>
+            <option value="stock">Stock CSV</option>
+            <option value="tamplate">Tamplate CSV</option>
+            <option value="itemDetail">ItemDetail CSV</option>
+            <option value="station">Station CSV</option>
+            <option value="item">ItemMinMax CSV</option>
+            <option value="masterItem">MasterItem CSV</option>
+            <option value="partner">Partner CSV</option>
+          </select>
+        </div>
+
+        {selectedFileType && renderFileUploadForm(selectedFileType)}
       </div>
     </div>
   );

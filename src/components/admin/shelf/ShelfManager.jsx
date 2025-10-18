@@ -1,25 +1,31 @@
-import React, { useState } from 'react';
-import useShelfData from '../../../hooks/useShelfData';
-
-import useBmrStore from '../../../store/bmr_store';
-import ShelfFilter from './ShelfFilter';
-import ShelfCard from './ShelfCard';
-import BranchSelector from './BranchSelector';
-import { addTemplate, deleteTemplate, updateProducts } from '../../../api/admin/tamplate';
+import React, { useState } from "react";
+import useShelfData from "../../../hooks/useShelfData";
+import useShelfActions from "../../../hooks/useShelfActions";
+import useBmrStore from "../../../store/bmr_store";
+import ShelfFilter from "./ShelfFilter";
+import ShelfCard from "./ShelfCard";
+import BranchSelector from "./BranchSelector";
 
 const ShelfManager = () => {
   const token = useBmrStore((s) => s.token);
-  const { branches, tamplate, product, loading, fetchProduct } = useShelfData(token);
-  const [selectedBranchCode, setSelectedBranchCode] = useState('');
+  const { branches, template, product, loading, fetchProduct } = useShelfData(token);
+  const {
+    handleAddProduct,
+    handleDelete,
+    handleUpdateProducts,
+    actionLoading,
+  } = useShelfActions(token, fetchProduct);
+
+  const [selectedBranchCode, setSelectedBranchCode] = useState("");
   const [selectedShelves, setSelectedShelves] = useState([]);
-  const [filteredTamplate, setFilteredTamplate] = useState([]);
+  const [filteredTemplate, setFilteredTemplate] = useState([]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const matched = tamplate.filter(
+    const matched = template.filter(
       (item) => String(item.branchCode) === String(selectedBranchCode)
     );
-    setFilteredTamplate(matched);
+    setFilteredTemplate(matched);
     fetchProduct(selectedBranchCode);
   };
 
@@ -30,49 +36,8 @@ const ShelfManager = () => {
   const handleClearFilter = () => setSelectedShelves([]);
 
   const displayedTemplates = selectedShelves.length
-    ? filteredTamplate.filter((t) => selectedShelves.includes(t.shelfCode))
-    : filteredTamplate;
-
-
-  const handleAddProduct = async (newItem) => {
-    try {
-      await addTemplate(token, newItem)
-      // alert("✅ success");
-      fetchProduct(selectedBranchCode);
-    } catch (error) {
-      console.error("Add failed:", error);
-      alert("error add data");
-    }
-  };
-
-  // Delete Product
-  const handleDelete = async (product) => {
-    try {
-      await deleteTemplate(token, product)
-      // alert("✅ success");
-      fetchProduct(selectedBranchCode);
-    } catch (err) {
-      console.error("Delete failed:", err);
-    }
-  };
-
-  // update EditShelfModal
-  const handleUpdateProducts = async (updatedProducts) => {
-    try {
-      const res = await updateProducts(token, updatedProducts);
-
-      if (res.success) {
-        console.log("✅ success:", res.message);
-        fetchProduct(selectedBranchCode);
-      } else {
-        console.error("❌ update failed:", res.message);
-        alert(res.message);
-      }
-    } catch (error) {
-      console.error("Update failed:", error);
-    }
-  };
-
+    ? filteredTemplate.filter((t) => selectedShelves.includes(t.shelfCode))
+    : filteredTemplate;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -83,27 +48,39 @@ const ShelfManager = () => {
         onSubmit={handleSubmit}
       />
 
-      {loading && <p className="text-center mt-4 text-gray-600">⏳ Loading data...</p>}
+      {/* 🔸 show status load data */}
+      {(loading || actionLoading) && (
+        <div className="flex items-center justify-center mt-4 text-gray-600">
+          <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-gray-600 mr-2"></div>
+          <span>
+            {actionLoading ? "loading..." : "loading..."}
+          </span>
+        </div>
+      )}
 
-      {filteredTamplate.length > 0 && (
+      {filteredTemplate.length > 0 && !loading && (
         <ShelfFilter
-          shelves={filteredTamplate.map(t => t.shelfCode)}
+          shelves={filteredTemplate.map((t) => t.shelfCode)}
           selectedShelves={selectedShelves}
           onToggle={toggleShelfFilter}
           onClear={handleClearFilter}
         />
       )}
 
-      {displayedTemplates.map((t) => (
-        <ShelfCard
-          key={t.id}
-          template={t}
-          onAdd={handleAddProduct}
-          product={product}
-          onDelete={handleDelete}
-          onUpdateProducts={handleUpdateProducts} />
-         
-      ))}
+      {!loading &&
+        displayedTemplates.map((t) => (
+          <ShelfCard
+            key={t.id}
+            template={t}
+            product={product}
+            onAdd={(item) => handleAddProduct(selectedBranchCode, item)}
+            actionLoading={actionLoading}
+            onDelete={(p) => handleDelete(selectedBranchCode, p)}
+            onUpdateProducts={(updated) =>
+              handleUpdateProducts(selectedBranchCode, updated)
+            }
+          />
+        ))}
     </div>
   );
 };

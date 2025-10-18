@@ -16,13 +16,38 @@ const BmrStore = (set) => ({
       throw err;
     }
   },
+
+
   logout: () => {
     set({ user: null, token: null });
-   
+
     if (typeof window !== 'undefined') {
       localStorage.removeItem('bmr-store');
+
+      // Remove data from IndexedDB
+      const request = indexedDB.open('dashboardDataDB', 1);
+
+      request.onerror = () => {
+        console.error('Error opening IndexedDB');
+      };
+
+      request.onsuccess = () => {
+        const db = request.result;
+        const transaction = db.transaction(['data'], 'readwrite');
+        const store = transaction.objectStore('data');
+        store.clear(); // Clear all the data in the "data" object store
+
+        transaction.oncomplete = () => {
+          console.log('IndexedDB data cleared');
+        };
+
+        transaction.onerror = () => {
+          console.error('Error clearing IndexedDB data');
+        };
+      };
     }
   }
+
 
 });
 
@@ -31,8 +56,6 @@ const useBmrStore = create(
 );
 
 export default useBmrStore;
-
-
 
 // import React, { useEffect } from "react";
 // import useBmrStore from "../store/bmr_store"; // นำเข้า store ที่สร้างขึ้น

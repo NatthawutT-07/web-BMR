@@ -60,24 +60,24 @@ const SiderbarAdmin = ({ isExpanded, toggleSidebar }) => {
           label="List of Item Hold"
           expanded={isExpanded}
         /> */}
-        {/* <SidebarItem
+        <SidebarItem
           to="station"
           icon={<Store size={20} />}
           label="Station"
           expanded={isExpanded}
-        /> */}
+        />
         <SidebarItem
           to="edit-station"
           icon={<MonitorCog size={20} />}
           label="Edit Station"
           expanded={isExpanded}
         />
-        <SidebarItem
+        {/* <SidebarItem
           to="stock"
           icon={<Layers size={20} />}
           label="Stock All Station"
           expanded={isExpanded}
-        />
+        /> */}
         <SidebarItem
           to="upload"
           icon={<FileUp size={20} />}

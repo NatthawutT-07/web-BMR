@@ -1,25 +1,25 @@
 import { useEffect, useState } from "react";
 import { listStation } from "../api/users/home";
-import { getItemSearch, getTamplate } from "../api/admin/tamplate";
+import { getItemSearch, getTemplate } from "../api/admin/template";
 
 export default function useShelfData(token) {
   const [branches, setBranches] = useState([]);
-  const [tamplate, setTamplate] = useState([]);
+  const [template, setTemplate] = useState([]);
   const [product, setProduct] = useState([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (token) {
       listStation().then((res) => setBranches(res.data));
-      fetchTamplate();
+      fetchTemplate();
     }
   }, [token]);
 
-  const fetchTamplate = async () => {
+  const fetchTemplate = async () => {
     setLoading(true);
     try {
-      const res = await getTamplate(token);
-      setTamplate(res);
+      const res = await getTemplate(token);
+      setTemplate(res);
     } finally {
       setLoading(false);
     }
@@ -37,7 +37,7 @@ export default function useShelfData(token) {
 
   return {
     branches,
-    tamplate,
+    template,
     product,
     loading,
     fetchProduct
