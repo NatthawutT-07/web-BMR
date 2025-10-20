@@ -155,14 +155,18 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
   const [addModal, setAddModal] = useState({ isOpen: false, rowNo: null });
   const [branchCode, setBranchCode] = useState("");
 
-  // if (!shelfProducts || shelfProducts.length === 0) {
-  //   return <p className="text-gray-500 italic">No products in this shelf.</p>;
-  // }
+  // State ใหม่สำหรับเก็บข้อมูลสินค้าบน frontend
+  const [localShelfProducts, setLocalShelfProducts] = useState(shelfProducts || []);
 
-  // 🆕 
+  useEffect(() => {
+    // อัปเดต state เมื่อ props shelfProducts เปลี่ยนแปลง
+    setLocalShelfProducts(shelfProducts || []);
+  }, [shelfProducts]);
+
+  // การเพิ่มสินค้าใหม่
   const handleAddClick = (rowNo) => {
-    const branchFromPrev = shelfProducts?.[0]?.branchCode ?? "";
-    const rowProducts = shelfProducts.filter((p) => p.rowNo === rowNo);
+    const branchFromPrev = localShelfProducts?.[0]?.branchCode ?? "";
+    const rowProducts = localShelfProducts.filter((p) => p.rowNo === rowNo);
     const maxIndexInRow = Math.max(0, ...rowProducts.map((p) => p.index ?? 0));
 
     setBranchCode(branchFromPrev);
@@ -191,7 +195,19 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
         index: deleteModal.product.index,
       };
 
-      onDelete(product);
+      // ลบจาก backend
+      onDelete(product)
+        .then(() => {
+          // อัปเดตข้อมูล localShelfProducts หลังจากลบสำเร็จ
+          setLocalShelfProducts((prevProducts) =>
+            prevProducts.filter(
+              (prod) => prod.codeProduct !== deleteModal.product.codeProduct
+            )
+          );
+        })
+        .catch((error) => {
+          console.error("Error deleting product:", error);
+        });
     }
     setDeleteModal({ isOpen: false, product: null });
   };
@@ -209,7 +225,7 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
         branchCode={branchCode}
         shelfCode={shelfCode}
         rowNo={addModal.rowNo}
-        shelfProducts={shelfProducts}
+        shelfProducts={localShelfProducts} // ใช้ localShelfProducts
       />
 
       <DeleteConfirmModal
@@ -245,7 +261,7 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
           <tbody>
             {[...Array(Number(rows) || 0)].map((_, rowIndex) => {
               const rowNo = rowIndex + 1;
-              const rowProducts = shelfProducts.filter((p) => p.rowNo === rowNo);
+              const rowProducts = localShelfProducts.filter((p) => p.rowNo === rowNo); // ใช้ localShelfProducts
               const totalSalesRow = calcTotalSales(rowProducts);
               const totalWithdrawRow = calcTotalWithdraw(rowProducts);
 
@@ -276,7 +292,7 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
                           : 0;
 
                       return (
-                        <tr key={prod.codeProduct}>
+                        <tr key={`${prod.codeProduct}-${prod.rowNo}-${prod.shelfCode}`}>
                           <td className="p-2 border text-center">{prod.index}</td>
                           <td className="p-2 border text-sm">
                             {String(prod.codeProduct).padStart(5, "0")}
@@ -310,7 +326,6 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
                               className="text-red-600 hover:text-red-800 hover:underline transition"
                             >
                               Delete
-                              {/* {actionLoading ? "loading..." : "Delete"} */}
                             </button>
                           </td>
                         </tr>
@@ -352,3 +367,4 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
 };
 
 export default ShelfTable;
+

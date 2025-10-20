@@ -70,7 +70,7 @@ const ShelfManager = () => {
       {!loading &&
         displayedTemplates.map((t) => (
           <ShelfCard
-            key={t.id}
+            key={t.shelfCode}
             template={t}
             product={product}
             onAdd={(item) => handleAddProduct(selectedBranchCode, item)}

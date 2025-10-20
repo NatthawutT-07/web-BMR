@@ -5,7 +5,7 @@ import {
   uploadWithdrawCSV,
   uploadStockCSV,
   uploadTamplateCSV,
-  uploadItemSearchCSV,
+  uploadItemSKUCSV,
   uploadStationCSV,
   uploadItemCSV,
   uploadMasterItemCSV,
@@ -58,7 +58,7 @@ const UploadCSV = () => {
       withdraw: 'Withdraw CSV',
       stock: 'Stock CSV',
       tamplate: 'Tamplate CSV',
-      itemDetail: 'ItemDetail CSV',
+      itemDetail: 'SUK CSV',
       station: 'Station CSV',
       item: 'ItemMinMax CSV',
       masterItem: 'MasterItem CSV',
@@ -70,7 +70,7 @@ const UploadCSV = () => {
       withdraw: uploadWithdrawCSV,
       stock: uploadStockCSV,
       tamplate: uploadTamplateCSV,
-      itemDetail: uploadItemSearchCSV,
+      itemDetail: uploadItemSKUCSV,
       station: uploadStationCSV,
       item: uploadItemCSV,
       masterItem: uploadMasterItemCSV,
@@ -142,7 +142,7 @@ const UploadCSV = () => {
             <option value="withdraw">Withdraw CSV</option>
             <option value="stock">Stock CSV</option>
             <option value="tamplate">Tamplate CSV</option>
-            <option value="itemDetail">ItemDetail CSV</option>
+            <option value="itemDetail">SUK CSV</option>
             <option value="station">Station CSV</option>
             <option value="item">ItemMinMax CSV</option>
             <option value="masterItem">MasterItem CSV</option>

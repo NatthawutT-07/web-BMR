@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { listStation } from "../api/users/home";
-import { getItemSearch, getTemplate } from "../api/admin/template";
+import { getSKU, getTemplate } from "../api/admin/template";
 
 export default function useShelfData(token) {
   const [branches, setBranches] = useState([]);
@@ -28,7 +28,7 @@ export default function useShelfData(token) {
   const fetchProduct = async (branchCode) => {
     setLoading(true);
     try {
-      const res = await getItemSearch(token, branchCode);
+      const res = await getSKU(token, branchCode);
       setProduct(res);
     } finally {
       setLoading(false);

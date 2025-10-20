@@ -14,7 +14,6 @@ export const fetchStationsData = async (token) => {
     }
 };
 
-
 export const uploadStationCSV = async (file, token) => {
     const formData = new FormData();
     formData.append('file', file);
@@ -32,7 +31,6 @@ export const uploadStationCSV = async (file, token) => {
         throw new Error('Failed to upload Station CSV');
     }
 };
-
 
 export const uploadItemCSV = async (file, token) => {
     const formData = new FormData();
@@ -69,7 +67,9 @@ export const uploadPartnersCSV = async (file, token) => {
         throw new Error('Failed to upload ItemMinMax CSV');
     }
 
-}; export const uploadMasterItemCSV = async (file, token) => {
+}; 
+
+export const uploadMasterItemCSV = async (file, token) => {
     const formData = new FormData();
     formData.append('file', file);
 
@@ -86,7 +86,6 @@ export const uploadPartnersCSV = async (file, token) => {
         throw new Error('Failed to upload MasterItem CSV');
     }
 };
-
 
 export const uploadSalesDayCSV = async (file, token) => {
     const formData = new FormData();
@@ -123,8 +122,6 @@ export const uploadSalesMonthCSV = async (file, token) => {
         throw new Error('Failed to upload MasterItem CSV');
     }
 };
-
-
 
 export const uploadStockCSV = async (file, token) => {
     const formData = new FormData();
@@ -180,12 +177,12 @@ export const uploadTamplateCSV = async (file, token) => {
     }
 };
 
-export const uploadItemSearchCSV = async (file, token) => {
+export const uploadItemSKUCSV = async (file, token) => {
     const formData = new FormData();
     formData.append('file', file);
 
     try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-itemsearch`, formData, {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-sku`, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 'Authorization': `Bearer ${token}`,

@@ -14,10 +14,10 @@ export const getTemplate = async (token) => {
     }
 };
 
-export const getItemSearch = async (token, branchCode) => {
+export const getSKU = async (token, branchCode) => {
     try {
         const response = await axios.post(
-            `${import.meta.env.VITE_API_URL}/api/shelf-itemsearch`,
+            `${import.meta.env.VITE_API_URL}/api/shelf-sku`,
             { branchCode },
             {
                 headers: {
