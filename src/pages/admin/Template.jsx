@@ -1,5 +1,5 @@
 import React from 'react'
-import ShelfManager from '../../components/admin/Shelf/ShelfManager'
+import ShelfManager from '../../components/admin/shelf/ShelfManager'
 
 
 const Template = () => {
