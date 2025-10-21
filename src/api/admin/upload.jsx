@@ -2,7 +2,7 @@ import axios from "axios";
 
 export const fetchStationsData = async (token) => {
     try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/post`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/station-list`, {
             headers: {
                 'Authorization': `Bearer ${token}`, 
             },

@@ -42,7 +42,7 @@ const ShelfManager = () => {
   return (
     <div className="container mx-auto p-6 space-y-6">
       <BranchSelector
-        branches={Array.isArray(branches) ? branches : []}
+        branches={branches}
         selectedBranchCode={selectedBranchCode}
         onChange={setSelectedBranchCode}
         onSubmit={handleSubmit}
