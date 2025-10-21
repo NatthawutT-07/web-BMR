@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const getTemplate = async (token) => {
     try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/shelf-tamplate`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/shelf-Template`, {
             headers: {
                 Authorization: `Bearer ${token}`,
             },

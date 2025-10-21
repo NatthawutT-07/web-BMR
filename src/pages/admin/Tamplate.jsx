@@ -2,7 +2,7 @@ import React from 'react'
 import ShelfManager from '../../components/admin/Shelf/ShelfManager'
 
 
-const Tamplate = () => {
+const Template = () => {
     return (
         <div>
             <ShelfManager />
@@ -10,4 +10,4 @@ const Tamplate = () => {
     )
 }
 
-export default Tamplate
+export default Template

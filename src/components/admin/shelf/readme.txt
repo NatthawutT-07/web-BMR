@@ -1,7 +1,7 @@
 src/
  ├─ api/
  │   ├─ home.js
- │   └─ tamplate.js
+ │   └─ Template.js
  ├─ components/
  │   └─ Shelf/
  │        ├─ ShelfManager.jsx        ← main file

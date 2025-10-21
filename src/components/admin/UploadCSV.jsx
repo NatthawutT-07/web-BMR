@@ -4,7 +4,7 @@ import {
   uploadSalesMonthCSV,
   uploadWithdrawCSV,
   uploadStockCSV,
-  uploadTamplateCSV,
+  uploadTemplateCSV,
   uploadItemSKUCSV,
   uploadStationCSV,
   uploadItemCSV,
@@ -57,7 +57,7 @@ const UploadCSV = () => {
       sales: 'Sales CSV',
       withdraw: 'Withdraw CSV',
       stock: 'Stock CSV',
-      tamplate: 'Tamplate CSV',
+      Template: 'Template CSV',
       itemDetail: 'SUK CSV',
       station: 'Station CSV',
       item: 'ItemMinMax CSV',
@@ -69,7 +69,7 @@ const UploadCSV = () => {
       sales: uploadType === 'day' ? uploadSalesDayCSV : uploadSalesMonthCSV,
       withdraw: uploadWithdrawCSV,
       stock: uploadStockCSV,
-      tamplate: uploadTamplateCSV,
+      Template: uploadTemplateCSV,
       itemDetail: uploadItemSKUCSV,
       station: uploadStationCSV,
       item: uploadItemCSV,
@@ -141,7 +141,7 @@ const UploadCSV = () => {
             <option value="sales">Sales CSV</option>
             <option value="withdraw">Withdraw CSV</option>
             <option value="stock">Stock CSV</option>
-            <option value="tamplate">Tamplate CSV</option>
+            <option value="Template">Template CSV</option>
             <option value="itemDetail">SUK CSV</option>
             <option value="station">Station CSV</option>
             <option value="item">ItemMinMax CSV</option>
