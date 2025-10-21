@@ -40,6 +40,8 @@ function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // console.log("API URL:", import.meta.env.VITE_API_URL);
+
       const res = await actionLogin(form);
       const role = res.data.payload.role;
       roleRedirect(role);

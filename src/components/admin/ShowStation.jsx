@@ -24,11 +24,19 @@ const ShowPartner = () => {
     const fetchStations = async () => {
         try {
             const data = await fetchStationsData();
-            setStations(data);
+            if (data && Array.isArray(data.stations)) {
+                setStations(data.stations);  // Extract 'stations' if it's inside an object
+            } else if (Array.isArray(data)) {
+                setStations(data);  // If it's directly an array
+            } else {
+                setStations([]);  // Fallback to empty array
+            }
         } catch (error) {
             console.error("Error fetching stations:", error);
+            setStations([]);  // Ensure an empty array is set in case of error
         }
     };
+
 
     useEffect(() => {
         fetchStations();

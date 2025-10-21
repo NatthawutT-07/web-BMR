@@ -129,15 +129,19 @@ const ShowDashboard = () => {
     if (error) return <div style={{ color: 'red' }}>{error}</div>;
 
     // Filter sales data based on selected month and year // กรองข้อมูลการขายตามเดือนและปีที่เลือก
-    const filteredSales = data.sales.filter((sale) => {
-        const saleMonth = sale.month;
-        const saleYear = sale.year;
+    let filteredSales = [];
 
-        return (
-            (selectedMonth === '' || selectedMonth === 'ALL' || saleMonth === parseInt(selectedMonth)) &&
-            (selectedYear ? saleYear === parseInt(selectedYear) : true)
-        );
-    });
+    if (Array.isArray(data?.sales)) {
+        filteredSales = data.sales.filter((sale) => {
+            const saleMonth = sale.month;
+            const saleYear = sale.year;
+
+            return (
+                (selectedMonth === '' || selectedMonth === 'ALL' || saleMonth === parseInt(selectedMonth)) &&
+                (selectedYear ? saleYear === parseInt(selectedYear) : true)
+            );
+        });
+    }
 
     // Summary calculations based on filtered sales data // การคำนวณสรุปข้อมูลตามสาขาและช่องทางการขาย
     const summaryByBranchAndChannel = filteredSales.reduce((acc, sale) => {
@@ -182,7 +186,8 @@ const ShowDashboard = () => {
     ];
 
     // Get unique years from the data // ดึงปีที่ไม่ซ้ำจากข้อมูล
-    const uniqueYears = [...new Set(data.sales.map((sale) => sale.year))];
+    const uniqueYears = [...new Set((data?.sales || []).map((sale) => sale.year))];
+
 
     // Ensure '2024' is included, but only if it's not already present // ตรวจสอบว่า 2024 มีหรือไม่ ถ้าไม่มีให้เพิ่ม
     const years = uniqueYears.includes(2024) ? uniqueYears : [2024, ...uniqueYears];

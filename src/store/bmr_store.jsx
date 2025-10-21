@@ -8,7 +8,7 @@ const BmrStore = (set) => ({
 
   actionLogin: async (form) => {
     try {
-      const res = await axios.post('http://localhost:5001/api/login', form);
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/login`, form);
       set({ user: res.data.payload, token: res.data.token });
       return res;
     } catch (err) {

@@ -10,7 +10,11 @@ export default function useShelfData(token) {
 
   useEffect(() => {
     if (token) {
-      listStation().then((res) => setBranches(res.data));
+      listStation(token).then(res => {
+         console.log("API response:", res); 
+        setBranches(Array.isArray(res.data) ? res.data : []);
+      });
+
       fetchTemplate();
     }
   }, [token]);
