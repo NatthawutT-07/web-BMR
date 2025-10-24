@@ -43,6 +43,7 @@ export default function useShelfData(token) {
     branches,
     template,
     product,
+    setProduct,
     loading,
     fetchProduct
   };

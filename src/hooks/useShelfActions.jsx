@@ -1,27 +1,49 @@
 import { useState } from "react";
 import { addTemplate, deleteTemplate, updateProducts } from "../api/admin/template";
 
-export default function useShelfActions(token, fetchProduct) {
-    const [actionLoading, setActionLoading] = useState(false); // ✅ เพิ่ม state
+export default function useShelfActions(token, fetchProduct, setProduct) {
+    const [actionLoading, setActionLoading] = useState(false);
 
     const handleAddProduct = async (branchCode, newItem) => {
-        setActionLoading(true);
         try {
-            await addTemplate(token, newItem);
-            await fetchProduct(branchCode);
+            // console.log("Adding product:", newItem);
+            const newItemArray = [newItem]; // แปลงเป็น array
+            const res = await addTemplate(token, { items: newItemArray });
+
+            const updatedProduct = {
+                ...newItem,
+                ...res,
+                salesQuantity: newItem.salesQuantity ?? null,
+                salesTotalPrice: newItem.salesTotalPrice ?? null,
+                stockQuantity: newItem.stockQuantity ?? null,
+                withdrawQuantity: newItem.withdrawQuantity ?? 0,
+                withdrawValue: newItem.withdrawValue ?? 0,
+            };
+
+            setProduct(prev => [...prev, updatedProduct]);
         } catch (error) {
             console.error("Add failed:", error);
-            alert("error add data");
+            alert("Error adding data");
         } finally {
             setActionLoading(false);
         }
     };
 
-    const handleDelete = async (branchCode, product) => {
-        setActionLoading(true);
+
+
+    const handleDelete = async (branchCode, productToDelete) => {
         try {
-            await deleteTemplate(token, product);
-            await fetchProduct(branchCode);
+            await deleteTemplate(token, productToDelete);
+
+            setProduct(prev =>
+                prev.filter(p =>
+                    !(
+                        p.branchCode === productToDelete.branchCode &&
+                        p.shelfCode === productToDelete.shelfCode &&
+                        p.codeProduct === productToDelete.codeProduct
+                    )
+                )
+            );
         } catch (error) {
             console.error("Delete failed:", error);
             alert("error delete data");
@@ -31,14 +53,19 @@ export default function useShelfActions(token, fetchProduct) {
     };
 
     const handleUpdateProducts = async (branchCode, updatedProducts) => {
-        setActionLoading(true);
         try {
             const res = await updateProducts(token, updatedProducts);
             if (res.success) {
-                console.log("✅ Update success:", res.message);
-                await fetchProduct(branchCode);
+                setProduct(prev => {
+                    const updatedMap = new Map(
+                        updatedProducts.map(p => [`${p.shelfCode}-${p.codeProduct}`, p])
+                    );
+                    return prev.map(p => {
+                        const key = `${p.shelfCode}-${p.codeProduct}`;
+                        return updatedMap.has(key) ? updatedMap.get(key) : p;
+                    });
+                });
             } else {
-                console.error("❌ Update failed:", res.message);
                 alert(res.message);
             }
         } catch (error) {
@@ -52,6 +79,6 @@ export default function useShelfActions(token, fetchProduct) {
         handleAddProduct,
         handleDelete,
         handleUpdateProducts,
-        actionLoading, 
+        actionLoading,
     };
 }

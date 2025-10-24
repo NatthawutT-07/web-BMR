@@ -4,7 +4,7 @@ import { deleteStation, addStation, updateStation } from "../../api/admin/statio
 import useBmrStore from "../../store/bmr_store";
 import { toast } from "react-toastify";
 
-const ShowPartner = () => {
+const ShowStation = () => {
     const [stations, setStations] = useState([]);
     const [newStation, setNewStation] = useState({
         codeSAP: "",
@@ -23,7 +23,7 @@ const ShowPartner = () => {
 
     const fetchStations = async () => {
         try {
-            const data = await fetchStationsData();
+            const data = await fetchStationsData(token);
             if (data && Array.isArray(data.stations)) {
                 setStations(data.stations);  // Extract 'stations' if it's inside an object
             } else if (Array.isArray(data)) {
@@ -40,7 +40,7 @@ const ShowPartner = () => {
 
     useEffect(() => {
         fetchStations();
-    }, []);
+    }, [token]);
 
     const handleDelete = async (id) => {
         if (!window.confirm("⚠️ Confirm delete this station?")) return;
@@ -173,7 +173,7 @@ const ShowPartner = () => {
                                     {editingId === s.id ? (
                                         <input
                                             className="border p-1  rounded"
-                                            value={s.codeSAP}
+                                            value={s.codeSAP ?? ""}
                                             onChange={(e) =>
                                                 setStations((prev) =>
                                                     prev.map((st) =>
@@ -192,7 +192,7 @@ const ShowPartner = () => {
                                     {editingId === s.id ? (
                                         <input
                                             className="border p-1  rounded"
-                                            value={s.codeADA}
+                                            value={s.codeADA ?? ""}
                                             onChange={(e) =>
                                                 setStations((prev) =>
                                                     prev.map((st) =>
@@ -211,7 +211,7 @@ const ShowPartner = () => {
                                     {editingId === s.id ? (
                                         <input
                                             className="border p-1  rounded"
-                                            value={s.adaStore}
+                                            value={s.adaStore ?? ""}
                                             onChange={(e) =>
                                                 setStations((prev) =>
                                                     prev.map((st) =>
@@ -229,14 +229,12 @@ const ShowPartner = () => {
                                 <td className="border px-2 py-1">
                                     {editingId === s.id ? (
                                         <input
-                                            className="border p-1  rounded"
-                                            value={s.codeBMX}
+                                            className="border p-1 rounded"
+                                            value={s.codeSAP ?? ""}
                                             onChange={(e) =>
                                                 setStations((prev) =>
                                                     prev.map((st) =>
-                                                        st.id === s.id
-                                                            ? { ...st, codeBMX: e.target.value }
-                                                            : st
+                                                        st.id === s.id ? { ...st, codeSAP: e.target.value } : st
                                                     )
                                                 )
                                             }
@@ -287,4 +285,4 @@ const ShowPartner = () => {
     );
 };
 
-export default ShowPartner;
+export default ShowStation;

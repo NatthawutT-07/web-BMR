@@ -69,7 +69,7 @@ const SiderbarAdmin = ({ isExpanded, toggleSidebar }) => {
         <SidebarItem
           to="edit-station"
           icon={<MonitorCog size={20} />}
-          label="Edit Station"
+          label="View Shelf"
           expanded={isExpanded}
         />
         {/* <SidebarItem

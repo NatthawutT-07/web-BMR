@@ -59,14 +59,10 @@ function LoginPage() {
     }
   };
 
-
   return (
     <div className="login-container">
-      <div
-        className="min-h-screen relative flex items-center justify-center bg-cover bg-center"
-        style={{ backgroundImage: "url('/bg.png')" }}
-      >
-        <div className="absolute inset-0 bg-black opacity-40 z-0"></div>
+      {/* เปลี่ยนพื้นหลังเป็นสีขาว */}
+      <div className="min-h-screen flex items-center justify-center bg-white"> {/* ปรับจาก bg-cover bg-center เป็น bg-white */}
         <div className="relative z-10 w-full max-w-md shadow-lg bg-white p-8 rounded-xl">
           <img
             src="/Bringmindlogo.png"

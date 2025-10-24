@@ -8,13 +8,13 @@ import BranchSelector from "./BranchSelector";
 
 const ShelfManager = () => {
   const token = useBmrStore((s) => s.token);
-  const { branches, template, product, loading, fetchProduct } = useShelfData(token);
+  const { branches, template, product, loading, fetchProduct ,setProduct } = useShelfData(token);
   const {
     handleAddProduct,
     handleDelete,
     handleUpdateProducts,
     actionLoading,
-  } = useShelfActions(token, fetchProduct);
+  } = useShelfActions(token, fetchProduct, setProduct);
 
   const [selectedBranchCode, setSelectedBranchCode] = useState("");
   const [selectedShelves, setSelectedShelves] = useState([]);
@@ -58,7 +58,7 @@ const ShelfManager = () => {
           </span>
         </div>
       )}
-
+  
       {filteredTemplate.length > 0 && !loading && (
         <ShelfFilter
           shelves={filteredTemplate.map((t) => t.shelfCode)}
