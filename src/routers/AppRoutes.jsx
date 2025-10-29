@@ -31,7 +31,7 @@ const router = createBrowserRouter([
             { path: "partner", element: <Partner /> },
             { path: "product", element: <Product /> },
             { path: "station", element: <ShowStation /> },
-            { path: "edit-station", element: <Template /> },
+            { path: "viewshelf", element: <Template /> },
             // {path : "stock" , element : </>},
             { path: "upload", element: <Upload /> }
 

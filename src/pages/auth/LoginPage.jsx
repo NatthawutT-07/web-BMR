@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useBmrStore from "../../store/bmr_store";
+import logger from "../../utils/logger";
 
 function LoginPage() {
   const actionLogin = useBmrStore((state) => state.actionLogin);
@@ -8,92 +9,81 @@ function LoginPage() {
   const user = useBmrStore((state) => state.user);
   const navigate = useNavigate();
 
-  const [form, setForm] = useState({
-    name: "",
-    password: "",
-  });
+  const [form, setForm] = useState({ name: "", password: "" });
+  const [errorMsg, setErrorMsg] = useState(""); // ✅ เก็บ error message
 
-  // login อยู่แล้ว ไม่ให้เข้าหน้า Login
+  // ถ้ามี token แล้ว ไม่ให้เข้าหน้า Login
   useEffect(() => {
     if (token && user) {
-      if (user.role === "admin") {
-        navigate("/admin", { replace: true });
-      } else if (user.role === "user") {
-        navigate("/user", { replace: true });
-      }
+      if (user.role === "admin") navigate("/admin", { replace: true });
+      else if (user.role === "user") navigate("/user", { replace: true });
     }
+    // console.log("MODE:", import.meta.env.MODE);
+
   }, [token, user, navigate]);
 
   const clearStorageAndLogout = () => {
-    useBmrStore.persist.clearStorage(); // ลบ localStorage
-    useBmrStore.getState().logout();    // ล้าง store
-  }
+    useBmrStore.persist.clearStorage();
+    useBmrStore.getState().logout();
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({
-      ...form,
-      [name]: value,
-    });
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMsg("");
     try {
-      // console.log("API URL:", import.meta.env.VITE_API_URL);
-
       const res = await actionLogin(form);
       const role = res.data.payload.role;
       roleRedirect(role);
     } catch (err) {
-      const errMsg = err.response?.data?.msg;
-      console.log(errMsg);
+      const errMsg = err.response?.data?.msg || "Login failed";
+      setErrorMsg(errMsg);
     }
   };
 
   const roleRedirect = (role) => {
-    if (role === "admin") {
-      navigate("/admin");
-    } else if (role === "user") {
-      navigate("/user");
-    }
+    if (role === "admin") navigate("/admin");
+    else if (role === "user") navigate("/user");
   };
 
   return (
     <div className="login-container">
-      {/* เปลี่ยนพื้นหลังเป็นสีขาว */}
-      <div className="min-h-screen flex items-center justify-center bg-white"> {/* ปรับจาก bg-cover bg-center เป็น bg-white */}
+      <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="relative z-10 w-full max-w-md shadow-lg bg-white p-8 rounded-xl">
-          <img
-            src="/Bringmindlogo.png"
-            alt="Logo"
-            className="mx-auto h-60"
-          />
+          <img src="/Bringmindlogo.png" alt="Logo" className="mx-auto h-60" />
+
           <form onSubmit={handleSubmit}>
             <div className="space-y-6">
               {/* Email Input */}
-              <div className="relative">
-                <input
-                  placeholder="Email"
-                  onChange={handleChange}
-                  value={form.username}  // ทำให้ input ควบคุมด้วย state
-                  type="name"
-                  name="name"  // ใช้ name ที่ตรงกับ key ใน state
-                  className="w-full px-4 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50"
-                />
-              </div>
+              <input
+                placeholder="User"
+                onChange={handleChange}
+                value={form.name}
+                type="text"
+                name="name"
+                autoComplete="username"
+                className="w-full px-4 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50"
+              />
 
               {/* Password Input */}
-              <div className="relative">
-                <input
-                  placeholder="Password"
-                  onChange={handleChange}
-                  value={form.password}  // ทำให้ input ควบคุมด้วย state
-                  type="password"
-                  name="password"  // ใช้ name ที่ตรงกับ key ใน state
-                  className="w-full px-4 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50"
-                />
-              </div>
+              <input
+                placeholder="Password"
+                onChange={handleChange}
+                value={form.password}
+                type="password"
+                name="password"
+                autoComplete="current-password"
+                className="w-full px-4 py-3 border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 bg-gray-50"
+              />
+
+              {/* ✅ แสดง error message ถ้ามี */}
+              {errorMsg && (
+                <p className="text-red-500 text-sm text-center">{errorMsg}</p>
+              )}
 
               {/* Submit Button */}
               <button
@@ -103,15 +93,7 @@ function LoginPage() {
                 Login
               </button>
 
-              {/* Additional Actions */}
-              {/* <div className="flex justify-end mt-4">
-                <a
-                  href="/register"
-                  className="text-indigo-600 hover:text-indigo-700 text-sm"
-                >
-                  Create an Account
-                </a>
-              </div> */}
+              {/* ปุ่ม clear (optional) */}
               {/* <button
                 type="button"
                 onClick={clearStorageAndLogout}

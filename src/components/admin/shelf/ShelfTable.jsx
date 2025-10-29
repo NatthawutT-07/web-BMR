@@ -302,10 +302,10 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
                           <td className="p-2 border text-center">{prod?.shelfLife ?? "-"}</td>
                           <td className="p-2 border text-center">{prod?.salesPriceIncVAT ?? "-"}</td>
                           <td className="p-2 border text-center">{prod?.salesQuantity ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod?.withdrawQuantity ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod?.minStore ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod?.maxStore ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod?.stockQuantity ?? "-"}</td>
+                          <td className="p-2 border text-center">{prod?.withdrawQuantity ? prod.withdrawQuantity : "-"}</td>
+                          <td className="p-2 border text-center">{prod?.minStore ? prod.minStore : "-"}</td>
+                          <td className="p-2 border text-center">{prod?.maxStore ? prod.maxStore : "-"}</td>
+                          <td className="p-2 border text-center">{prod?.stockQuantity ? prod.stockQuantity : "-"}</td>
                           <td className="p-2 border text-right">
                             {prod?.purchasePriceExcVAT != null
                               ? prod.purchasePriceExcVAT.toFixed(2)
@@ -318,7 +318,7 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
                             {prod?.salesTotalPrice ?? "-"}
                           </td>
                           <td className="p-2 border text-right">
-                            {prod?.withdrawValue ?? "-"}
+                            {prod?.withdrawValue ? prod.withdrawValue : "-"}
                           </td>
                           <td className="border px-2 text-center">
                             <button
