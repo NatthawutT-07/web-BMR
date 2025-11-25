@@ -1,6 +1,6 @@
 import React from 'react'
 import { Outlet } from 'react-router-dom'
-import MainNav from '../components/MainNav'
+import MainNav from '../components/user/MainNav'
 
 const LayoutUser = () => {
     return (

@@ -9,8 +9,8 @@ export const getTemplate = async (token) => {
         });
         return response.data;
     } catch (error) {
-        console.error("❌ Error fetching detail station:", error);
-        throw error;
+        // console.error("❌ Error fetching detail station:", error);
+        return error;
     }
 };
 
@@ -28,8 +28,8 @@ export const getSKU = async (token, branchCode) => {
         );
         return response.data;
     } catch (error) {
-        console.error('❌ Error fetching shelf detail:', error);
-        throw error;
+        // console.error('❌ Error fetching shelf detail:', error);
+        return error;
     }
 };
 
@@ -47,8 +47,8 @@ export const addTemplate = async (token, newItem) => {
             }
         );
     } catch (error) {
-        console.error("❌ Error adding product:", error);
-        throw error;
+        // console.error("❌ Error adding product:", error);
+        return error;
     }
 };
 
@@ -72,8 +72,8 @@ export const deleteTemplate = async (token, product) => {
             }
         );
     } catch (error) {
-        console.error("❌ Error deleting product:", error);
-        throw error;
+        // console.error("❌ Error deleting product:", error);
+        return error;
     }
 };
 
@@ -91,7 +91,7 @@ export const updateProducts = async (token, data) => {
         );
         return res.data;
     } catch (error) {
-        console.error("❌ Error updating shelf:", error);
-        throw error;
+        // console.error("❌ Error updating shelf:", error);
+        return error;
     }
 };

@@ -1,196 +1,56 @@
 import axios from "axios";
 
-export const fetchStationsData = async (token) => {
-    try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/station-list`, {
-            headers: {
-                'Authorization': `Bearer ${token}`, 
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error fetching stations:', error);
-        throw new Error('Failed to fetch station data');
+const API_URL = import.meta.env.VITE_API_URL;
+
+// 🔧 อัปโหลดแบบมาตรฐานทุกไฟล์
+const uploadXLSX = async (file, token, path) => {
+  const formData = new FormData();
+  formData.append("file", file); // สำคัญ! ต้องเป็น "file"
+
+  return await axios.post(
+    `${API_URL}${path}`,
+    formData,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
     }
+  );
 };
 
-export const uploadStationCSV = async (file, token) => {
-    const formData = new FormData();
-    formData.append('file', file);
+// Sales XLSX
+export const uploadSalesDayXLSX = (file, token) =>
+  uploadXLSX(file, token, "/api/upload-sales");
 
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-stations`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error uploading Station CSV:', error);
-        throw new Error('Failed to upload Station CSV');
-    }
-};
+// Withdraw
+export const uploadWithdrawXLSX = (file, token) =>
+  uploadXLSX(file, token, "/api/upload-withdraw");
 
-export const uploadItemCSV = async (file, token) => {
-    const formData = new FormData();
-    formData.append('file', file);
+// Stock
+export const uploadStockXLSX = (file, token) =>
+  uploadXLSX(file, token, "/api/upload-stock");
 
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-itemminmax`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error uploading ItemMinMax CSV:', error);
-        throw new Error('Failed to upload ItemMinMax CSV');
-    }
-};
+// Template Shelf XLSX
+export const uploadTemplateXLSX = (file, token) =>
+  uploadXLSX(file, token, "/api/upload-template");
 
-export const uploadPartnersCSV = async (file, token) => {
-    const formData = new FormData();
-    formData.append('file', file);
+// SKU XLSX
+export const uploadItemSKUXLSX = (file, token) =>
+  uploadXLSX(file, token, "/api/upload-sku");
 
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-partners`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error uploading ItemMinMax CSV:', error);
-        throw new Error('Failed to upload ItemMinMax CSV');
-    }
+// Store / Station
+export const uploadStationXLSX = (file, token) =>
+  uploadXLSX(file, token, "/api/upload-station");
 
-}; 
+// ItemMinMax XLSX
+export const uploadItemMinMaxXLSX = (file, token) =>
+  uploadXLSX(file, token, "/api/upload-minmax");
 
-export const uploadMasterItemCSV = async (file, token) => {
-    const formData = new FormData();
-    formData.append('file', file);
+// Master Item
+export const uploadMasterItemXLSX = (file, token) =>
+  uploadXLSX(file, token, "/api/upload-masterItem");
 
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-masteritem`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error uploading MasterItem CSV:', error);
-        throw new Error('Failed to upload MasterItem CSV');
-    }
-};
-
-export const uploadSalesDayCSV = async (file, token) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-salesday`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error uploading MasterItem CSV:', error);
-        throw new Error('Failed to upload MasterItem CSV');
-    }
-};
-
-export const uploadSalesMonthCSV = async (file, token) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-salesmonth`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error uploading MasterItem CSV:', error);
-        throw new Error('Failed to upload MasterItem CSV');
-    }
-};
-
-export const uploadStockCSV = async (file, token) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-stock`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error uploading MasterItem CSV:', error);
-        throw new Error('Failed to upload MasterItem CSV');
-    }
-};
-
-export const uploadWithdrawCSV = async (file, token) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-withdraw`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error uploading MasterItem CSV:', error);
-        throw new Error('Failed to upload MasterItem CSV');
-    }
-};
-
-export const uploadTemplateCSV = async (file, token) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-Template`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error uploading MasterItem CSV:', error);
-        throw new Error('Failed to upload MasterItem CSV');
-    }
-};
-
-export const uploadItemSKUCSV = async (file, token) => {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/upload-sku`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${token}`,
-            },
-        });
-        return response.data;
-    } catch (error) {
-        console.error('Error uploading MasterItem CSV:', error);
-        throw new Error('Failed to upload MasterItem CSV');
-    }
-};
+// Bill
+export const uploadBillXLSX = (file, token) =>
+  uploadXLSX(file, token, "/api/upload-bill");

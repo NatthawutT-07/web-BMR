@@ -1,11 +1,16 @@
 import React from 'react'
 import ShelfManager from '../../components/admin/shelf/ShelfManager'
+import HeaderAdmin from '../../components/admin/nav/HeaderAdmin'
 
 
 const Template = () => {
     return (
         <div>
-            <ShelfManager />
+            {/* <HeaderAdmin /> */}
+            <div>
+                <ShelfManager />
+
+            </div>
         </div>
     )
 }

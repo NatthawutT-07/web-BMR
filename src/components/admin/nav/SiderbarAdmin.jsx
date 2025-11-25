@@ -1,16 +1,9 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, Handshake, UserCog,
-  PackageSearch,
-  LogOut,
-  Menu,
-  Layers,
-  Store,
-  MonitorCog,
-  FileUp
+  LayoutDashboard, LogOut, Menu, Store, FileUp, ChartNoAxesCombined
 } from "lucide-react";
-import useBmrStore from "../../store/bmr_store";
+import useBmrStore from "../../../store/bmr_store";
 
 const SiderbarAdmin = ({ isExpanded, toggleSidebar }) => {
   const logout = useBmrStore((state) => state.logout);
@@ -31,53 +24,27 @@ const SiderbarAdmin = ({ isExpanded, toggleSidebar }) => {
         className="h-20 flex items-center justify-center cursor-pointer hover:bg-gray-700"
         onClick={toggleSidebar}
       >
-        <Menu size={28} />
+        {isExpanded ? (
+          <span className="text-white font-bold text-lg">BMR</span>
+        ) : (
+          <Menu size={28} />
+        )}
       </div>
 
       {/* Menu */}
       <nav className="flex-1 px-2 py-4 space-y-2">
         <SidebarItem
-          to="/admin"
-          icon={<LayoutDashboard size={20} />}
-          label="Dashboard"
+          to="sales"
+          icon={<ChartNoAxesCombined size={20} />}
+          label="Sales"
           expanded={isExpanded}
         />
-        {/* <SidebarItem
-          to="manage"
-          icon={<UserCog size={20} />}
-          label="Manage User"
-          expanded={isExpanded}
-        /> */}
-        {/* <SidebarItem
-          to="partner"
-          icon={<Handshake size={20} />}
-          label="Partner"
-          expanded={isExpanded}
-        /> */}
-        {/* <SidebarItem
-          to="product"
-          icon={<PackageSearch size={20} />}
-          label="List of Item Hold"
-          expanded={isExpanded}
-        /> */}
         <SidebarItem
-          to="station"
+          to="shelf"
           icon={<Store size={20} />}
-          label="Station"
+          label="Shelf"
           expanded={isExpanded}
         />
-        <SidebarItem
-          to="edit-station"
-          icon={<MonitorCog size={20} />}
-          label="View Shelf"
-          expanded={isExpanded}
-        />
-        {/* <SidebarItem
-          to="stock"
-          icon={<Layers size={20} />}
-          label="Stock All Station"
-          expanded={isExpanded}
-        /> */}
         <SidebarItem
           to="upload"
           icon={<FileUp size={20} />}
@@ -85,21 +52,20 @@ const SiderbarAdmin = ({ isExpanded, toggleSidebar }) => {
           expanded={isExpanded}
         />
 
+        {/* Logout as menu item */}
+        <div className="pt-10 py-4 px-0.5 space-y-2">
+          <SidebarButton
+            onClick={handleLogout}
+            icon={<LogOut size={20} />}
+            label="Logout"
+            expanded={isExpanded}
+          />
+        </div>
       </nav>
-
-      {/* Logout */}
-      <div className="px-2 py-4">
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center space-x-2 px-3 py-2 hover:bg-gray-700 rounded-lg text-sm"
-        >
-          <LogOut size={20} />
-          {isExpanded && <span>Logout</span>}
-        </button>
-      </div>
     </div>
   );
 };
+
 const SidebarItem = ({ to, icon, label, expanded }) => {
   return (
     <NavLink
@@ -123,5 +89,17 @@ const SidebarItem = ({ to, icon, label, expanded }) => {
   );
 };
 
+// SidebarButton ใช้สำหรับปุ่ม action เช่น Logout/Login
+const SidebarButton = ({ onClick, icon, label, expanded }) => {
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition"
+    >
+      {icon}
+      {expanded && <span>{label}</span>}
+    </button>
+  );
+};
 
 export default SiderbarAdmin;

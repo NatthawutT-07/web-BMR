@@ -1,28 +1,29 @@
 import React, { useState, useEffect } from "react";
-import { calcTotalSales, calcTotalWithdraw } from "../../../utils/shelfUtils";
+import { calcTotalSales, calcTotalStockCost, calcTotalWithdraw } from "../../../../../utils/shelfUtils";
 
+// ================= Delete Confirm Modal =================
 const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, productName }) => {
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl">
+      <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Confirm Delete</h3>
         <p className="text-gray-600 mb-6">
-          Delete  <span className="font-semibold">" {productName} "</span> ???
+          Delete <span className="font-semibold">"{productName}"</span>?
           <br />
           <span className="text-red-600 text-sm">การดำเนินการนี้ไม่สามารถย้อนกลับได้</span>
         </p>
         <div className="flex gap-3 justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition"
+            className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
           >
             Cancel
           </button>
           <button
             onClick={onConfirm}
-            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition"
+            className="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
           >
             Delete
           </button>
@@ -32,7 +33,7 @@ const DeleteConfirmModal = ({ isOpen, onClose, onConfirm, productName }) => {
   );
 };
 
-
+// ================= Add Product Modal =================
 const AddProductModal = ({
   isOpen,
   onClose,
@@ -55,7 +56,6 @@ const AddProductModal = ({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     if (!codeProduct.trim()) {
       setError("กรุณากรอกรหัสสินค้า");
       return;
@@ -67,7 +67,6 @@ const AddProductModal = ({
       return;
     }
 
-    // 🔍 ตรวจซ้ำเฉพาะรหัสสินค้าทั้ง shelf
     const isDuplicate = shelfProducts.some(
       (p) => parseInt(p.codeProduct, 10) === codeNum
     );
@@ -77,7 +76,6 @@ const AddProductModal = ({
       return;
     }
 
-    // ✅ ถ้าไม่ซ้ำ และไม่ว่าง → ส่ง API ได้
     onSubmit({
       codeProduct: codeNum,
       index: nextIndex,
@@ -85,25 +83,15 @@ const AddProductModal = ({
       rowNo,
       shelfCode,
     });
-
-    // ปิด modal และล้างค่า
-    setCodeProduct("");
-    setError("");
     onClose();
-  };
-
-  const handleChange = (e) => {
-    setCodeProduct(e.target.value);
-    if (error) setError("");
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-lg w-full max-w-sm shadow-lg">
+      <div className="bg-white p-6 rounded-lg max-w-sm w-full shadow-lg">
         <h2 className="text-lg font-semibold mb-4 text-gray-800">➕ New Item</h2>
-
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -112,33 +100,29 @@ const AddProductModal = ({
             <input
               type="number"
               value={codeProduct}
-              onChange={handleChange}
+              onChange={(e) => setCodeProduct(e.target.value)}
               placeholder="Code Item"
-              className={`w-full border rounded px-3 py-2 focus:ring focus:ring-green-100 focus:outline-none ${error ? "border-red-200" : ""
-                }`}
-              required
+              className={`w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-green-300 focus:outline-none ${error ? "border-red-300" : ""}`}
             />
             {error && <span className="text-red-600 text-sm mt-1">{error}</span>}
           </div>
-
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-600 space-y-1">
             <p>BranchCode: <span className="font-semibold">{branchCode}</span></p>
             <p>Index (Auto): <span className="font-semibold">{nextIndex}</span></p>
             <p>ShelfCode: <span className="font-semibold">{shelfCode}</span></p>
             <p>Row: <span className="font-semibold">{rowNo}</span></p>
           </div>
-
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition"
+              className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition"
+              className="px-3 py-1.5 bg-green-500 text-white text-sm rounded hover:bg-green-600 transition-colors"
             >
               Add
             </button>
@@ -149,37 +133,17 @@ const AddProductModal = ({
   );
 };
 
-
-const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoading }) => {
+const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, branchCode }) => {
   const [deleteModal, setDeleteModal] = useState({ isOpen: false, product: null });
   const [addModal, setAddModal] = useState({ isOpen: false, rowNo: null });
-  const [branchCode, setBranchCode] = useState("");
 
-  // State ใหม่สำหรับเก็บข้อมูลสินค้าบน frontend
-  const [localShelfProducts, setLocalShelfProducts] = useState(shelfProducts || []);
-
-  useEffect(() => {
-    // อัปเดต state เมื่อ props shelfProducts เปลี่ยนแปลง
-    setLocalShelfProducts(shelfProducts || []);
-  }, [shelfProducts]);
-
-  // การเพิ่มสินค้าใหม่
   const handleAddClick = (rowNo) => {
-    const branchFromPrev = localShelfProducts?.[0]?.branchCode ?? "";
-    const rowProducts = localShelfProducts.filter((p) => p.rowNo === rowNo);
+    const rowProducts = shelfProducts.filter((p) => p.rowNo === rowNo);
     const maxIndexInRow = Math.max(0, ...rowProducts.map((p) => p.index ?? 0));
-
-    setBranchCode(branchFromPrev);
-    setAddModal({
-      isOpen: true,
-      rowNo,
-      nextIndex: maxIndexInRow + 1,
-    });
+    setAddModal({ isOpen: true, rowNo, nextIndex: maxIndexInRow + 1 });
   };
 
-  const handleAddSubmit = (newItem) => {
-    if (onAdd) onAdd(newItem);
-  };
+  const handleAddSubmit = (newItem) => onAdd && onAdd(newItem);
 
   const handleDeleteClick = (product) => {
     setDeleteModal({ isOpen: true, product });
@@ -187,36 +151,26 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
 
   const handleConfirmDelete = () => {
     if (deleteModal.product && onDelete) {
-      const product = {
-        branchCode: deleteModal.product.branchCode,
-        codeProduct: deleteModal.product.codeProduct,
-        shelfCode: deleteModal.product.shelfCode,
-        rowNo: deleteModal.product.rowNo,
-        index: deleteModal.product.index,
-      };
-
-      // ลบจาก backend
-      onDelete(product)
-        .then(() => {
-          // อัปเดตข้อมูล localShelfProducts หลังจากลบสำเร็จ
-          setLocalShelfProducts((prevProducts) =>
-            prevProducts.filter(
-              (prod) => prod.codeProduct !== deleteModal.product.codeProduct
-            )
-          );
-        })
-        .catch((error) => {
-          console.error("Error deleting product:", error);
-        });
+      onDelete(deleteModal.product);
     }
     setDeleteModal({ isOpen: false, product: null });
   };
 
-  const handleCloseModal = () => setDeleteModal({ isOpen: false, product: null });
+  // Calculate the total values for the whole table (sum across all rows)
+  const totalSales = shelfProducts.reduce((sum, prod) => sum + (prod.salesTotalPrice || 0), 0);
+  const totalWithdraw = shelfProducts.reduce((sum, prod) => sum + (prod.withdrawValue || 0), 0);
+  const totalStockCost = shelfProducts.reduce(
+    (sum, prod) => sum + ((prod.stockQuantity ?? 0) * (prod.purchasePriceExcVAT ?? 0)),
+    0
+  );
+
+  const formatNumber = (num) => {
+    if (num === null || num === undefined) return "-";
+    return num.toLocaleString(); // ใช้ toLocaleString เพื่อให้มีเครื่องหมายคั่นหลักพัน
+  };
 
   return (
     <>
-      {/* Modal สำหรับ Add / Delete */}
       <AddProductModal
         isOpen={addModal.isOpen}
         onClose={() => setAddModal({ isOpen: false, rowNo: null })}
@@ -225,12 +179,12 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
         branchCode={branchCode}
         shelfCode={shelfCode}
         rowNo={addModal.rowNo}
-        shelfProducts={localShelfProducts} // ใช้ localShelfProducts
+        shelfProducts={shelfProducts}
       />
 
       <DeleteConfirmModal
         isOpen={deleteModal.isOpen}
-        onClose={handleCloseModal}
+        onClose={() => setDeleteModal({ isOpen: false, product: null })}
         onConfirm={handleConfirmDelete}
         productName={deleteModal.product?.nameProduct || ""}
       />
@@ -245,80 +199,78 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
               <th className="border px-2 py-1 text-center">Brand</th>
               <th className="border px-2 py-1 text-center">ShelfLife</th>
               <th className="border px-2 py-1 text-center">RSP</th>
-              <th className="border px-2 py-1 text-center">SalesQty</th>
-              <th className="border px-2 py-1 text-center">Wd Qty</th>
+              <th className="border px-2 py-1 text-center w-16">Sales Qty</th>
+              <th className="border px-2 py-1 text-center w-16">withdraw Qty</th>
               <th className="border px-2 py-1 text-center">MIN</th>
               <th className="border px-2 py-1 text-center">MAX</th>
-              <th className="border px-2 py-1 text-center">StockQty</th>
-              <th className="border px-2 py-1 text-center">UnitCost</th>
-              <th className="border px-2 py-1 text-center">StockCost</th>
-              <th className="border px-2 py-1 text-center">SalesAmount</th>
-              <th className="border px-2 py-1 text-center">Wd Amount</th>
+              <th className="border px-2 py-1 text-center">Stock Qty</th>
+              <th className="border px-2 py-1 text-center">Unit Cost</th>
+              <th className="border px-2 py-1 text-center">Stock Cost</th>
+              <th className="border px-2 py-1 text-center">Sales Amount</th>
+              <th className="border px-2 py-1 text-center w-20">Withdraw Amount</th>
               <th className="border px-2 py-1 text-center">Delete</th>
             </tr>
           </thead>
-
           <tbody>
             {[...Array(Number(rows) || 0)].map((_, rowIndex) => {
               const rowNo = rowIndex + 1;
-              const rowProducts = localShelfProducts.filter((p) => p.rowNo === rowNo); // ใช้ localShelfProducts
+              const rowProducts = shelfProducts.filter((p) => p.rowNo === rowNo);
+              const totalStockCostRow = calcTotalStockCost(rowProducts);
               const totalSalesRow = calcTotalSales(rowProducts);
               const totalWithdrawRow = calcTotalWithdraw(rowProducts);
 
               return (
-                <React.Fragment key={rowNo}>
-                  {/* Header per row */}
+                <React.Fragment key={`row-${rowNo}`}>
                   <tr className="bg-blue-50">
-                    <td className="p-2 border font-semibold italic text-gray-700" colSpan={15}>
+                    <td colSpan={15} className="p-2 border font-semibold italic text-gray-700">
                       ➤ Row: {rowNo}
                     </td>
                     <td className="p-2 border text-center">
                       <button
                         title="Add new Item"
                         onClick={() => handleAddClick(rowNo)}
-                        className="px-3 py-1 bg-green-400 text-white rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-400"
+                        className="px-3 py-1 bg-green-400 text-white rounded hover:bg-green-600"
                       >
                         ➕
                       </button>
                     </td>
                   </tr>
 
-                  {/* Product rows */}
                   {rowProducts.length > 0 ? (
-                    rowProducts.map((prod) => {
-                      const stockCost =
-                        (prod?.stockQuantity != null && prod?.purchasePriceExcVAT != null)
-                          ? prod.stockQuantity * prod.purchasePriceExcVAT
-                          : 0;
-
+                    rowProducts.map((prod, i) => {
+                      const rowKey = `prod-${prod.branchCode}-${prod.shelfCode}-${prod.rowNo}-${prod.codeProduct}-${prod.index}`;
+                      const stockCost = (prod.stockQuantity ?? 0) * (prod.purchasePriceExcVAT ?? 0);
+                      const zebra = i % 2 === 0 ? "bg-white" : "bg-gray-50";
                       return (
-                        <tr key={`${prod.codeProduct}-${prod.rowNo}-${prod.shelfCode}`}>
+                        <tr key={rowKey} className={zebra}>
                           <td className="p-2 border text-center">{prod.index}</td>
-                          <td className="p-2 border text-sm">
-                            {String(prod.codeProduct).padStart(5, "0")}
+                          <td className="p-2 border">{String(prod.codeProduct).padStart(5, "0")}</td>
+                          <td className="p-2 border">{prod.nameProduct ?? "-"}</td>
+                          <td className="p-2 border">{prod.nameBrand ?? "-"}</td>
+                          <td className="p-2 border text-center">{prod.shelfLife ?? "-"}</td>
+                          <td className="p-2 border text-center ">{prod.salesPriceIncVAT ?? "-"}</td>
+                          <td className="p-2 border text-center text-green-600">
+                            {prod.salesQuantity || "-"}
                           </td>
-                          <td className="p-2 border">{prod?.nameProduct ?? "-"}</td>
-                          <td className="p-2 border">{prod?.nameBrand ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod?.shelfLife ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod?.salesPriceIncVAT ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod?.salesQuantity ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod?.withdrawQuantity ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod?.minStore ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod?.maxStore ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod?.stockQuantity ?? "-"}</td>
-                          <td className="p-2 border text-right">
-                            {prod?.purchasePriceExcVAT != null
-                              ? prod.purchasePriceExcVAT.toFixed(2)
-                              : "-"}
+                          <td className="p-2 border text-center text-red-600">
+                            {prod.withdrawQuantity || "-"}
                           </td>
-                          <td className="p-2 border text-right">
-                            {stockCost !== 0 ? stockCost.toFixed(2) : "-"}
+                          <td className="p-2 border text-center">{prod.minStore ?? "-"}</td>
+                          <td className="p-2 border text-center">{prod.maxStore ?? "-"}</td>
+                          <td className="p-2 border text-center text-yellow-500">
+                            {prod.stockQuantity ?? "-"}
                           </td>
                           <td className="p-2 border text-right">
-                            {prod?.salesTotalPrice ?? "-"}
+                            {/* {formatNumber(prod.purchasePriceExcVAT) ?? "-"} */}
                           </td>
-                          <td className="p-2 border text-right">
-                            {prod?.withdrawValue ?? "-"}
+                          <td className="p-2 border text-right text-yellow-500">
+                            {/* {formatNumber(stockCost) ?? "-"} */}
+                          </td>
+                          <td className="p-2 border text-right text-green-600">
+                            {formatNumber(prod.salesTotalPrice) ?? "-"}
+                          </td>
+                          <td className="p-2 border text-right text-red-600">
+                            {formatNumber(prod.withdrawValue) ?? "-"}
                           </td>
                           <td className="border px-2 text-center">
                             <button
@@ -333,32 +285,47 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, actionLoa
                     })
                   ) : (
                     <tr>
-                      <td
-                        className="p-2 border text-center text-gray-500 italic"
-                        colSpan={16}
-                      >
+                      <td colSpan={16} className="p-2 border text-center text-gray-500 italic">
                         No products in this Row
                       </td>
                     </tr>
                   )}
 
-                  {/* Row total */}
                   <tr className="bg-gray-100 font-semibold">
-                    <td className="p-2 border" colSpan={11}></td>
-                    <td className="p-2 border text-right" colSpan={2}>
+                    <td colSpan={10} className="p-2 border"></td>
+                    <td colSpan={2} className="p-2 border text-right">
                       Total for Row {rowNo}
                     </td>
+                    <td className="p-2 border text-yellow-600 text-right">
+                      {formatNumber(totalStockCostRow)}
+                    </td>
                     <td className="p-2 border text-green-700 text-right">
-                      {totalSalesRow.toFixed(2)}
+                      {formatNumber(totalSalesRow)}
                     </td>
                     <td className="p-2 border text-orange-600 text-right">
-                      {totalWithdrawRow.toFixed(2)}
+                      {formatNumber(totalWithdrawRow)}
                     </td>
-                    <td className="p-2 border" />
+                    <td className="p-2 border"></td>
                   </tr>
                 </React.Fragment>
               );
             })}
+
+            {/* Total Row for the entire table */}
+            <tr className="bg-gray-200 font-semibold">
+              <td colSpan={12} className="p-2 border text-right">Total for All Rows</td>
+              <td className="p-2 border text-yellow-600 text-right text-sm">
+                {formatNumber(totalStockCost)}
+              </td>
+              <td className="p-2 border text-green-700 text-right text-sm">
+                {formatNumber(totalSales)}
+              </td>
+              <td className="p-2 border text-orange-600 text-right text-sm">
+                {formatNumber(totalWithdraw)}
+              </td>
+              <td className="p-2 border"></td>
+            </tr>
+
           </tbody>
         </table>
       </div>

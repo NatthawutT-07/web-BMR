@@ -9,7 +9,7 @@ export const getData = async (token) => {
         });
         return response.data;
     } catch (error) {
-        console.error("❌ Error fetching detail station:", error);
-        throw error;
+        // console.error("❌ Error fetching detail station:", error);
+        return error;
     }
 };

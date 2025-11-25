@@ -10,8 +10,8 @@ export const deleteStation = async (token, id) => {
         });
         return res.data;
     } catch (error) {
-        console.error("❌ Error deleting station:", error);
-        throw error;
+        // console.error("❌ Error deleting station:", error);
+        return error;
     }
 };
 
@@ -25,8 +25,8 @@ export const addStation = async (token, value) => {
         });
         return res.data;
     } catch (error) {
-        console.error("❌ Error adding station:", error);
-        throw error;
+        // console.error("❌ Error adding station:", error);
+        return error;
     }
 };
 
@@ -50,8 +50,8 @@ export const updateStation = async (token, station) => {
         );
         return res.data;
     } catch (error) {
-        console.error("❌ Error updating station:", error);
-        throw error;
+        // console.error("❌ Error updating station:", error);
+        return error;
     }
 };
 

@@ -7,12 +7,12 @@ import LayoutUser from '../layouts/LayoutUser'
 import LoginPage from '../pages/auth/LoginPage'
 import ProtectRouteAdmin from './ProtectRouteAdmin'
 import ProtectRouteUser from './ProtectRouteUser'
-import Manage from '../pages/admin/Manage'
-import Partner from '../pages/admin/Partner'
-import Product from '../pages/admin/Product'
-import ShowStation from '../components/admin/ShowStation'
 import Upload from '../pages/admin/Upload'
 import Template from '../pages/admin/Template'
+import FilterSales from '../pages/admin/sales/FilterSales'
+import DashboardSales from '../components/admin/sales/dashboard/DashboardSales'
+import MainSalesProduct from '../components/admin/sales/product/MainSalesProduct'
+import { Calculator } from 'lucide-react'
 
 const router = createBrowserRouter([
     {
@@ -27,18 +27,16 @@ const router = createBrowserRouter([
         element: <ProtectRouteAdmin element={<LayoutAdmin />} />,
         children: [
             { index: true, element: <Dashboard /> },
-            { path: "manage", element: <Manage /> },
-            { path: "partner", element: <Partner /> },
-            { path: "product", element: <Product /> },
-            { path: "station", element: <ShowStation /> },
-            { path: "edit-station", element: <Template /> },
-            // {path : "stock" , element : </>},
-            { path: "upload", element: <Upload /> }
-
+            { path: "shelf", element: <Template /> },
+            { path: "upload", element: <Upload /> },
+            { path: "sales", element: <FilterSales /> },
+            { path: "dashboard-sales", element: <DashboardSales /> },
+            { path: "product-sales", element: <MainSalesProduct /> },
+            { path: "calculator-sales", element: <Calculator /> },
         ]
     },
     {
-        path: '/user',
+        path: '/store',
         element: <ProtectRouteUser element={<LayoutUser />} />,
         children: [
             { index: true, element: <Home /> }

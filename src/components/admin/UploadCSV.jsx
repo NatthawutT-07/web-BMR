@@ -1,157 +1,232 @@
-  import React, { useState } from 'react';
-  import {
-    uploadSalesDayCSV,
-    uploadSalesMonthCSV,
-    uploadWithdrawCSV,
-    uploadStockCSV,
-    uploadTemplateCSV,
-    uploadItemSKUCSV,
-    uploadStationCSV,
-    uploadItemCSV,
-    uploadMasterItemCSV,
-    uploadPartnersCSV,
-  } from '../../api/admin/upload';
-  import useBmrStore from '../../store/bmr_store';
-  import { toast } from 'react-toastify';
+import React, { useState, useRef } from "react";
+import * as XLSX from "xlsx";
+import { toast } from "react-toastify";
+import useBmrStore from "../../store/bmr_store";
 
-  const UploadCSV = () => {
-    const [selectedFileType, setSelectedFileType] = useState(null);
-    const [uploadType, setUploadType] = useState('day'); // 'day' for daily, 'month' for monthly
-    const [files, setFiles] = useState([]); // เก็บไฟล์ทั้งหมดที่เลือก
-    const [loading, setLoading] = useState(false);
-    const token = useBmrStore((state) => state.token);
+// API Upload XLSX
+import {
+  uploadSalesDayXLSX,
+  uploadWithdrawXLSX,
+  uploadStockXLSX,
+  uploadTemplateXLSX,
+  uploadItemSKUXLSX,
+  uploadStationXLSX,
+  uploadItemMinMaxXLSX,
+  uploadMasterItemXLSX,
+  uploadBillXLSX,
+} from "../../api/admin/upload";
 
-    const handleFileChange = (e) => {
-      const selectedFiles = Array.from(e.target.files) || [];
-      setFiles(selectedFiles);
-    };
+// Download API
+import { downloadSKU, downloadTemplate } from "../../api/admin/download";
 
-    const handleFileUpload = async (uploadFn, label) => {
-      if (files.length === 0) {
-        toast.error(`Please select ${label} files`), { autoClose: 300 };
-        return;
+const UploadCSV = () => {
+  const [selectedFileType, setSelectedFileType] = useState(null);
+  const [files, setFiles] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fileInputRef = useRef(null);
+  const token = useBmrStore((state) => state.token);
+
+  // เมื่อเลือกประเภทไฟล์
+  const handleSelectFileType = (type) => {
+    setSelectedFileType(type);
+    setFiles([]);
+
+    // reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // อ่านไฟล์ XLSX
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files) || [];
+    setFiles(selectedFiles);
+  };
+
+  // upload functions map
+  const uploadFunctions = {
+    sales: uploadSalesDayXLSX,
+    withdraw: uploadWithdrawXLSX,
+    stock: uploadStockXLSX,
+    Template: uploadTemplateXLSX,
+    SKU: uploadItemSKUXLSX,
+    store: uploadStationXLSX,
+    minMax: uploadItemMinMaxXLSX,
+    masterItem: uploadMasterItemXLSX,
+    bill: uploadBillXLSX,
+  };
+
+  // upload handler
+  const handleFileUpload = async (uploadFn, label) => {
+    if (!files.length) {
+      toast.error(`Please select ${label} file`);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      for (let file of files) {
+        await uploadFn(file, token);
       }
 
-      setLoading(true);
-      try {
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i];
-          await uploadFn(file, token, uploadType);
-        }
-        toast.success(`${label} files uploaded successfully!`, { autoClose: 300 });
-        setFiles([]); 
-      } catch (err) {
-        toast.error(`Upload ${label} failed: ${err.message}`, { autoClose: 300 });
-      } finally {
-        setLoading(false);
+      toast.success(`${label} upload completed!`);
+
+      // reset state และ input
+      setFiles([]);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
-    };
+    } catch (err) {
+      toast.error(`Upload failed: ${err.message}`);
+    }
+    setLoading(false);
+  };
 
-    const renderFileUploadForm = (fileType) => {
-      const labels = {
-        sales: 'Sales CSV',
-        withdraw: 'Withdraw CSV',
-        stock: 'Stock CSV',
-        Template: 'POG Shelf template CSV',
-        SKU: 'POG SKU template CSV',
-        station: 'Station CSV',
-        item: 'ItemMinMax CSV',
-        masterItem: 'MasterItem CSV',
-        partner: 'Partner CSV',
-      };
-
-      const uploadFunctions = {
-        sales: uploadType === 'day' ? uploadSalesDayCSV : uploadSalesMonthCSV,
-        withdraw: uploadWithdrawCSV,
-        stock: uploadStockCSV,
-        Template: uploadTemplateCSV,
-        SKU: uploadItemSKUCSV,
-        station: uploadStationCSV,
-        item: uploadItemCSV, //min max
-        masterItem: uploadMasterItemCSV,
-        partner: uploadPartnersCSV,
-      };
-
-      return (
-        <div className="border rounded-md p-4 bg-gray-50 mt-6">
-          <h3 className="text-lg font-semibold text-gray-700 mb-2">{labels[fileType]}</h3>
-
-          {/* แสดง dropdown เลือกประเภทอัพโหลดสำหรับ Sales */}
-          {fileType === 'sales' && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">Select Upload Type</label>
-              <select
-                className="block w-full p-2 border border-gray-300 rounded-md"
-                value={uploadType}
-                onChange={(e) => setUploadType(e.target.value)}
-              >
-                <option value="day">Daily Sales</option>
-                <option value="month">Monthly Sales</option>
-              </select>
-            </div>
-          )}
-
-          <div className="bg-white border border-gray-300 rounded p-3 mb-3 text-sm overflow-x-auto">
-            <label className="font-medium text-gray-700 mb-1">Choose Files</label>
-            <input
-              type="file"
-              accept=".csv"
-              onChange={handleFileChange}
-              multiple
-              disabled={loading}
-              className="w-full p-2 border border-gray-300 rounded-md"
-            />
-          </div>
-
-          <button
-            onClick={() => handleFileUpload(uploadFunctions[fileType], labels[fileType])}
-            disabled={loading}
-            className={`mt-4 w-full py-2 text-white rounded ${loading ? 'opacity-50 cursor-not-allowed' : 'bg-green-600 hover:bg-green-700'}`}
-          >
-            {loading ? (
-              <div className="flex items-center justify-center mt-4 text-gray-600">
-                <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-gray-600 mr-2"></div>
-                <span>
-                  loading...
-                </span>
-              </div>
-            ) : (
-              `Upload ${labels[fileType]}`
-            )}
-          </button>
-        </div>
-      );
+  // UI render form
+  const renderFileUploadForm = (fileType) => {
+    const labels = {
+      sales: "Sales XLSX",
+      withdraw: "Withdraw XLSX",
+      stock: "Stock XLSX",
+      Template: "POG Shelf XLSX",
+      SKU: "POG SKU XLSX",
+      store: "Station XLSX",
+      minMax: "ItemMinMax XLSX",
+      masterItem: "MasterItem XLSX",
+      bill: "Bill XLSX",
     };
 
     return (
-      <div className="p-6 max-w-xl mx-auto">
-        <h2 className="text-2xl font-bold mb-6 text-gray-800 text-center">Choose File Type to Upload</h2>
+      <div className="border rounded-md p-4 bg-gray-50 mt-6">
+        <h3 className="text-lg font-semibold mb-2">{labels[fileType]}</h3>
 
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Select File Type</label>
-            <select
-              className="block w-full p-2 border border-gray-300 rounded-md"
-              value={selectedFileType || ''}
-              onChange={(e) => setSelectedFileType(e.target.value)}
-            >
-              <option value="">-- Select --</option>
-              <option value="sales">Sales CSV</option>
-              <option value="withdraw">Withdraw CSV</option>
-              <option value="stock">Stock CSV</option>
-              <option value="Template">POG Shelf template CSV</option>
-              <option value="SKU">POG SKU template CSV</option>
-              {/* <option value="station">Station CSV</option> */}
-              <option value="item">ItemMinMax CSV</option>
-              <option value="masterItem">MasterItem CSV</option>
-              <option value="partner">Partner CSV</option>
-            </select>
-          </div>
+        {/* File Input */}
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".xlsx"
+          onChange={handleFileChange}
+          multiple
+          disabled={loading}
+          className="w-full p-2 border rounded bg-white"
+        />
 
-          {selectedFileType && renderFileUploadForm(selectedFileType)}
-        </div>
+        <button
+          onClick={() => handleFileUpload(uploadFunctions[fileType], labels[fileType])}
+          disabled={loading}
+          className="mt-4 w-full py-2 bg-green-600 text-white rounded"
+        >
+          {loading ? "Uploading..." : `Upload ${labels[fileType]}`}
+        </button>
+
+        {/* Download Template XLSX */}
+        {fileType === "Template" && (
+          <button
+            disabled={loading}
+            onClick={async () => {
+              try {
+                setLoading(true);
+                const data = await downloadTemplate(token);
+                const sheet = XLSX.utils.json_to_sheet(data);
+                const book = XLSX.write(
+                  { Sheets: { data: sheet }, SheetNames: ["data"] },
+                  { bookType: "xlsx", type: "array" }
+                );
+
+                const blob = new Blob([book], { type: "application/octet-stream" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "POG_Shelf_Template.xlsx";
+                a.click();
+                URL.revokeObjectURL(url);
+
+                toast.success("Template Downloaded!");
+              } catch {
+                toast.error("Download failed");
+              } finally {
+                setLoading(false);
+
+                // reset input
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+              }
+            }}
+            className="mt-4 w-full py-2 bg-blue-600 text-white rounded"
+          >
+            Download POG Shelf Template XLSX
+          </button>
+        )}
+
+        {/* Download SKU XLSX */}
+        {fileType === "SKU" && (
+          <button
+            disabled={loading}
+            onClick={async () => {
+              try {
+                setLoading(true);
+                const data = await downloadSKU(token);
+                const sheet = XLSX.utils.json_to_sheet(data);
+                const book = XLSX.write(
+                  { Sheets: { data: sheet }, SheetNames: ["data"] },
+                  { bookType: "xlsx", type: "array" }
+                );
+
+                const blob = new Blob([book], { type: "application/octet-stream" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "POG_SKU_Template.xlsx";
+                a.click();
+                URL.revokeObjectURL(url);
+
+                toast.success("SKU Template Downloaded!");
+              } catch {
+                toast.error("Download failed");
+              } finally {
+                setLoading(false);
+
+                // reset input
+                if (fileInputRef.current) {
+                  fileInputRef.current.value = "";
+                }
+              }
+            }}
+            className="mt-4 w-full py-2 bg-blue-600 text-white rounded"
+          >
+            Download POG SKU Template XLSX
+          </button>
+        )}
       </div>
     );
   };
 
-  export default UploadCSV;
+  return (
+    <div className="p-6 max-w-xl mx-auto">
+      <h2 className="text-2xl font-bold mb-6 text-center">Choose File Type to Upload</h2>
+
+      <select
+        className="w-full p-2 border rounded mb-4"
+        value={selectedFileType || ""}
+        onChange={(e) => handleSelectFileType(e.target.value)}
+      >
+        <option value="">-- Select --</option>
+        <option value="Template">POG Shelf template XLSX</option>
+        <option value="SKU">POG SKU template XLSX</option>
+        <option value="sales">Sales XLSX</option>
+        <option value="withdraw">Withdraw XLSX</option>
+        <option value="stock">Stock XLSX</option>
+        <option value="store">Station XLSX</option>
+        <option value="minMax">ItemMinMax XLSX</option>
+        <option value="masterItem">MasterItem XLSX</option>
+        <option value="bill">Bill XLSX</option>
+      </select>
+
+      {selectedFileType && renderFileUploadForm(selectedFileType)}
+    </div>
+  );
+};
+
+export default UploadCSV;

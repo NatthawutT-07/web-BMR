@@ -30,3 +30,6 @@ onSave: function – ส่ง editedProducts กลับเมื่อกด 
 shelfProducts: array – รายการสินค้าทั้งหมดใน shelf
 
 shelfCode: string – รหัส shelf เช่น "W2"
+
+
+npm install html2pdf.js //การบันทึกทั้งหน้า (full page) เป็น PDF

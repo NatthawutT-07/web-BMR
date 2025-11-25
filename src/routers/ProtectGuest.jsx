@@ -16,12 +16,4 @@ const ProtectGuest = ({ element }) => {
 export default ProtectGuest;
 
 
-// import ProtectGuest from "./ProtectGuest";
 
-// {
-//   path: "/",
-//   children: [
-//     { index: true, element: <ProtectGuest element={<LoginPage />} /> },
-//     { path: "register", element: <ProtectGuest element={<RegisterPage />} /> },
-//   ],
-// }

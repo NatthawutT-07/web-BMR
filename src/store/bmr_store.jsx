@@ -23,30 +23,25 @@ const BmrStore = (set) => ({
 
     if (typeof window !== 'undefined') {
       localStorage.removeItem('bmr-store');
+      localStorage.removeItem('shelf-store');
+      localStorage.removeItem('sales-store');
 
-      // Remove data from IndexedDB
-      const request = indexedDB.open('dashboardDataDB', 1);
+      const deleteRequest = indexedDB.deleteDatabase('dashboardDataDB');
 
-      request.onerror = () => {
-        console.error('Error opening IndexedDB');
+      deleteRequest.onsuccess = () => {
+        console.log('IndexedDB deleted successfully');
       };
 
-      request.onsuccess = () => {
-        const db = request.result;
-        const transaction = db.transaction(['data'], 'readwrite');
-        const store = transaction.objectStore('data');
-        store.clear(); // Clear all the data in the "data" object store
+      deleteRequest.onerror = () => {
+        console.error('Failed to delete IndexedDB');
+      };
 
-        transaction.oncomplete = () => {
-          console.log('IndexedDB data cleared');
-        };
-
-        transaction.onerror = () => {
-          console.error('Error clearing IndexedDB data');
-        };
+      deleteRequest.onblocked = () => {
+        console.warn('IndexedDB deletion blocked');
       };
     }
   }
+
 
 
 });
@@ -57,30 +52,3 @@ const useBmrStore = create(
 
 export default useBmrStore;
 
-// import React, { useEffect } from "react";
-// import useBmrStore from "../store/bmr_store"; // นำเข้า store ที่สร้างขึ้น
-
-// const ProfilePage = () => {
-//   const { user, token, logout } = useBmrStore(state => ({
-//     user: state.user,
-//     token: state.token,
-//     logout: state.logout
-//   }));
-
-//   useEffect(() => {
-//     if (!user) {
-//       // ถ้า user เป็น null (ไม่ได้ login), ให้ redirect ไปหน้า login
-//       window.location.href = "/login";
-//     }
-//   }, [user]);
-
-//   return (
-//     <div>
-//       <h1>Profile Page</h1>
-//       <p>Welcome, {user ? user.name : "Guest"}!</p>
-//       <button onClick={logout}>Logout</button>
-//     </div>
-//   );
-// };
-
-// export default ProfilePage;
