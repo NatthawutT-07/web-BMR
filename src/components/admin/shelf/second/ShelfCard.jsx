@@ -13,8 +13,6 @@ const ShelfCard = ({
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false); // เปิด/ปิด table
   const [isImageOpen, setIsImageOpen] = useState(false); // ซูมรูปภาพ
-  const [forceOpen, setForceOpen] = useState(false); // บังคับเปิดหลัง edit
-
   const [localShelfProducts, setLocalShelfProducts] = useState([]);
 
   // โหลดสินค้าใน shelf
@@ -33,73 +31,71 @@ const ShelfCard = ({
     if (onUpdateProducts) await onUpdateProducts(updatedProducts);
 
     setIsEditOpen(false);
-    setIsOpen(true); // เปิดตารางไว้หลังแก้ไข
-    setForceOpen(false);
+    setIsOpen(true); // เปิด card เมื่อเซฟ
   };
 
   return (
     <div className="border rounded shadow-sm p-4 mb-6 bg-white relative">
 
-      {/* Loader */}
+      {/* LOADING MASK */}
       {actionLoading && (
         <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
           <div className="flex items-center space-x-2 text-gray-700">
             <div className="animate-spin h-5 w-5 border-t-2 border-b-2 border-gray-700 rounded-full"></div>
-            <span className="text-sm">The system is working...</span>
+            <span className="text-sm">Processing...</span>
           </div>
         </div>
       )}
 
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-3">
-
+      {/* HEADER — CLICK FULL BAR */}
+      <div
+        className="flex justify-between items-center mb-3 cursor-pointer select-none hover:bg-gray-50 p-2 rounded"
+        onClick={() => {
+          if (!actionLoading && !isImageOpen) {
+            setIsOpen((prev) => !prev);
+          }
+        }}
+      >
         {/* LEFT: Image + Title */}
         <div className="flex items-center space-x-3">
 
           {/* Expandable Image */}
           <div
             onClick={(e) => {
-              e.stopPropagation();
+              e.stopPropagation(); // ไม่ปิด/เปิด card
               setIsImageOpen((prev) => !prev);
             }}
             className={`
-              rounded border bg-gray-200 flex items-center justify-center text-xs text-gray-500 
-              cursor-pointer transition-all duration-300
-              ${isImageOpen ? "w-full h-64" : "w-10 h-10"}
+              rounded border bg-gray-200 flex items-center justify-center 
+              text-xs text-gray-500 cursor-pointer transition-all duration-300
+              ${isImageOpen ? "w-full h-64 min-h-[250px]" : "w-10 h-10"}
             `}
           >
             {isImageOpen ? (
-              <div className="text-gray-600">[ รูปภาพใหญ่ ]</div>
+              <div className="text-gray-600">[ IMAGE ]</div>
             ) : (
               <span>img</span>
             )}
           </div>
 
-          {/* Title — คลิกเปิด/ปิดได้ */}
+          {/* Title */}
           {!isImageOpen && (
-            <h2
-              className="text-lg font-semibold cursor-pointer hover:text-blue-600 select-none"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsOpen((prev) => !prev);
-              }}
-            >
+            <h2 className="text-lg font-semibold">
               Shelf: {template.shelfCode} - {template.fullName} ({template.rowQty} Rows)
             </h2>
           )}
         </div>
 
-        {/* RIGHT: Edit + toggle arrow */}
+        {/* RIGHT SIDE: Edit + Toggle Arrow */}
         {!isImageOpen && (
           <div className="flex items-center space-x-2">
 
-            {/* ปุ่ม Edit */}
+            {/* Edit button */}
             {isOpen && (
               <button
                 disabled={actionLoading}
                 onClick={(e) => {
                   e.stopPropagation();
-                  setForceOpen(true);
                   setIsEditOpen(true);
                 }}
                 className="px-3 py-1 text-sm rounded bg-green-500 text-white hover:bg-green-600"
@@ -108,14 +104,14 @@ const ShelfCard = ({
               </button>
             )}
 
-            {/* ปุ่มเปิด/ปิด */}
+            {/* Toggle Arrow */}
             <button
               disabled={actionLoading}
               onClick={(e) => {
                 e.stopPropagation();
                 setIsOpen((prev) => !prev);
               }}
-              className="px-2 py-1 text-lg select-none"
+              className="px-2 py-1 text-lg"
             >
               {isOpen ? "▲" : "▼"}
             </button>
@@ -144,10 +140,7 @@ const ShelfCard = ({
       {/* EDIT MODAL */}
       <EditShelfModal
         isOpen={isEditOpen}
-        onClose={() => {
-          setIsEditOpen(false);
-          setForceOpen(false);
-        }}
+        onClose={() => setIsEditOpen(false)}
         onSave={handleSaveEdit}
         shelfProducts={localShelfProducts}
         shelfCode={template.shelfCode}

@@ -1,12 +1,19 @@
 import React from 'react'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
+
+// Pages & Layouts
 import Home from '../pages/user/Home'
 import LayoutAdmin from '../layouts/LayoutAdmin'
 import Dashboard from '../pages/admin/Dashboard'
 import LayoutUser from '../layouts/LayoutUser'
 import LoginPage from '../pages/auth/LoginPage'
+
+// Protect
 import ProtectRouteAdmin from './ProtectRouteAdmin'
 import ProtectRouteUser from './ProtectRouteUser'
+import ProtectGuest from './ProtectGuest'
+
+// Admin Components
 import Upload from '../pages/admin/Upload'
 import Template from '../pages/admin/Template'
 import FilterSales from '../pages/admin/sales/FilterSales'
@@ -18,10 +25,13 @@ const router = createBrowserRouter([
     {
         path: '/',
         children: [
-            { index: true, element: <LoginPage /> },
+            { 
+                index: true, 
+                element: <ProtectGuest element={<LoginPage />} /> 
+            },
         ],
-
     },
+
     {
         path: '/admin',
         element: <ProtectRouteAdmin element={<LayoutAdmin />} />,
@@ -35,8 +45,9 @@ const router = createBrowserRouter([
             { path: "calculator-sales", element: <Calculator /> },
         ]
     },
+
     {
-        path: '/store',
+        path: '/store/:storecode',
         element: <ProtectRouteUser element={<LayoutUser />} />,
         children: [
             { index: true, element: <Home /> }
@@ -44,11 +55,10 @@ const router = createBrowserRouter([
     }
 ])
 
+// Export
 const AppRoutes = () => {
     return (
-        <>
-            <RouterProvider router={router} />
-        </>
+        <RouterProvider router={router} />
     )
 }
 

@@ -1,155 +1,106 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 const ShelfTableUser = ({ shelfProducts = [] }) => {
-    // ตรวจสอบว่า shelfProducts เป็น array หรือไม่
-    if (!Array.isArray(shelfProducts)) {
-        console.error("Expected shelfProducts to be an array, but received:", shelfProducts);
-        return <div>Error: Invalid data format.</div>;
-    }
+    if (!Array.isArray(shelfProducts)) return <div>Invalid data.</div>;
 
-    // กรองข้อมูล shelfProducts ที่มี rowNo กำหนด
-    const validProducts = shelfProducts.filter((p) => p.rowNo !== undefined);
+    const valid = shelfProducts.filter((p) => p.rowNo !== undefined);
+    const rowCount = Math.max(...valid.map((p) => p.rowNo), 0);
 
-    // หาจำนวนแถวสูงสุดจาก rowNo ที่มีอยู่
-    const rowCount = Math.max(...validProducts.map((p) => p.rowNo), 0);
-
-    // คำนวณผลรวมของ Sales, Withdraw, StockCost
-    const totalSales = shelfProducts.reduce((sum, prod) => sum + (prod.salesTotalPrice || 0), 0);
-    const totalWithdraw = shelfProducts.reduce((sum, prod) => sum + (prod.withdrawValue || 0), 0);
-    const totalStockCost = shelfProducts.reduce(
-        (sum, prod) => sum + ((prod.stockQuantity ?? 0) * (prod.purchasePriceExcVAT ?? 0)),
-        0
-    );
-
-    // ฟังก์ชั่นสำหรับฟอร์แมตตัวเลข
-    const formatNumber = (num) => {
-        if (num === null || num === undefined) return "-";
-        return num.toLocaleString(); // ใช้ toLocaleString เพื่อให้มีเครื่องหมายคั่นหลักพัน
-    };
+    const formatNum = (n) => (n ? n.toLocaleString() : "-");
 
     return (
-        <>
-            <div className="overflow-x-auto w-full px-0 sm:px-5 lg:px-20">
-                <table className=" min-w-[1000px] w-full text-left border text-gray-700 text-xs">
+        <div className="overflow-x-auto w-full px-1 sm:px-3">
+            <table className="min-w-[900px] w-full text-xs border text-gray-700">
 
-                    <thead className="bg-gray-100">
-                        <tr>
-                            <th className="border px-1 py-1 text-center">ID</th>
-                            <th className="border px-1 py-1 text-center">Code</th>
-                            <th className="border px-1 py-1 text-center ">Name</th>
-                            <th className="border px-1 py-1 text-center">Brand</th>
-                            <th className="border px-1 py-1 text-center w-12">ShelfLife</th>
-                            <th className="border px-1 py-1 text-center w-16">RSP</th>
-                            <th className="border px-1 py-1 text-center w-12">Sales Qty</th>
-                            <th className="border px-1 py-1 text-center w-12">Withdraw Qty</th>
-                            <th className="border px-1 py-1 text-center w-12">MIN</th>
-                            <th className="border px-1 py-1 text-center w-12">MAX</th>
-                            <th className="border px-1 py-1 text-center w-16">Stock Cost</th>
-                            <th className="border px-1 py-1 text-center w-16">Sales Amount</th>
-                            <th className="border px-1 py-1 text-center w-16">Withdraw Amount</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {/* แสดงข้อมูลแต่ละแถว */}
-                        {[...Array(rowCount)].map((_, rowIndex) => {
-                            const rowNo = rowIndex + 1;
-                            const rowProducts = shelfProducts.filter((p) => p.rowNo === rowNo);
-                            const totalStockCostRow = rowProducts.reduce(
-                                (sum, prod) => sum + ((prod.stockQuantity ?? 0) * (prod.purchasePriceExcVAT ?? 0)),
-                                0
-                            );
-                            const totalSalesRow = rowProducts.reduce(
-                                (sum, prod) => sum + (prod.salesTotalPrice || 0),
-                                0
-                            );
-                            const totalWithdrawRow = rowProducts.reduce(
-                                (sum, prod) => sum + (prod.withdrawValue || 0),
-                                0
-                            );
+                <thead className="bg-gray-200 sticky top-0 z-20">
+                    <tr>
+                        <th className="border px-1 py-1 text-center">ID</th>
+                        <th className="border px-1 py-1 text-center">Baccode</th>
+                        <th className="border px-1 py-1 text-center">Code</th>
+                        <th className="border px-1 py-1 text-center">Name</th>
+                        <th className="border px-1 py-1 text-center">Brand</th>
+                        <th className="border px-1 py-1 text-center w-14">Life</th>
+                        <th className="border px-1 py-1 text-center w-14">RSP</th>
+                        <th className="border px-1 py-1 text-center w-14">Sales Qty</th>
+                        <th className="border px-1 py-1 text-center w-14">Withdraw Qty</th>
+                        <th className="border px-1 py-1 text-center w-14">Min</th>
+                        <th className="border px-1 py-1 text-center w-14">Max</th>
+                        <th className="border px-1 py-1 text-center w-14">Stock</th>
+                        {/* <th className="border px-7 py-1 text-center w-10">Sales Amt</th> */}
+                        {/* <th className="border px-3 py-1 text-center w-10">Withdraw Amt</th> */}
+                    </tr>
+                </thead>
 
-                            return (
-                                <React.Fragment key={`row-${rowNo}`}>
-                                    <tr className="bg-blue-50">
-                                        <td colSpan={15} className="p-1 border font-semibold italic text-gray-700">
-                                            ➤ Row: {rowNo}
+                <tbody>
+
+                    {[...Array(rowCount)].map((_, idx) => {
+                        const rowNo = idx + 1;
+                        const items = shelfProducts.filter((p) => p.rowNo === rowNo);
+                        const zeroToDash = (v) => (v === 0 || v === "0" ? "-" : v ?? "-");
+
+                        return (
+                            <React.Fragment key={rowNo}>
+                                {/* Row header */}
+                                <tr className="bg-blue-50">
+                                    <td className="border p-1 font-semibold italic" colSpan={14}>
+                                        ➤ Row {rowNo}
+                                    </td>
+                                </tr>
+
+                                {items.length > 0 ? (
+                                    items.map((p, i) => {
+                                        const isStriped = i % 2 !== 0 ? "bg-gray-50" : "bg-white";
+                                        return (
+                                            <tr key={i} className={isStriped}>
+                                                <td className="border p-1 text-center">{zeroToDash(p.index)}</td>
+                                                <td className="border p-1 text-center">{zeroToDash(p.barcode)}</td>
+                                                <td className="border p-1 text-center">{String(p.codeProduct).padStart(5, "0")}</td>
+                                                <td className="border p-1">{p.nameProduct}</td>
+                                                <td className="border p-1">{p.nameBrand}</td>
+                                                <td className="border p-1 text-center">{zeroToDash(p.shelfLife)}</td>
+                                                <td className="border p-1 text-center">{zeroToDash(p.salesPriceIncVAT)}</td>
+
+                                                <td className="border p-1 text-center text-green-600">
+                                                    {zeroToDash(p.salesQuantity)}
+                                                </td>
+
+                                                <td className="border p-1 text-center text-red-600">
+                                                    {zeroToDash(p.withdrawQuantity)}
+                                                </td>
+
+                                                <td className="border p-1 text-center">{zeroToDash(p.minStore)}</td>
+                                                <td className="border p-1 text-center">{zeroToDash(p.maxStore)}</td>
+
+                                                <td className="border p-1 text-center text-yellow-700">
+                                                    {zeroToDash(p.stockQuantity)}
+                                                </td>
+
+                                                {/* <td className="border p-1 text-right text-green-700">
+                                                    {p.salesTotalPrice && p.salesTotalPrice !== 0
+                                                        ? Number(p.salesTotalPrice).toFixed(2)
+                                                        : "-"}
+                                                </td>
+
+                                                <td className="border p-1 text-right text-orange-700">
+                                                    {zeroToDash(formatNum(p.withdrawValue))}
+                                                </td> */}
+                                            </tr>
+
+                                        );
+                                    })
+                                ) : (
+                                    <tr>
+                                        <td colSpan={13} className="border p-1 text-center text-gray-500">
+                                            No products in this row
                                         </td>
                                     </tr>
-                                    {rowProducts.length > 0 ? (
-                                        rowProducts.map((prod) => {
-                                            const rowKey = `prod-${prod.branchCode}-${prod.shelfCode}-${prod.rowNo}-${prod.codeProduct}-${prod.index}`;
-                                            return (
-                                                <tr key={rowKey}>
-                                                    <td className="p-1 border text-center">{prod.index}</td>
-                                                    <td className="p-1 border text-center">{String(prod.codeProduct).padStart(5, "0")}</td>
-                                                    <td className="p-1 border">{prod.nameProduct ?? "-"}</td>
-                                                    <td className="p-1 border">{prod.nameBrand ?? "-"}</td>
-                                                    <td className="p-1 border text-center">{prod.shelfLife ?? "-"}</td>
-                                                    <td className="p-1 border text-center ">{prod.salesPriceIncVAT ?? "-"}</td>
-                                                    <td className="p-1 border text-center text-green-600">
-                                                        {prod.salesQuantity || "-"}
-                                                    </td>
-                                                    <td className="p-1 border text-center text-red-600">
-                                                        {prod.withdrawQuantity || "-"}
-                                                    </td>
-                                                    <td className="p-1 border text-center">{prod.minStore ?? "-"}</td>
-                                                    <td className="p-1 border text-center">{prod.maxStore ?? "-"}</td>
-                                                    <td className="p-1 border text-center text-yellow-500">
-                                                        {prod.stockQuantity ?? "-"}
-                                                    </td>
-                                                    <td className="p-1 border text-right text-green-600">
-                                                        {formatNumber(prod.salesTotalPrice) ?? "-"}
-                                                    </td>
-                                                    <td className="p-1 border text-right text-red-600">
-                                                        {formatNumber(prod.withdrawValue) ?? "-"}
-                                                    </td>
-                                                </tr>
-                                            );
-                                        })
-                                    ) : (
-                                        <tr>
-                                            <td colSpan={11} className="p-1 border text-center text-gray-500 italic">
-                                                No products in this Row
-                                            </td>
-                                        </tr>
-                                    )}
-
-                                    {/* ผลรวมของแถว */}
-                                    <tr className="bg-gray-100 font-semibold">
-                                        <td colSpan={8} className="p-1 border"></td>
-                                        <td colSpan={2} className="p-1 border text-right">
-                                            Total for Row {rowNo}
-                                        </td>
-                                        <td className="p-1 border text-yellow-600 text-right">
-                                            {formatNumber(totalStockCostRow)}
-                                        </td>
-                                        <td className="p-1 border text-green-700 text-right">
-                                            {formatNumber(totalSalesRow)}
-                                        </td>
-                                        <td className="p-1 border text-orange-600 text-right">
-                                            {formatNumber(totalWithdrawRow)}
-                                        </td>
-                                    </tr>
-                                </React.Fragment>
-                            );
-                        })}
-
-                        {/* ผลรวมทั้งหมด */}
-                        <tr className="bg-gray-200 font-semibold">
-                            <td colSpan={8} className="p-1 border text-right">Total for All Rows</td>
-                            <td className="p-1 border text-yellow-600 text-right text-sm">
-                                {formatNumber(totalStockCost)}
-                            </td>
-                            <td className="p-1 border text-green-700 text-right text-sm">
-                                {formatNumber(totalSales)}
-                            </td>
-                            <td className="p-1 border text-orange-600 text-right text-sm">
-                                {formatNumber(totalWithdraw)}
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </>
+                                )}
+                            </React.Fragment>
+                        );
+                    })}
+                </tbody>
+            </table>
+        </div>
     );
 };
 

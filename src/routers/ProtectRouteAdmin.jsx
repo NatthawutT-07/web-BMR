@@ -1,29 +1,20 @@
-import React, { useState, useEffect } from "react";
-
-import LoadingToRedirect from "./LoadingToRedirect";
-import { currentAdmin } from "../api/auth";
+import React from "react";
+import { Navigate } from "react-router-dom";
 import useBmrStore from "../store/bmr_store";
 
 const ProtectRouteAdmin = ({ element }) => {
-  const [ok, setOk] = useState(false);
   const user = useBmrStore((state) => state.user);
-  const token = useBmrStore((state) => state.token);
+  const accessToken = useBmrStore((state) => state.accessToken);
 
-  useEffect(() => {
-    if (user && token) {
-      currentAdmin(token)
-        .then((res) => {
-          setOk(true);
-          return ok ? element : <LoadingToRedirect />;
-        })
-        .catch((err) => {
-          setOk(false);
-        });
+  if (!accessToken || !user) {
+    return <Navigate to="/" replace />;
+  }
 
-    }
-  }, []);
+  if (user.role !== "admin") {
+    return <Navigate to={`/store/${user.storecode}`} replace />;
+  }
 
-  return ok ? element : <LoadingToRedirect />;
+  return element;
 };
 
 export default ProtectRouteAdmin;

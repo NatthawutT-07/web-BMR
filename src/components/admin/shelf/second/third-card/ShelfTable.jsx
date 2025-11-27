@@ -193,24 +193,26 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, branchCod
         <table className="min-w-[1200px] w-full text-left border text-gray-700 border-gray-300 text-xs">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border px-2 py-1 text-center">ID</th>
-              <th className="border px-2 py-1 text-center">Code</th>
-              <th className="border px-2 py-1 text-center">Name</th>
-              <th className="border px-2 py-1 text-center">Brand</th>
-              <th className="border px-2 py-1 text-center">ShelfLife</th>
-              <th className="border px-2 py-1 text-center">RSP</th>
-              <th className="border px-2 py-1 text-center w-16">Sales Qty</th>
-              <th className="border px-2 py-1 text-center w-16">withdraw Qty</th>
-              <th className="border px-2 py-1 text-center">MIN</th>
-              <th className="border px-2 py-1 text-center">MAX</th>
-              <th className="border px-2 py-1 text-center">Stock Qty</th>
-              <th className="border px-2 py-1 text-center">Unit Cost</th>
-              <th className="border px-2 py-1 text-center">Stock Cost</th>
-              <th className="border px-2 py-1 text-center">Sales Amount</th>
-              <th className="border px-2 py-1 text-center w-20">Withdraw Amount</th>
-              <th className="border px-2 py-1 text-center">Delete</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap">ID</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap">Barcode</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap">Code</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap w-40">Name</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap w-28">Brand</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap">ShelfLife</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap">RSP</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap">Sales Qty</th>
+              <th className="border px-0.5 py-1 text-center w-10">Withdraw Qty</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap">MIN</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap">MAX</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap">Stock Qty</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap">Unit Cost</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap">Stock Cost</th>
+              <th className="border px-0.5 py-1 text-center w-20">Sales Amount</th>
+              <th className="border px-0.5 py-1 text-center w-20">Withdraw Amount</th>
+              <th className="border px-0.5 py-1 text-center whitespace-nowrap">Delete</th>
             </tr>
           </thead>
+
           <tbody>
             {[...Array(Number(rows) || 0)].map((_, rowIndex) => {
               const rowNo = rowIndex + 1;
@@ -218,18 +220,20 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, branchCod
               const totalStockCostRow = calcTotalStockCost(rowProducts);
               const totalSalesRow = calcTotalSales(rowProducts);
               const totalWithdrawRow = calcTotalWithdraw(rowProducts);
+              const zeroToDash = (v) => (v === 0 || v === "0" ? "-" : v ?? "-");
 
               return (
                 <React.Fragment key={`row-${rowNo}`}>
+                  {/* Row Header */}
                   <tr className="bg-blue-50">
-                    <td colSpan={15} className="p-2 border font-semibold italic text-gray-700">
+                    <td colSpan={16} className="p-2 border font-semibold italic text-gray-700 whitespace-nowrap">
                       ➤ Row: {rowNo}
                     </td>
-                    <td className="p-2 border text-center">
+                    <td className="p-2 border text-center whitespace-nowrap">
                       <button
                         title="Add new Item"
                         onClick={() => handleAddClick(rowNo)}
-                        className="px-3 py-1 bg-green-400 text-white rounded hover:bg-green-600"
+                        className="px-3 py-1 bg-green-400 text-white rounded hover:bg-green-600 whitespace-nowrap"
                       >
                         ➕
                       </button>
@@ -241,41 +245,51 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, branchCod
                       const rowKey = `prod-${prod.branchCode}-${prod.shelfCode}-${prod.rowNo}-${prod.codeProduct}-${prod.index}`;
                       const stockCost = (prod.stockQuantity ?? 0) * (prod.purchasePriceExcVAT ?? 0);
                       const zebra = i % 2 === 0 ? "bg-white" : "bg-gray-50";
+
                       return (
                         <tr key={rowKey} className={zebra}>
-                          <td className="p-2 border text-center">{prod.index}</td>
-                          <td className="p-2 border">{String(prod.codeProduct).padStart(5, "0")}</td>
-                          <td className="p-2 border">{prod.nameProduct ?? "-"}</td>
-                          <td className="p-2 border">{prod.nameBrand ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod.shelfLife ?? "-"}</td>
-                          <td className="p-2 border text-center ">{prod.salesPriceIncVAT ?? "-"}</td>
-                          <td className="p-2 border text-center text-green-600">
+                          <td className="p-2 border text-center whitespace-nowrap">{prod.index}</td>
+                          <td className="p-2 border text-center whitespace-nowrap">{prod.barcode}</td>
+                          <td className="p-2 border whitespace-nowrap">{String(prod.codeProduct).padStart(5, "0")}</td>
+                          <td className="p-2 border whitespace-nowrap">{prod.nameProduct ?? "-"}</td>
+                          <td className="p-2 border whitespace-nowrap">{prod.nameBrand ?? "-"}</td>
+                          <td className="p-2 border text-center whitespace-nowrap">{prod.shelfLife ?? "-"}</td>
+                          <td className="p-2 border text-center whitespace-nowrap">{prod.salesPriceIncVAT ?? "-"}</td>
+
+                          <td className="p-2 border text-center text-green-600 whitespace-nowrap">
                             {prod.salesQuantity || "-"}
                           </td>
-                          <td className="p-2 border text-center text-red-600">
+
+                          <td className="p-2 border text-center text-red-600 whitespace-nowrap">
                             {prod.withdrawQuantity || "-"}
                           </td>
-                          <td className="p-2 border text-center">{prod.minStore ?? "-"}</td>
-                          <td className="p-2 border text-center">{prod.maxStore ?? "-"}</td>
-                          <td className="p-2 border text-center text-yellow-500">
+
+                          <td className="p-2 border text-center whitespace-nowrap">{prod.minStore ?? "-"}</td>
+                          <td className="p-2 border text-center whitespace-nowrap">{prod.maxStore ?? "-"}</td>
+
+                          <td className="p-2 border text-center text-yellow-800 whitespace-nowrap">
                             {prod.stockQuantity ?? "-"}
                           </td>
-                          <td className="p-2 border text-right">
+
+                          <td className="p-2 border text-right whitespace-nowrap">
                             {/* {formatNumber(prod.purchasePriceExcVAT) ?? "-"} */}
                           </td>
-                          <td className="p-2 border text-right text-yellow-500">
+
+                          <td className="p-2 border text-right text-yellow-500 whitespace-nowrap">
                             {/* {formatNumber(stockCost) ?? "-"} */}
                           </td>
-                          <td className="p-2 border text-right text-green-600">
-                            {formatNumber(prod.salesTotalPrice) ?? "-"}
+
+                          <td className="p-2 border text-right text-green-600 whitespace-nowrap">
+                            {prod.salesTotalPrice != null ? Number(prod.salesTotalPrice).toFixed(2) : "-"}
                           </td>
-                          <td className="p-2 border text-right text-red-600">
+                          <td className="p-2 border text-right text-red-600 whitespace-nowrap">
                             {formatNumber(prod.withdrawValue) ?? "-"}
                           </td>
-                          <td className="border px-2 text-center">
+
+                          <td className="border px-2 text-center whitespace-nowrap">
                             <button
                               onClick={() => handleDeleteClick(prod)}
-                              className="text-red-600 hover:text-red-800 hover:underline transition"
+                              className="text-red-600 hover:text-red-800 hover:underline transition whitespace-nowrap"
                             >
                               Delete
                             </button>
@@ -285,50 +299,62 @@ const ShelfTable = ({ rows, shelfProducts, onDelete, onAdd, shelfCode, branchCod
                     })
                   ) : (
                     <tr>
-                      <td colSpan={16} className="p-2 border text-center text-gray-500 italic">
+                      <td colSpan={16} className="p-2 border text-center text-gray-500 italic whitespace-nowrap">
                         No products in this Row
                       </td>
                     </tr>
                   )}
 
+                  {/* Row Total */}
                   <tr className="bg-gray-100 font-semibold">
-                    <td colSpan={10} className="p-2 border"></td>
-                    <td colSpan={2} className="p-2 border text-right">
+                    <td colSpan={11} className="p-2 border whitespace-nowrap"></td>
+                    <td colSpan={2} className="p-2 border text-right whitespace-nowrap">
                       Total for Row {rowNo}
                     </td>
-                    <td className="p-2 border text-yellow-600 text-right">
+
+                    <td className="p-2 border text-yellow-600 text-right whitespace-nowrap">
                       {formatNumber(totalStockCostRow)}
                     </td>
-                    <td className="p-2 border text-green-700 text-right">
+
+                    <td className="p-2 border text-green-700 text-right whitespace-nowrap">
                       {formatNumber(totalSalesRow)}
                     </td>
-                    <td className="p-2 border text-orange-600 text-right">
+
+                    <td className="p-2 border text-orange-600 text-right whitespace-nowrap">
                       {formatNumber(totalWithdrawRow)}
                     </td>
-                    <td className="p-2 border"></td>
+
+                    <td className="p-2 border whitespace-nowrap"></td>
                   </tr>
                 </React.Fragment>
               );
             })}
 
-            {/* Total Row for the entire table */}
+            {/* Total for all rows */}
             <tr className="bg-gray-200 font-semibold">
-              <td colSpan={12} className="p-2 border text-right">Total for All Rows</td>
-              <td className="p-2 border text-yellow-600 text-right text-sm">
+              <td colSpan={13} className="p-2 border text-right whitespace-nowrap">
+                Total for All Rows
+              </td>
+
+              <td className="p-2 border text-yellow-600 text-right text-sm whitespace-nowrap">
                 {formatNumber(totalStockCost)}
               </td>
-              <td className="p-2 border text-green-700 text-right text-sm">
+
+              <td className="p-2 border text-green-700 text-right text-sm whitespace-nowrap">
                 {formatNumber(totalSales)}
               </td>
-              <td className="p-2 border text-orange-600 text-right text-sm">
+
+              <td className="p-2 border text-orange-600 text-right text-sm whitespace-nowrap">
                 {formatNumber(totalWithdraw)}
               </td>
-              <td className="p-2 border"></td>
+
+              <td className="p-2 border whitespace-nowrap"></td>
             </tr>
 
           </tbody>
         </table>
       </div>
+
     </>
   );
 };

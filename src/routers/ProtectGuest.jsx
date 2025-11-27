@@ -6,14 +6,11 @@ const ProtectGuest = ({ element }) => {
     const user = useBmrStore((state) => state.user);
 
     if (token && user) {
-        const path = user.role === "admin" ? "/admin" : "/user";
-        return <Navigate to={path} replace />;
+        if (user.role === "admin") return <Navigate to="/admin" replace />;
+        if (user.role === "user") return <Navigate to={`/store/${user.storecode}`} replace />;
     }
 
     return element;
 };
 
 export default ProtectGuest;
-
-
-

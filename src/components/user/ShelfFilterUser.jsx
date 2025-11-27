@@ -1,7 +1,7 @@
 import React from "react";
 
-const ShelfFilter = ({ shelves, selectedShelves, onToggle, onClear }) => (
-  <div className="mb-3 bg-white p-3 mt-3 rounded shadow-sm">
+const ShelfFilterUser = ({ shelves, selectedShelves, onToggle, onClear }) => (
+  <div className="mb-3 bg-white p-3 rounded shadow-sm">
 
     {/* Header */}
     <div className="flex items-center justify-between mb-3">
@@ -19,7 +19,7 @@ const ShelfFilter = ({ shelves, selectedShelves, onToggle, onClear }) => (
     {/* Responsive Shelf Grid */}
     <div
       className="
-       grid grid-cols-4
+        grid grid-cols-4
         sm:grid-cols-6 
         md:grid-cols-8
         lg:grid-cols-10
@@ -53,4 +53,4 @@ const ShelfFilter = ({ shelves, selectedShelves, onToggle, onClear }) => (
   </div>
 );
 
-export default ShelfFilter;
+export default ShelfFilterUser;

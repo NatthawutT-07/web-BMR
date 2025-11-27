@@ -19,7 +19,7 @@ const BranchSelector = ({
       <label className="mb-2 font-semibold text-gray-700 flex flex-col sm:flex-row sm:justify-between sm:items-center w-full">
         <span>Select Branch</span>
         <span className="text-sm font-normal text-gray-500">
-          1/8/25 - 12/11/25
+          1/9/25 - 23/11/25
         </span>
       </label>
 
