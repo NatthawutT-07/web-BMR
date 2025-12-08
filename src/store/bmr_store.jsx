@@ -75,10 +75,14 @@ const BmrStore = (set, get) => ({
       localStorage.removeItem("sales-store");
 
       const deleteRequest = indexedDB.deleteDatabase("dashboardDataDB");
-
       deleteRequest.onsuccess = () => console.log("IndexedDB deleted successfully");
+
+      // ✅ เด้งกลับหน้า Login ทันที
+      window.location.replace("/");
+      // หรือจะใช้ window.location.href = "/" ก็ได้ แต่ replace ดีกว่า เพราะกด back แล้วไม่ย้อนกลับเข้าหน้าเดิม
     }
   },
+
 });
 
 const useBmrStore = create(

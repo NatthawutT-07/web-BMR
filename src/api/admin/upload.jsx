@@ -1,56 +1,52 @@
-import axios from "axios";
+import api from "../../utils/axios";   // axios instance พร้อม interceptors
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-// 🔧 อัปโหลดแบบมาตรฐานทุกไฟล์
-const uploadXLSX = async (file, token, path) => {
+// ฟังก์ชันอัปโหลดกลาง
+const uploadXLSX = async (file, path) => {
   const formData = new FormData();
-  formData.append("file", file); // สำคัญ! ต้องเป็น "file"
+  formData.append("file", file);
 
-  return await axios.post(
-    `${API_URL}${path}`,
-    formData,
-    {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "multipart/form-data",
-      },
-    }
-  );
+  return await api.post(path, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 };
 
 // Sales XLSX
-export const uploadSalesDayXLSX = (file, token) =>
-  uploadXLSX(file, token, "/api/upload-sales");
+export const uploadSalesDayXLSX = (file) =>
+  uploadXLSX(file, "/upload-sales");
 
 // Withdraw
-export const uploadWithdrawXLSX = (file, token) =>
-  uploadXLSX(file, token, "/api/upload-withdraw");
+export const uploadWithdrawXLSX = (file) =>
+  uploadXLSX(file, "/upload-withdraw");
 
 // Stock
-export const uploadStockXLSX = (file, token) =>
-  uploadXLSX(file, token, "/api/upload-stock");
+export const uploadStockXLSX = (file) =>
+  uploadXLSX(file, "/upload-stock");
 
 // Template Shelf XLSX
-export const uploadTemplateXLSX = (file, token) =>
-  uploadXLSX(file, token, "/api/upload-template");
+export const uploadTemplateXLSX = (file) =>
+  uploadXLSX(file, "/upload-template");
 
 // SKU XLSX
-export const uploadItemSKUXLSX = (file, token) =>
-  uploadXLSX(file, token, "/api/upload-sku");
+export const uploadItemSKUXLSX = (file) =>
+  uploadXLSX(file, "/upload-sku");
 
 // Store / Station
-export const uploadStationXLSX = (file, token) =>
-  uploadXLSX(file, token, "/api/upload-station");
+export const uploadStationXLSX = (file) =>
+  uploadXLSX(file, "/upload-station");
 
 // ItemMinMax XLSX
-export const uploadItemMinMaxXLSX = (file, token) =>
-  uploadXLSX(file, token, "/api/upload-minmax");
+export const uploadItemMinMaxXLSX = (file) =>
+  uploadXLSX(file, "/upload-minmax");
 
 // Master Item
-export const uploadMasterItemXLSX = (file, token) =>
-  uploadXLSX(file, token, "/api/upload-masterItem");
+export const uploadMasterItemXLSX = (file) =>
+  uploadXLSX(file, "/upload-masterItem");
 
 // Bill
-export const uploadBillXLSX = (file, token) =>
-  uploadXLSX(file, token, "/api/upload-bill");
+export const uploadBillXLSX = (file) =>
+  uploadXLSX(file, "/upload-bill");
+
+export const uploadGourmetXLSX = (file) =>
+  uploadXLSX(file, "upload-gourmets");

@@ -1,15 +1,28 @@
-import axios from 'axios';
+// src/api/admin/dashboard.jsx
+import api from "../../utils/axios";
 
-export const getData = async (token) => {
+// ดึง overview ยอดขายหลัก (ใช้สำหรับกราฟ + KPI)
+export const getDashboard = async (start, end) => {
     try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/dashboard-data`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
+        const response = await api.get("/dashboard-data", {
+            params: { start, end },
         });
         return response.data;
     } catch (error) {
-        // console.error("❌ Error fetching detail station:", error);
-        return error;
+        console.error("Dashboard API Error:", error);
+        throw error;
+    }
+};
+
+// ดึงรายการสินค้ารวมทั้งหมด (ใช้สำหรับ Dashboard สินค้า)
+export const getDashboardProductList = async (start, end) => {
+    try {
+        const response = await api.get("/dashboard-product-list", {
+            params: { start, end },
+        });
+        return response.data;
+    } catch (error) {
+        console.error("Dashboard Product List API Error:", error);
+        throw error;
     }
 };

@@ -1,203 +1,211 @@
-import React, { useState, useEffect } from 'react';
-import useBmrStore from '../../../../store/bmr_store';
-import useSalesStore from '../../../../store/sales_store';
+import React, { useState, useEffect, useCallback, useMemo } from "react";
+import useBmrStore from "../../../../store/bmr_store";
+import useSalesStore from "../../../../store/sales_store";
+
 import {
   fetchBranchSales,
   fetchBranchSalesDay,
   fetchBranchSalesDayProduct,
-  fetchBranchSalesMonthProduct
-} from '../../../../api/admin/sales';
-import BranchSelectForm from './BranchSelectForm';
-import ProductTable from './ProductTable';
+  fetchBranchSalesMonthProduct,
+} from "../../../../api/admin/sales";
+
+import BranchSelectForm from "./second/BranchSelectForm";
+import ProductTable from "./second/ProductTable";
+import MonthlyBranchSummary from "./second/MonthlyBranchSummary";
+import DailySalesSection from "./second/DailySalesSection";
+
+/* ---------------- HELPERS ---------------- */
+
+// ป้องกัน key ซ้ำ (ใช้ในฝั่ง month / day)
+const normalizeKey = (str) => {
+  if (!str) return "";
+  return String(str).trim().replace(/^0+/, "");
+};
+
+/* ---------------- MAIN COMPONENT ---------------- */
 
 const MainFilterSales = () => {
-  const token = useBmrStore(s => s.token);
+  const accessToken = useBmrStore((s) => s.accessToken);
+
   const { branches, fetchListBranches } = useSalesStore();
+
   const {
-    selectedBranchCode, setSelectedBranchCode,
-    salesData, setSalesData,
-    productMonthData, setProductMonthData,
-    productDayData, setProductDayData,
-    showDay, setShowDay,
-    showType, setShowType,
-    date, setDate
+    selectedBranchCode,
+    setSelectedBranchCode,
+    salesData,
+    setSalesData,
+    productMonthData,
+    setProductMonthData,
+    productDayData,
+    setProductDayData,
+    showDay,
+    setShowDay,
+    showType,
+    setShowType,
+    date,
+    setDate,
   } = useSalesStore();
 
+  // มีได้แค่ปุ่มเดียวที่ active เช่น "1/2025:day"
+  const [activeButton, setActiveButton] = useState(null);
+
+  /* โหลดสาขา */
   useEffect(() => {
-    if (token) fetchListBranches(token);
-  }, [token, fetchListBranches]);
-
-  const handleSelectedSubmit = async (e) => {
-    setShowType(""); // Reset the view type
-    e.preventDefault();
-    if (!selectedBranchCode) return;
-
-    try {
-      const data = await fetchBranchSales(token, selectedBranchCode);
-      const sortedData = [...data].sort((a, b) => {
-        const [monthA, yearA] = a.monthYear.split('/').map(Number);
-        const [monthB, yearB] = b.monthYear.split('/').map(Number);
-        if (yearB !== yearA) return yearB - yearA;
-        return monthB - monthA;
-      });
-      setSalesData(sortedData);
-    } catch (err) {
-      console.error(err);
+    if (accessToken && branches.length === 0) {
+      fetchListBranches();
     }
-  };
+  }, [accessToken, branches.length, fetchListBranches]);
 
-  const handleShowDataCall = async (d, type) => {
-    console.log(date)
-    try {
-      setShowType(type); // Set the type (day, month-product, or day-product)
+  /* Reset UI ทุกอย่าง */
+  const resetUI = useCallback(() => {
+    setShowType("");
+    setActiveButton(null);
+    setSalesData([]);
+    setProductMonthData([]);
+    setProductDayData([]);
+    setShowDay([]);
+    setDate("");
+  }, [
+    setShowType,
+    setSalesData,
+    setProductDayData,
+    setProductMonthData,
+    setShowDay,
+    setDate,
+  ]);
 
-      if (type === "day") {
-        setDate("")
-        // Fetch the day data
-        setProductMonthData([]);  // Clear product month data
-        setProductDayData([]);    // Clear product day data
-        const data = await fetchBranchSalesDay(token, selectedBranchCode, d);
-        setShowDay(data);         // Store day data
+  /* Submit เลือกสาขา */
+  const handleSelectedSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+      resetUI();
+
+      if (!selectedBranchCode) return;
+
+      try {
+        const data = await fetchBranchSales(selectedBranchCode);
+
+        const sortedData = [...data].sort((a, b) => {
+          const [mA, yA] = a.monthYear.split("/").map(Number);
+          const [mB, yB] = b.monthYear.split("/").map(Number);
+          // ปี/เดือนใหม่อยู่บนสุด
+          return yB !== yA ? yB - yA : mB - mA;
+        });
+
+        setSalesData(sortedData);
+      } catch (err) {
+        console.error("Fetch month sales error:", err);
       }
+    },
+    [selectedBranchCode, setSalesData, resetUI]
+  );
 
-      if (type === "month-product") {
-        setDate(d)
-        // Clear all day data when switching to month-product
-        setShowDay([]);            // Hide day data
-        setProductDayData([]);     // Hide day-product data
-        const data = await fetchBranchSalesMonthProduct(token, selectedBranchCode, d);
-        const sorted = [...data].sort((a, b) => b.sale_quantity - a.sale_quantity);
-        setProductMonthData(sorted); // Store month product data
+  /* เมื่อคลิกปุ่ม Show ข้อมูล (Day, Month-Product, Day-Product) */
+  const handleShowDataCall = useCallback(
+    async (key, type) => {
+      try {
+        const k = normalizeKey(key);
+
+        // กดปุ่มใหม่ → ปุ่มเก่า reset
+        setActiveButton(`${k}:${type}`);
+        setShowType(type);
+
+        if (type === "day") {
+          setDate("");
+          setProductMonthData([]);
+          setProductDayData([]);
+
+          const data = await fetchBranchSalesDay(selectedBranchCode, key);
+          setShowDay(data);
+        }
+
+        if (type === "month-product") {
+          setDate(key);
+          setShowDay([]);
+          setProductDayData([]);
+
+          const data = await fetchBranchSalesMonthProduct(
+            selectedBranchCode,
+            key
+          );
+          setProductMonthData(
+            data.slice().sort((a, b) => b.sale_quantity - a.sale_quantity)
+          );
+        }
+
+        if (type === "day-product") {
+          setDate(key);
+          setProductMonthData([]);
+
+          const data = await fetchBranchSalesDayProduct(
+            selectedBranchCode,
+            key
+          );
+          setProductDayData(
+            data.slice().sort((a, b) => b.sale_quantity - a.sale_quantity)
+          );
+        }
+      } catch (err) {
+        console.error("Fetch detail error:", err);
       }
+    },
+    [
+      selectedBranchCode,
+      setShowType,
+      setDate,
+      setShowDay,
+      setProductMonthData,
+      setProductDayData,
+    ]
+  );
 
-      if (type === "day-product") {
-        setDate(d)
-        // Fetch day product data
-        setProductMonthData([]); // Clear month product data
-        const data = await fetchBranchSalesDayProduct(token, selectedBranchCode, d);
-        const sorted = [...data].sort((a, b) => b.sale_quantity - a.sale_quantity);
-        setProductDayData(sorted); // Store day product data
-      }
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
+  const monthRows = useMemo(() => salesData, [salesData]);
 
   return (
-    <div className="p-4 bg-gray-50 min-h-screen text-sm">
-      <BranchSelectForm
-        branches={branches}
-        selectedBranchCode={selectedBranchCode}
-        setSelectedBranchCode={setSelectedBranchCode}
-        onSubmit={handleSelectedSubmit}
-      />
+    <div className="min-h-screen bg-slate-50/80 px-3 py-4 md:px-6 md:py-6 text-sm">
+      <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+        {/* Header */}
 
-      {/* Table for Sales Data */}
-      {salesData.length > 0 && (
-        <div className="overflow-x-auto bg-white rounded shadow-sm">
-          <div className="max-h-[500px] overflow-y-auto">
-            <table className="min-w-full border border-gray-200 text-xs">
-              <thead className="bg-blue-100 sticky top-0 z-10 text-xs">
-                <tr>
-                  <th className="border px-2 py-1 text-left">Month/Year</th>
-                  <th className="border px-2 py-1 text-right">Bill</th>
-                  <th className="border px-2 py-1 text-right">Total Sales</th>
-                  <th className="border px-2 py-1 text-right">Per Bill</th>
-                  <th className="border px-2 py-1 text-right">Total Returns</th>
-                  <th className="border px-2 py-1 text-right">end_bill_discount</th>
-                  <th className="border px-2 py-1 text-right">rounding</th>
-                  <th className="border px-2 py-1 text-right">Net Sales</th>
-                  <th className="border px-2 py-1 text-right">Day</th>
-                  <th className="border px-2 py-1 text-right">Month-Product</th>
-                </tr>
-              </thead>
-              <tbody>
-                {salesData.map((row, idx) => (
-                  <tr key={idx} className={`${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50`}>
-                    <td className="border px-2 py-1">{row.monthYear}</td>
-                    <td className="border px-2 py-1 text-right">{row.billCount}</td>
-                    <td className="border px-2 py-1 text-right text-green-600">{row.totalSales.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td className="border px-2 py-1 text-right">{row.salesPerBill.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td className="border px-2 py-1 text-right text-red-600">{row.totalReturns.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td className="border px-2 py-1 text-right text-red-600">{row.endBillDiscount}</td>
-                    <td className="border px-2 py-1 text-right text-green-600">{row.rounding}</td>
-                    <td className="border px-2 py-1 text-right font-semibold relative group text-green-700">
-                      {row.netSales.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="border px-2 py-1 text-right">
-                      <button type="button" onClick={() => handleShowDataCall(row.monthYear, "day")} className="text-blue-600 underline text-xs">Go</button>
-                    </td>
-                    <td className="border px-2 py-1 text-right">
-                      <button type="button" onClick={() => handleShowDataCall(row.monthYear, "month-product")} className="text-green-600 underline text-xs">Go</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+        {/* Select Branch */}
+        <BranchSelectForm
+          branches={branches}
+          selectedBranchCode={selectedBranchCode}
+          setSelectedBranchCode={setSelectedBranchCode}
+          onSubmit={handleSelectedSubmit}
+        />
 
-      {/* Conditional Rendering for Day and Product Day */}
-      {showType === 'day' && showDay.length > 0 && (
-        <div className="mt-4 flex flex-col space-y-2">
-          {/* Day Data Table */}
-          <div className="overflow-x-auto bg-white p-2 rounded shadow-sm flex-1 text-xs">
-            <table className="min-w-full border border-gray-200">
-              <thead className="bg-blue-100 sticky top-0 text-xs">
-                <tr>
-                  <th className="border px-2 py-1 text-left">Day/Month/Year</th>
-                  <th className="border px-2 py-1 text-right">Bill</th>
-                  <th className="border px-2 py-1 text-right">Total Sales</th>
-                  <th className="border px-2 py-1 text-right">Per Bill</th>
-                  <th className="border px-2 py-1 text-right">Total Returns</th>
-                  <th className="border px-2 py-1 text-right">end_bill_discount</th>
-                  <th className="border px-2 py-1 text-right">rounding</th>
-                  <th className="border px-2 py-1 text-right">Net Sales</th>
-                  <th className="border px-2 py-1 text-right">Day-Product</th>
-                </tr>
-              </thead>
-              <tbody>
-                {showDay.map((row, idx) => (
-                  <tr key={idx} className={`${idx % 2 === 0 ? 'bg-gray-50' : 'bg-white'} hover:bg-blue-50`}>
-                    <td className="border px-2 py-1">{row.dayMonthYear}</td>
-                    <td className="border px-2 py-1 text-right">{row.billCount}</td>
-                    <td className="border px-2 py-1 text-right text-green-600">{row.totalSales.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td className="border px-2 py-1 text-right ">{row.salesPerBill.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td className="border px-2 py-1 text-right text-red-600">{row.totalReturns === 0 ? '-'
-                      : row.totalReturns.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="border px-2 py-1 text-right text-red-600">{row.endBillDiscount === 0 ? '-'
-                      : row.endBillDiscount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="border px-2 py-1 text-right text-green-700">{row.rounding === 0 ? '-'
-                      : row.rounding.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="border px-2 py-1 text-right font-semibold relative group text-green-700">
-                      {row.netSales.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                    <td className="border px-2 py-1 text-right">
-                      <button type="button" onClick={() => handleShowDataCall(row.dayMonthYear, "day-product")} className="text-green-600 underline text-xs">Go</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )
-      }
+        {/* MONTH SUMMARY (ไฟล์ใหม่) */}
+        {monthRows.length > 0 && (
+          <MonthlyBranchSummary
+            monthRows={monthRows}
+            activeButton={activeButton}
+            onShowData={handleShowDataCall}
+          />
+        )}
 
-      {showType === 'month-product' && (
-        <ProductTable title={`Month Product (${date})`} data={productMonthData} />
-      )}
+        {/* DAILY SALES (ไฟล์ใหม่) */}
+        {showType === "day" && showDay.length > 0 && (
+          <DailySalesSection
+            date={date}
+            showDay={showDay}
+            activeButton={activeButton}
+            onShowData={handleShowDataCall}
+          />
+        )}
 
-      {showType === 'day-product' && (
-        <ProductTable title={`Day Product (${date})`} data={productDayData} />
-      )}
+        {/* PRODUCT TABLE */}
+        {showType === "month-product" && (
+          <ProductTable
+            title={`Month product (${date})`}
+            data={productMonthData}
+          />
+        )}
 
-    </div >
+        {showType === "day-product" && (
+          <ProductTable title={`Day product (${date})`} data={productDayData} />
+        )}
+      </div>
+    </div>
   );
 };
 

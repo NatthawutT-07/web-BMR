@@ -1,53 +1,47 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import ShelfTableUser from "./ShelfTableUser";
 
-const ShelfCardUser = ({ template, autoOpen }) => {
-    const shelfProducts = Array.isArray(template.shelfProducts) ? template.shelfProducts : [];
-    const shelfCode = template.shelfCode || "-";
-    const fullName = template.fullName || "N/A";
-    const rowQty = template.rowQty || 1;
+const ShelfCardUser = React.memo(({ template, autoOpen }) => {
+  const shelfProducts = useMemo(
+    () => Array.isArray(template.shelfProducts) ? template.shelfProducts : [],
+    [template.shelfProducts]
+  );
 
-    const [isOpen, setIsOpen] = useState(false);
+  const shelfCode = template.shelfCode || "-";
+  const fullName = template.fullName || "N/A";
+  const rowQty = template.rowQty || 1;
 
-    // 🔥 autoOpen จาก search → เปิด card เฉพาะการค้นหา
-    useEffect(() => {
-        if (autoOpen) setIsOpen(true);
-    }, [autoOpen]);
+  const [isOpen, setIsOpen] = useState(false);
 
-    return (
-        <div className="border rounded shadow-sm p-4 mb-6 bg-white">
+  useEffect(() => {
+    if (autoOpen) setIsOpen(true);
+  }, [autoOpen]);
 
-            {/* Header Bar คลิกได้ทั้งแถบ */}
-            <div
-                className="flex justify-between items-center mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded"
-                onClick={() => setIsOpen(!isOpen)}
-            >
-                <h2 className="text-sm sm:text-lg font-semibold">
-                    Shelf: {shelfCode} - {fullName} ({rowQty} Rows)
-                </h2>
+  return (
+    <div className="border rounded-lg shadow-sm p-3 sm:p-4 mb-4 bg-white print:shadow-none print:border-black">
+      {/* HEADER (คลิกเปิด/ปิด) */}
+      <div
+        className="flex justify-between items-center mb-2 sm:mb-3 cursor-pointer hover:bg-gray-50 p-2 rounded-md"
+        onClick={() => setIsOpen((o) => !o)}
+      >
+        <h2 className="text-sm sm:text-lg font-semibold text-slate-800">
+          Shelf: {shelfCode} – {fullName} ({rowQty} แถว)
+        </h2>
 
-                <div
-                    onClick={(e) => e.stopPropagation()}
-                    className="transition-transform duration-300"
-                >
-                    <div
-                        className={`
-                            w-0 h-0 border-l-8 border-r-8 border-b-8 
-                            border-l-transparent border-r-transparent 
-                            border-b-gray-600 transition-transform duration-300
-                            ${isOpen ? "rotate-180" : ""}
-                        `}
-                    ></div>
-                </div>
-            </div>
-
-            {isOpen && (
-                <div className="mt-2">
-                    <ShelfTableUser shelfProducts={shelfProducts} />
-                </div>
-            )}
+        <div
+          className={`transition-transform duration-300 ${isOpen ? "rotate-180" : ""} print:hidden`}
+        >
+          <div className="w-0 h-0 border-l-8 border-r-8 border-b-8 
+                        border-l-transparent border-r-transparent border-b-gray-600" />
         </div>
-    );
-};
+      </div>
+
+      {/* TABLE – ในหน้าจอใช้ isOpen, แต่เวลา print บังคับให้แสดงเสมอ */}
+      <div className={`${isOpen ? "block" : "hidden"} print:block mt-2`}>
+        <ShelfTableUser shelfProducts={shelfProducts} />
+      </div>
+    </div>
+  );
+});
 
 export default ShelfCardUser;

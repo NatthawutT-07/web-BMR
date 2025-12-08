@@ -1,6 +1,14 @@
-import React, { useState, useEffect } from "react";
-import ShelfTable from "./third-card/ShelfTable";
-import EditShelfModal from "./third-card/EditShelfModal";
+import React, {
+  useState,
+  useEffect,
+  lazy,
+  Suspense,
+  useMemo,
+} from "react";
+
+// lazy load component หนัก ๆ
+const ShelfTable = lazy(() => import("./third-card/ShelfTable"));
+const EditShelfModal = lazy(() => import("./third-card/EditShelfModal"));
 
 const ShelfCard = ({
   template,
@@ -15,23 +23,29 @@ const ShelfCard = ({
   const [isImageOpen, setIsImageOpen] = useState(false); // ซูมรูปภาพ
   const [localShelfProducts, setLocalShelfProducts] = useState([]);
 
-  // โหลดสินค้าใน shelf
-  useEffect(() => {
-    const filtered = product
+  /* ------------------------------------------------
+   * OPTIMIZE: ใช้ useMemo() ลดการ filter/sort บ่อย ๆ
+   * ------------------------------------------------ */
+  const filteredShelfProducts = useMemo(() => {
+    return product
       .filter((p) => p.shelfCode === template.shelfCode)
       .sort((a, b) => Number(a.index) - Number(b.index));
-
-    setLocalShelfProducts(filtered);
   }, [product, template.shelfCode]);
 
-  // เซฟข้อมูลจาก Modal
+  useEffect(() => {
+    setLocalShelfProducts(filteredShelfProducts);
+  }, [filteredShelfProducts]);
+
+  /* ------------------------------------------------
+   * Save after Edit
+   * ------------------------------------------------ */
   const handleSaveEdit = async (updatedProducts) => {
     setLocalShelfProducts(updatedProducts);
 
     if (onUpdateProducts) await onUpdateProducts(updatedProducts);
 
     setIsEditOpen(false);
-    setIsOpen(true); // เปิด card เมื่อเซฟ
+    setIsOpen(true);
   };
 
   return (
@@ -39,7 +53,7 @@ const ShelfCard = ({
 
       {/* LOADING MASK */}
       {actionLoading && (
-        <div className="absolute inset-0 bg-white bg-opacity-70 flex items-center justify-center z-10">
+        <div className="absolute inset-0 bg-white/70 flex items-center justify-center z-10">
           <div className="flex items-center space-x-2 text-gray-700">
             <div className="animate-spin h-5 w-5 border-t-2 border-b-2 border-gray-700 rounded-full"></div>
             <span className="text-sm">Processing...</span>
@@ -47,7 +61,7 @@ const ShelfCard = ({
         </div>
       )}
 
-      {/* HEADER — CLICK FULL BAR */}
+      {/* HEADER */}
       <div
         className="flex justify-between items-center mb-3 cursor-pointer select-none hover:bg-gray-50 p-2 rounded"
         onClick={() => {
@@ -59,17 +73,15 @@ const ShelfCard = ({
         {/* LEFT: Image + Title */}
         <div className="flex items-center space-x-3">
 
-          {/* Expandable Image */}
+          {/* Expand image */}
           <div
             onClick={(e) => {
-              e.stopPropagation(); // ไม่ปิด/เปิด card
+              e.stopPropagation();
               setIsImageOpen((prev) => !prev);
             }}
-            className={`
-              rounded border bg-gray-200 flex items-center justify-center 
+            className={`rounded border bg-gray-200 flex items-center justify-center 
               text-xs text-gray-500 cursor-pointer transition-all duration-300
-              ${isImageOpen ? "w-full h-64 min-h-[250px]" : "w-10 h-10"}
-            `}
+              ${isImageOpen ? "w-full h-64 min-h-[250px]" : "w-10 h-10"}`}
           >
             {isImageOpen ? (
               <div className="text-gray-600">[ IMAGE ]</div>
@@ -78,7 +90,6 @@ const ShelfCard = ({
             )}
           </div>
 
-          {/* Title */}
           {!isImageOpen && (
             <h2 className="text-lg font-semibold">
               Shelf: {template.shelfCode} - {template.fullName} ({template.rowQty} Rows)
@@ -86,7 +97,7 @@ const ShelfCard = ({
           )}
         </div>
 
-        {/* RIGHT SIDE: Edit + Toggle Arrow */}
+        {/* Right side buttons */}
         {!isImageOpen && (
           <div className="flex items-center space-x-2">
 
@@ -104,7 +115,7 @@ const ShelfCard = ({
               </button>
             )}
 
-            {/* Toggle Arrow */}
+            {/* Toggle */}
             <button
               disabled={actionLoading}
               onClick={(e) => {
@@ -119,32 +130,46 @@ const ShelfCard = ({
         )}
       </div>
 
-      {/* TABLE */}
+      {/* TABLE AREA */}
       {isOpen && !isImageOpen && (
-        <ShelfTable
-          rows={template.rowQty}
-          shelfProducts={localShelfProducts}
-          onDelete={(p) => {
-            setLocalShelfProducts((prev) => prev.filter((prod) => prod !== p));
-            if (onDelete) onDelete(p);
-          }}
-          onAdd={(p) => {
-            setLocalShelfProducts((prev) => [...prev, p]);
-            if (onAdd) onAdd(p);
-          }}
-          shelfCode={template.shelfCode}
-          branchCode={template.branchCode}
-        />
+        <Suspense
+          fallback={
+            <div className="p-3 text-gray-500 text-sm">Loading table...</div>
+          }
+        >
+          <ShelfTable
+            rows={template.rowQty}
+            shelfProducts={localShelfProducts}
+            onDelete={(p) => {
+              setLocalShelfProducts((prev) => prev.filter((prod) => prod !== p));
+              if (onDelete) onDelete(p);
+            }}
+            onAdd={(p) => {
+              setLocalShelfProducts((prev) => [...prev, p]);
+              if (onAdd) onAdd(p);
+            }}
+            shelfCode={template.shelfCode}
+            branchCode={template.branchCode}
+          />
+        </Suspense>
       )}
 
       {/* EDIT MODAL */}
-      <EditShelfModal
-        isOpen={isEditOpen}
-        onClose={() => setIsEditOpen(false)}
-        onSave={handleSaveEdit}
-        shelfProducts={localShelfProducts}
-        shelfCode={template.shelfCode}
-      />
+      <Suspense
+        fallback={
+          isEditOpen ? (
+            <div className="p-3 text-gray-500 text-sm">Loading editor...</div>
+          ) : null
+        }
+      >
+        <EditShelfModal
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          onSave={handleSaveEdit}
+          shelfProducts={localShelfProducts}
+          shelfCode={template.shelfCode}
+        />
+      </Suspense>
     </div>
   );
 };

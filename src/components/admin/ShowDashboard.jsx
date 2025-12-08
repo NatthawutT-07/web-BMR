@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import useBmrStore from '../../store/bmr_store';
-import { getData } from '../../api/admin/dashboard';
 import './loading.css';
 import { Fullscreen } from 'lucide-react';
 

@@ -1,9 +1,8 @@
 import React, { useState, useRef } from "react";
-import * as XLSX from "xlsx";
 import { toast } from "react-toastify";
 import useBmrStore from "../../store/bmr_store";
 
-// API Upload XLSX
+// upload APIs
 import {
   uploadSalesDayXLSX,
   uploadWithdrawXLSX,
@@ -14,9 +13,10 @@ import {
   uploadItemMinMaxXLSX,
   uploadMasterItemXLSX,
   uploadBillXLSX,
+  uploadGourmetXLSX,
 } from "../../api/admin/upload";
 
-// Download API
+// download APIs
 import { downloadSKU, downloadTemplate } from "../../api/admin/download";
 
 const UploadCSV = () => {
@@ -25,26 +25,16 @@ const UploadCSV = () => {
   const [loading, setLoading] = useState(false);
 
   const fileInputRef = useRef(null);
-  const token = useBmrStore((state) => state.token);
+  const accessToken = useBmrStore((s) => s.accessToken);
 
-  // เมื่อเลือกประเภทไฟล์
+  // เลือกประเภทไฟล์
   const handleSelectFileType = (type) => {
     setSelectedFileType(type);
     setFiles([]);
-
-    // reset file input
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // อ่านไฟล์ XLSX
-  const handleFileChange = (e) => {
-    const selectedFiles = Array.from(e.target.files) || [];
-    setFiles(selectedFiles);
-  };
-
-  // upload functions map
+  // อัปโหลด map
   const uploadFunctions = {
     sales: uploadSalesDayXLSX,
     withdraw: uploadWithdrawXLSX,
@@ -55,9 +45,21 @@ const UploadCSV = () => {
     minMax: uploadItemMinMaxXLSX,
     masterItem: uploadMasterItemXLSX,
     bill: uploadBillXLSX,
+    gourmet: uploadGourmetXLSX,
   };
 
-  // upload handler
+  // โหลดไฟล์ XLSX (Dynamic Import → ลด bundle)
+  const loadXLSX = async () => {
+    const XLSX = await import("xlsx");
+    return XLSX;
+  };
+
+  const handleFileChange = (e) => {
+    const selectedFiles = Array.from(e.target.files || []);
+    setFiles(selectedFiles);
+  };
+
+  // Upload handler
   const handleFileUpload = async (uploadFn, label) => {
     if (!files.length) {
       toast.error(`Please select ${label} file`);
@@ -65,25 +67,53 @@ const UploadCSV = () => {
     }
 
     setLoading(true);
+
     try {
       for (let file of files) {
-        await uploadFn(file, token);
+        await uploadFn(file);
       }
 
       toast.success(`${label} upload completed!`);
-
-      // reset state และ input
       setFiles([]);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
       toast.error(`Upload failed: ${err.message}`);
     }
+
     setLoading(false);
   };
 
-  // UI render form
+  // DOWNLOAD XLSX (Lazy XLSX)
+  const downloadXLSXFile = async (name, fetchApiFn) => {
+    try {
+      setLoading(true);
+
+      const XLSX = await loadXLSX(); // โหลดเฉพาะตอนใช้
+      const data = await fetchApiFn();
+
+      const sheet = XLSX.utils.json_to_sheet(data);
+      const book = XLSX.write(
+        { Sheets: { data: sheet }, SheetNames: ["data"] },
+        { bookType: "xlsx", type: "array" }
+      );
+
+      const blob = new Blob([book], { type: "application/octet-stream" });
+      const url = URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = name;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.success(`${name} Downloaded!`);
+    } catch {
+      toast.error("Download failed");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderFileUploadForm = (fileType) => {
     const labels = {
       sales: "Sales XLSX",
@@ -95,13 +125,13 @@ const UploadCSV = () => {
       minMax: "ItemMinMax XLSX",
       masterItem: "MasterItem XLSX",
       bill: "Bill XLSX",
+      gourmet: "Gourmet XLSX",
     };
 
     return (
       <div className="border rounded-md p-4 bg-gray-50 mt-6">
         <h3 className="text-lg font-semibold mb-2">{labels[fileType]}</h3>
 
-        {/* File Input */}
         <input
           ref={fileInputRef}
           type="file"
@@ -113,87 +143,35 @@ const UploadCSV = () => {
         />
 
         <button
-          onClick={() => handleFileUpload(uploadFunctions[fileType], labels[fileType])}
+          onClick={() =>
+            handleFileUpload(uploadFunctions[fileType], labels[fileType])
+          }
           disabled={loading}
           className="mt-4 w-full py-2 bg-green-600 text-white rounded"
         >
           {loading ? "Uploading..." : `Upload ${labels[fileType]}`}
         </button>
 
-        {/* Download Template XLSX */}
+        {/* DOWNLOAD TEMPLATE (Lazy XLSX) */}
         {fileType === "Template" && (
           <button
             disabled={loading}
-            onClick={async () => {
-              try {
-                setLoading(true);
-                const data = await downloadTemplate(token);
-                const sheet = XLSX.utils.json_to_sheet(data);
-                const book = XLSX.write(
-                  { Sheets: { data: sheet }, SheetNames: ["data"] },
-                  { bookType: "xlsx", type: "array" }
-                );
-
-                const blob = new Blob([book], { type: "application/octet-stream" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "POG_Shelf_Template.xlsx";
-                a.click();
-                URL.revokeObjectURL(url);
-
-                toast.success("Template Downloaded!");
-              } catch {
-                toast.error("Download failed");
-              } finally {
-                setLoading(false);
-
-                // reset input
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = "";
-                }
-              }
-            }}
+            onClick={() =>
+              downloadXLSXFile("POG_Shelf_Template.xlsx", downloadTemplate)
+            }
             className="mt-4 w-full py-2 bg-blue-600 text-white rounded"
           >
             Download POG Shelf Template XLSX
           </button>
         )}
 
-        {/* Download SKU XLSX */}
+        {/* DOWNLOAD SKU (Lazy XLSX) */}
         {fileType === "SKU" && (
           <button
             disabled={loading}
-            onClick={async () => {
-              try {
-                setLoading(true);
-                const data = await downloadSKU(token);
-                const sheet = XLSX.utils.json_to_sheet(data);
-                const book = XLSX.write(
-                  { Sheets: { data: sheet }, SheetNames: ["data"] },
-                  { bookType: "xlsx", type: "array" }
-                );
-
-                const blob = new Blob([book], { type: "application/octet-stream" });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = url;
-                a.download = "POG_SKU_Template.xlsx";
-                a.click();
-                URL.revokeObjectURL(url);
-
-                toast.success("SKU Template Downloaded!");
-              } catch {
-                toast.error("Download failed");
-              } finally {
-                setLoading(false);
-
-                // reset input
-                if (fileInputRef.current) {
-                  fileInputRef.current.value = "";
-                }
-              }
-            }}
+            onClick={() =>
+              downloadXLSXFile("POG_SKU_Template.xlsx", downloadSKU)
+            }
             className="mt-4 w-full py-2 bg-blue-600 text-white rounded"
           >
             Download POG SKU Template XLSX
@@ -205,7 +183,9 @@ const UploadCSV = () => {
 
   return (
     <div className="p-6 max-w-xl mx-auto">
-      <h2 className="text-2xl font-bold mb-6 text-center">Choose File Type to Upload</h2>
+      <h2 className="text-2xl font-bold mb-6 text-center">
+        Choose File Type to Upload
+      </h2>
 
       <select
         className="w-full p-2 border rounded mb-4"
@@ -222,6 +202,7 @@ const UploadCSV = () => {
         <option value="minMax">ItemMinMax XLSX</option>
         <option value="masterItem">MasterItem XLSX</option>
         <option value="bill">Bill XLSX</option>
+        <option value="gourmet">Gourmet XLSX</option>
       </select>
 
       {selectedFileType && renderFileUploadForm(selectedFileType)}

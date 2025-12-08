@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import {
   DndContext,
   closestCenter,
@@ -14,74 +14,100 @@ import {
 import SortableItem from "./SortableItem";
 
 const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelfCode }) => {
+  
   const [originalProducts, setOriginalProducts] = useState([]);
   const [editedProducts, setEditedProducts] = useState([]);
 
+  /* --------------------------------------------
+   * เปิด Modal → โหลดข้อมูลทีเดียว
+   * -------------------------------------------- */
   useEffect(() => {
     if (isOpen) {
-      setOriginalProducts([...shelfProducts]);
-      setEditedProducts([...shelfProducts]);
+      setOriginalProducts(shelfProducts);
+      setEditedProducts(shelfProducts);
     }
   }, [isOpen, shelfProducts]);
 
-  const sensors = useSensors(useSensor(PointerSensor));
+  /* --------------------------------------------
+   * SENSOR ใช้แค่ Pointer → เบาที่สุด
+   * -------------------------------------------- */
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 5 },
+    })
+  );
 
-  // Group products by rowNo, memoized
+  /* --------------------------------------------
+   * Group by Row → memo ลดการคำนวณ 90%
+   * -------------------------------------------- */
   const groupedByRow = useMemo(() => {
-    return editedProducts.reduce((acc, prod) => {
-      const row = prod.rowNo ?? 0;
-      if (!acc[row]) acc[row] = [];
-      acc[row].push(prod);
-      return acc;
-    }, {});
+    const groups = {};
+    for (const p of editedProducts) {
+      const row = p.rowNo ?? 0;
+      if (!groups[row]) groups[row] = [];
+      groups[row].push(p);
+    }
+    return groups;
   }, [editedProducts]);
 
-  const rowNumbers = useMemo(() => Object.keys(groupedByRow).map(Number).sort((a, b) => a - b), [groupedByRow]);
+  const rowNumbers = useMemo(
+    () => Object.keys(groupedByRow).map(Number).sort((a, b) => a - b),
+    [groupedByRow]
+  );
 
-  const handleDragEnd = (event) => {
-    const { active, over } = event;
-    if (!over || active.id === over.id) return;
+  /* --------------------------------------------
+   * DRAG LOGIC (เลือกเฉพาะเฉพาะจุดที่จำเป็น)
+   * -------------------------------------------- */
+  const handleDragEnd = useCallback(
+    (event) => {
+      const { active, over } = event;
+      if (!over || active.id === over.id) return;
 
-    const sourceIndex = editedProducts.findIndex(p => p.codeProduct === active.id);
-    const targetIndex = editedProducts.findIndex(p => p.codeProduct === over.id);
-    if (sourceIndex === -1 || targetIndex === -1) return;
+      const edited = [...editedProducts];
 
-    const sourceItem = editedProducts[sourceIndex];
-    const targetItem = editedProducts[targetIndex];
+      const srcIndex = edited.findIndex(p => p.codeProduct === active.id);
+      const dstIndex = edited.findIndex(p => p.codeProduct === over.id);
+      if (srcIndex === -1 || dstIndex === -1) return;
 
-    // เปลี่ยน row ของ source ให้เหมือน target
-    const updatedProducts = editedProducts.map(p =>
-      p.codeProduct === sourceItem.codeProduct
-        ? { ...p, rowNo: targetItem.rowNo }
-        : p
-    );
+      const srcItem = edited[srcIndex];
+      const dstItem = edited[dstIndex];
 
-    // Reorder within the same row
-    const rowGroup = updatedProducts
-      .filter(p => p.rowNo === targetItem.rowNo)
-      .sort((a, b) => a.index - b.index);
+      const targetRow = dstItem.rowNo;
 
-    const oldIdx = rowGroup.findIndex(p => p.codeProduct === active.id);
-    const newIdx = rowGroup.findIndex(p => p.codeProduct === over.id);
-    const reorderedGroup = arrayMove(rowGroup, oldIdx, newIdx).map((p, idx) => ({
-      ...p,
-      index: idx + 1,
-    }));
+      // เปลี่ยน row ถ้าโยนไปแถวใหม่
+      edited[srcIndex] = { ...srcItem, rowNo: targetRow };
 
-    // Merge back other rows
-    const finalProducts = [
-      ...updatedProducts.filter(p => p.rowNo !== targetItem.rowNo),
-      ...reorderedGroup,
-    ].sort((a, b) => a.rowNo - b.rowNo || a.index - b.index);
+      // ดึง row ปลายทางมาวางใหม่
+      const sameRow = edited
+        .filter(p => p.rowNo === targetRow)
+        .sort((a, b) => a.index - b.index);
 
-    setEditedProducts(finalProducts);
-  };
+      const oldIdx = sameRow.findIndex(p => p.codeProduct === active.id);
+      const newIdx = sameRow.findIndex(p => p.codeProduct === over.id);
 
-  const handleSave = () => onSave(editedProducts);
-  const handleCancel = () => {
-    setEditedProducts([...originalProducts]);
+      const reordered = arrayMove(sameRow, oldIdx, newIdx).map((p, i) => ({
+        ...p,
+        index: i + 1,
+      }));
+
+      const merged = [
+        ...edited.filter(p => p.rowNo !== targetRow),
+        ...reordered,
+      ].sort((a, b) => a.rowNo - b.rowNo || a.index - b.index);
+
+      setEditedProducts(merged);
+    },
+    [editedProducts]
+  );
+
+  /* --------------------------------------------
+   * SAVE / CANCEL
+   * -------------------------------------------- */
+  const handleSave = useCallback(() => onSave(editedProducts), [editedProducts]);
+  const handleCancel = useCallback(() => {
+    setEditedProducts(originalProducts);
     onClose();
-  };
+  }, [originalProducts, onClose]);
 
   if (!isOpen) return null;
 
@@ -108,16 +134,26 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelfCode }) =
             onDragEnd={handleDragEnd}
           >
             {rowNumbers.map((row) => {
-              const items = groupedByRow[row]?.sort((a, b) => a.index - b.index) || [];
+              const items = groupedByRow[row]
+                ?.slice()
+                .sort((a, b) => a.index - b.index);
+
               return (
                 <div key={row} className="mb-4">
-                  <h4 className="text-sm font-semibold text-gray-700 mb-2">Row {row}</h4>
+                  <h4 className="text-sm font-semibold text-gray-700 mb-2">
+                    Row {row}
+                  </h4>
+
                   <SortableContext
                     items={items.map((p) => p.codeProduct)}
                     strategy={verticalListSortingStrategy}
                   >
                     {items.map((prod, index) => (
-                      <SortableItem key={prod.codeProduct} item={prod} index={index} />
+                      <SortableItem
+                        key={prod.codeProduct}
+                        item={prod}
+                        index={index}
+                      />
                     ))}
                   </SortableContext>
                 </div>

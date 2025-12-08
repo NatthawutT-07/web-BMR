@@ -1,97 +1,109 @@
-import axios from "axios";
 
+// ------------------------------------------------
+// GET: รายการสาขา
 
-export const fetchBranchListSales = async (token) => {
+import api from "../../utils/axios";
+
+// ------------------------------------------------
+export const fetchBranchListSales = async () => {
     try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/sales-list-branch`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        });
+        const response = await api.get("/sales-list-branch");
         return response.data;
     } catch (error) {
-        // console.error("❌ Error fetching detail station:", error);
         return error;
     }
 };
 
-export const fetchBranchSales = async (token, branchCode) => {
+// ------------------------------------------------
+// POST: Sales Summary by Branch
+// ------------------------------------------------
+export const fetchBranchSales = async (branchCode) => {
     try {
-        const res = await axios.post(
-            `${import.meta.env.VITE_API_URL}/api/sales-search-branch`,
-            { branch_code: branchCode },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
+        const res = await api.post("/sales-search-branch", {
+            branch_code: branchCode,
+        });
+
         return res.data;
     } catch (error) {
-        // console.error("❌ Error fetching branch sales:", error);
         throw error;
     }
 };
 
-export const fetchBranchSalesDay = async (token, branchCode, date) => {
+// ------------------------------------------------
+// POST: Sales per Day
+// ------------------------------------------------
+export const fetchBranchSalesDay = async (branchCode, date) => {
     try {
-        const res = await axios.post(
-            `${import.meta.env.VITE_API_URL}/api/sales-search-branch-day`,
-            {
-                branch_code: branchCode,
-                date
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
+        const res = await api.post("/sales-search-branch-day", {
+            branch_code: branchCode,
+            date,
+        });
+
         return res.data;
     } catch (error) {
-        // console.error("❌ Error fetching branch sales:", error);
         throw error;
     }
 };
 
-export const fetchBranchSalesMonthProduct = async (token, branchCode, date) => {
+// ------------------------------------------------
+// POST: Month → Products Summary
+// ------------------------------------------------
+export const fetchBranchSalesMonthProduct = async (branchCode, date) => {
     try {
-        const res = await axios.post(
-            `${import.meta.env.VITE_API_URL}/api/sales-search-branch-monthproduct`,
-            {
-                branch_code: branchCode,
-                date
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
+        const res = await api.post("/sales-search-branch-monthproduct", {
+            branch_code: branchCode,
+            date,
+        });
+
         return res.data;
     } catch (error) {
-        // console.error("❌ Error fetching branch sales:", error);
         throw error;
     }
 };
 
-export const fetchBranchSalesDayProduct = async (token, branchCode, date) => {
+// ------------------------------------------------
+// POST: Day → Products Summary
+// ------------------------------------------------
+export const fetchBranchSalesDayProduct = async (branchCode, date) => {
     try {
-        const res = await axios.post(
-            `${import.meta.env.VITE_API_URL}/api/sales-search-branch-dayproduct`,
-            {
-                branch_code: branchCode,
-                date
-            },
-            {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            }
-        );
+        const res = await api.post("/sales-search-branch-dayproduct", {
+            branch_code: branchCode,
+            date,
+        });
+
         return res.data;
     } catch (error) {
-        // console.error("❌ Error fetching branch sales:", error);
+        throw error;
+    }
+};
+
+
+// ------------------------------------------------
+// GET: Search product (by name/code/brand)
+// ------------------------------------------------
+export const searchSalesProduct = async (keyword) => {
+    try {
+        const res = await api.get("/sales-product", {
+            params: { q: keyword },
+        });
+        return res.data; // { total, items: [...] }
+    } catch (error) {
+        throw error;
+    }
+};
+
+// ------------------------------------------------
+// POST: Product sales detail (single product)
+// ------------------------------------------------
+export const fetchSalesProductDetail = async ({ productId, start, end }) => {
+    try {
+        const res = await api.post("/sales-product-detail", {
+            productId,
+            start,
+            end,
+        });
+        return res.data; // { product, range, rows }
+    } catch (error) {
         throw error;
     }
 };

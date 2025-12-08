@@ -1,12 +1,8 @@
-import axios from "axios";
+import api from "../../utils/axios";   // axios instance พร้อม token + refresh-auto
 
-export const downloadTemplate = async (token) => {
+export const downloadTemplate = async () => {
   try {
-    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/download-template`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const res = await api.get("/download-template");
     return res.data;
   } catch (error) {
     console.error("❌ Error fetching template:", error);
@@ -14,16 +10,12 @@ export const downloadTemplate = async (token) => {
   }
 };
 
-export const downloadSKU = async (token) => {
+export const downloadSKU = async () => {
   try {
-    const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/download-sku`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const res = await api.get("/download-sku");
     return res.data;
   } catch (error) {
-    console.error("❌ Error fetching template:", error);
+    console.error("❌ Error fetching SKU:", error);
     throw error;
   }
 };
