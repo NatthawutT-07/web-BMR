@@ -45,13 +45,13 @@ const getDefaultAllRange = () => {
   };
 };
 
-// =================== Product Date Filter ===================
+// =================== Product Date Filter (ขนาดเล็กลง) ===================
 const ProductDateFilter = ({
   start,
   end,
   setStart,
   setEnd,
-  onRangeChange, // 🆕 แจ้ง parent เมื่อช่วงวันที่เปลี่ยน
+  onRangeChange, // แจ้ง parent เมื่อช่วงวันที่เปลี่ยน
 }) => {
   // min = 1/1/2024
   const minDate = "2024-01-01";
@@ -124,16 +124,16 @@ const ProductDateFilter = ({
 
     setStart(startStr);
     setEnd(endStr);
-    notifyRangeChange(startStr, endStr); // 🆕 แจ้ง parent ทุกครั้งที่กด preset
+    notifyRangeChange(startStr, endStr);
   };
 
   return (
-    <div className="bg-white/90 backdrop-blur shadow-sm rounded-xl border border-slate-200 px-4 py-3 md:px-6 md:py-4">
-      <div className="space-y-3">
-        {/* แถว: Start / End */}
-        <div className="flex flex-wrap gap-3 items-end">
+    <div className="bg-white/90 backdrop-blur shadow-sm rounded-xl border border-slate-200 px-3 py-2 md:px-4 md:py-3">
+      <div className="space-y-2">
+        {/* แถว: Start / End (compact) */}
+        <div className="flex flex-wrap gap-2 items-end">
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-slate-600 mb-1">
+            <label className="text-[10px] font-medium text-slate-600 mb-0.5">
               Start Date
             </label>
             <input
@@ -142,12 +142,12 @@ const ProductDateFilter = ({
               min={minDate}
               max={maxDate}
               onChange={(e) => handleChangeStart(e.target.value)}
-              className="border border-slate-200 px-3 py-2 rounded-lg w-full shadow-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:border-indigo-500"
+              className="border border-slate-200 px-2 py-1.5 rounded-lg w-full shadow-sm text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500/70 focus:border-indigo-500"
             />
           </div>
 
           <div className="flex flex-col">
-            <label className="text-xs font-medium text-slate-600 mb-1">
+            <label className="text-[10px] font-medium text-slate-600 mb-0.5">
               End Date
             </label>
             <input
@@ -156,29 +156,29 @@ const ProductDateFilter = ({
               min={minDate}
               max={maxDate}
               onChange={(e) => handleChangeEnd(e.target.value)}
-              className="border border-slate-200 px-3 py-2 rounded-lg w-full shadow-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:border-indigo-500"
+              className="border border-slate-200 px-2 py-1.5 rounded-lg w-full shadow-sm text-xs bg-white focus:outline-none focus:ring-1 focus:ring-indigo-500/70 focus:border-indigo-500"
             />
           </div>
         </div>
 
-        {/* แสดงช่วงวันที่แบบ dd/mm/yyyy */}
-        <div className="text-[11px] text-slate-500">
+        {/* แสดงช่วงวันที่แบบ dd/mm/yyyy (เล็กลง) */}
+        <div className="text-[10px] text-slate-500">
           ช่วงวันที่ที่ใช้ในการดูยอดขาย:{" "}
           <span className="font-medium text-slate-700">
             {formatDisplayDate(start)} - {formatDisplayDate(end)}
           </span>
         </div>
 
-        {/* Quick Range */}
-        <div className="flex flex-wrap gap-2 text-xs mt-1">
-          <span className="self-center text-[11px] text-slate-500 mr-1">
+        {/* Quick Range (compact) */}
+        <div className="flex flex-wrap gap-1.5 text-[10px] mt-0.5">
+          <span className="self-center text-[10px] text-slate-500 mr-1">
             Quick Range :
           </span>
 
           <button
             type="button"
             onClick={() => applyPreset("7d")}
-            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition text-xs"
+            className="px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition"
           >
             Last 7 Days
           </button>
@@ -186,7 +186,7 @@ const ProductDateFilter = ({
           <button
             type="button"
             onClick={() => applyPreset("30d")}
-            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition text-xs"
+            className="px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition"
           >
             Last 30 Days
           </button>
@@ -194,7 +194,7 @@ const ProductDateFilter = ({
           <button
             type="button"
             onClick={() => applyPreset("60d")}
-            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition text-xs"
+            className="px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition"
           >
             Last 60 Days
           </button>
@@ -202,7 +202,7 @@ const ProductDateFilter = ({
           <button
             type="button"
             onClick={() => applyPreset("90d")}
-            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition text-xs"
+            className="px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition"
           >
             Last 90 Days
           </button>
@@ -210,7 +210,7 @@ const ProductDateFilter = ({
           <button
             type="button"
             onClick={() => applyPreset("month")}
-            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition text-xs"
+            className="px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition"
           >
             This Month
           </button>
@@ -218,7 +218,7 @@ const ProductDateFilter = ({
           <button
             type="button"
             onClick={() => applyPreset("year")}
-            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition text-xs"
+            className="px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition"
           >
             This Year
           </button>
@@ -226,13 +226,13 @@ const ProductDateFilter = ({
           <button
             type="button"
             onClick={() => applyPreset("all")}
-            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition text-xs"
+            className="px-2.5 py-1 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition"
           >
             All
           </button>
         </div>
 
-        <div className="text-[11px] text-slate-400">
+        <div className="text-[10px] text-slate-400">
           หลังจากเลือกสินค้าแล้ว ระบบจะใช้ช่วงวันที่นี้ในการคำนวณให้อัตโนมัติ
         </div>
       </div>
@@ -417,7 +417,7 @@ const MainSalesProduct = () => {
 
             {/* Result list + pagination */}
             <div className="bg-white/90 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-3 md:p-4 flex flex-col h-[420px]">
-              <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center justify_between mb-2">
                 <h3 className="text-xs font-semibold text-slate-700">
                   Product list
                 </h3>
@@ -459,10 +459,11 @@ const MainSalesProduct = () => {
                       key={item.id}
                       type="button"
                       onClick={() => handleSelectProduct(item)}
-                      className={`w-full text-left px-2.5 py-2 rounded-lg border text-xs transition-colors ${isActive
+                      className={`w-full text-left px-2.5 py-2 rounded-lg border text-xs transition-colors ${
+                        isActive
                           ? "border-indigo-300 bg-indigo-50"
                           : "border-slate-200 bg-white hover:bg-slate-50"
-                        }`}
+                      }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="truncate">

@@ -48,6 +48,24 @@ const diffClass = (curr, base) => {
   return "text-slate-500";
 };
 
+// 🔼🔽 ลูกศรเปรียบเทียบ เดือนนี้ vs เดือนก่อนหน้า (ในปีเดียวกัน)
+const getMonthArrow = (curr, prev) => {
+  if (prev == null) return "–";
+  const diff = curr - prev;
+  if (diff > 0) return "▲";
+  if (diff < 0) return "▼";
+  return "–";
+};
+
+// สีของลูกศร ตามทิศทาง diff
+const getMonthArrowClass = (curr, prev) => {
+  if (prev == null) return "text-slate-400"; // ไม่มีเดือนก่อน → เทาอ่อน
+  const diff = curr - prev;
+  if (diff > 0) return "text-emerald-600";   // ขึ้น → เขียว
+  if (diff < 0) return "text-red-500";       // ลง → แดง
+  return "text-slate-500";                   // เท่าเดิม → เทา
+};
+
 // สร้างสรุปรายปี (ใช้กับ all branch / selected branch)
 const buildYearSummary = (yearTotals) => {
   const years = Object.keys(yearTotals)
@@ -183,22 +201,11 @@ const ProductSalesMatrix = ({ detail }) => {
           ? null
           : qtyCurr - qtyPrev;
 
-      // diff เดือน: เดือนนี้ vs เดือนก่อนหน้า (ในปีล่าสุด)
-      let diffMonth = null;
-      if (m > 1) {
-        const keyPrevMonth = `${currentYear}-${m - 1}`;
-        const prevMonthQty = qtyMap.get(keyPrevMonth) || 0;
-        if (prevMonthQty !== 0 || qtyCurr !== 0) {
-          diffMonth = qtyCurr - prevMonthQty;
-        }
-      }
-
       monthRows.push({
         month: m,
         qtyPrev,
         qtyCurr,
         diffYear,
-        diffMonth,
         currentYear,
         prevYear,
       });
@@ -286,7 +293,7 @@ const ProductSalesMatrix = ({ detail }) => {
   return (
     <section className="bg-white/90 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-3 md:p-4 mt-4 space-y-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 border-b border-slate-100  mb-1">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 border-b border-slate-100 mb-1 pb-2">
         <div>
           <h2 className="text-sm md:text-base font-semibold text-slate-800">
             Monthly quantity by year
@@ -297,9 +304,17 @@ const ProductSalesMatrix = ({ detail }) => {
               {rangeLabel}
             </span>
           </div>
+          {product && (
+            <div className="mt-0.5 text-[11px] text-slate-500">
+              Product:{" "}
+              <span className="font-semibold text-slate-800">
+                {product.product_code} • {product.product_name}
+              </span>
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-col items-start md:items-end gap-2 text-[11px] text-slate-500">
+        <div className="flex flex-col items-start md:items-end gap-1.5 text-[11px] text-slate-500">
           <div className="flex items-center gap-2">
             <span>Branch:</span>
             <select
@@ -329,14 +344,17 @@ const ProductSalesMatrix = ({ detail }) => {
         <div className="space-y-3">
           {/* Summary: all branches + selected branch */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {renderSummaryBox("All branches (total quantity)", matrix.allYearSummary)}
+            {renderSummaryBox(
+              "All branches (total quantity)",
+              matrix.allYearSummary
+            )}
             {renderSummaryBox(
               "Selected branch (total quantity)",
               matrix.branchYearSummary
             )}
           </div>
 
-          {/* ตารางหลัก */}
+          {/* ตารางหลัก (เพิ่มลูกศร diff เดือน/เดือน ใน Qty ปีล่าสุด) */}
           <div className="overflow-x-auto text-xs md:text-sm mt-2">
             <table className="min-w-full">
               <thead className="bg-slate-100 text-[11px] md:text-xs text-slate-600">
@@ -351,15 +369,9 @@ const ProductSalesMatrix = ({ detail }) => {
                   )}
                   <th className="px-2 md:px-3 py-2.5 text-right font-semibold">
                     Qty {matrix.currentYear}
-                    <span className="block text-[10px] text-slate-500">
-                      (with month diff in cell)
-                    </span>
                   </th>
                   <th className="px-2 md:px-3 py-2.5 text-right font-semibold">
-                    Diff year
-                    <span className="block text-[10px] text-slate-500">
-                      current vs prev year
-                    </span>
+                    YoY diff
                   </th>
                 </tr>
               </thead>
@@ -372,12 +384,20 @@ const ProductSalesMatrix = ({ detail }) => {
                   const qtyPrevBase =
                     matrix.prevYear != null ? row.qtyPrev : null;
 
-                  // base สำหรับ diff เดือน = qty ของเดือนก่อนหน้า (ปีล่าสุด)
+                  // ค่าเดือนก่อนหน้า (ในปีล่าสุด) สำหรับ diff เดือน/เดือน
                   let prevMonthQty = null;
-                  if (row.month > 1) {
-                    const prevRow = matrix.monthRows[row.month - 2];
-                    prevMonthQty = prevRow ? prevRow.qtyCurr : null;
+                  if (idx > 0) {
+                    prevMonthQty = matrix.monthRows[idx - 1].qtyCurr;
                   }
+
+                  const monthArrow = getMonthArrow(
+                    row.qtyCurr,
+                    prevMonthQty
+                  );
+                  const arrowClass = getMonthArrowClass(
+                    row.qtyCurr,
+                    prevMonthQty
+                  );
 
                   return (
                     <tr
@@ -396,33 +416,17 @@ const ProductSalesMatrix = ({ detail }) => {
                         </td>
                       )}
 
-                      {/* Qty current year + diff เดือนในช่องเดียวกัน */}
-                      <td className="px-2 md:px-3 py-2.5 text-right align-top">
-                        <div className="text-slate-800 font-semibold">
-                          {fmtQty(row.qtyCurr)}
-                        </div>
-                        <div className="text-[10px] mt-0.5">
-                          {row.diffMonth == null ? (
-                            <span className="text-slate-400">
-                              – no prev month –
-                            </span>
-                          ) : (
-                            <span
-                              className={
-                                row.diffMonth > 0
-                                  ? "text-emerald-600"
-                                  : row.diffMonth < 0
-                                  ? "text-red-500"
-                                  : "text-slate-500"
-                              }
-                            >
-                              {fmtDiffQty(row.qtyCurr, prevMonthQty)}
-                            </span>
-                          )}
-                        </div>
+                      {/* Qty current year + ลูกศร diff เดือน/เดือน (สีตามทิศทาง) */}
+                      <td className="px-2 md:px-3 py-2.5 text-right text-slate-800 align-top">
+                        <span className="inline-flex items-center justify-end gap-1 font-semibold">
+                          <span className={`text-[9px] ${arrowClass}`}>
+                            {monthArrow}
+                          </span>
+                          <span>{fmtQty(row.qtyCurr)}</span>
+                        </span>
                       </td>
 
-                      {/* Diff year (current vs prev year) อยู่ขวาสุด */}
+                      {/* Diff year (current vs prev year) - คง logic เดิม */}
                       <td
                         className={`px-2 md:px-3 py-2.5 text-right text-[11px] md:text-xs align-top ${diffClass(
                           row.qtyCurr,
