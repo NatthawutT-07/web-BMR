@@ -198,7 +198,7 @@ const DashboardSales = () => {
             setLoading(true);
             try {
                 const res = await getDashboard(MIN_DATE, MAX_DATE);
-                console.log(res)
+                // console.log(res)
                 setBaseData(res);
 
                 const filtered = filterDashboardData(res, start, end);
@@ -206,7 +206,7 @@ const DashboardSales = () => {
                     const days =
                         (new Date(end) - new Date(start)) /
                         (1000 * 60 * 60 * 24) +
-                        1;
+                        1;  
                     setDailyAvgSales(
                         filtered.summary.total_payment / days || 0
                     );

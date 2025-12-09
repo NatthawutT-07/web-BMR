@@ -1,105 +1,125 @@
 import React from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
-  LayoutDashboard, LogOut, Menu, Store, FileUp, ChartNoAxesCombined
+  LogOut,
+  Menu,
+  X,
+  Store,
+  FileUp,
+  ChartNoAxesCombined
 } from "lucide-react";
 import useBmrStore from "../../../store/bmr_store";
 
-const SiderbarAdmin = ({ isExpanded, toggleSidebar }) => {
-  const logout = useBmrStore((state) => state.logout);
+const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
+  const logout = useBmrStore((s) => s.logout);
   const navigate = useNavigate();
 
   const handleLogout = () => {
     logout();
     navigate("/");
+    if (isMobile) closeMobile();
   };
 
+  // ---- Mobile Sidebar (Overlay) ----
+  if (isMobile) {
+    return (
+      <>
+        {/* backdrop */}
+        <div
+          className={`fixed inset-0 bg-black/40 z-40 transition-opacity duration-300
+          ${isOpen ? "opacity-100" : "opacity-0 pointer-events-none"}`}
+          onClick={closeMobile}
+        />
+
+        {/* panel */}
+        <div
+          className={`fixed top-0 left-0 w-64 h-full z-50 bg-gray-900 text-white 
+            transition-transform duration-300 shadow-xl
+            ${isOpen ? "translate-x-0" : "-translate-x-full"}`}
+        >
+          {/* header */}
+          <div className="flex items-center justify-between px-4 h-16 border-b border-gray-700">
+            <span className="text-lg font-bold">BMR Menu</span>
+            <button onClick={closeMobile} className="p-2 hover:bg-gray-700 rounded">
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* items */}
+          <nav className="p-4 space-y-2">
+            <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} close={closeMobile} />
+            <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} close={closeMobile} />
+            <SidebarItem to="upload" label="Upload CSV" icon={<FileUp size={20} />} close={closeMobile} />
+
+            <div className="pt-4">
+              <SidebarButton onClick={handleLogout} label="Logout" icon={<LogOut size={20} />} />
+            </div>
+          </nav>
+        </div>
+      </>
+    );
+  }
+
+  // ---- Desktop Sidebar (Collapsed / Expanded) ----
   return (
     <div
-      className={`bg-gradient-to-b from-gray-800 to-gray-900 text-gray-100 h-screen flex flex-col transition-all duration-300
-        ${isExpanded ? "w-48" : "w-16"} fixed left-0 top-0 z-50`}
+      className={`
+        bg-gray-900 text-gray-100 h-screen fixed left-0 top-0 z-30
+        transition-all duration-300 flex flex-col
+        ${isOpen ? "w-48" : "w-16"}
+      `}
     >
-      {/* Header */}
+      {/* header */}
       <div
-        className="h-20 flex items-center justify-center cursor-pointer hover:bg-gray-700"
-        onClick={toggleSidebar}
+        onClick={toggle}
+        className="h-16 flex items-center justify-center hover:bg-gray-700 cursor-pointer"
       >
-        {isExpanded ? (
-          <span className="text-white font-bold text-lg">BMR</span>
+        {isOpen ? (
+          <span className="text-lg font-bold">BMR</span>
         ) : (
-          <Menu size={28} />
+          <Menu size={24} />
         )}
       </div>
 
-      {/* Menu */}
+      {/* items */}
       <nav className="flex-1 px-2 py-4 space-y-2">
-        <SidebarItem
-          to="sales"
-          icon={<ChartNoAxesCombined size={20} />}
-          label="Sales"
-          expanded={isExpanded}
-        />
-        <SidebarItem
-          to="shelf"
-          icon={<Store size={20} />}
-          label="Shelf"
-          expanded={isExpanded}
-        />
-        <SidebarItem
-          to="upload"
-          icon={<FileUp size={20} />}
-          label="Upload CSV"
-          expanded={isExpanded}
-        />
+        <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} expanded={isOpen} />
+        <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} expanded={isOpen} />
+        <SidebarItem to="upload" label="Upload CSV" icon={<FileUp size={20} />} expanded={isOpen} />
 
-        {/* Logout as menu item */}
-        <div className="pt-10 py-4 px-0.5 space-y-2">
-          <SidebarButton
-            onClick={handleLogout}
-            icon={<LogOut size={20} />}
-            label="Logout"
-            expanded={isExpanded}
-          />
+        <div className="pt-8">
+          <SidebarButton onClick={handleLogout} label="Logout" icon={<LogOut size={20} />} expanded={isOpen} />
         </div>
       </nav>
     </div>
   );
 };
 
-const SidebarItem = ({ to, icon, label, expanded }) => {
+const SidebarItem = ({ to, label, icon, expanded, close }) => {
   return (
     <NavLink
       to={to}
-      end={to === "/admin"}
-      className={({ isActive }) => {
-        if (isActive) {
-          return expanded
-            ? "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm bg-gray-900 text-white shadow hover:bg-gray-700 transition"
-            : "flex items-center justify-center px-3 py-2 rounded-lg text-white bg-gray-900 hover:bg-gray-700 transition";
-        } else {
-          return expanded
-            ? "flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition"
-            : "flex items-center justify-center px-3 py-2 rounded-lg text-gray-300 hover:bg-gray-700 hover:text-white transition";
-        }
-      }}
+      onClick={() => close && close()}
+      className={({ isActive }) =>
+        `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition
+        ${isActive ? "bg-gray-800 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white"}
+      `
+      }
     >
       {icon}
-      {expanded && <span>{label}</span>}
+      {expanded !== false && <span>{label}</span>}
     </NavLink>
   );
 };
 
-// SidebarButton ใช้สำหรับปุ่ม action เช่น Logout/Login
-const SidebarButton = ({ onClick, icon, label, expanded }) => {
-  return (
-    <button
-      onClick={onClick}
-      className="w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition"
-    >
-      {icon}
-      {expanded && <span>{label}</span>}
-    </button>
-  );
-};
+const SidebarButton = ({ onClick, label, icon, expanded }) => (
+  <button
+    onClick={onClick}
+    className="flex items-center w-full gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition"
+  >
+    {icon}
+    {expanded !== false && <span>{label}</span>}
+  </button>
+);
 
 export default SiderbarAdmin;
