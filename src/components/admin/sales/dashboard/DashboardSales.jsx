@@ -198,7 +198,7 @@ const DashboardSales = () => {
             setLoading(true);
             try {
                 const res = await getDashboard(MIN_DATE, MAX_DATE);
-
+                console.log(res)
                 setBaseData(res);
 
                 const filtered = filterDashboardData(res, start, end);

@@ -1,7 +1,9 @@
 import React, { useMemo } from "react";
 
 const ShelfTableUser = ({ shelfProducts = [] }) => {
-  if (!Array.isArray(shelfProducts)) return <div>Invalid data.</div>;
+  if (!Array.isArray(shelfProducts)) {
+    return <div className="text-xs text-red-500">Invalid data.</div>;
+  }
 
   // เอาเฉพาะตัวที่มี rowNo
   const valid = useMemo(
@@ -10,10 +12,10 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
   );
 
   // จำนวนแถวทั้งหมด (Row)
-  const rowCount = useMemo(
-    () => Math.max(...valid.map((p) => p.rowNo || 0), 0),
-    [valid]
-  );
+  const rowCount = useMemo(() => {
+    if (!valid.length) return 0;
+    return Math.max(...valid.map((p) => p.rowNo || 0), 0);
+  }, [valid]);
 
   // group ตาม rowNo
   const groupedRows = useMemo(() => {
@@ -23,10 +25,29 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
       if (!result[rowNo]) result[rowNo] = [];
       result[rowNo].push(p);
     });
+
+    // sort index ในแต่ละ row ให้เป็นระเบียบ
+    Object.keys(result).forEach((rowNo) => {
+      result[rowNo].sort((a, b) => (a.index || 0) - (b.index || 0));
+    });
+
     return result;
   }, [valid]);
 
-  const zeroToDash = (v) => (v === 0 || v === "0" ? "-" : v ?? "-");
+  const zeroToDash = (v) => {
+    if (v === null || v === undefined) return "-";
+    if (v === 0 || v === "0") return "-";
+    return v;
+  };
+
+  // ปัดเศษเป็น int สำหรับ 3M Avg และ Target
+  const formatInt = (v) => {
+    if (v === null || v === undefined) return "-";
+    const n = Number(v);
+    if (Number.isNaN(n)) return "-";
+    if (n === 0) return "-";
+    return Math.round(n); // ถ้าอยากปัดลงใช้ Math.floor ได้
+  };
 
   return (
     <div className="overflow-x-auto w-full px-1 sm:px-3 print:px-0 print:overflow-visible">
@@ -41,7 +62,7 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
             <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
               ID
             </th>
-            <th className="border px-2 py-1 text-center print:px-[2px] align-middle">
+            <th className="border py-1 text-center print:px-[2px] align-middle">
               Barcode
             </th>
             <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
@@ -53,28 +74,37 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
             <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
               Brand
             </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+            <th className="border py-1 text-center print:px-[2px] align-middle">
               Life
             </th>
             <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
               RSP
             </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+
+            {/* ⭐ ใหม่: Avg 3 เดือน, Target, ยอดขายเดือนนี้ */}
+            {/* <th className="border px-1 py-1 text-center print:px-[2px] align-middle"> */}
+              {/* 3M
+            </th> */}
+            <th className="border py-1 text-center print:px-[2px] align-middle">
+              Target
+            </th>
+            <th className="border py-1 text-center print:px-[2px] align-middle">
               Sales
             </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+
+            <th className="border py-1 text-center print:px-[2px] align-middle">
               With..
             </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+            <th className="border py-1 text-center print:px-[2px] align-middle">
               Min
             </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+            <th className="border py-1 text-center print:px-[2px] align-middle">
               Max
             </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+            <th className="border py-1 text-center print:px-[2px] align-middle">
               Stock
             </th>
-            {/* ✅ คอลัมน์ Audit */}
+            {/* Audit */}
             <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
               Audit
             </th>
@@ -82,6 +112,17 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
         </thead>
 
         <tbody>
+          {rowCount === 0 && (
+            <tr>
+              <td
+                colSpan={15}
+                className="border p-1 text-center text-gray-500 text-xs"
+              >
+                No products.
+              </td>
+            </tr>
+          )}
+
           {Array.from({ length: rowCount }).map((_, idx) => {
             const rowNo = idx + 1;
             const items = groupedRows[rowNo] || [];
@@ -91,7 +132,7 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
                 {/* หัว row (แยกแต่ละ Row) */}
                 <tr className="bg-blue-50 print:bg-slate-200">
                   <td
-                    colSpan={13} // 12 คอลัมน์ข้อมูล + 1 Audit
+                    colSpan={15} // 14 คอลัมน์ข้อมูล + 1 Audit
                     className="border p-1 print:py-[2px] font-semibold italic text-left"
                   >
                     ➤ Row {rowNo}
@@ -99,92 +140,124 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
                 </tr>
 
                 {items.length > 0 ? (
-                  items.map((p, i) => (
-                    <tr
-                      key={i}
-                      className={
-                        i % 2
-                          ? // แถวลำดับที่ 2,4,6,... → สีอ่อนขึ้นทั้งบนเว็บและ PDF
-                            "bg-gray-50 print:bg-gray-100"
-                          : // แถว 1,3,5,... → ขาวปกติ
-                            "bg-white print:bg-white"
-                      }
-                    >
-                      <td className="border p-1 print:px-[2px] text-center align-middle">
-                        {zeroToDash(p.index)}
-                      </td>
-                      <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle">
-                        {zeroToDash(p.barcode)}
-                      </td>
-                      <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle">
-                        {p.codeProduct
-                          ? String(p.codeProduct).padStart(5, "0")
-                          : "-"}
-                      </td>
+                  items.map((p, i) => {
+                    const currentSales = Number(p.salesCurrentMonthQty ?? 0);
+                    const targetVal = Number(p.salesTargetQty ?? 0);
+                    const hitTarget =
+                      targetVal > 0 &&
+                      !Number.isNaN(currentSales) &&
+                      currentSales >= targetVal;
 
-                      {/* Name: 1 บรรทัดบนเว็บ + … / PDF ให้ wrap ได้ */}
-                      <td
-                        className="
-                          border p-1 print:px-[2px] align-middle
-                          max-w-[140px] sm:max-w-[200px] lg:max-w-[260px]
-                          whitespace-nowrap overflow-hidden text-ellipsis
-                          print:whitespace-normal print:max-w-none
-                        "
-                        title={p.nameProduct}
+                    return (
+                      <tr
+                        key={`${rowNo}-${p.codeProduct || i}`}
+                        className={
+                          i % 2
+                            ? "bg-gray-50 print:bg-gray-100"
+                            : "bg-white print:bg-white"
+                        }
                       >
-                        {p.nameProduct}
-                      </td>
+                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                          {zeroToDash(p.index)}
+                        </td>
 
-                      {/* Brand */}
-                      <td
-                        className="
-                          border p-1 print:px-[2px] align-middle
-                          max-w-[100px] sm:max-w-[140px] lg:max-w-[180px]
-                          whitespace-nowrap overflow-hidden text-ellipsis
-                          print:whitespace-normal print:max-w-none
-                        "
-                        title={p.nameBrand}
-                      >
-                        {p.nameBrand}
-                      </td>
+                        <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle">
+                          {zeroToDash(p.barcode)}
+                        </td>
 
-                      <td className="border p-1 print:px-[2px] text-center align-middle">
-                        {zeroToDash(p.shelfLife)}
-                      </td>
-                      <td className="border p-1 print:px-[2px] text-center align-middle">
-                        {zeroToDash(p.salesPriceIncVAT)}
-                      </td>
-                      <td className="border p-1 print:px-[2px] text-center text-green-600 align-middle">
-                        {zeroToDash(p.salesQuantity)}
-                      </td>
-                      <td className="border p-1 print:px-[2px] text-center text-red-600 align-middle">
-                        {zeroToDash(p.withdrawQuantity)}
-                      </td>
-                      <td className="border p-1 print:px-[2px] text-center align-middle">
-                        {zeroToDash(p.minStore)}
-                      </td>
-                      <td className="border p-1 print:px-[2px] text-center align-middle">
-                        {zeroToDash(p.maxStore)}
-                      </td>
-                      <td className="border p-1 print:px-[2px] text-center text-yellow-700 align-middle">
-                        {zeroToDash(p.stockQuantity)}
-                      </td>
+                        <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle">
+                          {p.codeProduct
+                            ? String(p.codeProduct).padStart(5, "0")
+                            : "-"}
+                        </td>
 
-                      {/* Audit: บนจอ = checkbox, PDF = กล่องติ๊ก */}
-                      <td className="border p-1 print:px-[2px] text-center align-middle">
-                        <input
-                          type="checkbox"
-                          className="h-4 w-4 accent-emerald-600 print:hidden"
-                        />
-                        <span className="hidden print:inline-block">☐</span>
-                      </td>
-                    </tr>
-                  ))
+                        {/* Name */}
+                        <td
+                          className="
+                            border p-1 print:px-[2px] align-middle
+                            max-w-[140px] sm:max-w-[200px] lg:max-w-[260px]
+                            whitespace-nowrap overflow-hidden text-ellipsis
+                            print:whitespace-normal print:max-w-none
+                          "
+                          title={p.nameProduct}
+                        >
+                          {p.nameProduct}
+                        </td>
+
+                        {/* Brand */}
+                        <td
+                          className="
+                            border p-1 print:px-[2px] align-middle
+                            max-w-[100px] sm:max-w-[140px] lg:max-w-[180px]
+                            whitespace-nowrap overflow-hidden text-ellipsis
+                            print:whitespace-normal print:max-w-none
+                          "
+                          title={p.nameBrand}
+                        >
+                          {p.nameBrand}
+                        </td>
+
+                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                          {zeroToDash(p.shelfLife)}
+                        </td>
+
+                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                          {zeroToDash(p.salesPriceIncVAT)}
+                        </td>
+
+                        {/* ⭐ 3M Qty (รวม 3 เดือน ปัดเป็น int) */}
+                        {/* <td className="border p-1 print:px-[2px] text-center text-indigo-700 align-middle">
+                          {formatInt(p.sales3mQty)}
+                        </td> */}
+
+                        {/* ⭐ Target (80% ของ avg 3 เดือน) ปัดเป็น int */}
+                        <td className=" border p-1 print:px-[2px] text-center text-purple-700 align-middle">
+                          {formatInt(p.salesTargetQty)}
+                        </td>
+
+                        {/* ⭐ Sales เดือนนี้เท่านั้น + ไฮไลต์ถ้าถึงเป้า */}
+                        <td
+                          className={`
+                            border p-1 print:px-[2px] text-center font-semibold align-middle
+                            text-blue-600
+                            ${hitTarget ? "bg-green-50" : ""}
+                          `}
+                        >
+                          {zeroToDash(p.salesCurrentMonthQty)}
+                        </td>
+
+                        <td className="border p-1 print:px-[2px] text-center text-red-600 align-middle">
+                          {zeroToDash(p.withdrawQuantity)}
+                        </td>
+
+                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                          {zeroToDash(p.minStore)}
+                        </td>
+
+                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                          {zeroToDash(p.maxStore)}
+                        </td>
+
+                        <td className="border p-1 print:px-[2px] text-center text-yellow-700 align-middle">
+                          {zeroToDash(p.stockQuantity)}
+                        </td>
+
+                        {/* Audit: บนจอ = checkbox, PDF = กล่องติ๊ก */}
+                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                          <input
+                            type="checkbox"
+                            className="h-4 w-4 accent-emerald-600 print:hidden cursor-pointer"
+                          />
+                          <span className="hidden print:inline-block">☐</span>
+                        </td>
+                      </tr>
+                    );
+                  })
                 ) : (
                   <tr>
                     <td
-                      colSpan={13}
-                      className="border p-1 print:py-[2px] text-center text-gray-500"
+                      colSpan={15}
+                      className="border p-1 print:py-[2px] text-center text-gray-500 text-xs"
                     >
                       No products in this row
                     </td>

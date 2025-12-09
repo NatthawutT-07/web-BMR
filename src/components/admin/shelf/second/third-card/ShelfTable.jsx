@@ -6,9 +6,24 @@ import React, {
 } from "react";
 import {
   calcTotalSales,
-  calcTotalStockCost,
   calcTotalWithdraw
 } from "../../../../../utils/shelfUtils";
+
+/* ===========================
+   Helper: number formatter
+=========================== */
+const toNumber = (v) => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+
+// คำนวณ Stock Cost ต่อรายการ โดยถ้า stockQuantity < 0 ⇒ ใช้ 0 แทนในการคิดต้นทุน
+const getSafeStockCost = (p) => {
+  const qtyRaw = toNumber(p.stockQuantity ?? 0);
+  const unit = toNumber(p.purchasePriceExcVAT ?? 0);
+  const qtyForCost = qtyRaw < 0 ? 0 : qtyRaw; // ❗ ใช้ 0 แทนถ้าติดลบ
+  return qtyForCost * unit;
+};
 
 /* ===========================
    Delete Confirm Modal
@@ -219,24 +234,23 @@ const ShelfTable = ({
     return map;
   }, [shelfProducts]);
 
-  /* Memo: calculate totals for entire shelf */
+  /* Memo: calculate totals for entire shelf
+     – Stock Cost ใช้ getSafeStockCost (qty ติดลบ → คิดเป็น 0) */
   const totalAll = useMemo(() => {
-    return {
-      sales: shelfProducts.reduce(
-        (a, b) => a + (b.salesTotalPrice || 0),
-        0
-      ),
-      withdraw: shelfProducts.reduce(
-        (a, b) => a + (b.withdrawValue || 0),
-        0
-      ),
-      stockCost: shelfProducts.reduce(
-        (a, b) =>
-          a +
-          (b.stockQuantity ?? 0) * (b.purchasePriceExcVAT ?? 0),
-        0
-      )
-    };
+    const sales = shelfProducts.reduce(
+      (a, b) => a + (b.salesTotalPrice || 0),
+      0
+    );
+    const withdraw = shelfProducts.reduce(
+      (a, b) => a + (b.withdrawValue || 0),
+      0
+    );
+    const stockCost = shelfProducts.reduce(
+      (sum, p) => sum + getSafeStockCost(p),
+      0
+    );
+
+    return { sales, withdraw, stockCost };
   }, [shelfProducts]);
 
   /* Action callbacks */
@@ -272,11 +286,24 @@ const ShelfTable = ({
     return Number(v).toLocaleString();
   }, []);
 
-  /* Render table */
+  // ปัดเป็น int สำหรับ Target (3M Avg * 0.8)
+  const formatInt = (v) => {
+    if (v === null || v === undefined) return "-";
+    const n = Number(v);
+    if (Number.isNaN(n)) return "-";
+    if (n === 0) return "-";
+    return Math.round(n);
+  };
+
+  /* Render table row (per RowNo) */
   const renderRow = (rowNo) => {
     const rowProducts = productsByRow[rowNo] || [];
 
-    const totalRowStock = calcTotalStockCost(rowProducts);
+    // ❗ Row total: ใช้ getSafeStockCost เช่นกัน
+    const totalRowStock = rowProducts.reduce(
+      (sum, p) => sum + getSafeStockCost(p),
+      0
+    );
     const totalRowSales = calcTotalSales(rowProducts);
     const totalRowWithdraw = calcTotalWithdraw(rowProducts);
 
@@ -284,7 +311,7 @@ const ShelfTable = ({
       <React.Fragment key={`row-${rowNo}`}>
         {/* Row header */}
         <tr className="bg-blue-50">
-          <td colSpan={16} className="p-2 border font-semibold italic">
+          <td colSpan={18} className="p-2 border font-semibold italic">
             ➤ Row: {rowNo}
           </td>
 
@@ -301,67 +328,128 @@ const ShelfTable = ({
         {/* Products */}
         {rowProducts.length > 0 ? (
           rowProducts.map((prod) => {
-            const cost =
-              (prod.stockQuantity ?? 0) *
-              (prod.purchasePriceExcVAT ?? 0);
+            // cost: ถ้า stockQuantity < 0 → ใช้ 0 ในการคูณ
+            const cost = getSafeStockCost(prod);
+
+            const salesTargetQty = Number(prod.salesTargetQty ?? 0);
+            const salesCurrentMonthQty = Number(
+              prod.salesCurrentMonthQty ?? 0
+            );
+
+            const targetRounded = Math.round(salesTargetQty);
+            const meetTarget =
+              targetRounded > 0 &&
+              salesCurrentMonthQty >= targetRounded;
 
             return (
-              <tr key={`prod-${prod.codeProduct}-${prod.index}`} className="even:bg-gray-50">
-                <td className="p-1 border text-center">{prod.index}</td>
-                <td className="p-1 border text-center">{prod.barcode}</td>
-                <td className="p-1 border whitespace-nowrap text-ellipsis overflow-hidden max-w-[280px]">
-                  {String(prod.codeProduct).padStart(5, "0")}
+              <tr
+                key={`prod-${prod.codeProduct}-${prod.index}`}
+                className="even:bg-gray-50"
+              >
+                <td className="p-1 border text-center w-10">
+                  {prod.index}
                 </td>
-                <td className="p-1 border whitespace-nowrap text-ellipsis overflow-hidden max-w-[280px]">{prod.nameProduct ?? "-"}</td>
-                <td className="p-1 border whitespace-nowrap text-ellipsis overflow-hidden max-w-[280px]">{prod.nameBrand ?? "-"}</td>
 
-                <td className="p-1 border text-center">
+                <td className="p-1 border text-center w-24 whitespace-nowrap">
+                  {prod.barcode ?? "-"}
+                </td>
+
+                <td className="p-1 border text-center w-16 whitespace-nowrap">
+                  {prod.codeProduct
+                    ? String(prod.codeProduct).padStart(5, "0")
+                    : "-"}
+                </td>
+
+                <td
+                  className="
+                    p-1 border whitespace-nowrap text-ellipsis overflow-hidden
+                    max-w-[320px]
+                  "
+                  title={prod.nameProduct ?? "-"}
+                >
+                  {prod.nameProduct ?? "-"}
+                </td>
+
+                <td className="p-1 border whitespace-nowrap text-ellipsis overflow-hidden max-w-[160px]">
+                  {prod.nameBrand ?? "-"}
+                </td>
+
+                <td className="border text-center w-12">
                   {prod.shelfLife ?? "-"}
                 </td>
 
-                <td className="p-1 border text-center">
+                <td className="p-1 border text-center w-16">
                   {prod.salesPriceIncVAT ?? "-"}
                 </td>
 
-                <td className="p-1 border text-center text-green-600">
-                  {prod.salesQuantity || "-"}
+                {/* Target (80% avg 3M, ปัดเป็น int) */}
+                <td className="p-1 border text-center w-12 text-purple-700">
+                  {formatInt(salesTargetQty)}
                 </td>
 
-                <td className="p-1 border text-center text-red-600">
-                  {prod.withdrawQuantity || "-"}
+                {/* Sales เดือนปัจจุบันเท่านั้น + highlight ถ้าถึงเป้า */}
+                <td
+                  className={[
+                    "p-1 border text-center w-14 font-semibold",
+                    meetTarget
+                      ? "bg-green-100 text-green-700"
+                      : "text-blue-600"
+                  ].join(" ")}
+                >
+                  {salesCurrentMonthQty
+                    ? salesCurrentMonthQty.toLocaleString()
+                    : "-"}
                 </td>
 
-                <td className="p-1 border text-center">
+                {/* Sales Qty เดิม (90 วัน / 3M) */}
+                <td className="p-1 border text-center w-14 text-green-600">
+                  {prod.salesQuantity
+                    ? prod.salesQuantity.toLocaleString()
+                    : "-"}
+                </td>
+
+                <td className="p-1 border text-center w-14 text-red-600">
+                  {prod.withdrawQuantity
+                    ? prod.withdrawQuantity.toLocaleString()
+                    : "-"}
+                </td>
+
+                <td className="p-1 border text-center w-12">
                   {prod.minStore ?? "-"}
                 </td>
 
-                <td className="p-1 border text-center">
+                <td className="p-1 border text-center w-12">
                   {prod.maxStore ?? "-"}
                 </td>
 
-                <td className="p-1 border text-center text-yellow-700">
-                  {prod.stockQuantity ?? "-"}
+                {/* Stock Qty แสดงตามจริง (ติดลบได้) */}
+                <td className="p-1 border text-center w-14 text-yellow-700">
+                  {prod.stockQuantity !== null &&
+                  prod.stockQuantity !== undefined
+                    ? prod.stockQuantity.toLocaleString()
+                    : "-"}
                 </td>
 
-                <td className="p-1 border text-right">
+                <td className="p-1 border text-right w-16">
                   {format(prod.purchasePriceExcVAT)}
                 </td>
 
-                <td className="p-1 border text-right text-yellow-600">
+                {/* Stock Cost = 0 ถ้า stockQuantity < 0 */}
+                <td className="p-1 border text-right w-20 text-yellow-600">
                   {format(cost)}
                 </td>
 
-                <td className="p-1 border text-right text-green-600">
+                <td className="p-1 border text-right w-24 text-green-600">
                   {prod.salesTotalPrice
                     ? prod.salesTotalPrice.toFixed(2)
                     : "-"}
                 </td>
 
-                <td className="p-1 border text-right text-orange-600">
+                <td className="p-1 border text-right w-24 text-orange-600">
                   {format(prod.withdrawValue)}
                 </td>
 
-                <td className="border p-1 text-center">
+                <td className="border p-1 text-center w-16">
                   <button
                     onClick={() => handleDeleteClick(prod)}
                     className="text-red-600 hover:underline"
@@ -375,7 +463,7 @@ const ShelfTable = ({
         ) : (
           <tr>
             <td
-              colSpan={16}
+              colSpan={19}
               className="p-2 border text-center italic text-gray-500"
             >
               No products in this Row
@@ -385,24 +473,30 @@ const ShelfTable = ({
 
         {/* Row total */}
         <tr className="bg-gray-100 font-semibold">
-          <td colSpan={11}></td>
+          {/* ข้ามคอลัมน์ข้อมูลทั้งหมดก่อน Unit Cost */}
+          <td colSpan={12}></td>
 
-          <td colSpan={2} className="p-2 border text-right">
+          {/* Label */}
+          <td colSpan={3} className="p-2 border text-right">
             Total Row {rowNo}
           </td>
 
+          {/* Stock Cost */}
           <td className="p-2 border text-yellow-600 text-right">
             {format(totalRowStock)}
           </td>
 
+          {/* Sales Amount */}
           <td className="p-2 border text-green-700 text-right">
             {format(totalRowSales)}
           </td>
 
+          {/* Withdraw Amount */}
           <td className="p-2 border text-orange-600 text-right">
             {format(totalRowWithdraw)}
           </td>
 
+          {/* Delete col */}
           <td></td>
         </tr>
       </React.Fragment>
@@ -438,25 +532,50 @@ const ShelfTable = ({
         <table className="min-w-[1200px] w-full border text-xs text-gray-700">
           <thead className="bg-gray-100">
             <tr>
-              <th className="border p-1 text-center">ID</th>
-              <th className="border p-1 text-center">Barcode</th>
-              <th className="border p-1 text-center">Code</th>
-              <th className="border p-1 text-center w-40">Name</th>
-              <th className="border p-1 text-center w-28">Brand</th>
-              <th className="border p-1 text-center">ShelfLife</th>
-              <th className="border p-1 text-center">RSP</th>
-              <th className="border p-1 text-center">Sales Qty</th>
-              <th className="border p-1 text-center">Withdraw Qty</th>
-              <th className="border p-1 text-center">MIN</th>
-              <th className="border p-1 text-center">MAX</th>
-              <th className="border p-1 text-center">Stock Qty</th>
-              <th className="border p-1 text-center">Unit Cost</th>
-              <th className="border p-1 text-center">Stock Cost</th>
-              <th className="border p-1 text-center w-20">Sales Amount</th>
+              <th className="border p-1 text-center w-10">ID</th>
+              <th className="border p-1 text-center w-24">Barcode</th>
+              <th className="border p-1 text-center w-16">Code</th>
+              <th className="border p-1 text-center w-44">
+                Name
+              </th>
+
+              <th className="border p-1 text-center w-32">Brand</th>
+              <th className="border text-center w-12">Shelf</th>
+              <th className="border p-1 text-center w-16">RSP</th>
+
+              {/* Target / Sales เดือนปัจจุบัน */}
+              <th className="border p-1 text-center w-12">Target</th>
+              <th className="border p-1 text-center w-14">Sales M</th>
+
+              {/* เดิม: Sales Qty (90 วัน / 3M) */}
+              <th className="border p-1 text-center w-14">Sales 3M</th>
+              <th className="border p-1 text-center w-14">W. Qty</th>
+              <th className="border p-1 text-center w-12">MIN</th>
+              <th className="border p-1 text-center w-12">MAX</th>
+              <th className="border p-1 text-center w-10">
+                <span className="block leading-tight">Stock</span>
+                <span className="block leading-tight">Qty</span>
+              </th>
+
+              <th className="border p-1 text-center w-10">
+                <span className="block leading-tight">Unit</span>
+                <span className="block leading-tight">Cost</span>
+              </th>
+
               <th className="border p-1 text-center w-20">
+                <span className="block leading-tight">Stock</span>
+                <span className="block leading-tight">Cost</span>
+              </th>
+
+              <th className="border p-1 text-center w-24">
+                <span className="block leading-tight">Sales</span>
+                <span className="block leading-tight">Amount</span>
+              </th>
+
+              <th className="border p-1 text-center w-24">
                 Withdraw Amount
               </th>
-              <th className="border p-1 text-center">Delete</th>
+              <th className="border p-1 text-center w-16">Delete</th>
             </tr>
           </thead>
 
@@ -468,7 +587,7 @@ const ShelfTable = ({
 
             {/* Total all rows */}
             <tr className="bg-gray-200 font-semibold">
-              <td colSpan={13} className="p-2 border text-right">
+              <td colSpan={15} className="p-2 border text-right">
                 Total for All Rows
               </td>
 

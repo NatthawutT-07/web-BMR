@@ -286,26 +286,11 @@ const ProductSalesMatrix = ({ detail }) => {
   return (
     <section className="bg-white/90 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-3 md:p-4 mt-4 space-y-4">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 border-b border-slate-100 pb-3 mb-1">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 border-b border-slate-100  mb-1">
         <div>
           <h2 className="text-sm md:text-base font-semibold text-slate-800">
             Monthly quantity by year
           </h2>
-          <p className="text-[11px] text-slate-500">
-            ตารางเปรียบเทียบ <span className="font-semibold">Quantity</span>{" "}
-            รายเดือนของสินค้า 1 ชิ้น แยกตามปี (row = เดือน Jan–Dec)
-          </p>
-          <div className="mt-2 text-[11px] text-slate-600">
-            Product:{" "}
-            <span className="font-semibold text-slate-800">
-              {product.product_code} • {product.product_name}
-            </span>
-            {product.product_brand && (
-              <span className="ml-1 text-slate-500">
-                ({product.product_brand})
-              </span>
-            )}
-          </div>
           <div className="mt-1 text-[11px] text-slate-500">
             Range:{" "}
             <span className="font-semibold text-slate-800">
@@ -343,17 +328,10 @@ const ProductSalesMatrix = ({ detail }) => {
       {matrix && (
         <div className="space-y-3">
           {/* Summary: all branches + selected branch */}
-          <div className="text-[11px] text-slate-600">
-            Showing quantity for branch{" "}
-            <span className="font-semibold text-slate-800">
-              {selectedBranch?.code || "-"} {selectedBranch?.name || ""}
-            </span>
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {renderSummaryBox("All branches (total quantity by year)", matrix.allYearSummary)}
+            {renderSummaryBox("All branches (total quantity)", matrix.allYearSummary)}
             {renderSummaryBox(
-              "Selected branch (total quantity by year)",
+              "Selected branch (total quantity)",
               matrix.branchYearSummary
             )}
           </div>

@@ -584,13 +584,13 @@ const TopFiltersAndKpi = ({
                 <div className="space-y-3">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <KpiCard
-                            title="Net Sales (ยอดขายสุทธิรายปี)"
+                            title="Net Sales"
                             metric={netSalesMetric}
                             highlight
                         />
 
                         <KpiCard
-                            title="Bill Count (จำนวนบิลสุทธิรายปี)"
+                            title="Bill Count"
                             metric={billCountMetric}
                             format={(v) =>
                                 v.toLocaleString(undefined, {
@@ -600,24 +600,24 @@ const TopFiltersAndKpi = ({
                         />
 
                         <KpiCard
-                            title="Average per Bill (เฉลี่ย/บิล)"
+                            title="Average per Bill"
                             metric={avgPerBillMetric}
                         />
 
                         <KpiCard
-                            title="Total Discounts (ส่วนลดรวมรายปี)"
+                            title="Total Discounts"
                             metric={discountMetric}
                             variant="discount"
                         />
 
                         <KpiCard
-                            title="Total Rounding (Rounding รวมรายปี)"
+                            title="Total Rounding"
                             metric={roundingMetric}
                             variant="rounding"
                         />
 
                         <KpiCard
-                            title="Daily Average Sales (เฉลี่ยรายวันต่อปี)"
+                            title="Daily Average Sales"
                             metric={dailyAvgMetric}
                         />
                     </div>

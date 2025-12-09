@@ -151,10 +151,9 @@ const ProductDateFilter = ({
               onClick={onApply}
               disabled={disabled}
               className={`inline-flex items-center justify-center px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all
-                ${
-                  disabled
-                    ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-md active:scale-[0.98]"
+                ${disabled
+                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                  : "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-md active:scale-[0.98]"
                 }`}
             >
               Show Data
@@ -227,7 +226,7 @@ const ProductDateFilter = ({
           <button
             type="button"
             onClick={() => applyPreset("all")}
-            className="px-3 py-1.5 rounded-full border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium transition text-xs"
+            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-indigo-50 text-slate-700 hover:text-indigo-700 transition text-xs"
           >
             All
           </button>
@@ -333,17 +332,9 @@ const MainSalesProduct = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50/80 px-3 py-4 md:px-6 md:py-6 text-sm">
+    <div className="min-h-screen bg-slate-50/80 px-3 py-4 md:px-6 md:py-2 text-sm">
       <div className="max-w-6xl mx-auto">
-        {/* Header */}
-        <div className="mb-4 md:mb-6">
-          <h1 className="text-base md:text-lg font-semibold text-slate-800">
-            Product sales by branch
-          </h1>
-          <p className="text-xs text-slate-500 mt-1">
-            เลือกสินค้าหนึ่งตัว → ดูยอด quantity รายเดือน แยกตามปี และเทียบ diff
-          </p>
-        </div>
+
 
         {/* Layout: ซ้าย (ค้นหา) / ขวา (ฟิลเตอร์ + ตาราง) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
@@ -455,11 +446,10 @@ const MainSalesProduct = () => {
                       key={item.id}
                       type="button"
                       onClick={() => handleSelectProduct(item)}
-                      className={`w-full text-left px-2.5 py-2 rounded-lg border text-xs transition-colors ${
-                        isActive
-                          ? "border-indigo-300 bg-indigo-50"
-                          : "border-slate-200 bg-white hover:bg-slate-50"
-                      }`}
+                      className={`w-full text-left px-2.5 py-2 rounded-lg border text-xs transition-colors ${isActive
+                        ? "border-indigo-300 bg-indigo-50"
+                        : "border-slate-200 bg-white hover:bg-slate-50"
+                        }`}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="truncate">
@@ -487,16 +477,7 @@ const MainSalesProduct = () => {
           <section className="lg:col-span-8 space-y-4">
             {/* Product detail + Date Filter (แบบหน้า KPI) */}
             <div className="bg-white/90 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-3 md:p-4 space-y-3">
-              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                <div>
-                  <h2 className="text-sm font-semibold text-slate-800">
-                    Product detail
-                  </h2>
-                  <p className="text-[11px] text-slate-500">
-                    เลือกช่วงเวลา แล้วเลือกสินค้าทางซ้ายเพื่อโหลดตาราง
-                  </p>
-                </div>
-              </div>
+
 
               <ProductDateFilter
                 start={start}
@@ -522,7 +503,7 @@ const MainSalesProduct = () => {
                 </div>
               ) : (
                 <p className="text-[11px] text-slate-500 border-t border-slate-100 pt-2 mt-1">
-                  กรุณาเลือกสินค้าจากฝั่งซ้าย
+
                 </p>
               )}
 

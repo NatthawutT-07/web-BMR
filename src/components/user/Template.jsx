@@ -6,6 +6,37 @@ import { getTemplateAndProduct } from "../../api/users/home";
 const ShelfCardUser = React.lazy(() => import("./second/ShelfCardUser"));
 const ShelfFilterUser = React.lazy(() => import("./ShelfFilterUser"));
 
+/* ================================
+ * Helper: ช่วงเดือนตามเวลาไทย
+ * - currentStart  = วันแรกของเดือนปัจจุบัน 00:00 (เวลาไทย)
+ * - prev3Start    = วันแรกของเดือนย้อนหลังไป 3 เดือน 00:00 (เวลาไทย)
+ * ================================ */
+const getBangkokMonthWindows = () => {
+  const now = new Date();
+  const bangkokNow = new Date(
+    now.toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
+  );
+
+  // วันแรกของเดือนปัจจุบัน
+  const currentStart = new Date(bangkokNow);
+  currentStart.setDate(1);
+  currentStart.setHours(0, 0, 0, 0);
+
+  // วันแรกของเดือนย้อนหลัง 3 เดือน
+  const prev3Start = new Date(currentStart);
+  prev3Start.setMonth(prev3Start.getMonth() - 3);
+
+  return { currentStart, prev3Start };
+};
+
+// แปลง Date → MM/YYYY
+const formatMMYYYY = (d) => {
+  if (!d) return "";
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${month}/${year}`;
+};
+
 const Template = () => {
   const storecode = useBmrStore((s) => s.user?.storecode);
 
@@ -13,6 +44,19 @@ const Template = () => {
   const [selectedShelves, setSelectedShelves] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
+
+  // 🕒 ช่วงเดือนสำหรับ logic ใหม่ (3 เดือนก่อนหน้า + เดือนปัจจุบัน)
+  const { currentStart, prev3Start } = useMemo(
+    () => getBangkokMonthWindows(),
+    []
+  );
+
+  // เดือนสุดท้ายของช่วง 3 เดือนก่อนหน้า = เดือนก่อนหน้าเดือนปัจจุบัน
+  const prev3EndMonth = useMemo(() => {
+    const d = new Date(currentStart);
+    d.setMonth(d.getMonth() - 1);
+    return d;
+  }, [currentStart]);
 
   // โหลด Template + Product
   useEffect(() => {
@@ -57,7 +101,9 @@ const Template = () => {
         fullName: items[0]?.fullName || "N/A",
         rowQty,
         shelfProducts: items.sort(
-          (a, b) => (a.rowNo || 0) - (b.rowNo || 0) || (a.index || 0) - (b.index || 0)
+          (a, b) =>
+            (a.rowNo || 0) - (b.rowNo || 0) ||
+            (a.index || 0) - (b.index || 0)
         ),
       };
     });
@@ -95,22 +141,14 @@ const Template = () => {
   return (
     <div className="min-h-screen bg-slate-100 print:bg-white">
       <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
-
         {/* HEADER + ปุ่ม PRINT (ซ่อนปุ่มตอนพิมพ์) */}
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print:gap-1">
           <div>
-            <h1 className="text-lg sm:text-2xl font-semibold text-slate-800">
-              POG – Shelf Check
-            </h1>
             <p className="text-xs sm:text-sm text-slate-500">
               สาขา:{" "}
               <span className="font-semibold text-slate-700">
                 {storecode || "-"}
               </span>{" "}
-              | ใช้สำหรับตรวจสอบสินค้า, Min/Max และสต็อกหน้าร้าน
-            </p>
-            <p className="text-[11px] sm:text-xs text-slate-400 print:hidden">
-              เลือกชั้นวาง / ค้นหา แล้วกด “พิมพ์ PDF” หากต้องการเช็คบนกระดาษ
             </p>
           </div>
 
@@ -129,7 +167,7 @@ const Template = () => {
         {!loading && groupedShelves.length > 0 && (
           <section className="w-full flex justify-center print:hidden">
             <div
-              className="bg-white p-4 rounded-lg shadow-sm border 
+              className="bg-white p-4 rounded-lg shadow-sm border justify-center
               flex flex-col md:flex-row gap-4 mx-auto w-full max-w-4xl"
             >
               {/* IMAGE */}
@@ -147,9 +185,18 @@ const Template = () => {
                 className="bg-gray-50 border rounded p-3 shadow-inner 
                 max-h-[420px] md:max-h-[480px] w-full md:w-[260px] overflow-y-auto"
               >
-                <h3 className="font-semibold text-gray-700 mb-2 text-sm text-center">
-                  โครงสร้าง Shelf (สรุป)
+                <h3 className="font-semibold text-gray-700 mb-1 text-sm text-center">
+                  โครงสร้าง Shelf
                 </h3>
+
+                {/* ช่วงเวลาสำหรับ logic ใหม่ */}
+                <p className="text-[11px] text-center text-slate-500 mb-1">
+                  Target ใช้ยอดขาย 3 เดือนก่อนหน้า:{" "}
+                  {formatMMYYYY(prev3Start)} - {formatMMYYYY(prev3EndMonth)}
+                </p>
+                <p className="text-[11px] text-center text-slate-500 mb-2">
+                  ยอดขายปัจจุบัน (เดือนนี้): {formatMMYYYY(currentStart)}
+                </p>
 
                 {groupedShelves.map((shelf) => (
                   <div
@@ -162,7 +209,7 @@ const Template = () => {
 
                     <div className="ml-2 mt-1 text-xs leading-tight">
                       <div className="font-semibold text-gray-600">
-                        จำนวนแถว: {shelf.rowQty}
+                        จำนวน : {shelf.rowQty} เเถว
                       </div>
 
                       {Array.from({ length: shelf.rowQty }).map((_, idx) => {

@@ -34,13 +34,6 @@ function MainNav() {
 
           {/* ขวา: ปุ่ม Home + Logout */}
           <div className="flex items-center gap-2 sm:gap-3">
-            <Link
-              to="/"
-              className="hidden sm:inline-flex px-3 py-1.5 rounded-md text-xs sm:text-sm bg-emerald-500 hover:bg-emerald-400 transition-colors"
-            >
-              Home
-            </Link>
-
             <button
               type="button"
               onClick={clearStorageAndLogout}

@@ -16,6 +16,37 @@ const ShelfFilter = lazy(() => import("./second/ShelfFilter"));
 const ShelfCard = lazy(() => import("./second/ShelfCard"));
 const BranchSelector = lazy(() => import("./second/BranchSelector"));
 
+/* ================================
+ * Helper: ช่วงเวลา 90 วันย้อนหลัง (ตามเวลาไทย, yesterday = end)
+ * ================================ */
+const getBangkok90DaysRange = () => {
+  const now = new Date();
+  const bangkokNow = new Date(
+    now.toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
+  );
+
+  // yesterday = end
+  const end = new Date(bangkokNow);
+  end.setDate(end.getDate() - 1);
+  end.setHours(23, 59, 59, 999);
+
+  // start = yesterday - 89 วัน (รวมทั้งหมด 90 วัน)
+  const start = new Date(end);
+  start.setDate(start.getDate() - 89);
+  start.setHours(0, 0, 0, 0);
+
+  return { start, end };
+};
+
+// แปลง Date → DD/MM/YYYY
+const formatDDMMYYYY = (d) => {
+  if (!d) return "";
+  const day = String(d.getDate()).padStart(2, "0");
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const year = d.getFullYear();
+  return `${day}/${month}/${year}`;
+};
+
 const ShelfManager = () => {
   const accessToken = useBmrStore((s) => s.accessToken);
 
@@ -46,6 +77,20 @@ const ShelfManager = () => {
 
   const captureRef = useRef(null);
 
+  // 🕒 ช่วงเวลายอดขาย 90 วัน (ตาม logic backend)
+  const { start: salesStart, end: salesEnd } = useMemo(
+    () => getBangkok90DaysRange(),
+    []
+  );
+
+  // 🟢 ใช้เฉพาะ product ของ "สาขาที่กด OK แล้ว"
+  const branchProduct = useMemo(() => {
+    if (!submittedBranchCode) return [];
+    return (product || []).filter(
+      (p) => String(p.branchCode) === String(submittedBranchCode)
+    );
+  }, [product, submittedBranchCode]);
+
   // initial load branches + templates
   useEffect(() => {
     if (!accessToken) return;
@@ -53,16 +98,16 @@ const ShelfManager = () => {
     fetchTemplate();
   }, [accessToken, fetchBranches, fetchTemplate]);
 
-  // build summary by shelf from product list
+  // 🟢 summary ใช้เฉพาะ branchProduct
   useEffect(() => {
-    if (!product || product.length === 0) {
+    if (!branchProduct || branchProduct.length === 0) {
       setBranchSummary([]);
       return;
     }
 
     const summaryMap = {};
 
-    product.forEach((p) => {
+    branchProduct.forEach((p) => {
       const shelf = p.shelfCode || p.shelf_code;
       if (!shelf) return;
 
@@ -76,7 +121,8 @@ const ShelfManager = () => {
       }
 
       const stockQty = p.stockQuantity ?? p.stock_qty ?? 0;
-      const purchasePrice = p.purchasePriceExcVAT ?? p.purchase_price_ex_vat ?? 0;
+      const purchasePrice =
+        p.purchasePriceExcVAT ?? p.purchase_price_ex_vat ?? 0;
       const salesTotal = p.salesTotalPrice ?? p.sales_total_price ?? 0;
       const withdrawVal = p.withdrawValue ?? p.withdraw_value ?? 0;
 
@@ -104,7 +150,7 @@ const ShelfManager = () => {
 
     summaryList.push(totalRow);
     setBranchSummary(summaryList);
-  }, [product]);
+  }, [branchProduct]);
 
   // submit branch
   const handleSubmit = (e) => {
@@ -122,18 +168,20 @@ const ShelfManager = () => {
     );
     setFilteredTemplate(matched);
 
+    // ตั้งสาขาที่ใช้งานจริง
     setSubmittedBranchCode(selectedBranchCode);
+
+    // reset filter/ search
     setSelectedShelves([]);
     setSearchText("");
     setSearchResult([]);
+    setBranchSummary([]);
   };
 
   // filter shelves
   const toggleShelfFilter = (code) => {
     setSelectedShelves((prev) =>
-      prev.includes(code)
-        ? prev.filter((c) => c !== code)
-        : [...prev, code]
+      prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]
     );
   };
 
@@ -154,7 +202,7 @@ const ShelfManager = () => {
     });
   }, [filteredTemplate, selectedShelves]);
 
-  // search product by brand / barcode
+  // search product by brand / barcode (ใช้เฉพาะ branchProduct)
   const handleSearch = (value) => {
     setSearchText(value);
 
@@ -165,7 +213,7 @@ const ShelfManager = () => {
 
     const text = value.toLowerCase();
 
-    const found = (product || [])
+    const found = (branchProduct || [])
       .filter((p) => {
         const brand = (p.nameBrand || p.product_brand || "").toLowerCase();
         const barcode = (p.barcode || p.product_code || "").toString();
@@ -186,30 +234,27 @@ const ShelfManager = () => {
     refreshDataProduct(code);
   };
 
-  // ==== DOWNLOAD XLSX (รองรับไทย + ไม่ตัด 0 ข้างหน้า code) ====
+  // ==== DOWNLOAD XLSX: ใช้ branchProduct เท่านั้น ====
   const handleDownloadShelfXlsx = () => {
-    const code = submittedBranchCode || selectedBranchCode;
-    if (!code || !product || product.length === 0) return;
+    const code = submittedBranchCode;
+    if (!code || !branchProduct || branchProduct.length === 0) return;
 
     setDownloadLoading(true);
     try {
-      // ดึง key ทั้งหมดจาก object ใน product เพื่อเป็น column
+      // ดึง key ทั้งหมดจาก object ใน branchProduct เพื่อเป็น column
       const headerSet = new Set();
-      product.forEach((row) => {
+      branchProduct.forEach((row) => {
         if (!row) return;
         Object.keys(row).forEach((k) => headerSet.add(k));
       });
       const headers = Array.from(headerSet);
 
       // สร้าง array ของ object ตาม headers (ให้ทุก row มี column เท่ากัน)
-      const rows = product.map((row) => {
+      const rows = branchProduct.map((row) => {
         const obj = {};
         headers.forEach((h) => {
           const v = row ? row[h] : "";
-          obj[h] =
-            v === undefined || v === null
-              ? ""
-              : v;
+          obj[h] = v === undefined || v === null ? "" : v;
         });
         return obj;
       });
@@ -239,7 +284,7 @@ const ShelfManager = () => {
           }
         }
 
-        // บังคับให้ทั้ง column เหล่านั้นเป็น text (t = 's') เพื่อไม่ตัด 0 ข้างหน้า
+        // บังคับให้ทั้ง column เหล่านั้นเป็น text (ตัด 0 ข้างหน้าออกไม่ได้)
         textCols.forEach((col) => {
           for (let R = headerRowIndex + 1; R <= range.e.r; ++R) {
             const addr = XLSX.utils.encode_cell({ r: R, c: col });
@@ -265,7 +310,6 @@ const ShelfManager = () => {
     }
   };
 
-
   const imageUrl = submittedBranchCode
     ? `/images/branch/${submittedBranchCode}.png`
     : "";
@@ -289,10 +333,9 @@ const ShelfManager = () => {
           okLocked={okLocked}
           onSubmit={handleSubmit}
           onRefreshProduct={handleRefreshProduct}
-          onDownload={handleDownloadShelfXlsx}   
+          onDownload={handleDownloadShelfXlsx}
           downloadLoading={downloadLoading}
         />
-
       </Suspense>
 
       {(loading || actionLoading) && (
@@ -317,9 +360,17 @@ const ShelfManager = () => {
             </div>
 
             <div className="bg-gray-50 border rounded p-3 shadow-sm max-h-[450px] w-[400px] overflow-y-auto">
-              <h3 className="text-sm font-semibold text-center mb-2">
+              <h3 className="text-sm font-semibold text-center mb-1">
                 Summary
               </h3>
+
+              {/* ช่วงเวลา start - end ของยอดขาย 90 วัน */}
+              {salesStart && salesEnd && (
+                <p className="text-[11px] text-center text-gray-500 mb-2">
+                  Sales period: {formatDDMMYYYY(salesStart)} -{" "}
+                  {formatDDMMYYYY(salesEnd)}
+                </p>
+              )}
 
               <div className="grid grid-cols-4 text-xs font-semibold border-b pb-2 mb-2">
                 <span>Shelf</span>
@@ -332,10 +383,11 @@ const ShelfManager = () => {
                 {branchSummary.map((s) => (
                   <div
                     key={s.shelfCode}
-                    className={`grid grid-cols-4 px-2 py-2 ${s.shelfCode === "TOTAL"
-                      ? "bg-gray-100 font-semibold sticky bottom-0"
-                      : ""
-                      }`}
+                    className={`grid grid-cols-4 px-2 py-2 ${
+                      s.shelfCode === "TOTAL"
+                        ? "bg-gray-100 font-semibold sticky bottom-0"
+                        : ""
+                    }`}
                   >
                     <span>{s.shelfCode}</span>
                     <span className="text-right text-yellow-700">
@@ -429,7 +481,8 @@ const ShelfManager = () => {
               <ShelfCard
                 key={t.shelfCode}
                 template={t}
-                product={product}
+                // ใช้เฉพาะ product ของสาขาที่กด OK แล้ว
+                product={branchProduct}
                 onAdd={(item) => handleAddProduct(item)}
                 onDelete={(p) => handleDelete(p)}
                 onUpdateProducts={(updated) => handleUpdateProducts(updated)}
