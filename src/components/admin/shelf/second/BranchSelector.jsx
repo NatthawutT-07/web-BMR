@@ -85,7 +85,7 @@ const BranchSelector = React.memo(
           >
             🔄 Refresh Product
           </button> */}
-
+{/* 
           <button
             type="button"
             onClick={handleDownload}
@@ -97,7 +97,7 @@ const BranchSelector = React.memo(
             }`}
           >
             {downloadLoading ? "⬇️ Downloading..." : "⬇️ Download XLSX"}
-          </button>
+          </button> */}
         </div>
       </form>
     );

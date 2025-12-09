@@ -348,7 +348,7 @@ const ShelfManager = () => {
       <div ref={captureRef}>
         {/* SUMMARY + IMAGE */}
         {submittedBranchCode && (
-          <div className="bg-white p-4 rounded-lg shadow-md flex flex-col sm:flex-row gap-4 mx-auto max-w-4xl justify-center">
+          <div className="bg-white p-4 rounded-lg shadow-md flex flex-col sm:flex-row gap-4 mx-auto max-w-4xl justify-center mb-4">
             <div className="flex justify-center sm:w-[260px]">
               {imageUrl && (
                 <img

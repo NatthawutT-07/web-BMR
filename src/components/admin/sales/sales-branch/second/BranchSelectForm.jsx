@@ -1,7 +1,13 @@
 import React, { useMemo } from "react";
 
 const BranchSelectForm = React.memo(
-  ({ branches, selectedBranchCode, setSelectedBranchCode, onSubmit }) => {
+  ({
+    branches,
+    selectedBranchCode,
+    setSelectedBranchCode,
+    onSubmit,
+    submitLocked, // 🆕 รับสถานะล็อกปุ่ม
+  }) => {
     // Memoize dropdown options
     const branchOptions = useMemo(() => {
       return branches.map((b, idx) => (
@@ -41,7 +47,8 @@ const BranchSelectForm = React.memo(
             <button
               type="submit"
               className="mt-2 md:mt-0 inline-flex items-center justify-center px-4 py-2 text-xs md:text-sm font-semibold rounded-lg bg-indigo-600 text-white hover:bg-indigo-500 active:bg-indigo-700 shadow-sm transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              disabled={!selectedBranchCode}
+              // 🆕 เมื่อเลือกสาขาแล้ว 1 ครั้ง ปุ่มจะ disabled จนกว่าจะเปลี่ยนสาขา
+              disabled={!selectedBranchCode || submitLocked}
             >
               OK
             </button>

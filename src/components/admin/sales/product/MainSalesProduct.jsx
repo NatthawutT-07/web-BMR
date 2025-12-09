@@ -32,7 +32,6 @@ const getDefaultAllRange = () => {
 
   const start = new Date(2024, 0, 1, 0, 0, 0, 0);
 
-  // กันเคสข้อมูลก่อนปี 2024 (ไม่ค่อยน่ามี แต่กันไว้)
   if (end < start) {
     return {
       start: toLocalISO(start),
@@ -52,8 +51,7 @@ const ProductDateFilter = ({
   end,
   setStart,
   setEnd,
-  onApply,
-  disabled,
+  onRangeChange, // 🆕 แจ้ง parent เมื่อช่วงวันที่เปลี่ยน
 }) => {
   // min = 1/1/2024
   const minDate = "2024-01-01";
@@ -73,6 +71,24 @@ const ProductDateFilter = ({
     if (min && d < min) return minDate;
     if (max && d > max) return maxDate;
     return toLocalISO(d);
+  };
+
+  const notifyRangeChange = (newStart, newEnd) => {
+    if (typeof onRangeChange === "function") {
+      onRangeChange(newStart, newEnd);
+    }
+  };
+
+  const handleChangeStart = (value) => {
+    const s = clampDate(value);
+    setStart(s);
+    notifyRangeChange(s, end);
+  };
+
+  const handleChangeEnd = (value) => {
+    const e = clampDate(value);
+    setEnd(e);
+    notifyRangeChange(start, e);
   };
 
   const applyPreset = (type) => {
@@ -108,12 +124,13 @@ const ProductDateFilter = ({
 
     setStart(startStr);
     setEnd(endStr);
+    notifyRangeChange(startStr, endStr); // 🆕 แจ้ง parent ทุกครั้งที่กด preset
   };
 
   return (
     <div className="bg-white/90 backdrop-blur shadow-sm rounded-xl border border-slate-200 px-4 py-3 md:px-6 md:py-4">
       <div className="space-y-3">
-        {/* แถว: Start / End / Show Data */}
+        {/* แถว: Start / End */}
         <div className="flex flex-wrap gap-3 items-end">
           <div className="flex flex-col">
             <label className="text-xs font-medium text-slate-600 mb-1">
@@ -124,7 +141,7 @@ const ProductDateFilter = ({
               value={start}
               min={minDate}
               max={maxDate}
-              onChange={(e) => setStart(clampDate(e.target.value))}
+              onChange={(e) => handleChangeStart(e.target.value)}
               className="border border-slate-200 px-3 py-2 rounded-lg w-full shadow-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:border-indigo-500"
             />
           </div>
@@ -138,32 +155,15 @@ const ProductDateFilter = ({
               value={end}
               min={minDate}
               max={maxDate}
-              onChange={(e) => setEnd(clampDate(e.target.value))}
+              onChange={(e) => handleChangeEnd(e.target.value)}
               className="border border-slate-200 px-3 py-2 rounded-lg w-full shadow-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/70 focus:border-indigo-500"
             />
-          </div>
-
-          <div className="flex flex-col">
-            <label className="text-xs font-medium text-transparent mb-1">
-              .
-            </label>
-            <button
-              onClick={onApply}
-              disabled={disabled}
-              className={`inline-flex items-center justify-center px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all
-                ${disabled
-                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                  : "bg-indigo-600 text-white hover:bg-indigo-700 hover:shadow-md active:scale-[0.98]"
-                }`}
-            >
-              Show Data
-            </button>
           </div>
         </div>
 
         {/* แสดงช่วงวันที่แบบ dd/mm/yyyy */}
         <div className="text-[11px] text-slate-500">
-          ช่วงวันที่ที่เลือก:{" "}
+          ช่วงวันที่ที่ใช้ในการดูยอดขาย:{" "}
           <span className="font-medium text-slate-700">
             {formatDisplayDate(start)} - {formatDisplayDate(end)}
           </span>
@@ -230,6 +230,10 @@ const ProductDateFilter = ({
           >
             All
           </button>
+        </div>
+
+        <div className="text-[11px] text-slate-400">
+          หลังจากเลือกสินค้าแล้ว ระบบจะใช้ช่วงวันที่นี้ในการคำนวณให้อัตโนมัติ
         </div>
       </div>
     </div>
@@ -305,9 +309,10 @@ const MainSalesProduct = () => {
     }
   };
 
-  const handleApplyFilter = async () => {
+  // เมื่อเปลี่ยนช่วงวันที่ ถ้ามีสินค้าเลือกอยู่แล้ว → reload detail ให้อัตโนมัติ
+  const handleRangeChange = async (s, e) => {
     if (!selectedProduct) return;
-    await loadProductDetail(selectedProduct, start, end);
+    await loadProductDetail(selectedProduct, s, e);
   };
 
   const handleSelectProduct = async (item) => {
@@ -334,12 +339,18 @@ const MainSalesProduct = () => {
   return (
     <div className="min-h-screen bg-slate-50/80 px-3 py-4 md:px-6 md:py-2 text-sm">
       <div className="max-w-6xl mx-auto">
-
-
-        {/* Layout: ซ้าย (ค้นหา) / ขวา (ฟิลเตอร์ + ตาราง) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6">
-          {/* LEFT: Search + list */}
+          {/* LEFT: Date filter + Search + list */}
           <section className="lg:col-span-4 space-y-4">
+            {/* Date Filter อยู่บนสุด */}
+            <ProductDateFilter
+              start={start}
+              end={end}
+              setStart={setStart}
+              setEnd={setEnd}
+              onRangeChange={handleRangeChange}
+            />
+
             {/* Search box */}
             <form
               onSubmit={handleSearch}
@@ -380,7 +391,9 @@ const MainSalesProduct = () => {
               </div>
 
               {searchError && (
-                <p className="text-[11px] text-red-500 mt-1">{searchError}</p>
+                <p className="text-[11px] text-red-500 mt-1">
+                  {searchError}
+                </p>
               )}
 
               <div className="flex items-center justify-between text-[11px] text-slate-500 mt-1">
@@ -447,8 +460,8 @@ const MainSalesProduct = () => {
                       type="button"
                       onClick={() => handleSelectProduct(item)}
                       className={`w-full text-left px-2.5 py-2 rounded-lg border text-xs transition-colors ${isActive
-                        ? "border-indigo-300 bg-indigo-50"
-                        : "border-slate-200 bg-white hover:bg-slate-50"
+                          ? "border-indigo-300 bg-indigo-50"
+                          : "border-slate-200 bg-white hover:bg-slate-50"
                         }`}
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -473,51 +486,8 @@ const MainSalesProduct = () => {
             </div>
           </section>
 
-          {/* RIGHT: Filter + detail + matrix */}
+          {/* RIGHT: Detail + matrix */}
           <section className="lg:col-span-8 space-y-4">
-            {/* Product detail + Date Filter (แบบหน้า KPI) */}
-            <div className="bg-white/90 backdrop-blur rounded-xl shadow-sm border border-slate-200 p-3 md:p-4 space-y-3">
-
-
-              <ProductDateFilter
-                start={start}
-                end={end}
-                setStart={setStart}
-                setEnd={setEnd}
-                onApply={handleApplyFilter}
-                disabled={!selectedProduct || detailLoading}
-              />
-
-              {selectedProduct ? (
-                <div className="text-[11px] text-slate-600 border-t border-slate-100 pt-2 mt-1">
-                  Selected product:{" "}
-                  <span className="font-semibold text-slate-800">
-                    {selectedProduct.product_code} •{" "}
-                    {selectedProduct.product_name}
-                  </span>
-                  {selectedProduct.product_brand && (
-                    <span className="ml-1 text-slate-500">
-                      ({selectedProduct.product_brand})
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <p className="text-[11px] text-slate-500 border-t border-slate-100 pt-2 mt-1">
-
-                </p>
-              )}
-
-              {detailError && (
-                <p className="text-[11px] text-red-500 mt-1">{detailError}</p>
-              )}
-
-              {detailLoading && (
-                <p className="text-[11px] text-indigo-600 mt-1">
-                  Loading product sales detail...
-                </p>
-              )}
-            </div>
-
             {/* Matrix */}
             {detail && !detailLoading && <ProductSalesMatrix detail={detail} />}
           </section>

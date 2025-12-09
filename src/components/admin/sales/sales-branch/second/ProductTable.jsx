@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 
 const fmt = (num) => {
   if (num == null || isNaN(num)) return "-";
@@ -85,7 +85,6 @@ const ProductTable = React.memo(({ title, data }) => {
 
       {/* Table */}
       <div className="overflow-x-auto">
-        {/* 🔥 เอา max-h + overflow-y-auto ออก เพื่อให้เห็นครบ 15 แถวโดยไม่ต้องสกอลในกรอบ */}
         <div className="text-xs md:text-sm">
           <table className="min-w-full">
             <thead className="bg-emerald-50 sticky top-0 z-10 text-[11px] md:text-xs text-slate-700">
@@ -178,8 +177,44 @@ const ProductTable = React.memo(({ title, data }) => {
 
 // แยกปุ่มเปลี่ยนหน้าออกมาให้โค้ดอ่านง่าย
 const PaginationControls = ({ currentPage, totalPages, onChange }) => {
-  const handlePrev = () => onChange((p) => Math.max(1, p - 1));
-  const handleNext = () => onChange((p) => Math.min(totalPages, p + 1));
+  const [inputValue, setInputValue] = useState(String(currentPage));
+
+  // sync value ในช่องกับหน้า current
+  useEffect(() => {
+    setInputValue(String(currentPage));
+  }, [currentPage]);
+
+  const handlePrev = () =>
+    onChange((p) => Math.max(1, p - 1));
+
+  const handleNext = () =>
+    onChange((p) => Math.min(totalPages, p + 1));
+
+  const applyInputPage = () => {
+    let num = parseInt(inputValue, 10);
+
+    if (isNaN(num)) {
+      // ถ้าพิมพ์มั่ว ๆ ให้รีเซ็ตกลับหน้าเดิม
+      setInputValue(String(currentPage));
+      return;
+    }
+
+    if (num < 1) num = 1;
+    if (num > totalPages) num = totalPages;
+
+    onChange(num);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      applyInputPage();
+    }
+  };
+
+  const handleBlur = () => {
+    applyInputPage();
+  };
 
   return (
     <div className="flex items-center gap-2 justify-end">
@@ -193,13 +228,27 @@ const PaginationControls = ({ currentPage, totalPages, onChange }) => {
             : "border-slate-300 text-slate-700 hover:bg-slate-100"
         }`}
       >
-        Prev
+        Back
       </button>
-      <span>
-        Page{" "}
-        <span className="font-semibold text-slate-800">{currentPage}</span> /{" "}
-        <span className="font-semibold text-slate-800">{totalPages}</span>
-      </span>
+
+      <div className="flex items-center gap-1">
+        <span>Page</span>
+        <input
+          type="number"
+          min={1}
+          max={totalPages}
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onBlur={handleBlur}
+          className="w-12 px-1.5 py-1 border border-slate-300 rounded-md text-center text-[11px] md:text-xs focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
+        />
+        <span>/</span>
+        <span className="font-semibold text-slate-800">
+          {totalPages}
+        </span>
+      </div>
+
       <button
         type="button"
         onClick={handleNext}

@@ -1,5 +1,5 @@
 // src/components/admin/dashboard/second/UISections.jsx
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 // ====================== SECTION WRAPPER ======================
 export const Section = ({ title, subtitle, children, className = "" }) => (
@@ -97,9 +97,9 @@ export const ProductListTable = ({
             const absDiff = Math.abs(diff);
             const valueText = isMoney
                 ? absDiff.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                  })
                 : absDiff.toLocaleString();
             return `${sign}${valueText}`;
         }
@@ -109,9 +109,9 @@ export const ProductListTable = ({
         const absDiff = Math.abs(diff);
         const valueText = isMoney
             ? absDiff.toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            })
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+              })
             : absDiff.toLocaleString();
         return `${sign}${absPercent}% (${sign}${valueText})`;
     };
@@ -200,9 +200,9 @@ export const ProductListTable = ({
                     const absDiff = Math.abs(diff);
                     const valueText = isMoney
                         ? absDiff.toLocaleString(undefined, {
-                            minimumFractionDigits: 2,
-                            maximumFractionDigits: 2,
-                        })
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                          })
                         : absDiff.toLocaleString();
                     return `${sign}${valueText}`;
                 }
@@ -213,9 +213,9 @@ export const ProductListTable = ({
                 const absDiff = Math.abs(diff);
                 const valueText = isMoney
                     ? absDiff.toLocaleString(undefined, {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                    })
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                      })
                     : absDiff.toLocaleString();
                 return `${sign}${absPercent}% (${sign}${valueText})`;
             }
@@ -548,36 +548,107 @@ export const ProductListTable = ({
                     </span>{" "}
                     products
                 </div>
-                <div className="flex items-center gap-2">
-                    <button
-                        type="button"
-                        disabled={page <= 1}
-                        onClick={() => onPageChange(page - 1)}
-                        className={`px-2.5 py-1 rounded-lg border text-[11px] ${page <= 1
-                                ? "border-slate-200 text-slate-300 cursor-default"
-                                : "border-slate-300 text-slate-700 hover:bg-slate-100"
-                            }`}
-                    >
-                        Prev
-                    </button>
-                    <span className="text-[11px] text-slate-500">
-                        Page{" "}
-                        <span className="font-medium">{page}</span> /{" "}
-                        <span className="font-medium">{totalPages}</span>
-                    </span>
-                    <button
-                        type="button"
-                        disabled={page >= totalPages}
-                        onClick={() => onPageChange(page + 1)}
-                        className={`px-2.5 py-1 rounded-lg border text-[11px] ${page >= totalPages
-                                ? "border-slate-200 text-slate-300 cursor-default"
-                                : "border-slate-300 text-slate-700 hover:bg-slate-100"
-                            }`}
-                    >
-                        Next
-                    </button>
-                </div>
+
+                <PaginationControls
+                    page={page}
+                    totalPages={totalPages}
+                    onPageChange={onPageChange}
+                />
             </div>
+        </div>
+    );
+};
+
+// ====================== PAGINATION CONTROLS (with page input) ======================
+const PaginationControls = ({ page: currentPage, totalPages, onPageChange }) => {
+    const [inputValue, setInputValue] = useState(String(currentPage));
+
+    // Sync ช่อง input ให้ตรงกับหน้าเวลาหน้าเปลี่ยนจากข้างนอก
+    useEffect(() => {
+        setInputValue(String(currentPage));
+    }, [currentPage]);
+
+    const goPrev = () => {
+        if (currentPage <= 1) return;
+        onPageChange(currentPage - 1);
+    };
+
+    const goNext = () => {
+        if (currentPage >= totalPages) return;
+        onPageChange(currentPage + 1);
+    };
+
+    const applyInputPage = () => {
+        let num = parseInt(inputValue, 10);
+
+        if (isNaN(num)) {
+            // ถ้าพิมพ์มั่ว ๆ ให้รีเซ็ตกลับเป็นหน้าปัจจุบัน
+            setInputValue(String(currentPage));
+            return;
+        }
+
+        if (num < 1) num = 1;
+        if (num > totalPages) num = totalPages;
+
+        onPageChange(num);
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            applyInputPage();
+        }
+    };
+
+    const handleBlur = () => {
+        applyInputPage();
+    };
+
+    return (
+        <div className="flex items-center gap-2">
+            <button
+                type="button"
+                disabled={currentPage <= 1}
+                onClick={goPrev}
+                className={`px-2.5 py-1 rounded-lg border text-[11px] ${
+                    currentPage <= 1
+                        ? "border-slate-200 text-slate-300 cursor-default"
+                        : "border-slate-300 text-slate-700 hover:bg-slate-100"
+                }`}
+            >
+                Back
+            </button>
+
+            <div className="flex items-center gap-1 text-[11px] text-slate-500">
+                <span>Page</span>
+                <input
+                    type="number"
+                    min={1}
+                    max={totalPages}
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    onBlur={handleBlur}
+                    className="w-12 px-1.5 py-1 border border-slate-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                />
+                <span>/</span>
+                <span className="font-medium text-slate-800">
+                    {totalPages}
+                </span>
+            </div>
+
+            <button
+                type="button"
+                disabled={currentPage >= totalPages}
+                onClick={goNext}
+                className={`px-2.5 py-1 rounded-lg border text-[11px] ${
+                    currentPage >= totalPages
+                        ? "border-slate-200 text-slate-300 cursor-default"
+                        : "border-slate-300 text-slate-700 hover:bg-slate-100"
+                }`}
+            >
+                Next
+            </button>
         </div>
     );
 };

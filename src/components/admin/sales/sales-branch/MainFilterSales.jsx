@@ -49,12 +49,20 @@ const MainFilterSales = () => {
   // มีได้แค่ปุ่มเดียวที่ active เช่น "1/2025:day"
   const [activeButton, setActiveButton] = useState(null);
 
+  // 🆕 state สำหรับล็อกปุ่ม OK หลังจาก submit แล้ว
+  const [submitLocked, setSubmitLocked] = useState(false);
+
   /* โหลดสาขา */
   useEffect(() => {
     if (accessToken && branches.length === 0) {
       fetchListBranches();
     }
   }, [accessToken, branches.length, fetchListBranches]);
+
+  /* ทุกครั้งที่เปลี่ยนสาขา ให้ปลดล็อกปุ่ม */
+  useEffect(() => {
+    setSubmitLocked(false);
+  }, [selectedBranchCode]);
 
   /* Reset UI ทุกอย่าง */
   const resetUI = useCallback(() => {
@@ -78,9 +86,14 @@ const MainFilterSales = () => {
   const handleSelectedSubmit = useCallback(
     async (e) => {
       e.preventDefault();
-      resetUI();
 
-      if (!selectedBranchCode) return;
+      // ถ้ายังไม่ได้เลือกสาขา หรือปุ่มถูกล็อกอยู่ → ไม่ทำอะไร
+      if (!selectedBranchCode || submitLocked) return;
+
+      // ล็อกปุ่มทันทีหลังจากกด
+      setSubmitLocked(true);
+
+      resetUI();
 
       try {
         const data = await fetchBranchSales(selectedBranchCode);
@@ -97,7 +110,7 @@ const MainFilterSales = () => {
         console.error("Fetch month sales error:", err);
       }
     },
-    [selectedBranchCode, setSalesData, resetUI]
+    [selectedBranchCode, submitLocked, resetUI, setSalesData]
   );
 
   /* เมื่อคลิกปุ่ม Show ข้อมูล (Day, Month-Product, Day-Product) */
@@ -164,17 +177,16 @@ const MainFilterSales = () => {
   return (
     <div className="min-h-screen bg-slate-50/80 px-3 py-4 md:px-6 md:py-6 text-sm">
       <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
-        {/* Header */}
-
         {/* Select Branch */}
         <BranchSelectForm
           branches={branches}
           selectedBranchCode={selectedBranchCode}
           setSelectedBranchCode={setSelectedBranchCode}
           onSubmit={handleSelectedSubmit}
+          submitLocked={submitLocked} // 🆕 ส่งสถานะล็อกไปใช้ในฟอร์ม
         />
 
-        {/* MONTH SUMMARY (ไฟล์ใหม่) */}
+        {/* MONTH SUMMARY */}
         {monthRows.length > 0 && (
           <MonthlyBranchSummary
             monthRows={monthRows}
@@ -183,7 +195,7 @@ const MainFilterSales = () => {
           />
         )}
 
-        {/* DAILY SALES (ไฟล์ใหม่) */}
+        {/* DAILY SALES */}
         {showType === "day" && showDay.length > 0 && (
           <DailySalesSection
             date={date}
