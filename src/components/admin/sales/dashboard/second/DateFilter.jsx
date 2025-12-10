@@ -119,10 +119,9 @@ const DateFilter = ({
                             onClick={load}
                             disabled={disabled}
                             className={`inline-flex items-center justify-center px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all
-                                ${
-                                    disabled
-                                        ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                                        : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-[0.98]"
+                                ${disabled
+                                    ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                                    : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-[0.98]"
                                 }`}
                         >
                             Show Data
@@ -239,8 +238,13 @@ const buildYearStats = (salesByDate) => {
         stats[y].total_payment += total;
         stats[y].discount_sum += discount;
         stats[y].rounding_sum += rounding;
-        stats[y].bill_count += billCount;
+
+        // ✅ Bill Count = นับเฉพาะบิลขาย (ให้ตรงกับ backend summary.bill_count)
+        stats[y].bill_count += saleCount;
+
+        // ✅ net_bill_count = บิลขาย + บิลคืน (ใช้เป็น “จำนวนบิลทั้งหมด”)
         stats[y].net_bill_count += saleCount + returnCount;
+
     });
 
     const years = Object.keys(stats)
@@ -364,20 +368,20 @@ const KpiCard = ({ title, metric, format, highlight, variant }) => {
         format && typeof current === "number"
             ? format(current)
             : typeof current === "number"
-            ? current.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-              })
-            : "-";
+                ? current.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                })
+                : "-";
 
     const prevText =
         prevYear != null && typeof prev === "number"
             ? format
                 ? format(prev)
                 : prev.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                  })
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                })
             : "-";
 
     // ฟอร์แมต diff text
@@ -386,19 +390,18 @@ const KpiCard = ({ title, metric, format, highlight, variant }) => {
             ? format
                 ? format(diff)
                 : diff.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                  })
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                })
             : null;
 
     const diffText =
         pct == null
             ? "-"
-            : `${pct > 0 ? "+" : ""}${pct.toFixed(1)}%${
-                  diffAmountFormatted != null
-                      ? ` (${diff > 0 ? "+" : ""}${diffAmountFormatted})`
-                      : ""
-              }`;
+            : `${pct > 0 ? "+" : ""}${pct.toFixed(1)}%${diffAmountFormatted != null
+                ? ` (${diff > 0 ? "+" : ""}${diffAmountFormatted})`
+                : ""
+            }`;
 
     // กำหนดสี diff ตาม variant
     let diffColor = "text-slate-500";
@@ -448,11 +451,10 @@ const KpiCard = ({ title, metric, format, highlight, variant }) => {
     return (
         <div
             className={`relative overflow-hidden rounded-xl border text-sm shadow-sm p-4 md:p-5
-        ${
-            highlight
-                ? "bg-gradient-to-br from-blue-50 via-emerald-50 to-white border-blue-100"
-                : "bg-white border-slate-200"
-        }`}
+        ${highlight
+                    ? "bg-gradient-to-br from-blue-50 via-emerald-50 to-white border-blue-100"
+                    : "bg-white border-slate-200"
+                }`}
         >
             {highlight && (
                 <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-emerald-100/60" />
@@ -516,7 +518,7 @@ const TopFiltersAndKpi = ({
     );
 
     const netSalesMetric = getYearMetric(yearInfo, "total_payment");
-    const billCountMetric = getYearMetric(yearInfo, "net_bill_count");
+    const billCountMetric = getYearMetric(yearInfo, "bill_count");
     const discountMetric = getYearMetric(yearInfo, "discount_sum");
     const roundingMetric = getYearMetric(yearInfo, "rounding_sum");
 
@@ -530,39 +532,39 @@ const TopFiltersAndKpi = ({
     const avgPerBillMetric =
         netSalesMetric && billCountMetric
             ? (() => {
-                  const { latestYear, prevYear } = netSalesMetric;
-                  const currentBills = billCountMetric.current || 0;
-                  const prevBills =
-                      billCountMetric.prev != null
-                          ? billCountMetric.prev
-                          : null;
+                const { latestYear, prevYear } = netSalesMetric;
+                const currentBills = billCountMetric.current || 0;
+                const prevBills =
+                    billCountMetric.prev != null
+                        ? billCountMetric.prev
+                        : null;
 
-                  const currentAvg =
-                      currentBills > 0
-                          ? netSalesMetric.current / currentBills
-                          : 0;
+                const currentAvg =
+                    currentBills > 0
+                        ? netSalesMetric.current / currentBills
+                        : 0;
 
-                  let prevAvg = null;
-                  if (prevYear != null && prevBills && prevBills > 0) {
-                      prevAvg = netSalesMetric.prev / prevBills;
-                  }
+                let prevAvg = null;
+                if (prevYear != null && prevBills && prevBills > 0) {
+                    prevAvg = netSalesMetric.prev / prevBills;
+                }
 
-                  let diff = null;
-                  let pct = null;
-                  if (prevAvg != null && prevAvg !== 0) {
-                      diff = currentAvg - prevAvg;
-                      pct = (diff / prevAvg) * 100;
-                  }
+                let diff = null;
+                let pct = null;
+                if (prevAvg != null && prevAvg !== 0) {
+                    diff = currentAvg - prevAvg;
+                    pct = (diff / prevAvg) * 100;
+                }
 
-                  return {
-                      latestYear,
-                      prevYear,
-                      current: currentAvg,
-                      prev: prevAvg,
-                      diff,
-                      pct,
-                  };
-              })()
+                return {
+                    latestYear,
+                    prevYear,
+                    current: currentAvg,
+                    prev: prevAvg,
+                    diff,
+                    pct,
+                };
+            })()
             : null;
 
     return (
