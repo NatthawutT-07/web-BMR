@@ -292,7 +292,7 @@ const StockPage = () => {
                       type="text"
                       value={searchText}
                       onChange={(e) => setSearchText(e.target.value)}
-                      placeholder="เช่น 12345 / Coke / น้ำดื่ม"
+                      placeholder=""
                       className="px-3 py-1.5 border rounded-md text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
                     />
                   </div>
@@ -348,13 +348,13 @@ const StockPage = () => {
                   </div>
 
                   {/* Helper text / small tip */}
-                  <div className="flex flex-col justify-between gap-1 text-[11px] text-slate-500">
+                  {/* <div className="flex flex-col justify-between gap-1 text-[11px] text-slate-500">
                     <div>
                       • เวลาพิมพ์ตัวเลข ไม่ต้องใส่ ,  
                       <br />
                       • ถ้าไม่กรอก = ไม่กรองเงื่อนไขนั้น
                     </div>
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Right side: clear button */}
