@@ -24,6 +24,7 @@ import DashboardSales from "../components/admin/sales/dashboard/DashboardSales";
 import MainSalesProduct from "../components/admin/sales/product/MainSalesProduct";
 import { Calculator } from "lucide-react";
 import LayoutManager from "../layouts/LayoutManager";
+import Stock from "../pages/admin/Stock";
 
 const router = createBrowserRouter([
     // หน้า Login
@@ -60,6 +61,7 @@ const router = createBrowserRouter([
             { path: "dashboard-sales", element: <DashboardSales /> },
             { path: "product-sales", element: <MainSalesProduct /> },
             { path: "calculator-sales", element: <Calculator /> },
+            { path: "stock", element: <Stock /> },
         ],
     },
 

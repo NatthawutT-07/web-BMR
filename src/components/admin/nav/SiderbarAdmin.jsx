@@ -6,7 +6,8 @@ import {
   X,
   Store,
   FileUp,
-  ChartNoAxesCombined
+  ChartNoAxesCombined,
+  Package2
 } from "lucide-react";
 import useBmrStore from "../../../store/bmr_store";
 
@@ -50,6 +51,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
             <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} close={closeMobile} />
             <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} close={closeMobile} />
             <SidebarItem to="upload" label="Upload CSV" icon={<FileUp size={20} />} close={closeMobile} />
+            <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} close={closeMobile} />
 
             <div className="pt-4">
               <SidebarButton onClick={handleLogout} label="Logout" icon={<LogOut size={20} />} />
@@ -86,6 +88,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
         <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} expanded={isOpen} />
         <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} expanded={isOpen} />
         <SidebarItem to="upload" label="Upload CSV" icon={<FileUp size={20} />} expanded={isOpen} />
+        <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} />
 
         <div className="pt-8">
           <SidebarButton onClick={handleLogout} label="Logout" icon={<LogOut size={20} />} expanded={isOpen} />

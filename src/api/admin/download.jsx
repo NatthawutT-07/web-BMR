@@ -19,3 +19,21 @@ export const downloadSKU = async () => {
     throw error;
   }
 };
+
+/**
+ * ดึงข้อมูล stock รวม (ทุนคงเหลือ)
+ * GET /api/stock-data
+ * - ถ้าไม่ส่ง branchCode → ทุกสาขา
+ * - ถ้าส่ง branchCode → เฉพาะสาขานั้น
+ */
+export const getStockData = async (branchCode) => {
+  try {
+    const response = await api.get("/stock-data", {
+      params: branchCode ? { branchCode } : {},
+    });
+    return response.data; // array ของ { branchCode, codeProduct, quantity, nameProduct, nameBrand, purchasePriceExcVAT, salesPriceIncVAT }
+  } catch (error) {
+    console.error("Stock Data API Error:", error);
+    throw error;
+  }
+};

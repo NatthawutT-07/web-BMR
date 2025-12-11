@@ -193,16 +193,16 @@ const UploadCSV = () => {
         onChange={(e) => handleSelectFileType(e.target.value)}
       >
         <option value="">-- Select --</option>
-        <option value="Template">POG Shelf template XLSX</option>
-        <option value="SKU">POG SKU template XLSX</option>
-        <option value="sales">Sales XLSX</option>
-        <option value="withdraw">Withdraw XLSX</option>
-        <option value="stock">Stock XLSX</option>
-        <option value="store">Station XLSX</option>
-        <option value="minMax">ItemMinMax XLSX</option>
-        <option value="masterItem">MasterItem XLSX</option>
-        <option value="bill">Bill XLSX</option>
-        <option value="gourmet">Gourmet XLSX</option>
+        {/* <option value="Template">POG Shelf template XLSX</option> */}
+        {/* <option value="SKU">POG SKU template XLSX</option> */}
+        {/* <option value="sales">Sales XLSX</option> */}
+        {/* <option value="withdraw">Withdraw XLSX</option> */}
+        {/* <option value="stock">Stock XLSX</option> */}
+        {/* <option value="store">Station XLSX</option> */}
+        {/* <option value="minMax">ItemMinMax XLSX</option> */}
+        {/* <option value="masterItem">MasterItem XLSX</option> */}
+        {/* <option value="bill">Bill XLSX</option> */}
+        {/* <option value="gourmet">Gourmet XLSX</option> */}
       </select>
 
       {selectedFileType && renderFileUploadForm(selectedFileType)}

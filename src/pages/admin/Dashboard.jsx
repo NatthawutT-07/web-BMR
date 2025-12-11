@@ -38,7 +38,7 @@ const Dashboard = () => {
             BMR Admin Console
           </p>
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-800">
-            Welcome back 👋
+            Welcome 👋
           </h1>
           <p className="mt-2 text-sm md:text-base text-slate-600">
             เลือกหน้ารายงานที่ต้องการใช้งาน ระบบเตรียมลิงก์ลัดไว้ให้แล้ว
