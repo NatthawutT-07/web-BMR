@@ -235,7 +235,7 @@ const DailySalesSection = ({ date, showDay, activeButton, onShowData }) => {
 
                     return (
                       <td key={chName} className="px-3 py-2.5 text-right text-[11px]">
-                        <span className="text-slate-500 mr-1">
+                        <span className="text-slate-500 mr-1 ">
                           {nowValue.toLocaleString(undefined, {
                             minimumFractionDigits: 2,
                             maximumFractionDigits: 2,
@@ -252,7 +252,7 @@ const DailySalesSection = ({ date, showDay, activeButton, onShowData }) => {
                     {netNow.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </td>
 
-                  <td className={`px-3 py-2.5 text-right ${getDiffClass(netDiff ?? 0)}`}>
+                  <td className={`px-3 py-2.5 text-right text-[11px] ${getDiffClass(netDiff ?? 0)}`}>
                     {formatDiffWithPercent(netDiff, netPrev, { isMoney: true })}
                   </td>
 
