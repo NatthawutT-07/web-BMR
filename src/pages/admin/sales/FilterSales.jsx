@@ -10,7 +10,7 @@ const FilterSales = () => {
     const tabs = [
         { id: "dashboard-sales", label: "Dashboard" },
         { id: "sales", label: "Sales by branch" },
-        { id: "product-sales", label: "Product sales" },
+        { id: "product-sales", label: "Product Quantity" },
         { id: "calculator-sales", label: "Calculator" },
     ];
 

@@ -11,10 +11,15 @@ function LoginPage() {
   const [form, setForm] = useState({ name: "", password: "" });
   const [errorMsg, setErrorMsg] = useState("");
 
+  // ถ้าล็อกอินค้างอยู่แล้ว → เด้งตาม role ทันที
   useEffect(() => {
     if (accessToken && user) {
       if (user.role === "admin") {
         navigate("/admin", { replace: true });
+      } else if (user.role === "manager") {
+        navigate("/manager", { replace: true });
+      } else if (user.role === "audit") {
+        navigate("/audit", { replace: true });
       } else if (user.role === "user") {
         navigate(`/store/${user.storecode}`, { replace: true });
       }
@@ -27,12 +32,24 @@ function LoginPage() {
 
     try {
       const res = await actionLogin(form);
-      const role = res.data.payload.role;
+      const role = res?.data?.payload?.role;
 
-      if (role === "admin") navigate("/admin");
-      else navigate(`/store/${form.name}`);
+      // 👉 หลัง login สำเร็จ เด้งตาม role ทันที
+      if (role === "admin") {
+        navigate("/admin", { replace: true });
+      } else if (role === "manager") {
+        navigate("/manager", { replace: true });
+      } else if (role === "audit") {
+        navigate("/audit", { replace: true });
+      } else if (role === "user") {
+        // ตอนนี้ใช้ name เป็น branch/store code ตามโค้ดเดิม
+        navigate(`/store/${form.name}`, { replace: true });
+      } else {
+        // กัน role แปลก ๆ
+        navigate("/", { replace: true });
+      }
     } catch (err) {
-      const errMsg = err.response?.data?.msg || "Login failed";
+      const errMsg = err?.response?.data?.msg || "Login failed";
       setErrorMsg(errMsg);
     }
   };

@@ -61,19 +61,25 @@ const BranchSelector = React.memo(
           <button
             type="submit"
             disabled={okLocked || !selectedBranchCode}
-            className={`px-4 py-2 rounded-lg font-semibold text-sm w-full sm:w-auto transition-all duration-200 ${
-              okLocked || !selectedBranchCode
-                ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-500 shadow-md"
-            }`}
+            className={`px-4 py-2 rounded-lg font-semibold text-sm w-full sm:w-auto transition-all duration-200 ${okLocked || !selectedBranchCode
+              ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-500 shadow-md"
+              }`}
           >
             {okLocked ? "✅ Loaded" : "✔️ OK"}
           </button>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
-          {/* <button
+      </form>
+    );
+  }
+);
+
+export default BranchSelector;
+
+{/* Action Buttons */ }
+<div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
+  {/* <button
             type="button"
             onClick={handleRefresh}
             disabled={!selectedBranchCode}
@@ -85,7 +91,7 @@ const BranchSelector = React.memo(
           >
             🔄 Refresh Product
           </button> */}
-{/* 
+  {/* 
           <button
             type="button"
             onClick={handleDownload}
@@ -98,10 +104,5 @@ const BranchSelector = React.memo(
           >
             {downloadLoading ? "⬇️ Downloading..." : "⬇️ Download XLSX"}
           </button> */}
-        </div>
-      </form>
-    );
-  }
-);
 
-export default BranchSelector;
+</div>

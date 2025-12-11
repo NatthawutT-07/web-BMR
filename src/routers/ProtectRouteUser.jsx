@@ -8,13 +8,24 @@ const ProtectRouteUser = ({ element }) => {
 
   if (!accessToken || !user) return <Navigate to="/" replace />;
 
-  if (user.role !== "user") return <Navigate to="/admin" replace />;
+  // 🟢 admin เข้าได้ทุก store page
+  if (user.role === "admin") {
+    return element;
+  }
 
-  if (user.storecode !== storecode)
+  // manager / audit → เด้งไปหน้าของตัวเอง
+  if (user.role === "manager") return <Navigate to="/manager" replace />;
+  if (user.role === "audit") return <Navigate to="/audit" replace />;
+
+  // อนุญาตเฉพาะ user ปกติ
+  if (user.role !== "user") return <Navigate to="/" replace />;
+
+  // กันเคส user พิมพ์ /store/สาขาอื่นเอง
+  if (user.storecode !== storecode) {
     return <Navigate to={`/store/${user.storecode}`} replace />;
+  }
 
   return element;
 };
-
 
 export default ProtectRouteUser;
