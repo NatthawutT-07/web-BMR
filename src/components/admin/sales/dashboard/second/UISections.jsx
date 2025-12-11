@@ -36,13 +36,24 @@ export const ProductListTable = ({
     onSortChange,
     onPageChange,
 }) => {
-    // ---------- กำหนดปีปัจจุบัน / ปีก่อนหน้า (รองรับปีถัด ๆ ไปอัตโนมัติ) ----------
+    // ---------- กำหนดปี / label ปัจจุบัน / ปีก่อนหน้า ----------
     const now = new Date();
+    const defaultCurrentYear = now.getFullYear();
+
     const currentYear =
         typeof summary?.currentYear === "number"
             ? summary.currentYear
-            : now.getFullYear();
-    const prevYear = currentYear - 1;
+            : defaultCurrentYear;
+
+    const prevYear =
+        typeof summary?.prevYear === "number"
+            ? summary.prevYear
+            : currentYear - 1;
+
+    const currentLabel =
+        summary?.currentLabel ?? String(currentYear);
+    const prevLabel =
+        summary?.prevLabel ?? String(prevYear);
 
     // ---------- ดึงค่ารวมพื้นฐาน (ใช้เป็น fallback) ----------
     const rawTotalProducts = Number(
@@ -58,21 +69,55 @@ export const ProductListTable = ({
         summary?.totalDiscount ?? summary?.total_discount ?? 0
     );
 
-    // helper: สร้าง metric รายปีจาก summary
+    const capitalize = (s) =>
+        typeof s === "string" && s.length
+            ? s.charAt(0).toUpperCase() + s.slice(1)
+            : s;
+
+    // helper: อ่านค่าจาก summary ตาม baseKey + รูปแบบ current/prev/year
+    const getSummaryValue = (baseKey, type) => {
+        const cap = capitalize(baseKey);
+
+        if (type === "current") {
+            return (
+                summary?.[`${baseKey}_current`] ??
+                summary?.[`current${cap}`] ??
+                summary?.[`${baseKey}_${currentYear}`] ??
+                summary?.[baseKey] ??
+                0
+            );
+        }
+
+        // prev
+        return (
+            summary?.[`${baseKey}_prev`] ??
+            summary?.[`prev${cap}`] ??
+            summary?.[`${baseKey}_${prevYear}`] ??
+            null // null = ไม่มีข้อมูลเปรียบเทียบ
+        );
+    };
+
+    // helper: สร้าง metric current/prev/diff จาก summary
     const buildSummaryMetric = (baseKey, fallbackValue) => {
         const currentValue =
-            summary?.[`${baseKey}_${currentYear}`] ??
-            summary?.[baseKey] ??
-            fallbackValue ??
-            0;
-        const prevValue =
-            summary?.[`${baseKey}_${prevYear}`] ?? 0;
+            getSummaryValue(baseKey, "current") ?? fallbackValue ?? 0;
+        const prevValue = getSummaryValue(baseKey, "prev");
 
         const currentNum = Number(currentValue || 0);
-        const prevNum = Number(prevValue || 0);
-        const diff = currentNum - prevNum;
-        const percentChange =
-            prevNum === 0 ? null : (diff / prevNum) * 100;
+        const prevNum =
+            prevValue === null ? null : Number(prevValue || 0);
+
+        let diff = null;
+        let percentChange = null;
+
+        if (prevNum === null) {
+            diff = null;
+            percentChange = null;
+        } else {
+            diff = currentNum - prevNum;
+            percentChange =
+                prevNum === 0 ? null : (diff / prevNum) * 100;
+        }
 
         return { current: currentNum, prev: prevNum, diff, percentChange };
     };
@@ -91,6 +136,10 @@ export const ProductListTable = ({
     const formatSummaryDiff = (metric, { isMoney = false } = {}) => {
         const { diff, percentChange, prev } = metric;
 
+        // ไม่มีข้อมูลเปรียบเทียบ
+        if (prev === null || diff === null) return "-";
+
+        // prev = 0 แต่มี diff → แสดงเฉพาะส่วนต่าง
         if (prev === 0) {
             if (!diff) return "no change";
             const sign = diff > 0 ? "+" : "-";
@@ -105,6 +154,8 @@ export const ProductListTable = ({
         }
 
         const sign = diff > 0 ? "+" : diff < 0 ? "-" : "";
+        if (!percentChange && diff === 0) return "no change";
+
         const absPercent = Math.abs(percentChange ?? 0).toFixed(2);
         const absDiff = Math.abs(diff);
         const valueText = isMoney
@@ -124,29 +175,38 @@ export const ProductListTable = ({
 
     const totalPages = totalRows > 0 ? Math.ceil(totalRows / pageSize) : 1;
 
-    // ---------- metric รายปีสำหรับแต่ละ row ----------
+    // ---------- metric รายปี/ช่วงเวลา สำหรับแต่ละ row ----------
     const getRowMetric = (row, baseKey) => {
+        const cap = capitalize(baseKey);
+
         const currentValue =
+            row[`${baseKey}_current`] ??
+            row[`current${cap}`] ??
             row[`${baseKey}_${currentYear}`] ??
             row[baseKey] ??
             0;
+
         const prevValue =
-            row[`${baseKey}_${prevYear}`] ?? 0;
+            row[`${baseKey}_prev`] ??
+            row[`prev${cap}`] ??
+            row[`${baseKey}_${prevYear}`] ??
+            null;
 
         return {
             current: Number(currentValue || 0),
-            prev: Number(prevValue || 0),
+            prev: prevValue === null ? null : Number(prevValue || 0),
         };
     };
 
-    // render cell แบบ “ปีนี้ / ปีที่แล้ว / diff”
+    // render cell แบบ “ปัจจุบัน / ก่อนหน้า / diff”
     const renderYearCell = (
         metric,
         { isMoney = false, isPercent = false, mainClass = "" } = {}
     ) => {
         const { current, prev } = metric;
-        const diff = current - prev;
-        const diffClass = getDiffClass(diff);
+        const diff =
+            prev === null ? null : current - prev;
+        const diffClass = getDiffClass(diff ?? 0);
 
         const formatMain = () => {
             if (isPercent) {
@@ -163,6 +223,7 @@ export const ProductListTable = ({
         };
 
         const formatPrev = () => {
+            if (prev === null) return "-";
             if (isPercent) {
                 const pct = prev * 100;
                 return `${pct.toFixed(2)}%`;
@@ -177,6 +238,8 @@ export const ProductListTable = ({
         };
 
         const formatDiff = () => {
+            if (prev === null || diff === null) return "-";
+
             if (isPercent) {
                 const currPct = current * 100;
                 const prevPct = prev * 100;
@@ -229,7 +292,7 @@ export const ProductListTable = ({
                     {formatMain()}
                 </div>
                 <div className="col-span-1 text-[10px] text-slate-500 text-right">
-                    {prevYear}: {formatPrev()}
+                    {prevLabel}: {formatPrev()}
                 </div>
                 <div
                     className={`col-span-1 text-[10px] text-right ${diffClass}`}
@@ -255,12 +318,14 @@ export const ProductListTable = ({
                         </div>
                         <div className="flex flex-col items-end text-[11px]">
                             <span className="text-slate-500">
-                                {prevYear}:{" "}
-                                {productsMetric.prev.toLocaleString()}
+                                {prevLabel}:{" "}
+                                {productsMetric.prev === null
+                                    ? "-"
+                                    : productsMetric.prev.toLocaleString()}
                             </span>
                             <span
                                 className={`mt-0.5 ${getDiffClass(
-                                    productsMetric.diff
+                                    productsMetric.diff ?? 0
                                 )}`}
                             >
                                 {formatSummaryDiff(productsMetric, {
@@ -282,12 +347,14 @@ export const ProductListTable = ({
                         </div>
                         <div className="flex flex-col items-end text-[11px]">
                             <span className="text-slate-500">
-                                {prevYear}:{" "}
-                                {qtyMetric.prev.toLocaleString()}
+                                {prevLabel}:{" "}
+                                {qtyMetric.prev === null
+                                    ? "-"
+                                    : qtyMetric.prev.toLocaleString()}
                             </span>
                             <span
                                 className={`mt-0.5 ${getDiffClass(
-                                    qtyMetric.diff
+                                    qtyMetric.diff ?? 0
                                 )}`}
                             >
                                 {formatSummaryDiff(qtyMetric, {
@@ -298,7 +365,7 @@ export const ProductListTable = ({
                     </div>
                 </div>
 
-                {/* Total sales + Discount yearly */}
+                {/* Total sales + Discount yearly/period */}
                 <div className="rounded-xl border border-slate-200 bg-slate-50/60 p-3">
                     <p className="text-[11px] uppercase tracking-wide text-slate-500">
                         Total sales
@@ -315,18 +382,20 @@ export const ProductListTable = ({
                         </div>
                         <div className="flex flex-col items-end text-[11px]">
                             <span className="text-slate-500">
-                                {prevYear}:{" "}
-                                {salesMetric.prev.toLocaleString(
-                                    undefined,
-                                    {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    }
-                                )}
+                                {prevLabel}:{" "}
+                                {salesMetric.prev === null
+                                    ? "-"
+                                    : salesMetric.prev.toLocaleString(
+                                          undefined,
+                                          {
+                                              minimumFractionDigits: 2,
+                                              maximumFractionDigits: 2,
+                                          }
+                                      )}
                             </span>
                             <span
                                 className={`mt-0.5 ${getDiffClass(
-                                    salesMetric.diff
+                                    salesMetric.diff ?? 0
                                 )}`}
                             >
                                 {formatSummaryDiff(salesMetric, {
@@ -336,10 +405,10 @@ export const ProductListTable = ({
                         </div>
                     </div>
 
-                    {/* Discount yearly info */}
+                    {/* Discount info (ใช้ label ช่วงเวลาแทนปีตรง ๆ) */}
                     <div className="mt-1 text-[11px]">
                         <div className="text-red-500">
-                            Discount {currentYear}:{" "}
+                            Discount {currentLabel}:{" "}
                             {discountMetric.current.toLocaleString(
                                 undefined,
                                 {
@@ -349,18 +418,20 @@ export const ProductListTable = ({
                             )}
                         </div>
                         <div className="text-slate-500">
-                            {prevYear}:{" "}
-                            {discountMetric.prev.toLocaleString(
-                                undefined,
-                                {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                }
-                            )}
+                            {prevLabel}:{" "}
+                            {discountMetric.prev === null
+                                ? "-"
+                                : discountMetric.prev.toLocaleString(
+                                      undefined,
+                                      {
+                                          minimumFractionDigits: 2,
+                                          maximumFractionDigits: 2,
+                                      }
+                                  )}
                         </div>
                         <div
                             className={`${getDiffClass(
-                                discountMetric.diff
+                                discountMetric.diff ?? 0
                             )} mt-0.5`}
                         >
                             {formatSummaryDiff(discountMetric, {

@@ -16,7 +16,6 @@ import DailySalesSection from "./second/DailySalesSection";
 
 /* ---------------- HELPERS ---------------- */
 
-// ป้องกัน key ซ้ำ (ใช้ในฝั่ง month / day)
 const normalizeKey = (str) => {
   if (!str) return "";
   return String(str).trim().replace(/^0+/, "");
@@ -46,10 +45,9 @@ const MainFilterSales = () => {
     setDate,
   } = useSalesStore();
 
-  // มีได้แค่ปุ่มเดียวที่ active เช่น "1/2025:day"
   const [activeButton, setActiveButton] = useState(null);
 
-  // 🆕 state สำหรับล็อกปุ่ม OK หลังจาก submit แล้ว
+  // 🆕 ปุ่มกันสแปม submit
   const [submitLocked, setSubmitLocked] = useState(false);
 
   /* โหลดสาขา */
@@ -59,15 +57,16 @@ const MainFilterSales = () => {
     }
   }, [accessToken, branches.length, fetchListBranches]);
 
-  /* ทุกครั้งที่เปลี่ยนสาขา ให้ปลดล็อกปุ่ม */
+  /* เมื่อเปลี่ยนสาขา → ปลดล็อกปุ่ม + รีเซ็ตปุ่มแสดงข้อมูล */
   useEffect(() => {
     setSubmitLocked(false);
+    setActiveButton(null); // 🆕 reset ปุ่ม Viewing
   }, [selectedBranchCode]);
 
-  /* Reset UI ทุกอย่าง */
+  /* Reset UI */
   const resetUI = useCallback(() => {
     setShowType("");
-    setActiveButton(null);
+    setActiveButton(null); // 🆕 reset Viewing button
     setSalesData([]);
     setProductMonthData([]);
     setProductDayData([]);
@@ -86,13 +85,9 @@ const MainFilterSales = () => {
   const handleSelectedSubmit = useCallback(
     async (e) => {
       e.preventDefault();
-
-      // ถ้ายังไม่ได้เลือกสาขา หรือปุ่มถูกล็อกอยู่ → ไม่ทำอะไร
       if (!selectedBranchCode || submitLocked) return;
 
-      // ล็อกปุ่มทันทีหลังจากกด
-      setSubmitLocked(true);
-
+      setSubmitLocked(true); // 🆕 ล็อกปุ่มทันทีหลัง submit
       resetUI();
 
       try {
@@ -101,11 +96,12 @@ const MainFilterSales = () => {
         const sortedData = [...data].sort((a, b) => {
           const [mA, yA] = a.monthYear.split("/").map(Number);
           const [mB, yB] = b.monthYear.split("/").map(Number);
-          // ปี/เดือนใหม่อยู่บนสุด
           return yB !== yA ? yB - yA : mB - mA;
         });
 
         setSalesData(sortedData);
+
+        setActiveButton(null); // 🆕 รีเซ็ตปุ่ม
       } catch (err) {
         console.error("Fetch month sales error:", err);
       }
@@ -113,15 +109,17 @@ const MainFilterSales = () => {
     [selectedBranchCode, submitLocked, resetUI, setSalesData]
   );
 
-  /* เมื่อคลิกปุ่ม Show ข้อมูล (Day, Month-Product, Day-Product) */
+  /* คลิกปุ่ม Day / Month Product / Day Product */
   const handleShowDataCall = useCallback(
     async (key, type) => {
       try {
         const k = normalizeKey(key);
 
-        // กดปุ่มใหม่ → ปุ่มเก่า reset
+        // 🆕 เวลากดปุ่มใหม่ ให้ reset viewing ปุ่มเก่า
         setActiveButton(`${k}:${type}`);
         setShowType(type);
+
+        // NOTE: ปุ่ม Show ไม่เกี่ยวกับ submitLocked เลย
 
         if (type === "day") {
           setDate("");
@@ -176,14 +174,15 @@ const MainFilterSales = () => {
 
   return (
     <div className="min-h-screen bg-slate-50/80 px-3 py-4 md:px-6 md:py-6 text-sm">
-      <div className="max-w-6xl mx-auto space-y-4 md:space-y-6">
+      <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
+
         {/* Select Branch */}
         <BranchSelectForm
           branches={branches}
           selectedBranchCode={selectedBranchCode}
           setSelectedBranchCode={setSelectedBranchCode}
           onSubmit={handleSelectedSubmit}
-          submitLocked={submitLocked} // 🆕 ส่งสถานะล็อกไปใช้ในฟอร์ม
+          submitLocked={submitLocked}
         />
 
         {/* MONTH SUMMARY */}
@@ -195,7 +194,7 @@ const MainFilterSales = () => {
           />
         )}
 
-        {/* DAILY SALES */}
+        {/* DAILY */}
         {showType === "day" && showDay.length > 0 && (
           <DailySalesSection
             date={date}
@@ -205,7 +204,7 @@ const MainFilterSales = () => {
           />
         )}
 
-        {/* PRODUCT TABLE */}
+        {/* MONTH PRODUCT */}
         {showType === "month-product" && (
           <ProductTable
             title={`Month product (${date})`}
@@ -213,8 +212,12 @@ const MainFilterSales = () => {
           />
         )}
 
+        {/* DAY PRODUCT */}
         {showType === "day-product" && (
-          <ProductTable title={`Day product (${date})`} data={productDayData} />
+          <ProductTable
+            title={`Day product (${date})`}
+            data={productDayData}
+          />
         )}
       </div>
     </div>

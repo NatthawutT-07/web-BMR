@@ -26,6 +26,8 @@ const DateFilter = ({
     minDate,
     maxDate,
     disabled,
+    compareMode,
+    setCompareMode,
 }) => {
     const clampDate = (dateStr) => {
         if (!dateStr) return dateStr;
@@ -80,6 +82,33 @@ const DateFilter = ({
     return (
         <div className="bg-white/90 backdrop-blur shadow-sm rounded-xl border border-slate-200 px-4 py-3 md:px-6 md:py-4">
             <div className="space-y-3">
+                {/* โหมดการดูข้อมูล (อันดับ 1) */}
+                <div className="flex flex-wrap items-center gap-2 text-xs mb-1">
+                    <span className="text-[11px] text-slate-500 mr-1">
+                        View mode :
+                    </span>
+                    <button
+                        type="button"
+                        onClick={() => setCompareMode("overview")}
+                        className={`px-3 py-1.5 rounded-full border text-xs transition ${compareMode === "overview"
+                                ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                                : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                            }`}
+                    >
+                        Year overview
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setCompareMode("range_yoy")}
+                        className={`px-3 py-1.5 rounded-full border text-xs transition ${compareMode === "range_yoy"
+                                ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                                : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                            }`}
+                    >
+                        Compare selected period vs last year
+                    </button>
+                </div>
+
                 {/* แถว: วันที่เริ่มต้น + วันที่สิ้นสุด + ปุ่มแสดงข้อมูล (ชิดกัน) */}
                 <div className="flex flex-wrap gap-3 items-end">
                     <div className="flex flex-col">
@@ -135,6 +164,11 @@ const DateFilter = ({
                     <span className="font-medium text-slate-700">
                         {formatDisplayDate(start)} - {formatDisplayDate(end)}
                     </span>
+                    {compareMode === "range_yoy" && (
+                        <span className="ml-1 text-[10px] text-slate-400">
+                            (เทียบช่วงเดียวกันของปีที่แล้วอัตโนมัติ)
+                        </span>
+                    )}
                 </div>
 
                 {/* ปุ่มลัดช่วงวันที่ */}
@@ -231,7 +265,6 @@ const buildYearStats = (salesByDate) => {
         const total = Number(row.total_payment || 0);
         const discount = Number(row.discount_sum || 0);
         const rounding = Number(row.rounding_sum || 0);
-        const billCount = Number(row.bill_count || 0);
         const saleCount = Number(row.sale_count || 0);
         const returnCount = Number(row.return_count || 0);
 
@@ -244,7 +277,6 @@ const buildYearStats = (salesByDate) => {
 
         // ✅ net_bill_count = บิลขาย + บิลคืน (ใช้เป็น “จำนวนบิลทั้งหมด”)
         stats[y].net_bill_count += saleCount + returnCount;
-
     });
 
     const years = Object.keys(stats)
@@ -346,6 +378,187 @@ const buildDailyAvgYearMetric = (salesByDate) => {
     };
 };
 
+// กล่องแสดงยอดขายตามช่องทาง (Year / Year) แบบอ่านง่าย
+const SalesChannelSummary = ({ salesByChannelYear, yearInfo }) => {
+    if (!salesByChannelYear || !yearInfo || !yearInfo.latestYear) return null;
+
+    const { latestYear, prevYear, stats } = yearInfo;
+
+    const latestMap = salesByChannelYear[latestYear] || {};
+    const prevMap = prevYear != null ? salesByChannelYear[prevYear] || {} : {};
+
+    const latestTotalNet = Number(
+        (stats[latestYear] && stats[latestYear].total_payment) || 0
+    );
+    const prevTotalNet =
+        prevYear != null
+            ? Number(
+                (stats[prevYear] && stats[prevYear].total_payment) || 0
+            )
+            : 0;
+
+    // รวมชื่อช่องทางของ 2 ปี
+    const channelNamesSet = new Set([
+        ...Object.keys(latestMap),
+        ...Object.keys(prevMap),
+    ]);
+
+    const channels = Array.from(channelNamesSet).map((name) => {
+        const current = Number(latestMap[name] || 0);
+        const prev = prevYear != null ? Number(prevMap[name] || 0) : 0;
+
+        // % share ต่อยอดรวมแต่ละปี (ใช้โชว์บนขวาเหมือนเดิม)
+        const currentPct =
+            latestTotalNet > 0 ? (current / latestTotalNet) * 100 : 0;
+        const prevPct =
+            prevYear != null && prevTotalNet > 0
+                ? (prev / prevTotalNet) * 100
+                : 0;
+
+        // ✅ ส่วนต่างยอดขายจริง (ปีล่าสุด - ปีก่อน)
+        const diffAmount = prevYear != null ? current - prev : null;
+
+        // ✅ % เปลี่ยนแปลงของ "ยอดขายจริง" เทียบปีที่แล้ว
+        let diffPct = null;
+        if (prevYear != null && prev > 0) {
+            diffPct = (diffAmount / prev) * 100;
+        }
+
+        return {
+            name,
+            current,
+            prev,
+            currentPct,
+            prevPct,
+            diffAmount,
+            diffPct,
+        };
+    });
+
+    // ✅ เรียงจากยอดปีล่าสุดมาก → น้อย
+    channels.sort((a, b) => b.current - a.current);
+
+    if (channels.length === 0) return null;
+
+    return (
+        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 md:px-4 md:py-4 h-full">
+            <div className="flex items-center justify-between mb-2">
+                <div className="text-xs font-semibold text-slate-600">
+                    Sales by Channel
+                </div>
+                <div className="text-[11px] text-slate-500">
+                    {prevYear
+                        ? `${prevYear} vs ${latestYear}`
+                        : `Year ${latestYear}`}
+                </div>
+            </div>
+
+            <div className="space-y-2 text-xs max-h-[320px] overflow-auto pr-1">
+                {channels.map((c) => {
+                    // ✅ สี & label ตาม "ยอดล่าสุดมากกว่าหรือน้อยกว่า"
+                    let diffColor = "text-slate-400";
+                    let diffLabel = "-";
+
+                    if (
+                        prevYear &&
+                        c.diffPct != null &&
+                        !Number.isNaN(c.diffPct) &&
+                        c.diffAmount != null
+                    ) {
+                        const sign =
+                            c.diffAmount > 0
+                                ? "+"
+                                : c.diffAmount < 0
+                                    ? "-"
+                                    : "";
+                        const absPct = Math.abs(c.diffPct).toFixed(1);
+                        const absAmt = Math.abs(c.diffAmount).toLocaleString(
+                            undefined,
+                            {
+                                minimumFractionDigits: 0,
+                                maximumFractionDigits: 0,
+                            }
+                        );
+
+                        if (c.diffAmount > 0) {
+                            // ✅ ยอดปีล่าสุดมากกว่า → เขียว
+                            diffColor = "text-emerald-600";
+                        } else if (c.diffAmount < 0) {
+                            // ✅ ยอดปีล่าสุดน้อยกว่า → แดง
+                            diffColor = "text-red-500";
+                        } else {
+                            diffColor = "text-slate-400";
+                        }
+
+                        diffLabel = `${sign}${absPct}% (${absAmt})`;
+                    }
+
+                    const barWidth = Math.max(
+                        4,
+                        Math.min(c.currentPct, 100)
+                    );
+
+                    return (
+                        <div
+                            key={c.name}
+                            className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2"
+                        >
+                            {/* บรรทัดบน: ชื่อ + % share ปีล่าสุด */}
+                            <div className="flex items-center justify-between">
+                                <span className="font-medium text-slate-700">
+                                    {c.name}
+                                </span>
+                                <span className="tabular-nums text-slate-900">
+                                    {c.currentPct.toFixed(1)}%
+                                </span>
+                            </div>
+
+                            {/* Bar แสดงสัดส่วนปีล่าสุด */}
+                            <div className="mt-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                                <div
+                                    className="h-full rounded-full bg-blue-500"
+                                    style={{ width: `${barWidth}%` }}
+                                />
+                            </div>
+
+                            {/* บรรทัดล่าง: ยอดเงิน + ปีที่แล้ว */}
+                            <div className="mt-1 flex flex-wrap justify-between gap-x-2 gap-y-0.5 text-[11px]">
+                                <span className="tabular-nums text-slate-600">
+                                    {latestYear}:{" "}
+                                    {c.current.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
+                                </span>
+
+                                {prevYear && (
+                                    <span className="tabular-nums text-slate-500">
+                                        {prevYear}:{" "}
+                                        {c.prev.toLocaleString(undefined, {
+                                            minimumFractionDigits: 2,
+                                            maximumFractionDigits: 2,
+                                        })}
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* บรรทัดสุดท้าย: ส่วนต่าง % + ยอดเงิน */}
+                            {prevYear && (
+                                <div
+                                    className={`mt-0.5 text-[11px] ${diffColor}`}
+                                >
+                                    {diffLabel}
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
+
 // =================== KPI Card ===================
 const KpiCard = ({ title, metric, format, highlight, variant }) => {
     if (!metric) {
@@ -407,10 +620,8 @@ const KpiCard = ({ title, metric, format, highlight, variant }) => {
     let diffColor = "text-slate-500";
 
     if (variant === "rounding") {
-        // Rounding = สีขาว/เทา กลาง ๆ ไม่บอกดี/แย่
         diffColor = "text-slate-400";
     } else if (variant === "discount") {
-        // Total Discounts: ถ้ายอดติดลบน้อยลง = ดีขึ้น → เขียว
         if (
             prevYear != null &&
             typeof current === "number" &&
@@ -419,16 +630,12 @@ const KpiCard = ({ title, metric, format, highlight, variant }) => {
             let improved = false;
 
             if (prev < 0 && current < 0) {
-                // ทั้งคู่ติดลบ → ดูว่า magnitude ลดลงไหม
                 improved = Math.abs(current) < Math.abs(prev);
             } else if (prev < 0 && current >= 0) {
-                // จากติดลบ → เป็น 0 หรือบวก → ดีขึ้นแน่นอน
                 improved = true;
             } else if (prev >= 0 && current >= 0) {
-                // ส่วนลดเป็นบวกทั้งคู่ → ถ้า current < prev = ลดส่วนลดลง → ดีขึ้น
                 improved = current < prev;
             } else if (prev >= 0 && current < 0) {
-                // จากไม่ติดลบ → กลายเป็นติดลบ → แย่ลง
                 improved = false;
             }
 
@@ -441,7 +648,6 @@ const KpiCard = ({ title, metric, format, highlight, variant }) => {
             }
         }
     } else {
-        // default KPI: เขียว = เพิ่มดี, แดง = ลดลง
         if (pct == null) diffColor = "text-slate-500";
         else if (pct > 0) diffColor = "text-emerald-600 font-semibold";
         else if (pct < 0) diffColor = "text-red-500 font-semibold";
@@ -460,7 +666,6 @@ const KpiCard = ({ title, metric, format, highlight, variant }) => {
                 <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-emerald-100/60" />
             )}
 
-            {/* ปีปัจจุบัน + ค่าหลัก อยู่ด้านซ้ายกลาง */}
             <div className="flex items-start justify-between gap-2">
                 <div>
                     <div className="text-slate-500 text-xs font-medium mb-1">
@@ -480,7 +685,6 @@ const KpiCard = ({ title, metric, format, highlight, variant }) => {
                     </div>
                 </div>
 
-                {/* มุมบนขวา: ข้อมูลปีที่ผ่านมา + diff */}
                 <div className="text-right">
                     <div className="text-[10px] uppercase tracking-wide text-slate-400">
                         {prevYear != null ? `ปี ${prevYear}` : "ปีที่ผ่านมา"}
@@ -508,10 +712,13 @@ const TopFiltersAndKpi = ({
     maxDate,
     disabled,
     summary,
-    dailyAvgSales, // ยังรับไว้เผื่อใช้ต่อ แต่ logic ตอนนี้ไม่พึ่งค่า store แล้ว
+    dailyAvgSales,
     salesByDate,
+    // ✅ map: { [year]: { [channelName]: totalSales } }
+    salesByChannelYear,
+    compareMode,
+    setCompareMode,
 }) => {
-    // สร้างข้อมูลรายปีจาก salesByDate (ใช้ทำ KPI แบบรายปี)
     const yearInfo = useMemo(
         () => buildYearStats(salesByDate || []),
         [salesByDate]
@@ -522,13 +729,11 @@ const TopFiltersAndKpi = ({
     const discountMetric = getYearMetric(yearInfo, "discount_sum");
     const roundingMetric = getYearMetric(yearInfo, "rounding_sum");
 
-    // ✅ Daily Average Sales แบบปีต่อปี + มีย้อนหลังเหมือนบล็อกอื่น
     const dailyAvgMetric = useMemo(
         () => buildDailyAvgYearMetric(salesByDate || []),
         [salesByDate]
     );
 
-    // Average per Bill: ใช้ยอดขาย / จำนวนบิล ของแต่ละปี แล้วเปรียบเทียบ diff/pct
     const avgPerBillMetric =
         netSalesMetric && billCountMetric
             ? (() => {
@@ -579,49 +784,64 @@ const TopFiltersAndKpi = ({
                 minDate={minDate}
                 maxDate={maxDate}
                 disabled={disabled}
+                compareMode={compareMode}
+                setCompareMode={setCompareMode}
             />
 
-            {/* KPI Cards แบบรายปี */}
+            {/* KPI Cards + Sales by Channel (layout 30/70 ในจอใหญ่) */}
             {summary && (
                 <div className="space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <KpiCard
-                            title="Net Sales"
-                            metric={netSalesMetric}
-                            highlight
-                        />
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+                        {/* ซ้าย: Sales by Channel (ประมาณ 1/3) */}
+                        <div className="lg:col-span-1">
+                            <SalesChannelSummary
+                                salesByChannelYear={salesByChannelYear}
+                                yearInfo={yearInfo}
+                            />
+                        </div>
 
-                        <KpiCard
-                            title="Bill Count"
-                            metric={billCountMetric}
-                            format={(v) =>
-                                v.toLocaleString(undefined, {
-                                    maximumFractionDigits: 0,
-                                })
-                            }
-                        />
+                        {/* ขวา: KPI Cards (ประมาณ 2/3) */}
+                        <div className="lg:col-span-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                                <KpiCard
+                                    title="Net Sales"
+                                    metric={netSalesMetric}
+                                    highlight
+                                />
 
-                        <KpiCard
-                            title="Average per Bill"
-                            metric={avgPerBillMetric}
-                        />
+                                <KpiCard
+                                    title="Bill Count"
+                                    metric={billCountMetric}
+                                    format={(v) =>
+                                        v.toLocaleString(undefined, {
+                                            maximumFractionDigits: 0,
+                                        })
+                                    }
+                                />
 
-                        <KpiCard
-                            title="Total Discounts"
-                            metric={discountMetric}
-                            variant="discount"
-                        />
+                                <KpiCard
+                                    title="Average per Bill"
+                                    metric={avgPerBillMetric}
+                                />
 
-                        <KpiCard
-                            title="Total Rounding"
-                            metric={roundingMetric}
-                            variant="rounding"
-                        />
+                                <KpiCard
+                                    title="Total Discounts End Bill"
+                                    metric={discountMetric}
+                                    variant="discount"
+                                />
 
-                        <KpiCard
-                            title="Daily Average Sales"
-                            metric={dailyAvgMetric}
-                        />
+                                <KpiCard
+                                    title="Total Rounding"
+                                    metric={roundingMetric}
+                                    variant="rounding"
+                                />
+
+                                <KpiCard
+                                    title="Daily Average Sales"
+                                    metric={dailyAvgMetric}
+                                />
+                            </div>
+                        </div>
                     </div>
                 </div>
             )}

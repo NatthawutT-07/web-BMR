@@ -56,7 +56,7 @@ const FilterSales = () => {
             </header>
 
             {/* Content */}
-            <main className="flex-1 px-3 md:px-6 py-4 md:py-6">
+            <main className="flex-1 ">
                 {activePage === "dashboard-sales" && <DashboardSales />}
                 {activePage === "sales" && <MainFilterSales />}
                 {activePage === "product-sales" && <MainSalesProduct />}
