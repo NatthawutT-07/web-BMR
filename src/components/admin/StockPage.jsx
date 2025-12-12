@@ -23,6 +23,16 @@ const getBaseBranchCode = (branchCode) => {
   return s;
 };
 
+// ✅ debounce ช่วยลดแลคตอนพิมพ์ค้นหา
+const useDebouncedValue = (value, delay = 200) => {
+  const [debounced, setDebounced] = useState(value);
+  useEffect(() => {
+    const t = setTimeout(() => setDebounced(value), delay);
+    return () => clearTimeout(t);
+  }, [value, delay]);
+  return debounced;
+};
+
 const StockPage = () => {
   const [rawData, setRawData] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -31,6 +41,8 @@ const StockPage = () => {
 
   // ====== Filter state (global) ======
   const [searchText, setSearchText] = useState("");
+  const debouncedSearchText = useDebouncedValue(searchText, 200);
+
   const [minQty, setMinQty] = useState("");
   const [maxQty, setMaxQty] = useState("");
   const [minCost, setMinCost] = useState("");
@@ -45,7 +57,7 @@ const StockPage = () => {
       setLoading(true);
       setErrorMsg("");
       try {
-        const res = await getStockData(); // ไม่ส่ง branchCode = ทุกสาขา
+        const res = await getStockData();
         setRawData(Array.isArray(res) ? res : []);
       } catch (err) {
         console.error("Load stock page error:", err);
@@ -54,11 +66,26 @@ const StockPage = () => {
         setLoading(false);
       }
     };
-
     load();
   }, []);
 
-  // จัดกลุ่มตาม branchCode + คำนวณทุน (ตัวเต็ม ยังไม่ apply filter)
+  // ✅ พาร์เซตัวเลขฟิลเตอร์ครั้งเดียว (ลดงานในลูป)
+  const parsedFilters = useMemo(() => {
+    const qtyMin = minQty !== "" ? Number(minQty) : null;
+    const qtyMax = maxQty !== "" ? Number(maxQty) : null;
+    const costMin = minCost !== "" ? Number(minCost) : null;
+    const costMax = maxCost !== "" ? Number(maxCost) : null;
+
+    return {
+      s: debouncedSearchText.trim().toLowerCase(),
+      qtyMin: qtyMin !== null && !Number.isNaN(qtyMin) ? qtyMin : null,
+      qtyMax: qtyMax !== null && !Number.isNaN(qtyMax) ? qtyMax : null,
+      costMin: costMin !== null && !Number.isNaN(costMin) ? costMin : null,
+      costMax: costMax !== null && !Number.isNaN(costMax) ? costMax : null,
+    };
+  }, [debouncedSearchText, minQty, maxQty, minCost, maxCost]);
+
+  // จัดกลุ่มตาม branchCode + คำนวณทุน + ✅เตรียม search blob ล่วงหน้า (ตัวเต็ม ยังไม่ apply filter)
   const branchSummary = useMemo(() => {
     if (!Array.isArray(rawData) || rawData.length === 0) return [];
 
@@ -75,24 +102,16 @@ const StockPage = () => {
       const stockCost = qty < 0 ? 0 : qty * unitCost;
 
       // ✅ Sales 90D (Qty) จาก backend: sales90dQty (null ได้)
-      // (ถ้ายังมีคนใช้ backend เก่า จะ fallback sales3mQty ให้)
       const rawSales90 =
         row.sales90dQty !== undefined ? row.sales90dQty : row.sales3mQty;
-
       const sales90dQty =
-        rawSales90 === null || rawSales90 === undefined
-          ? null
-          : Number(rawSales90);
+        rawSales90 === null || rawSales90 === undefined ? null : Number(rawSales90);
 
       if (!map[branchKey]) {
         map[branchKey] = {
           branchKey,
           branchCode: branchDisplay,
           items: [],
-          totalCost: 0,
-          totalQtyPos: 0, // ✅ ยอดบวก
-          totalQtyNeg: 0, // ✅ ยอดติดลบ (เก็บเป็นค่าติดลบ)
-          totalSales90dQty: 0, // ✅ รวม Sales 90D ต่อสาขา (null นับเป็น 0)
         };
       } else {
         const currentDisplay = String(map[branchKey].branchCode || "");
@@ -102,191 +121,173 @@ const StockPage = () => {
         }
       }
 
+      // ✅ precompute search fields
+      const codeStr = row.codeProduct ? String(row.codeProduct).padStart(5, "0") : "";
+      const nameLower = String(row.nameProduct || "").toLowerCase();
+      const brandLower = String(row.nameBrand || "").toLowerCase();
+      const searchBlob = `${codeStr}|${nameLower}|${brandLower}`;
+
       map[branchKey].items.push({
         ...row,
         branchKey,
+        // ✅ เก็บตัวเลขที่ใช้บ่อยไว้เลย
+        _qty: qty,
         stockCost,
         sales90dQty,
+        _search: searchBlob,
       });
-
-      map[branchKey].totalCost += stockCost;
-
-      if (qty > 0) map[branchKey].totalQtyPos += qty;
-      if (qty < 0) map[branchKey].totalQtyNeg += qty;
-
-      map[branchKey].totalSales90dQty +=
-        sales90dQty === null || Number.isNaN(sales90dQty) ? 0 : sales90dQty;
     });
 
     const list = Object.values(map);
-
-    // sort ตาม branchKey
-    list.sort((a, b) => {
-      if (a.branchKey < b.branchKey) return -1;
-      if (a.branchKey > b.branchKey) return 1;
-      return 0;
-    });
-
+    list.sort((a, b) => (a.branchKey < b.branchKey ? -1 : a.branchKey > b.branchKey ? 1 : 0));
     return list;
   }, [rawData]);
 
-  // ====== Apply filter + sort ต่อสาขา ======
-  const filteredBranchSummary = useMemo(() => {
+  // ✅ ฟังก์ชันเช็ค filter (ใช้ precomputed)
+  const passesFilter = (item) => {
+    const { s, qtyMin, qtyMax, costMin, costMax } = parsedFilters;
+
+    if (s) {
+      if (!item._search.includes(s)) return false;
+    }
+
+    const qty = item._qty;
+    const cost = Number(item.stockCost ?? 0) || 0;
+
+    if (qtyMin !== null && qty < qtyMin) return false;
+    if (qtyMax !== null && qty > qtyMax) return false;
+
+    if (costMin !== null && cost < costMin) return false;
+    if (costMax !== null && cost > costMax) return false;
+
+    return true;
+  };
+
+  // ✅ Meta ต่อสาขา: คำนวณแค่ count/totals (ไม่สร้าง list ใหม่ ไม่ sort) → เบาลงตอนพิมพ์
+  const filteredBranchMeta = useMemo(() => {
     if (!branchSummary.length) return [];
-
-    const s = searchText.trim().toLowerCase();
-
-    const qtyMin = minQty !== "" ? Number(minQty) : null;
-    const qtyMax = maxQty !== "" ? Number(maxQty) : null;
-    const costMin = minCost !== "" ? Number(minCost) : null;
-    const costMax = maxCost !== "" ? Number(maxCost) : null;
 
     return branchSummary
       .map((branch) => {
-        const filteredItems = branch.items.filter((item) => {
-          // search text
-          if (s) {
-            const codeStr = item.codeProduct
-              ? String(item.codeProduct).padStart(5, "0")
-              : "";
-            const name = (item.nameProduct || "").toLowerCase();
-            const brand = (item.nameBrand || "").toLowerCase();
-
-            const matchText =
-              codeStr.includes(s) || name.includes(s) || brand.includes(s);
-
-            if (!matchText) return false;
-          }
-
-          const qty = Number(item.quantity ?? 0) || 0;
-          const cost = Number(item.stockCost ?? 0) || 0;
-
-          // Qty filter
-          if (qtyMin !== null && !Number.isNaN(qtyMin) && qty < qtyMin)
-            return false;
-          if (qtyMax !== null && !Number.isNaN(qtyMax) && qty > qtyMax)
-            return false;
-
-          // Cost filter
-          if (costMin !== null && !Number.isNaN(costMin) && cost < costMin)
-            return false;
-          if (costMax !== null && !Number.isNaN(costMax) && cost > costMax)
-            return false;
-
-          return true;
-        });
-
-        // ====== apply sort per branch ======
-        const sortCfg = branchSort[branch.branchKey];
-        let itemsForBranch = filteredItems;
-
-        if (sortCfg && sortCfg.key) {
-          const dir = sortCfg.direction === "asc" ? 1 : -1;
-
-          itemsForBranch = [...filteredItems].sort((a, b) => {
-            if (sortCfg.key === "qty") {
-              const qa = Number(a.quantity ?? 0) || 0;
-              const qb = Number(b.quantity ?? 0) || 0;
-              if (qa === qb) return 0;
-              return qa < qb ? -1 * dir : 1 * dir;
-            }
-
-            if (sortCfg.key === "cost") {
-              const ca = Number(a.stockCost ?? 0) || 0;
-              const cb = Number(b.stockCost ?? 0) || 0;
-              if (ca === cb) return 0;
-              return ca < cb ? -1 * dir : 1 * dir;
-            }
-
-            // ✅ sort Sales 90D: null ให้ไปท้าย "เสมอ" ทั้ง asc/desc
-            if (sortCfg.key === "sales90d") {
-              const saRaw = a.sales90dQty;
-              const sbRaw = b.sales90dQty;
-
-              const aNull =
-                saRaw === null ||
-                saRaw === undefined ||
-                Number.isNaN(Number(saRaw));
-              const bNull =
-                sbRaw === null ||
-                sbRaw === undefined ||
-                Number.isNaN(Number(sbRaw));
-
-              if (aNull && bNull) return 0;
-              if (aNull) return 1; // a ไปท้าย
-              if (bNull) return -1; // b ไปท้าย
-
-              const sa = Number(saRaw);
-              const sb = Number(sbRaw);
-              if (sa === sb) return 0;
-              return sa < sb ? -1 * dir : 1 * dir;
-            }
-
-            return 0;
-          });
-        }
-
-        // คำนวณ total ใหม่หลัง filter + sort (แยก qty + / -)
+        let itemsCount = 0;
         let totalCost = 0;
         let totalQtyPos = 0;
         let totalQtyNeg = 0;
         let totalSales90dQty = 0;
 
-        itemsForBranch.forEach((i) => {
-          totalCost += Number(i.stockCost ?? 0) || 0;
+        for (const it of branch.items) {
+          if (!passesFilter(it)) continue;
 
-          const q = Number(i.quantity ?? 0) || 0;
+          itemsCount += 1;
+
+          totalCost += Number(it.stockCost ?? 0) || 0;
+
+          const q = it._qty;
           if (q > 0) totalQtyPos += q;
           if (q < 0) totalQtyNeg += q;
 
-          const s90 =
-            i.sales90dQty === null || i.sales90dQty === undefined
-              ? 0
-              : Number(i.sales90dQty) || 0;
-
+          const s90 = it.sales90dQty === null || it.sales90dQty === undefined ? 0 : Number(it.sales90dQty) || 0;
           totalSales90dQty += s90;
-        });
+        }
+
+        if (itemsCount === 0) return null;
 
         return {
-          ...branch,
-          items: itemsForBranch,
+          branchKey: branch.branchKey,
+          branchCode: branch.branchCode,
+          itemsCount,
           totalCost,
           totalQtyPos,
           totalQtyNeg,
           totalSales90dQty,
         };
       })
-      .filter((b) => b.items.length > 0);
-  }, [branchSummary, searchText, minQty, maxQty, minCost, maxCost, branchSort]);
+      .filter(Boolean);
+  }, [branchSummary, parsedFilters]); // ✅ ใช้ debounced search ผ่าน parsedFilters แล้ว
+
+  // ✅ สร้าง “รายการจริง” เฉพาะสาขาที่เปิดอยู่เท่านั้น + apply sort เฉพาะตอนต้องแสดงตาราง
+  const openBranchItemsMap = useMemo(() => {
+    const map = {};
+    if (!branchSummary.length) return map;
+
+    const openKeys = Object.keys(openBranches).filter((k) => openBranches[k]);
+    if (openKeys.length === 0) return map;
+
+    const branchByKey = new Map(branchSummary.map((b) => [b.branchKey, b]));
+
+    for (const branchKey of openKeys) {
+      const branch = branchByKey.get(branchKey);
+      if (!branch) continue;
+
+      const filteredItems = branch.items.filter(passesFilter);
+
+      const sortCfg = branchSort[branchKey];
+      if (sortCfg && sortCfg.key) {
+        const dir = sortCfg.direction === "asc" ? 1 : -1;
+
+        filteredItems.sort((a, b) => {
+          if (sortCfg.key === "qty") {
+            const qa = a._qty;
+            const qb = b._qty;
+            if (qa === qb) return 0;
+            return qa < qb ? -1 * dir : 1 * dir;
+          }
+
+          if (sortCfg.key === "cost") {
+            const ca = Number(a.stockCost ?? 0) || 0;
+            const cb = Number(b.stockCost ?? 0) || 0;
+            if (ca === cb) return 0;
+            return ca < cb ? -1 * dir : 1 * dir;
+          }
+
+          if (sortCfg.key === "sales90d") {
+            const saRaw = a.sales90dQty;
+            const sbRaw = b.sales90dQty;
+
+            const aNull = saRaw === null || saRaw === undefined || Number.isNaN(Number(saRaw));
+            const bNull = sbRaw === null || sbRaw === undefined || Number.isNaN(Number(sbRaw));
+
+            // null ไปท้ายเสมอ
+            if (aNull && bNull) return 0;
+            if (aNull) return 1;
+            if (bNull) return -1;
+
+            const sa = Number(saRaw);
+            const sb = Number(sbRaw);
+            if (sa === sb) return 0;
+            return sa < sb ? -1 * dir : 1 * dir;
+          }
+
+          return 0;
+        });
+      }
+
+      map[branchKey] = filteredItems;
+    }
+
+    return map;
+  }, [branchSummary, openBranches, branchSort, parsedFilters]);
 
   // ✅ Total รวมทุกสาขา (หลัง filter)
   const grandTotalCostAll = useMemo(() => {
-    return filteredBranchSummary.reduce(
-      (sum, b) => sum + (Number(b.totalCost ?? 0) || 0),
-      0
-    );
-  }, [filteredBranchSummary]);
+    return filteredBranchMeta.reduce((sum, b) => sum + (Number(b.totalCost ?? 0) || 0), 0);
+  }, [filteredBranchMeta]);
 
-  // ✅ Total ไม่รวมสาขาบางตัว (ตามที่คุณใช้ล่าสุด)
+  // ✅ Total ไม่รวมสาขาบางตัว
   const excludeTotals = useMemo(() => {
     let excludeCost = 0;
 
-    filteredBranchSummary.forEach((b) => {
+    filteredBranchMeta.forEach((b) => {
       const cost = Number(b.totalCost ?? 0) || 0;
       const code = String(b.branchKey || "").trim().toUpperCase();
 
-      if (
-        code !== "EC000" &&
-        code !== "ST000" &&
-        code !== "ST036" &&
-        code !== "ST037"
-      ) {
+      if (code !== "EC000" && code !== "ST000" && code !== "ST036" && code !== "ST037") {
         excludeCost += cost;
       }
     });
 
     return { excludeCost };
-  }, [filteredBranchSummary]);
+  }, [filteredBranchMeta]);
 
   const toggleBranch = (branchKey) => {
     setOpenBranches((prev) => ({
@@ -300,23 +301,14 @@ const StockPage = () => {
     setBranchSort((prev) => {
       const current = prev[branchKey];
 
-      // เปลี่ยนคีย์ใหม่ → เริ่ม desc
       if (!current || current.key !== key) {
-        return {
-          ...prev,
-          [branchKey]: { key, direction: "desc" },
-        };
+        return { ...prev, [branchKey]: { key, direction: "desc" } };
       }
 
-      // คีย์เดิม → desc -> asc
       if (current.direction === "desc") {
-        return {
-          ...prev,
-          [branchKey]: { key, direction: "asc" },
-        };
+        return { ...prev, [branchKey]: { key, direction: "asc" } };
       }
 
-      // คีย์เดิม → asc -> none (ลบออก = กลับค่าเดิม)
       const next = { ...prev };
       delete next[branchKey];
       return next;
@@ -337,9 +329,7 @@ const StockPage = () => {
       <header className="border-b bg-white/90 backdrop-blur sticky top-0 z-20">
         <div className="max-w-8xl mx-auto px-3 sm:px-4 lg:px-8 py-1 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
-            <h1 className="text-base sm:text-lg font-semibold text-slate-800">
-              Stock overview
-            </h1>
+            <h1 className="text-base sm:text-lg font-semibold text-slate-800">Stock overview</h1>
           </div>
 
           <div className="flex items-stretch gap-2">
@@ -349,11 +339,10 @@ const StockPage = () => {
                 ฿ {formatMoney(grandTotalCostAll)}
               </div>
               <div className="text-[11px] text-slate-400">
-                {filteredBranchSummary.length} branches
-                {filteredBranchSummary.length !== branchSummary.length &&
-                  branchSummary.length > 0 && (
-                    <> (from {branchSummary.length})</>
-                  )}
+                {filteredBranchMeta.length} branches
+                {filteredBranchMeta.length !== branchSummary.length && branchSummary.length > 0 && (
+                  <> (from {branchSummary.length})</>
+                )}
               </div>
             </div>
 
@@ -363,9 +352,7 @@ const StockPage = () => {
                 ฿ {formatMoney(excludeTotals.excludeCost)}
               </div>
               <div className="text-[11px] text-slate-400">
-                <span className="text-slate-500 text-right">
-                  EC000, ST000, ST036, ST037
-                </span>
+                <span className="text-slate-500 text-right">EC000, ST000, ST036, ST037</span>
               </div>
             </div>
           </div>
@@ -375,20 +362,10 @@ const StockPage = () => {
       {/* Content */}
       <main className="flex-1">
         <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-8 py-2 sm:py-2 space-y-2">
-          {loading && (
-            <div className="text-center text-sm text-slate-500">
-              กำลังโหลดข้อมูล stock...
-            </div>
-          )}
-
-          {errorMsg && (
-            <div className="text-center text-sm text-red-500">{errorMsg}</div>
-          )}
-
+          {loading && <div className="text-center text-sm text-slate-500">กำลังโหลดข้อมูล stock...</div>}
+          {errorMsg && <div className="text-center text-sm text-red-500">{errorMsg}</div>}
           {!loading && !errorMsg && branchSummary.length === 0 && (
-            <div className="text-center text-sm text-slate-500">
-              ไม่มีข้อมูล stock
-            </div>
+            <div className="text-center text-sm text-slate-500">ไม่มีข้อมูล stock</div>
           )}
 
           {/* Filter panel */}
@@ -404,15 +381,13 @@ const StockPage = () => {
                       type="text"
                       value={searchText}
                       onChange={(e) => setSearchText(e.target.value)}
-                      placeholder=""
                       className="px-3 py-1.5 border rounded-md text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
                     />
+
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-medium text-slate-600">
-                      Qty range
-                    </label>
+                    <label className="text-[11px] font-medium text-slate-600">Qty range</label>
                     <div className="flex gap-2">
                       <input
                         type="number"
@@ -432,9 +407,7 @@ const StockPage = () => {
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[11px] font-medium text-slate-600">
-                      Stock cost range (฿)
-                    </label>
+                    <label className="text-[11px] font-medium text-slate-600">Stock cost range (฿)</label>
                     <div className="flex gap-2">
                       <input
                         type="number"
@@ -469,18 +442,14 @@ const StockPage = () => {
             </section>
           )}
 
-          {!loading &&
-            !errorMsg &&
-            branchSummary.length > 0 &&
-            filteredBranchSummary.length === 0 && (
-              <div className="text-center text-sm text-slate-500">
-                ไม่พบข้อมูลตามเงื่อนไขที่เลือก ลองปรับ filter ใหม่
-              </div>
-            )}
+          {!loading && !errorMsg && branchSummary.length > 0 && filteredBranchMeta.length === 0 && (
+            <div className="text-center text-sm text-slate-500">ไม่พบข้อมูลตามเงื่อนไขที่เลือก ลองปรับ filter ใหม่</div>
+          )}
 
-          {filteredBranchSummary.map((branch) => {
+          {filteredBranchMeta.map((branch) => {
             const isOpen = !!openBranches[branch.branchKey];
             const sortCfg = branchSort[branch.branchKey];
+            const items = isOpen ? openBranchItemsMap[branch.branchKey] || [] : [];
 
             return (
               <div
@@ -496,9 +465,8 @@ const StockPage = () => {
                     <span className="text-sm font-semibold text-slate-800">
                       Branch: {branch.branchCode}
                     </span>
-                    <span className="text-[12px] text-slate-500">
-                      {branch.items.length} items •
-                      Qty  {" "}{formatInt(branch.totalQtyPos)}    {">l<"}  {formatInt(branch.totalSales90dQty)}  • Sales 90D{" "}  ll missing{formatInt(branch.totalQtyNeg)}
+                    <span className="text-[11px] text-slate-500">
+                      {branch.itemsCount} items ll Qty  {" "}{formatInt(branch.totalQtyPos)}    {">l<"}  {formatInt(branch.totalSales90dQty)}  • Sales 90D{" "}
                     </span>
                   </div>
 
@@ -510,22 +478,9 @@ const StockPage = () => {
                       </div>
                     </div>
 
-                    <div
-                      className={`transition-transform duration-200 ${isOpen ? "rotate-180" : "rotate-0"
-                        }`}
-                    >
-                      <svg
-                        className="w-4 h-4 text-slate-500"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
+                    <div className={`transition-transform duration-200 ${isOpen ? "rotate-180" : "rotate-0"}`}>
+                      <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                       </svg>
                     </div>
                   </div>
@@ -550,9 +505,7 @@ const StockPage = () => {
                               >
                                 <span>Qty</span>
                                 {sortCfg?.key === "qty" && (
-                                  <span>
-                                    {sortCfg.direction === "desc" ? "↓" : "↑"}
-                                  </span>
+                                  <span>{sortCfg.direction === "desc" ? "↓" : "↑"}</span>
                                 )}
                               </button>
                             </th>
@@ -560,23 +513,17 @@ const StockPage = () => {
                             <th className="border px-2 py-1 text-center">
                               <button
                                 type="button"
-                                onClick={() =>
-                                  toggleSort(branch.branchKey, "sales90d")
-                                }
+                                onClick={() => toggleSort(branch.branchKey, "sales90d")}
                                 className="w-full flex items-center justify-center gap-1 text-xs font-medium text-slate-700 hover:text-emerald-700"
                               >
                                 <span>Sales 90D</span>
                                 {sortCfg?.key === "sales90d" && (
-                                  <span>
-                                    {sortCfg.direction === "desc" ? "↓" : "↑"}
-                                  </span>
+                                  <span>{sortCfg.direction === "desc" ? "↓" : "↑"}</span>
                                 )}
                               </button>
                             </th>
 
-                            <th className="border px-2 py-1 text-right">
-                              Unit cost
-                            </th>
+                            <th className="border px-2 py-1 text-right">Unit cost</th>
 
                             <th className="border px-2 py-1 text-right">
                               <button
@@ -586,9 +533,7 @@ const StockPage = () => {
                               >
                                 <span>Stock cost</span>
                                 {sortCfg?.key === "cost" && (
-                                  <span>
-                                    {sortCfg.direction === "desc" ? "↓" : "↑"}
-                                  </span>
+                                  <span>{sortCfg.direction === "desc" ? "↓" : "↑"}</span>
                                 )}
                               </button>
                             </th>
@@ -597,22 +542,16 @@ const StockPage = () => {
                           </tr>
                         </thead>
                         <tbody>
-                          {branch.items.map((item, idx) => {
-                            const qtyVal = Number(item.quantity ?? 0) || 0;
-                            const isNeg = qtyVal < 0;
-
+                          {items.map((item, idx) => {
+                            const isNeg = item._qty < 0;
                             return (
                               <tr
                                 key={`${branch.branchKey}-${item.codeProduct ?? "x"}-${idx}`}
                                 className={idx % 2 ? "bg-slate-50/60" : ""}
                               >
-                                <td className="border px-2 py-1 text-center">
-                                  {idx + 1}
-                                </td>
+                                <td className="border px-2 py-1 text-center">{idx + 1}</td>
                                 <td className="border px-2 py-1 text-center whitespace-nowrap">
-                                  {item.codeProduct
-                                    ? String(item.codeProduct).padStart(5, "0")
-                                    : "-"}
+                                  {item.codeProduct ? String(item.codeProduct).padStart(5, "0") : "-"}
                                 </td>
                                 <td
                                   className="border px-2 py-1 text-left max-w-[260px] whitespace-nowrap overflow-hidden text-ellipsis"
@@ -627,28 +566,19 @@ const StockPage = () => {
                                   {item.nameBrand || "-"}
                                 </td>
 
-                                <td
-                                  className={`border px-2 py-1 text-center ${isNeg ? "bg-red-50 text-red-600" : ""
-                                    }`}
-                                >
-                                  {formatInt(item.quantity)}
+                                <td className={`border px-2 py-1 text-center ${isNeg ? "bg-red-50 text-red-600" : ""}`}>
+                                  {formatInt(item._qty)}
                                 </td>
 
-                                <td className="border px-2 py-1 text-center">
-                                  {formatInt(item.sales90dQty)}
-                                </td>
+                                <td className="border px-2 py-1 text-center">{formatInt(item.sales90dQty)}</td>
 
-                                <td className="border px-2 py-1 text-right">
-                                  {formatMoney(item.purchasePriceExcVAT)}
-                                </td>
+                                <td className="border px-2 py-1 text-right">{formatMoney(item.purchasePriceExcVAT)}</td>
 
                                 <td className="border px-2 py-1 text-right text-emerald-700 font-semibold">
                                   {formatMoney(item.stockCost)}
                                 </td>
 
-                                <td className="border px-2 py-1 text-right">
-                                  {formatMoney(item.salesPriceIncVAT)}
-                                </td>
+                                <td className="border px-2 py-1 text-right">{formatMoney(item.salesPriceIncVAT)}</td>
                               </tr>
                             );
                           })}
@@ -657,9 +587,8 @@ const StockPage = () => {
                     </div>
 
                     <div className="mt-2 text-[11px] text-slate-500 text-right">
-                      Total items:
-                      <span className="text-[12px] text-slate-500">
-                        {branch.items.length} items •
+                      Total items: {branch.itemsCount}  ll  <span className="text-[12px] text-slate-500">
+
                         Qty  {" "}{formatInt(branch.totalQtyPos)}    {">l<"}  {formatInt(branch.totalSales90dQty)}  • Sales 90D{" "}
                       </span>
                     </div>
@@ -675,3 +604,5 @@ const StockPage = () => {
 };
 
 export default StockPage;
+
+
