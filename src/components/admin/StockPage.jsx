@@ -15,21 +15,28 @@ const formatInt = (v) => {
   return Number(v).toLocaleString();
 };
 
+// ดึง branch code จริงออกจาก "EC000 : Branch Name"
+const getBaseBranchCode = (branchCode) => {
+  const s = String(branchCode || "-").trim();
+  if (s.includes(" : ")) return s.split(" : ")[0].trim();
+  if (s.includes(":")) return s.split(":")[0].trim();
+  return s;
+};
+
 const StockPage = () => {
   const [rawData, setRawData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
-  const [openBranches, setOpenBranches] = useState({}); // branchCode -> boolean
+  const [openBranches, setOpenBranches] = useState({}); // branchKey -> boolean
 
   // ====== Filter state (global) ======
-  const [searchText, setSearchText] = useState(""); // ค้นหาชื่อสินค้า / แบรนด์ / code
+  const [searchText, setSearchText] = useState("");
   const [minQty, setMinQty] = useState("");
   const [maxQty, setMaxQty] = useState("");
   const [minCost, setMinCost] = useState("");
   const [maxCost, setMaxCost] = useState("");
 
-  // ====== Sort state per branch (ใน card table ของแต่ละสาขา) ======
-  // branchCode -> { key: "qty" | "cost", direction: "asc" | "desc" }
+  // ====== Sort state per branch ======
   const [branchSort, setBranchSort] = useState({});
 
   // โหลดข้อมูล stock จาก backend
@@ -58,35 +65,50 @@ const StockPage = () => {
     const map = {};
 
     rawData.forEach((row) => {
-      const branchCode = row.branchCode || "-";
+      const branchDisplay = row.branchCode || "-";
+      const branchKey = getBaseBranchCode(branchDisplay) || "-";
+
       const qty = Number(row.quantity ?? 0) || 0;
       const unitCost = Number(row.purchasePriceExcVAT ?? 0) || 0;
-      const stockCost = qty * unitCost;
 
-      if (!map[branchCode]) {
-        map[branchCode] = {
-          branchCode,
+      // ✅ qty ติดลบ → stockCost = 0
+      const stockCost = qty < 0 ? 0 : qty * unitCost;
+
+      if (!map[branchKey]) {
+        map[branchKey] = {
+          branchKey,
+          branchCode: branchDisplay,
           items: [],
           totalCost: 0,
-          totalQty: 0,
+          totalQtyPos: 0, // ✅ ยอดบวก
+          totalQtyNeg: 0, // ✅ ยอดติดลบ (เก็บเป็นค่าติดลบ)
         };
+      } else {
+        const currentDisplay = String(map[branchKey].branchCode || "");
+        const incomingDisplay = String(branchDisplay || "");
+        if (incomingDisplay.length > currentDisplay.length) {
+          map[branchKey].branchCode = incomingDisplay;
+        }
       }
 
-      map[branchCode].items.push({
+      map[branchKey].items.push({
         ...row,
+        branchKey,
         stockCost,
       });
 
-      map[branchCode].totalCost += stockCost;
-      map[branchCode].totalQty += qty;
+      map[branchKey].totalCost += stockCost;
+
+      if (qty > 0) map[branchKey].totalQtyPos += qty;
+      if (qty < 0) map[branchKey].totalQtyNeg += qty; // ค่าติดลบตามจริง
     });
 
     const list = Object.values(map);
 
-    // sort ตาม branchCode
+    // sort ตาม branchKey
     list.sort((a, b) => {
-      if (a.branchCode < b.branchCode) return -1;
-      if (a.branchCode > b.branchCode) return 1;
+      if (a.branchKey < b.branchKey) return -1;
+      if (a.branchKey > b.branchKey) return 1;
       return 0;
     });
 
@@ -116,9 +138,7 @@ const StockPage = () => {
             const brand = (item.nameBrand || "").toLowerCase();
 
             const matchText =
-              codeStr.includes(s) ||
-              name.includes(s) ||
-              brand.includes(s);
+              codeStr.includes(s) || name.includes(s) || brand.includes(s);
 
             if (!matchText) return false;
           }
@@ -127,26 +147,18 @@ const StockPage = () => {
           const cost = Number(item.stockCost ?? 0) || 0;
 
           // Qty filter
-          if (qtyMin !== null && !Number.isNaN(qtyMin) && qty < qtyMin) {
-            return false;
-          }
-          if (qtyMax !== null && !Number.isNaN(qtyMax) && qty > qtyMax) {
-            return false;
-          }
+          if (qtyMin !== null && !Number.isNaN(qtyMin) && qty < qtyMin) return false;
+          if (qtyMax !== null && !Number.isNaN(qtyMax) && qty > qtyMax) return false;
 
           // Cost filter
-          if (costMin !== null && !Number.isNaN(costMin) && cost < costMin) {
-            return false;
-          }
-          if (costMax !== null && !Number.isNaN(costMax) && cost > costMax) {
-            return false;
-          }
+          if (costMin !== null && !Number.isNaN(costMin) && cost < costMin) return false;
+          if (costMax !== null && !Number.isNaN(costMax) && cost > costMax) return false;
 
           return true;
         });
 
         // ====== apply sort per branch ======
-        const sortCfg = branchSort[branch.branchCode];
+        const sortCfg = branchSort[branch.branchKey];
         let itemsForBranch = filteredItems;
 
         if (sortCfg && sortCfg.key) {
@@ -169,47 +181,71 @@ const StockPage = () => {
           });
         }
 
-        // คำนวณ total ใหม่หลัง filter + sort
+        // คำนวณ total ใหม่หลัง filter + sort (แยก qty + / -)
         let totalCost = 0;
-        let totalQty = 0;
+        let totalQtyPos = 0;
+        let totalQtyNeg = 0;
+
         itemsForBranch.forEach((i) => {
           totalCost += Number(i.stockCost ?? 0) || 0;
-          totalQty += Number(i.quantity ?? 0) || 0;
+
+          const q = Number(i.quantity ?? 0) || 0;
+          if (q > 0) totalQtyPos += q;
+          if (q < 0) totalQtyNeg += q; // ค่าติดลบตามจริง
         });
 
         return {
           ...branch,
           items: itemsForBranch,
           totalCost,
-          totalQty,
+          totalQtyPos,
+          totalQtyNeg,
         };
       })
       .filter((b) => b.items.length > 0); // ซ่อนสาขาที่ไม่เหลือ item หลัง filter
   }, [branchSummary, searchText, minQty, maxQty, minCost, maxCost, branchSort]);
 
-  // ทุนรวมทุกสาขา (หลัง filter)
-  const grandTotalCost = useMemo(
-    () => filteredBranchSummary.reduce((sum, b) => sum + b.totalCost, 0),
-    [filteredBranchSummary]
-  );
+  // ✅ Total รวมทุกสาขา (หลัง filter)
+  const grandTotalCostAll = useMemo(() => {
+    return filteredBranchSummary.reduce(
+      (sum, b) => sum + (Number(b.totalCost ?? 0) || 0),
+      0
+    );
+  }, [filteredBranchSummary]);
 
-  const toggleBranch = (branchCode) => {
+  // ✅ Total ไม่รวม EC000 + ST037 + ST038 (รวมบรรทัดเดียว)
+  const excludeTotals = useMemo(() => {
+    let excludeEC000ST037ST038 = 0;
+
+    filteredBranchSummary.forEach((b) => {
+      const cost = Number(b.totalCost ?? 0) || 0;
+      const code = String(b.branchKey || "").trim().toUpperCase();
+
+      if (code !== "EC000" && code !== "ST037" && code !== "ST038") {
+        excludeEC000ST037ST038 += cost;
+      }
+    });
+
+    return { excludeEC000ST037ST038 };
+  }, [filteredBranchSummary]);
+
+  const toggleBranch = (branchKey) => {
     setOpenBranches((prev) => ({
       ...prev,
-      [branchCode]: !prev[branchCode],
+      [branchKey]: !prev[branchKey],
     }));
   };
 
   // toggle sort (per branch + per key)
-  const toggleSort = (branchCode, key) => {
+  const toggleSort = (branchKey, key) => {
     setBranchSort((prev) => {
-      const current = prev[branchCode];
+      const current = prev[branchKey];
 
       // ถ้าเปลี่ยน key ใหม่ → เริ่มที่ desc (มาก -> น้อย)
       if (!current || current.key !== key) {
         return {
           ...prev,
-          [branchCode]: { key, direction: "desc" },
+          [branchKey]: { key, direction: "desc" },
         };
       }
 
@@ -217,7 +253,7 @@ const StockPage = () => {
       const nextDir = current.direction === "desc" ? "asc" : "desc";
       return {
         ...prev,
-        [branchCode]: { key, direction: nextDir },
+        [branchKey]: { key, direction: nextDir },
       };
     });
   };
@@ -239,28 +275,43 @@ const StockPage = () => {
             <h1 className="text-base sm:text-lg font-semibold text-slate-800">
               Stock overview
             </h1>
-            
           </div>
 
-          <div className="bg-slate-100 rounded-lg px-3 py-2 text-right">
-            <div className="text-[11px] text-slate-500">Total stock cost</div>
-            <div className="text-base sm:text-lg font-semibold text-emerald-700">
-              ฿ {formatMoney(grandTotalCost)}
+          {/* ✅ 2 กล่อง */}
+          <div className="flex items-stretch gap-2">
+            {/* กล่อง 1: รวมทั้งหมด */}
+            <div className="bg-slate-100 rounded-lg px-3 py-2 text-right min-w-[190px]">
+              <div className="text-[11px] text-slate-500">Total stock cost</div>
+              <div className="text-base sm:text-lg font-semibold text-emerald-700">
+                ฿ {formatMoney(grandTotalCostAll)}
+              </div>
+              <div className="text-[11px] text-slate-400">
+                {filteredBranchSummary.length} branches
+                {filteredBranchSummary.length !== branchSummary.length &&
+                  branchSummary.length > 0 && (
+                    <> (from {branchSummary.length})</>
+                  )}
+              </div>
             </div>
-            <div className="text-[11px] text-slate-400">
-              {filteredBranchSummary.length} branches
-              {filteredBranchSummary.length !== branchSummary.length &&
-                branchSummary.length > 0 && (
-                  <> (from {branchSummary.length})</>
-                )}
+
+            {/* กล่อง 2: รวมบรรทัดเดียว */}
+            <div className="bg-slate-100 rounded-lg px-3 py-2 text-right min-w-[190px]">
+              <div className="text-[11px] text-slate-500">Total stock cost</div>
+              <div className="text-base sm:text-lg font-semibold text-emerald-700">
+                ฿ {formatMoney(excludeTotals.excludeEC000ST037ST038)}
+              </div>
+              <div className="text-[11px] text-slate-400">
+                <span className="text-slate-500 text-right">EC000, ST037, ST038</span>
+              </div>
             </div>
+
           </div>
         </div>
       </header>
 
       {/* Content */}
       <main className="flex-1">
-        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 space-y-4">
+        <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-8 py-2 sm:py-2 space-y-2">
           {loading && (
             <div className="text-center text-sm text-slate-500">
               กำลังโหลดข้อมูล stock...
@@ -281,9 +332,7 @@ const StockPage = () => {
           {branchSummary.length > 0 && (
             <section className="bg-white border rounded-lg shadow-sm px-3 py-3 sm:px-4 sm:py-4">
               <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-                {/* Left side: filters */}
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 w-full">
-                  {/* Search */}
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-medium text-slate-600">
                       Search (code / name / brand)
@@ -297,7 +346,6 @@ const StockPage = () => {
                     />
                   </div>
 
-                  {/* Qty min/max */}
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-medium text-slate-600">
                       Qty range
@@ -305,7 +353,6 @@ const StockPage = () => {
                     <div className="flex gap-2">
                       <input
                         type="number"
-                        min="0"
                         value={minQty}
                         onChange={(e) => setMinQty(e.target.value)}
                         placeholder="Min"
@@ -313,7 +360,6 @@ const StockPage = () => {
                       />
                       <input
                         type="number"
-                        min="0"
                         value={maxQty}
                         onChange={(e) => setMaxQty(e.target.value)}
                         placeholder="Max"
@@ -322,7 +368,6 @@ const StockPage = () => {
                     </div>
                   </div>
 
-                  {/* Cost min/max */}
                   <div className="flex flex-col gap-1">
                     <label className="text-[11px] font-medium text-slate-600">
                       Stock cost range (฿)
@@ -346,18 +391,8 @@ const StockPage = () => {
                       />
                     </div>
                   </div>
-
-                  {/* Helper text / small tip */}
-                  {/* <div className="flex flex-col justify-between gap-1 text-[11px] text-slate-500">
-                    <div>
-                      • เวลาพิมพ์ตัวเลข ไม่ต้องใส่ ,  
-                      <br />
-                      • ถ้าไม่กรอก = ไม่กรองเงื่อนไขนั้น
-                    </div>
-                  </div> */}
                 </div>
 
-                {/* Right side: clear button */}
                 <div className="flex justify-end">
                   <button
                     type="button"
@@ -371,7 +406,6 @@ const StockPage = () => {
             </section>
           )}
 
-          {/* ข้อความกรณี filter แล้วไม่เจอข้อมูล */}
           {!loading &&
             !errorMsg &&
             branchSummary.length > 0 &&
@@ -381,20 +415,18 @@ const StockPage = () => {
               </div>
             )}
 
-          {/* การ์ดต่อสาขา (ชุดหลัง filter + sort) */}
           {filteredBranchSummary.map((branch) => {
-            const isOpen = !!openBranches[branch.branchCode];
-            const sortCfg = branchSort[branch.branchCode];
+            const isOpen = !!openBranches[branch.branchKey];
+            const sortCfg = branchSort[branch.branchKey];
 
             return (
               <div
-                key={branch.branchCode}
+                key={branch.branchKey}
                 className="border rounded-xl bg-white shadow-sm hover:shadow-md transition-shadow duration-200"
               >
-                {/* Card header (กดเพื่อเปิด/ปิด) */}
                 <button
                   type="button"
-                  onClick={() => toggleBranch(branch.branchCode)}
+                  onClick={() => toggleBranch(branch.branchKey)}
                   className="w-full flex items-center justify-between px-4 py-3 rounded-t-xl hover:bg-slate-50"
                 >
                   <div className="flex flex-col text-left">
@@ -402,25 +434,23 @@ const StockPage = () => {
                       Branch: {branch.branchCode}
                     </span>
                     <span className="text-[11px] text-slate-500">
-                      {branch.items.length} items • Qty:{" "}
-                      {formatInt(branch.totalQty)}
+                      {branch.items.length} items • Qty +:{" "}
+                      {formatInt(branch.totalQtyPos)} • Qty -:{" "}
+                      {formatInt(branch.totalQtyNeg)}
                     </span>
                   </div>
 
                   <div className="flex items-center gap-4">
                     <div className="text-right">
-                      <div className="text-[11px] text-slate-500">
-                        Stock cost
-                      </div>
+                      <div className="text-[11px] text-slate-500">Stock cost</div>
                       <div className="text-sm sm:text-base font-semibold text-emerald-700">
                         ฿ {formatMoney(branch.totalCost)}
                       </div>
                     </div>
 
                     <div
-                      className={`transition-transform duration-200 ${
-                        isOpen ? "rotate-180" : "rotate-0"
-                      }`}
+                      className={`transition-transform duration-200 ${isOpen ? "rotate-180" : "rotate-0"
+                        }`}
                     >
                       <svg
                         className="w-4 h-4 text-slate-500"
@@ -439,7 +469,6 @@ const StockPage = () => {
                   </div>
                 </button>
 
-                {/* Card body: render table เมื่อเปิดเท่านั้น เพื่อลดโหลด DOM */}
                 {isOpen && (
                   <div className="px-3 pb-3">
                     <div className="mt-2 overflow-x-auto max-h-[480px] border rounded-lg">
@@ -447,23 +476,14 @@ const StockPage = () => {
                         <thead className="bg-slate-100 sticky top-0 z-10">
                           <tr>
                             <th className="border px-2 py-1 text-center">#</th>
-                            <th className="border px-2 py-1 text-center">
-                              Code
-                            </th>
-                            <th className="border px-2 py-1 text-left">
-                              Name
-                            </th>
-                            <th className="border px-2 py-1 text-left">
-                              Brand
-                            </th>
+                            <th className="border px-2 py-1 text-center">Code</th>
+                            <th className="border px-2 py-1 text-left">Name</th>
+                            <th className="border px-2 py-1 text-left">Brand</th>
 
-                            {/* Qty header: clickable sort */}
                             <th className="border px-2 py-1 text-center">
                               <button
                                 type="button"
-                                onClick={() =>
-                                  toggleSort(branch.branchCode, "qty")
-                                }
+                                onClick={() => toggleSort(branch.branchKey, "qty")}
                                 className="w-full flex items-center justify-center gap-1 text-xs font-medium text-slate-700 hover:text-emerald-700"
                               >
                                 <span>Qty</span>
@@ -479,13 +499,10 @@ const StockPage = () => {
                               Unit cost
                             </th>
 
-                            {/* Stock cost header: clickable sort */}
                             <th className="border px-2 py-1 text-right">
                               <button
                                 type="button"
-                                onClick={() =>
-                                  toggleSort(branch.branchCode, "cost")
-                                }
+                                onClick={() => toggleSort(branch.branchKey, "cost")}
                                 className="w-full flex items-center justify-end gap-1 text-xs font-medium text-slate-700 hover:text-emerald-700"
                               >
                                 <span>Stock cost</span>
@@ -497,15 +514,12 @@ const StockPage = () => {
                               </button>
                             </th>
 
-                            <th className="border px-2 py-1 text-right">
-                              RSP
-                            </th>
+                            <th className="border px-2 py-1 text-right">RSP</th>
                           </tr>
                         </thead>
                         <tbody>
                           {branch.items.map((item, idx) => {
-                            const qtyVal =
-                              Number(item.quantity ?? 0) || 0;
+                            const qtyVal = Number(item.quantity ?? 0) || 0;
                             const isNeg = qtyVal < 0;
 
                             return (
@@ -518,10 +532,7 @@ const StockPage = () => {
                                 </td>
                                 <td className="border px-2 py-1 text-center whitespace-nowrap">
                                   {item.codeProduct
-                                    ? String(item.codeProduct).padStart(
-                                        5,
-                                        "0"
-                                      )
+                                    ? String(item.codeProduct).padStart(5, "0")
                                     : "-"}
                                 </td>
                                 <td
@@ -536,20 +547,22 @@ const StockPage = () => {
                                 >
                                   {item.nameBrand || "-"}
                                 </td>
-                                {/* Qty – ถ้าติดลบเป็นสีแดงจาง ๆ */}
+
                                 <td
-                                  className={`border px-2 py-1 text-center ${
-                                    isNeg ? "bg-red-50 text-red-600" : ""
-                                  }`}
+                                  className={`border px-2 py-1 text-center ${isNeg ? "bg-red-50 text-red-600" : ""
+                                    }`}
                                 >
                                   {formatInt(item.quantity)}
                                 </td>
+
                                 <td className="border px-2 py-1 text-right">
                                   {formatMoney(item.purchasePriceExcVAT)}
                                 </td>
+
                                 <td className="border px-2 py-1 text-right text-emerald-700 font-semibold">
                                   {formatMoney(item.stockCost)}
                                 </td>
+
                                 <td className="border px-2 py-1 text-right">
                                   {formatMoney(item.salesPriceIncVAT)}
                                 </td>
@@ -560,10 +573,10 @@ const StockPage = () => {
                       </table>
                     </div>
 
-                    {/* footer summary branch */}
                     <div className="mt-2 text-[11px] text-slate-500 text-right">
-                      Total items: {branch.items.length} • Qty:{" "}
-                      {formatInt(branch.totalQty)} • Cost: ฿{" "}
+                      Total items: {branch.items.length} • Qty +:{" "}
+                      {formatInt(branch.totalQtyPos)} • Qty -:{" "}
+                      {formatInt(branch.totalQtyNeg)} • Cost: ฿{" "}
                       {formatMoney(branch.totalCost)}
                     </div>
                   </div>
