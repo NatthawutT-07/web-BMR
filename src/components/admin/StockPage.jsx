@@ -74,6 +74,15 @@ const StockPage = () => {
       // ✅ qty ติดลบ → stockCost = 0
       const stockCost = qty < 0 ? 0 : qty * unitCost;
 
+      // ✅ Sales 90D (Qty) จาก backend: prefer sales90dQty, fallback sales3mQty
+      const rawSales90 =
+        row.sales90dQty !== undefined ? row.sales90dQty : row.sales3mQty;
+
+      const sales90dQty =
+        rawSales90 === null || rawSales90 === undefined
+          ? null
+          : Number(rawSales90);
+
       if (!map[branchKey]) {
         map[branchKey] = {
           branchKey,
@@ -82,6 +91,7 @@ const StockPage = () => {
           totalCost: 0,
           totalQtyPos: 0, // ✅ ยอดบวก
           totalQtyNeg: 0, // ✅ ยอดติดลบ (เก็บเป็นค่าติดลบ)
+          totalSales90dQty: 0, // ✅ รวม Sales 90D ต่อสาขา (null นับเป็น 0)
         };
       } else {
         const currentDisplay = String(map[branchKey].branchCode || "");
@@ -95,12 +105,16 @@ const StockPage = () => {
         ...row,
         branchKey,
         stockCost,
+        sales90dQty, // ✅ เก็บไว้ใช้แสดง/คำนวณ
       });
 
       map[branchKey].totalCost += stockCost;
 
       if (qty > 0) map[branchKey].totalQtyPos += qty;
       if (qty < 0) map[branchKey].totalQtyNeg += qty; // ค่าติดลบตามจริง
+
+      map[branchKey].totalSales90dQty +=
+        sales90dQty === null || Number.isNaN(sales90dQty) ? 0 : sales90dQty;
     });
 
     const list = Object.values(map);
@@ -171,12 +185,33 @@ const StockPage = () => {
               if (qa === qb) return 0;
               return qa < qb ? -1 * dir : 1 * dir;
             }
+
             if (sortCfg.key === "cost") {
               const ca = Number(a.stockCost ?? 0) || 0;
               const cb = Number(b.stockCost ?? 0) || 0;
               if (ca === cb) return 0;
               return ca < cb ? -1 * dir : 1 * dir;
             }
+
+            // ✅ sort sales 90d (null ให้ไปท้าย)
+            if (sortCfg.key === "sales90d") {
+              const saRaw = a.sales90dQty;
+              const sbRaw = b.sales90dQty;
+
+              const sa =
+                saRaw === null || saRaw === undefined || Number.isNaN(Number(saRaw))
+                  ? Number.NEGATIVE_INFINITY
+                  : Number(saRaw);
+
+              const sb =
+                sbRaw === null || sbRaw === undefined || Number.isNaN(Number(sbRaw))
+                  ? Number.NEGATIVE_INFINITY
+                  : Number(sbRaw);
+
+              if (sa === sb) return 0;
+              return sa < sb ? -1 * dir : 1 * dir;
+            }
+
             return 0;
           });
         }
@@ -185,13 +220,21 @@ const StockPage = () => {
         let totalCost = 0;
         let totalQtyPos = 0;
         let totalQtyNeg = 0;
+        let totalSales90dQty = 0;
 
         itemsForBranch.forEach((i) => {
           totalCost += Number(i.stockCost ?? 0) || 0;
 
           const q = Number(i.quantity ?? 0) || 0;
           if (q > 0) totalQtyPos += q;
-          if (q < 0) totalQtyNeg += q; // ค่าติดลบตามจริง
+          if (q < 0) totalQtyNeg += q;
+
+          const s90 =
+            i.sales90dQty === null || i.sales90dQty === undefined
+              ? 0
+              : Number(i.sales90dQty) || 0;
+
+          totalSales90dQty += s90;
         });
 
         return {
@@ -200,9 +243,10 @@ const StockPage = () => {
           totalCost,
           totalQtyPos,
           totalQtyNeg,
+          totalSales90dQty,
         };
       })
-      .filter((b) => b.items.length > 0); // ซ่อนสาขาที่ไม่เหลือ item หลัง filter
+      .filter((b) => b.items.length > 0);
   }, [branchSummary, searchText, minQty, maxQty, minCost, maxCost, branchSort]);
 
   // ✅ Total รวมทุกสาขา (หลัง filter)
@@ -213,7 +257,7 @@ const StockPage = () => {
     );
   }, [filteredBranchSummary]);
 
-  // ✅ Total ไม่รวม EC000 + ST037 + ST038 (รวมบรรทัดเดียว)
+  // ✅ Total ไม่รวมสาขาบางตัว
   const excludeTotals = useMemo(() => {
     let excludeEC000ST037ST038 = 0;
 
@@ -221,7 +265,8 @@ const StockPage = () => {
       const cost = Number(b.totalCost ?? 0) || 0;
       const code = String(b.branchKey || "").trim().toUpperCase();
 
-      if (code !== "EC000" && code !== "ST037" && code !== "ST038") {
+      // ตามที่คุณใช้ล่าสุด
+      if (code !== "EC000" && code !== "ST037" && code !== "ST036" && code !== "ST000") {
         excludeEC000ST037ST038 += cost;
       }
     });
@@ -236,12 +281,12 @@ const StockPage = () => {
     }));
   };
 
-  // toggle sort (per branch + per key)
+  // toggle sort (per branch + per key) : desc -> asc -> none
   const toggleSort = (branchKey, key) => {
     setBranchSort((prev) => {
       const current = prev[branchKey];
 
-      // ถ้าเปลี่ยน key ใหม่ → เริ่มที่ desc (มาก -> น้อย)
+      // เปลี่ยนคีย์ใหม่ → เริ่ม desc
       if (!current || current.key !== key) {
         return {
           ...prev,
@@ -249,12 +294,18 @@ const StockPage = () => {
         };
       }
 
-      // ถ้า key เดิม → toggle asc/desc
-      const nextDir = current.direction === "desc" ? "asc" : "desc";
-      return {
-        ...prev,
-        [branchKey]: { key, direction: nextDir },
-      };
+      // คีย์เดิม → desc -> asc
+      if (current.direction === "desc") {
+        return {
+          ...prev,
+          [branchKey]: { key, direction: "asc" },
+        };
+      }
+
+      // คีย์เดิม → asc -> none (ลบออก = กลับค่าเดิม)
+      const next = { ...prev };
+      delete next[branchKey];
+      return next;
     });
   };
 
@@ -301,10 +352,11 @@ const StockPage = () => {
                 ฿ {formatMoney(excludeTotals.excludeEC000ST037ST038)}
               </div>
               <div className="text-[11px] text-slate-400">
-                <span className="text-slate-500 text-right">EC000, ST037, ST038</span>
+                <span className="text-slate-500 text-right">
+                  EC000, ST036, ST037
+                </span>
               </div>
             </div>
-
           </div>
         </div>
       </header>
@@ -433,10 +485,9 @@ const StockPage = () => {
                     <span className="text-sm font-semibold text-slate-800">
                       Branch: {branch.branchCode}
                     </span>
-                    <span className="text-[11px] text-slate-500">
-                      {branch.items.length} items • Qty +:{" "}
-                      {formatInt(branch.totalQtyPos)} • Qty -:{" "}
-                      {formatInt(branch.totalQtyNeg)}
+                    <span className="text-[12px] text-slate-500">
+                      {branch.items.length} items •
+                      Qty  {" "}{formatInt(branch.totalQtyPos)}    {">l<"}  {formatInt(branch.totalSales90dQty)}  • Sales 90D{" "}  ll missing{formatInt(branch.totalQtyNeg)}
                     </span>
                   </div>
 
@@ -472,7 +523,7 @@ const StockPage = () => {
                 {isOpen && (
                   <div className="px-3 pb-3">
                     <div className="mt-2 overflow-x-auto max-h-[480px] border rounded-lg">
-                      <table className="min-w-[900px] w-full border-collapse text-xs text-slate-700">
+                      <table className="min-w-[980px] w-full border-collapse text-xs text-slate-700">
                         <thead className="bg-slate-100 sticky top-0 z-10">
                           <tr>
                             <th className="border px-2 py-1 text-center">#</th>
@@ -488,6 +539,24 @@ const StockPage = () => {
                               >
                                 <span>Qty</span>
                                 {sortCfg?.key === "qty" && (
+                                  <span>
+                                    {sortCfg.direction === "desc" ? "↓" : "↑"}
+                                  </span>
+                                )}
+                              </button>
+                            </th>
+
+                            {/* ✅ Sales 90D */}
+                            <th className="border px-2 py-1 text-center">
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  toggleSort(branch.branchKey, "sales90d")
+                                }
+                                className="w-full flex items-center justify-center gap-1 text-xs font-medium text-slate-700 hover:text-emerald-700"
+                              >
+                                <span>Sales 90D</span>
+                                {sortCfg?.key === "sales90d" && (
                                   <span>
                                     {sortCfg.direction === "desc" ? "↓" : "↑"}
                                   </span>
@@ -524,7 +593,7 @@ const StockPage = () => {
 
                             return (
                               <tr
-                                key={`${item.codeProduct}-${idx}`}
+                                key={`${branch.branchKey}-${item.codeProduct ?? "x"}-${idx}`}
                                 className={idx % 2 ? "bg-slate-50/60" : ""}
                               >
                                 <td className="border px-2 py-1 text-center">
@@ -555,6 +624,11 @@ const StockPage = () => {
                                   {formatInt(item.quantity)}
                                 </td>
 
+                                {/* Sales 90D (null -> "-") */}
+                                <td className="border px-2 py-1 text-center">
+                                  {formatInt(item.sales90dQty)}
+                                </td>
+
                                 <td className="border px-2 py-1 text-right">
                                   {formatMoney(item.purchasePriceExcVAT)}
                                 </td>
@@ -574,10 +648,10 @@ const StockPage = () => {
                     </div>
 
                     <div className="mt-2 text-[11px] text-slate-500 text-right">
-                      Total items: {branch.items.length} • Qty +:{" "}
-                      {formatInt(branch.totalQtyPos)} • Qty -:{" "}
-                      {formatInt(branch.totalQtyNeg)} • Cost: ฿{" "}
-                      {formatMoney(branch.totalCost)}
+                      Total items:<span className="text-[11px] text-slate-500">
+                        {branch.items.length} items •
+                        Qty  {" "}{formatInt(branch.totalQtyPos)}    {">l<"}  {formatInt(branch.totalSales90dQty)}  • Sales 90D{" "}
+                      </span>
                     </div>
                   </div>
                 )}
