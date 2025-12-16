@@ -12,9 +12,7 @@ export const Section = ({ title, subtitle, children, className = "" }) => (
                     {title}
                 </h2>
                 {subtitle && (
-                    <p className="mt-1 text-xs md:text-sm text-slate-500">
-                        {subtitle}
-                    </p>
+                    <p className="mt-1 text-xs md:text-sm text-slate-500">{subtitle}</p>
                 )}
             </div>
         )}
@@ -41,38 +39,22 @@ export const ProductListTable = ({
     const defaultCurrentYear = now.getFullYear();
 
     const currentYear =
-        typeof summary?.currentYear === "number"
-            ? summary.currentYear
-            : defaultCurrentYear;
+        typeof summary?.currentYear === "number" ? summary.currentYear : defaultCurrentYear;
 
     const prevYear =
-        typeof summary?.prevYear === "number"
-            ? summary.prevYear
-            : currentYear - 1;
+        typeof summary?.prevYear === "number" ? summary.prevYear : currentYear - 1;
 
-    const currentLabel =
-        summary?.currentLabel ?? String(currentYear);
-    const prevLabel =
-        summary?.prevLabel ?? String(prevYear);
+    const currentLabel = summary?.currentLabel ?? String(currentYear);
+    const prevLabel = summary?.prevLabel ?? String(prevYear);
 
     // ---------- ดึงค่ารวมพื้นฐาน (ใช้เป็น fallback) ----------
-    const rawTotalProducts = Number(
-        summary?.totalProducts ?? summary?.total_products ?? 0
-    );
-    const rawTotalQty = Number(
-        summary?.totalQty ?? summary?.total_qty ?? 0
-    );
-    const rawTotalSales = Number(
-        summary?.totalSales ?? summary?.total_sales ?? 0
-    );
-    const rawTotalDiscount = Number(
-        summary?.totalDiscount ?? summary?.total_discount ?? 0
-    );
+    const rawTotalProducts = Number(summary?.totalProducts ?? summary?.total_products ?? 0);
+    const rawTotalQty = Number(summary?.totalQty ?? summary?.total_qty ?? 0);
+    const rawTotalSales = Number(summary?.totalSales ?? summary?.total_sales ?? 0);
+    const rawTotalDiscount = Number(summary?.totalDiscount ?? summary?.total_discount ?? 0);
 
     const capitalize = (s) =>
-        typeof s === "string" && s.length
-            ? s.charAt(0).toUpperCase() + s.slice(1)
-            : s;
+        typeof s === "string" && s.length ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
     // helper: อ่านค่าจาก summary ตาม baseKey + รูปแบบ current/prev/year
     const getSummaryValue = (baseKey, type) => {
@@ -99,13 +81,11 @@ export const ProductListTable = ({
 
     // helper: สร้าง metric current/prev/diff จาก summary
     const buildSummaryMetric = (baseKey, fallbackValue) => {
-        const currentValue =
-            getSummaryValue(baseKey, "current") ?? fallbackValue ?? 0;
+        const currentValue = getSummaryValue(baseKey, "current") ?? fallbackValue ?? 0;
         const prevValue = getSummaryValue(baseKey, "prev");
 
         const currentNum = Number(currentValue || 0);
-        const prevNum =
-            prevValue === null ? null : Number(prevValue || 0);
+        const prevNum = prevValue === null ? null : Number(prevValue || 0);
 
         let diff = null;
         let percentChange = null;
@@ -115,23 +95,19 @@ export const ProductListTable = ({
             percentChange = null;
         } else {
             diff = currentNum - prevNum;
-            percentChange =
-                prevNum === 0 ? null : (diff / prevNum) * 100;
+            percentChange = prevNum === 0 ? null : (diff / prevNum) * 100;
         }
 
         return { current: currentNum, prev: prevNum, diff, percentChange };
     };
 
-    const productsMetric = buildSummaryMetric(
-        "totalProducts",
-        rawTotalProducts
-    );
+    const productsMetric = buildSummaryMetric("totalProducts", rawTotalProducts);
     const qtyMetric = buildSummaryMetric("totalQty", rawTotalQty);
     const salesMetric = buildSummaryMetric("totalSales", rawTotalSales);
-    const discountMetric = buildSummaryMetric(
-        "totalDiscount",
-        rawTotalDiscount
-    );
+    const discountMetric = buildSummaryMetric("totalDiscount", rawTotalDiscount);
+
+    // ✅ ป้องกัน wrap ตรง "% (" โดยใช้ NBSP: "%\u00A0("
+    const joinPctWithParen = (pctText, parenText) => `${pctText}\u00A0${parenText}`;
 
     const formatSummaryDiff = (metric, { isMoney = false } = {}) => {
         const { diff, percentChange, prev } = metric;
@@ -145,10 +121,7 @@ export const ProductListTable = ({
             const sign = diff > 0 ? "+" : "-";
             const absDiff = Math.abs(diff);
             const valueText = isMoney
-                ? absDiff.toLocaleString(undefined, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                  })
+                ? absDiff.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
                 : absDiff.toLocaleString();
             return `${sign}${valueText}`;
         }
@@ -159,12 +132,12 @@ export const ProductListTable = ({
         const absPercent = Math.abs(percentChange ?? 0).toFixed(2);
         const absDiff = Math.abs(diff);
         const valueText = isMoney
-            ? absDiff.toLocaleString(undefined, {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-              })
+            ? absDiff.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
             : absDiff.toLocaleString();
-        return `${sign}${absPercent}% (${sign}${valueText})`;
+
+        // เดิม: "+44.64% (+1,234)" อาจ wrap
+        // ใหม่: "+44.64%\u00A0(+1,234)" ไม่แตกบรรทัดตรงกลาง
+        return joinPctWithParen(`${sign}${absPercent}%`, `(${sign}${valueText})`);
     };
 
     const getDiffClass = (diff) => {
@@ -204,8 +177,7 @@ export const ProductListTable = ({
         { isMoney = false, isPercent = false, mainClass = "" } = {}
     ) => {
         const { current, prev } = metric;
-        const diff =
-            prev === null ? null : current - prev;
+        const diff = prev === null ? null : current - prev;
         const diffClass = getDiffClass(diff ?? 0);
 
         const formatMain = () => {
@@ -253,9 +225,12 @@ export const ProductListTable = ({
 
                 const percentChange = (diffPts / prevPct) * 100;
                 const sign = diffPts > 0 ? "+" : "-";
-                return `${sign}${Math.abs(percentChange).toFixed(
-                    2
-                )}% (${sign}${Math.abs(diffPts).toFixed(2)})`;
+
+                // เดิมมีช่องว่าง → wrap ได้
+                return joinPctWithParen(
+                    `${sign}${Math.abs(percentChange).toFixed(2)}%`,
+                    `(${sign}${Math.abs(diffPts).toFixed(2)})`
+                );
             } else {
                 if (prev === 0) {
                     if (!diff) return "no change";
@@ -263,9 +238,9 @@ export const ProductListTable = ({
                     const absDiff = Math.abs(diff);
                     const valueText = isMoney
                         ? absDiff.toLocaleString(undefined, {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                          })
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                        })
                         : absDiff.toLocaleString();
                     return `${sign}${valueText}`;
                 }
@@ -276,26 +251,31 @@ export const ProductListTable = ({
                 const absDiff = Math.abs(diff);
                 const valueText = isMoney
                     ? absDiff.toLocaleString(undefined, {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                      })
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                    })
                     : absDiff.toLocaleString();
-                return `${sign}${absPercent}% (${sign}${valueText})`;
+
+                return joinPctWithParen(`${sign}${absPercent}%`, `(${sign}${valueText})`);
             }
         };
 
         return (
-            <div className="grid grid-cols-[1fr,1fr] grid-rows-2 gap-x-1">
+            <div className="grid grid-cols-[1fr,1fr] grid-rows-2 gap-x-1 min-w-0">
                 <div
-                    className={`row-span-2 flex items-center justify-end font-medium ${mainClass}`}
+                    className={`row-span-2 flex items-center justify-end font-medium tabular-nums min-w-0 ${mainClass}`}
                 >
-                    {formatMain()}
+                    <span className="whitespace-nowrap">{formatMain()}</span>
                 </div>
-                <div className="col-span-1 text-[10px] text-slate-500 text-right">
+
+                <div className="col-span-1 text-[10px] text-slate-500 text-right tabular-nums whitespace-nowrap min-w-max">
                     {prevLabel}: {formatPrev()}
                 </div>
+
+
                 <div
-                    className={`col-span-1 text-[10px] text-right ${diffClass}`}
+                    className={`col-span-1 text-[10px] text-right tabular-nums min-w-0 whitespace-nowrap overflow-hidden text-ellipsis ${diffClass}`}
+                    title={formatDiff()}
                 >
                     {formatDiff()}
                 </div>
@@ -312,25 +292,22 @@ export const ProductListTable = ({
                     <p className="text-[11px] uppercase tracking-wide text-slate-500">
                         Total products
                     </p>
-                    <div className="mt-1 grid grid-cols-[1.4fr,1.6fr] gap-x-2 items-center">
-                        <div className="text-lg font-semibold text-slate-800">
+                    <div className="mt-1 grid grid-cols-[1.4fr,1.6fr] gap-x-2 items-center min-w-0">
+                        <div className="text-lg font-semibold text-slate-800 tabular-nums whitespace-nowrap">
                             {productsMetric.current.toLocaleString()}
                         </div>
-                        <div className="flex flex-col items-end text-[11px]">
-                            <span className="text-slate-500">
+                        <div className="flex flex-col items-end text-[11px] min-w-0">
+                            <span className="text-slate-500 whitespace-nowrap">
                                 {prevLabel}:{" "}
-                                {productsMetric.prev === null
-                                    ? "-"
-                                    : productsMetric.prev.toLocaleString()}
+                                {productsMetric.prev === null ? "-" : productsMetric.prev.toLocaleString()}
                             </span>
                             <span
-                                className={`mt-0.5 ${getDiffClass(
+                                className={`mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis ${getDiffClass(
                                     productsMetric.diff ?? 0
                                 )}`}
+                                title={formatSummaryDiff(productsMetric, { isMoney: false })}
                             >
-                                {formatSummaryDiff(productsMetric, {
-                                    isMoney: false,
-                                })}
+                                {formatSummaryDiff(productsMetric, { isMoney: false })}
                             </span>
                         </div>
                     </div>
@@ -341,25 +318,22 @@ export const ProductListTable = ({
                     <p className="text-[11px] uppercase tracking-wide text-slate-500">
                         Total quantity
                     </p>
-                    <div className="mt-1 grid grid-cols-[1.4fr,1.6fr] gap-x-2 items-center">
-                        <div className="text-lg font-semibold text-slate-800">
+                    <div className="mt-1 grid grid-cols-[1.4fr,1.6fr] gap-x-2 items-center min-w-0">
+                        <div className="text-lg font-semibold text-slate-800 tabular-nums whitespace-nowrap">
                             {qtyMetric.current.toLocaleString()}
                         </div>
-                        <div className="flex flex-col items-end text-[11px]">
-                            <span className="text-slate-500">
+                        <div className="flex flex-col items-end text-[11px] min-w-0">
+                            <span className="text-slate-500 whitespace-nowrap">
                                 {prevLabel}:{" "}
-                                {qtyMetric.prev === null
-                                    ? "-"
-                                    : qtyMetric.prev.toLocaleString()}
+                                {qtyMetric.prev === null ? "-" : qtyMetric.prev.toLocaleString()}
                             </span>
                             <span
-                                className={`mt-0.5 ${getDiffClass(
+                                className={`mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis ${getDiffClass(
                                     qtyMetric.diff ?? 0
                                 )}`}
+                                title={formatSummaryDiff(qtyMetric, { isMoney: false })}
                             >
-                                {formatSummaryDiff(qtyMetric, {
-                                    isMoney: false,
-                                })}
+                                {formatSummaryDiff(qtyMetric, { isMoney: false })}
                             </span>
                         </div>
                     </div>
@@ -370,73 +344,57 @@ export const ProductListTable = ({
                     <p className="text-[11px] uppercase tracking-wide text-slate-500">
                         Total sales
                     </p>
-                    <div className="mt-1 grid grid-cols-[1.4fr,1.6fr] gap-x-2 items-center">
-                        <div className="text-lg font-semibold text-emerald-700">
-                            {salesMetric.current.toLocaleString(
-                                undefined,
-                                {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                }
-                            )}
+                    <div className="mt-1 grid grid-cols-[1.4fr,1.6fr] gap-x-2 items-center min-w-0">
+                        <div className="text-lg font-semibold text-emerald-700 tabular-nums whitespace-nowrap">
+                            {salesMetric.current.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                            })}
                         </div>
-                        <div className="flex flex-col items-end text-[11px]">
-                            <span className="text-slate-500">
+                        <div className="flex flex-col items-end text-[11px] min-w-0">
+                            <span className="text-slate-500 whitespace-nowrap">
                                 {prevLabel}:{" "}
                                 {salesMetric.prev === null
                                     ? "-"
-                                    : salesMetric.prev.toLocaleString(
-                                          undefined,
-                                          {
-                                              minimumFractionDigits: 2,
-                                              maximumFractionDigits: 2,
-                                          }
-                                      )}
+                                    : salesMetric.prev.toLocaleString(undefined, {
+                                        minimumFractionDigits: 2,
+                                        maximumFractionDigits: 2,
+                                    })}
                             </span>
                             <span
-                                className={`mt-0.5 ${getDiffClass(
+                                className={`mt-0.5 whitespace-nowrap overflow-hidden text-ellipsis ${getDiffClass(
                                     salesMetric.diff ?? 0
                                 )}`}
+                                title={formatSummaryDiff(salesMetric, { isMoney: true })}
                             >
-                                {formatSummaryDiff(salesMetric, {
-                                    isMoney: true,
-                                })}
+                                {formatSummaryDiff(salesMetric, { isMoney: true })}
                             </span>
                         </div>
                     </div>
 
                     {/* Discount info (ใช้ label ช่วงเวลาแทนปีตรง ๆ) */}
-                    <div className="mt-1 text-[11px]">
-                        <div className="text-red-500">
+                    <div className="mt-1 text-[11px] min-w-0">
+                        <div className="text-red-500 tabular-nums whitespace-nowrap overflow-hidden text-ellipsis">
                             Discount {currentLabel}:{" "}
-                            {discountMetric.current.toLocaleString(
-                                undefined,
-                                {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                }
-                            )}
+                            {discountMetric.current.toLocaleString(undefined, {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                            })}
                         </div>
-                        <div className="text-slate-500">
+                        <div className="text-slate-500 tabular-nums whitespace-nowrap overflow-hidden text-ellipsis">
                             {prevLabel}:{" "}
                             {discountMetric.prev === null
                                 ? "-"
-                                : discountMetric.prev.toLocaleString(
-                                      undefined,
-                                      {
-                                          minimumFractionDigits: 2,
-                                          maximumFractionDigits: 2,
-                                      }
-                                  )}
+                                : discountMetric.prev.toLocaleString(undefined, {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
                         </div>
                         <div
-                            className={`${getDiffClass(
-                                discountMetric.diff ?? 0
-                            )} mt-0.5`}
+                            className={`${getDiffClass(discountMetric.diff ?? 0)} mt-0.5 tabular-nums whitespace-nowrap overflow-hidden text-ellipsis`}
+                            title={formatSummaryDiff(discountMetric, { isMoney: true })}
                         >
-                            {formatSummaryDiff(discountMetric, {
-                                isMoney: true,
-                            })}
+                            {formatSummaryDiff(discountMetric, { isMoney: true })}
                         </div>
                     </div>
                 </div>
@@ -464,9 +422,7 @@ export const ProductListTable = ({
                 </div>
 
                 <div className="flex items-center justify-between md:justify-end gap-2">
-                    <label className="text-[11px] text-slate-500">
-                        Sort by:
-                    </label>
+                    <label className="text-[11px] text-slate-500">Sort by:</label>
                     <select
                         value={sort}
                         onChange={(e) => onSortChange(e.target.value)}
@@ -474,9 +430,7 @@ export const ProductListTable = ({
                     >
                         <option value="sales_desc">Sales (high → low)</option>
                         <option value="qty_desc">Qty (high → low)</option>
-                        <option value="discount_desc">
-                            Discount (most negative first)
-                        </option>
+                        <option value="discount_desc">Discount (most negative first)</option>
                         <option value="name_asc">Name (A → Z)</option>
                     </select>
                 </div>
@@ -489,25 +443,25 @@ export const ProductListTable = ({
                         Loading products...
                     </div>
                 ) : rows && rows.length > 0 ? (
-                    <table className="min-w-full text-xs md:text-sm">
+                    <table className="min-w-full table-fixed text-xs md:text-sm">
                         <thead>
                             <tr className="bg-slate-100 border-b border-slate-200">
-                                <th className="py-2.5 px-3 text-left text-[11px] font-semibold text-slate-600">
+                                <th className="w-12 py-2.5 px-3 text-left text-[11px] font-semibold text-slate-600 whitespace-nowrap">
                                     #
                                 </th>
-                                <th className="py-2.5 px-3 text-left text-[11px] font-semibold text-slate-600">
+                                <th className="w-[38%] py-2.5 px-3 text-left text-[11px] font-semibold text-slate-600">
                                     สินค้า
                                 </th>
-                                <th className="py-2.5 px-3 text-right text-[11px] font-semibold text-slate-600">
+                                <th className="w-[15%] py-2.5 px-3 text-right text-[11px] font-semibold text-slate-600 whitespace-nowrap">
                                     จำนวน
                                 </th>
-                                <th className="py-2.5 px-3 text-right text-[11px] font-semibold text-slate-600">
+                                <th className="w-[17%] py-2.5 px-3 text-right text-[11px] font-semibold text-slate-600 whitespace-nowrap">
                                     ยอดขาย
                                 </th>
-                                <th className="py-2.5 px-3 text-right text-[11px] font-semibold text-slate-600">
+                                <th className="w-[15%] py-2.5 px-3 text-right text-[11px] font-semibold text-slate-600 whitespace-nowrap">
                                     ส่วนลด
                                 </th>
-                                <th className="py-2.5 px-3 text-right text-[11px] font-semibold text-slate-600">
+                                <th className="w-[15%] py-2.5 px-3 text-right text-[11px] font-semibold text-slate-600 whitespace-nowrap">
                                     % of total
                                 </th>
                             </tr>
@@ -515,77 +469,51 @@ export const ProductListTable = ({
                         <tbody>
                             {rows.map((p, i) => {
                                 const qtyMetricRow = getRowMetric(p, "qty");
-                                const salesMetricRow = getRowMetric(
-                                    p,
-                                    "sales"
-                                );
-                                const discountMetricRow = getRowMetric(
-                                    p,
-                                    "discount_total"
-                                );
-                                const ratioMetricRow = getRowMetric(
-                                    p,
-                                    "sales_ratio"
-                                );
+                                const salesMetricRow = getRowMetric(p, "sales");
+                                const discountMetricRow = getRowMetric(p, "discount_total");
+                                const ratioMetricRow = getRowMetric(p, "sales_ratio");
 
                                 return (
                                     <tr
                                         key={`${p.product_code}-${i}`}
                                         className="border-b last:border-0 border-slate-100 odd:bg-white even:bg-slate-50/60 hover:bg-indigo-50/60 transition-colors"
                                     >
-                                        <td className="py-2.5 px-3 text-[11px] text-slate-500">
+                                        <td className="py-2.5 px-3 text-[11px] text-slate-500 whitespace-nowrap">
                                             {(page - 1) * pageSize + i + 1}
                                         </td>
+
                                         <td className="py-2.5 px-3 text-slate-800">
-                                            <div className="font-medium">
-                                                {p.product_name}
-                                            </div>
-                                            <div className="text-[11px] text-slate-500">
+                                            <div className="font-medium break-words">{p.product_name}</div>
+                                            <div className="text-[11px] text-slate-500 break-words">
                                                 {p.product_code}
-                                                {p.product_brand
-                                                    ? ` • ${p.product_brand}`
-                                                    : ""}
+                                                {p.product_brand ? ` • ${p.product_brand}` : ""}
                                             </div>
                                         </td>
+
                                         {/* Qty */}
                                         <td className="py-2.5 px-3">
-                                            {renderYearCell(
-                                                qtyMetricRow,
-                                                {
-                                                    isMoney: false,
-                                                }
-                                            )}
+                                            {renderYearCell(qtyMetricRow, { isMoney: false })}
                                         </td>
+
                                         {/* Sales */}
                                         <td className="py-2.5 px-3">
-                                            {renderYearCell(
-                                                salesMetricRow,
-                                                {
-                                                    isMoney: true,
-                                                    mainClass:
-                                                        "text-blue-700",
-                                                }
-                                            )}
+                                            {renderYearCell(salesMetricRow, {
+                                                isMoney: true,
+                                                mainClass: "text-blue-700",
+                                            })}
                                         </td>
+
                                         {/* Discount */}
                                         <td className="py-2.5 px-3">
-                                            {renderYearCell(
-                                                discountMetricRow,
-                                                {
-                                                    isMoney: true,
-                                                    mainClass:
-                                                        "text-red-500",
-                                                }
-                                            )}
+                                            {renderYearCell(discountMetricRow, {
+                                                isMoney: true,
+                                                mainClass: "text-red-500",
+                                            })}
                                         </td>
+
                                         {/* % of total */}
                                         <td className="py-2.5 px-3">
-                                            {renderYearCell(
-                                                ratioMetricRow,
-                                                {
-                                                    isPercent: true,
-                                                }
-                                            )}
+                                            {renderYearCell(ratioMetricRow, { isPercent: true })}
                                         </td>
                                     </tr>
                                 );
@@ -604,27 +532,15 @@ export const ProductListTable = ({
                 <div className="text-[11px] text-slate-500">
                     Showing{" "}
                     <span className="font-medium">
-                        {totalRows === 0
-                            ? 0
-                            : (page - 1) * pageSize + 1}
+                        {totalRows === 0 ? 0 : (page - 1) * pageSize + 1}
                     </span>{" "}
                     –
-                    <span className="font-medium">
-                        {" "}
-                        {Math.min(page * pageSize, totalRows)}
-                    </span>{" "}
-                    of{" "}
-                    <span className="font-medium">
-                        {totalRows.toLocaleString()}
-                    </span>{" "}
+                    <span className="font-medium"> {Math.min(page * pageSize, totalRows)}</span>{" "}
+                    of <span className="font-medium">{totalRows.toLocaleString()}</span>{" "}
                     products
                 </div>
 
-                <PaginationControls
-                    page={page}
-                    totalPages={totalPages}
-                    onPageChange={onPageChange}
-                />
+                <PaginationControls page={page} totalPages={totalPages} onPageChange={onPageChange} />
             </div>
         </div>
     );
@@ -653,7 +569,6 @@ const PaginationControls = ({ page: currentPage, totalPages, onPageChange }) => 
         let num = parseInt(inputValue, 10);
 
         if (isNaN(num)) {
-            // ถ้าพิมพ์มั่ว ๆ ให้รีเซ็ตกลับเป็นหน้าปัจจุบัน
             setInputValue(String(currentPage));
             return;
         }
@@ -681,11 +596,10 @@ const PaginationControls = ({ page: currentPage, totalPages, onPageChange }) => 
                 type="button"
                 disabled={currentPage <= 1}
                 onClick={goPrev}
-                className={`px-2.5 py-1 rounded-lg border text-[11px] ${
-                    currentPage <= 1
-                        ? "border-slate-200 text-slate-300 cursor-default"
-                        : "border-slate-300 text-slate-700 hover:bg-slate-100"
-                }`}
+                className={`px-2.5 py-1 rounded-lg border text-[11px] ${currentPage <= 1
+                    ? "border-slate-200 text-slate-300 cursor-default"
+                    : "border-slate-300 text-slate-700 hover:bg-slate-100"
+                    }`}
             >
                 Back
             </button>
@@ -703,20 +617,17 @@ const PaginationControls = ({ page: currentPage, totalPages, onPageChange }) => 
                     className="w-12 px-1.5 py-1 border border-slate-300 rounded-md text-center focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
                 />
                 <span>/</span>
-                <span className="font-medium text-slate-800">
-                    {totalPages}
-                </span>
+                <span className="font-medium text-slate-800">{totalPages}</span>
             </div>
 
             <button
                 type="button"
                 disabled={currentPage >= totalPages}
                 onClick={goNext}
-                className={`px-2.5 py-1 rounded-lg border text-[11px] ${
-                    currentPage >= totalPages
-                        ? "border-slate-200 text-slate-300 cursor-default"
-                        : "border-slate-300 text-slate-700 hover:bg-slate-100"
-                }`}
+                className={`px-2.5 py-1 rounded-lg border text-[11px] ${currentPage >= totalPages
+                    ? "border-slate-200 text-slate-300 cursor-default"
+                    : "border-slate-300 text-slate-700 hover:bg-slate-100"
+                    }`}
             >
                 Next
             </button>

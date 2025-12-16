@@ -54,7 +54,7 @@ const getMonthArrow = (curr, prev) => {
   const diff = curr - prev;
   if (diff > 0) return "▲";
   if (diff < 0) return "▼";
-  return "–";
+  return "";
 };
 
 // สีของลูกศร ตามทิศทาง diff

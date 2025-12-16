@@ -12,9 +12,9 @@ const getDiffClass = (v) => {
 };
 
 const getArrowIcon = (v) => {
-  if (v > 0) return "↑";
-  if (v < 0) return "↓";
-  return "–";
+  if (v > 0) return <span className="text-[9px] leading-none align-middle">▲</span>;
+  if (v < 0) return <span className="text-[9px] leading-none align-middle">▼</span>;
+  return null;
 };
 
 const formatDiffWithPercent = (diff, prev, { isMoney = false } = {}) => {
@@ -34,14 +34,12 @@ const formatDiffWithPercent = (diff, prev, { isMoney = false } = {}) => {
   }
 
   const absPercent = Math.abs((diff / prev) * 100).toFixed(2);
-
   return `${sign}${mainText} (${sign}${absPercent}%)`;
 };
 
 const MonthlyBranchSummary = ({ monthRows, activeButton, onShowData }) => {
   if (!monthRows || monthRows.length === 0) return null;
 
-  // รวมยอด channel → เรียงหัวตาราง
   const channelTotals = {};
   monthRows.forEach((m) => {
     (m.salesChannels || []).forEach((c) => {
@@ -56,7 +54,6 @@ const MonthlyBranchSummary = ({ monthRows, activeButton, onShowData }) => {
 
   return (
     <section className="bg-white/90 backdrop-blur rounded-xl shadow-sm border border-slate-200">
-      {/* HEADER */}
       <div className="px-4 py-4 border-b border-slate-100 flex justify-between">
         <div>
           <h2 className="text-sm md:text-base font-semibold text-slate-800">
@@ -73,20 +70,18 @@ const MonthlyBranchSummary = ({ monthRows, activeButton, onShowData }) => {
         </div>
       </div>
 
-      {/* Scroll wrapper */}
       <div className="overflow-x-auto">
         <div className="max-h-[640px] overflow-y-auto">
           <table className="min-w-full text-xs md:text-sm">
             <thead className="bg-slate-100 sticky top-0 z-20 text-slate-600 text-[11px]">
               <tr>
-                {/* Sticky left column */}
                 <th className="px-3 py-2.5 border-b font-semibold text-left bg-slate-100 sticky left-0 z-[25]">
                   Month / Year
                 </th>
 
                 <th className="px-3 py-2.5 border-b font-semibold text-right">Bills</th>
                 <th className="px-3 py-2.5 border-b font-semibold text-right">Returns</th>
-                <th className="px-3 py-2.5 border-b font-semibold text-right">Discount</th>
+                <th className="px-3 py-2.5 border-b font-semibold text-right">Discount End Bill</th>
 
                 {allChannels.map((chName) => (
                   <th
@@ -102,7 +97,6 @@ const MonthlyBranchSummary = ({ monthRows, activeButton, onShowData }) => {
                 <th className="px-3 py-2.5 border-b font-semibold text-right">Per bill</th>
                 <th className="px-1 py-2.5 border-b font-semibold text-left">PB diff</th>
 
-                {/* ⭐ ช่องใหม่ Net/day */}
                 <th className="px-3 py-2.5 border-b font-semibold text-right">
                   Avg / day
                 </th>
@@ -122,9 +116,9 @@ const MonthlyBranchSummary = ({ monthRows, activeButton, onShowData }) => {
 
                 const perBillNow = Number(row.salesPerBill || 0);
                 const perBillPrev = prev ? Number(prev.salesPerBill || 0) : null;
-                const perBillDiff = perBillPrev != null ? perBillNow - perBillPrev : null;
+                const perBillDiff =
+                  perBillPrev != null ? perBillNow - perBillPrev : null;
 
-                // ⭐ ใช้จำนวนวันที่มาจาก backend โดยตรง
                 const realDays = Number(row.days || 1);
                 const avgPerDay = netNow / realDays;
 
@@ -133,26 +127,24 @@ const MonthlyBranchSummary = ({ monthRows, activeButton, onShowData }) => {
                 return (
                   <tr
                     key={idx}
-                    className={`border-b ${
-                      idx % 2 === 0 ? "bg-white" : "bg-slate-50/70"
-                    } hover:bg-indigo-50/40`}
+                    className={`border-b ${idx % 2 === 0 ? "bg-white" : "bg-slate-50/70"
+                      } hover:bg-indigo-50/40`}
                   >
-                    {/* Sticky left cell */}
-                    <td className="px-3 py-2.5 sticky left-0 bg-white z-[15] font-medium">
+                    <td className="px-1 py-2.5 sticky left-0 bg-white z-[15] font-medium">
                       {row.monthYear}
                     </td>
-
-                    <td className="px-3 py-2.5 text-right">{row.billCount}</td>
-
-                    <td className="px-3 py-2.5 text-right text-red-600">
-                      {row.totalReturns.toLocaleString()}
+                    <td className="px-1 py-2.5 text-right text-[12px] md:text-xs text-slate-700">
+                      {row.billCount}
                     </td>
 
-                    <td className="px-3 py-2.5 text-right">
+                    <td className="px-1 py-2.5 text-right text-[12px] md:text-xs text-slate-700">
+                      {row.totalReturns?.toLocaleString?.() ?? row.totalReturns}
+                    </td>
+
+                    <td className="px-1 py-2.5 text-center text-[12px] md:text-xs text-red-600">
                       {row.endBillDiscount}
                     </td>
 
-                    {/* CHANNEL VALUES */}
                     {allChannels.map((chName) => {
                       const nowObj =
                         row.salesChannels?.find((c) => c.channelName === chName);
@@ -165,16 +157,14 @@ const MonthlyBranchSummary = ({ monthRows, activeButton, onShowData }) => {
                       const diff = nowVal - prevVal;
 
                       return (
-                        <td key={chName} className="px-2 py-2.5 text-right text-[11px]">
+                        <td key={chName} className="px-0.5 py-2.5 text-right text-[11px]">
                           <span className="text-slate-500 mr-1">
                             {nowVal.toLocaleString(undefined, {
                               minimumFractionDigits: 2,
                               maximumFractionDigits: 2,
                             })}
                           </span>
-                          <span className={getDiffClass(diff)}>
-                            {getArrowIcon(diff)}
-                          </span>
+                          <span className={getDiffClass(diff)}>{getArrowIcon(diff)}</span>
                         </td>
                       );
                     })}
@@ -186,10 +176,12 @@ const MonthlyBranchSummary = ({ monthRows, activeButton, onShowData }) => {
                       })}
                     </td>
 
+                    {/* ✅ Net diff: ไม่ให้ขึ้นบรรทัดใหม่ */}
                     <td
-                      className={`px-1 py-2.5 text-left text-[11px] ${getDiffClass(
+                      className={`px-1 py-2.5 text-left text-[11px] whitespace-nowrap overflow-hidden text-ellipsis ${getDiffClass(
                         netDiff ?? 0
                       )}`}
+                      title={formatDiffWithPercent(netDiff, netPrev, { isMoney: true })}
                     >
                       {formatDiffWithPercent(netDiff, netPrev, { isMoney: true })}
                     </td>
@@ -201,15 +193,16 @@ const MonthlyBranchSummary = ({ monthRows, activeButton, onShowData }) => {
                       })}
                     </td>
 
+                    {/* ✅ PB diff: ไม่ให้ขึ้นบรรทัดใหม่ */}
                     <td
-                      className={`px-1 py-2.5 text-left text-[11px] ${getDiffClass(
+                      className={`px-1 py-2.5 text-left text-[11px] whitespace-nowrap overflow-hidden text-ellipsis ${getDiffClass(
                         perBillDiff ?? 0
                       )}`}
+                      title={formatDiffWithPercent(perBillDiff, perBillPrev)}
                     >
                       {formatDiffWithPercent(perBillDiff, perBillPrev)}
                     </td>
 
-                    {/* ⭐ Net/day */}
                     <td className="px-3 py-2.5 text-right font-semibold text-indigo-600">
                       {avgPerDay.toLocaleString(undefined, {
                         minimumFractionDigits: 2,
@@ -217,7 +210,6 @@ const MonthlyBranchSummary = ({ monthRows, activeButton, onShowData }) => {
                       })}
                     </td>
 
-                    {/* DAY BUTTON */}
                     <td className="px-3 py-2.5 text-center">
                       {activeButton === `${k}:day` ? (
                         <span className=" py-1 text-[11px] rounded-full bg-slate-100 text-slate-500 border">
@@ -233,7 +225,6 @@ const MonthlyBranchSummary = ({ monthRows, activeButton, onShowData }) => {
                       )}
                     </td>
 
-                    {/* PRODUCT BUTTON */}
                     <td className="px-1 py-2.5 text-center">
                       {activeButton === `${k}:month-product` ? (
                         <span className="py-1 text-[11px] rounded-full bg-slate-100 text-slate-500 border">
