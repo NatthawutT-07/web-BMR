@@ -1,3 +1,4 @@
+// src/components/admin/dashboard/second/MainFilterSales.jsx
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import useBmrStore from "../../../../store/bmr_store";
 import useSalesStore from "../../../../store/sales_store";
@@ -19,6 +20,17 @@ import DailySalesSection from "./second/DailySalesSection";
 const normalizeKey = (str) => {
   if (!str) return "";
   return String(str).trim().replace(/^0+/, "");
+};
+
+// ✅ ใช้ตัดเวลาออกจาก string วันที่ (แค่เพื่อแสดงผล)
+const toDateOnlyLabel = (val) => {
+  if (!val) return "";
+  const s = String(val).trim();
+  // ISO: 2025-12-17T00:00:00.000Z -> 2025-12-17
+  if (s.includes("T")) return s.split("T")[0];
+  // DMY + time: 13/12/2025 12:56:44 -> 13/12/2025
+  if (s.includes(" ")) return s.split(" ")[0];
+  return s;
 };
 
 /* ---------------- MAIN COMPONENT ---------------- */
@@ -60,13 +72,13 @@ const MainFilterSales = () => {
   /* เมื่อเปลี่ยนสาขา → ปลดล็อกปุ่ม + รีเซ็ตปุ่มแสดงข้อมูล */
   useEffect(() => {
     setSubmitLocked(false);
-    setActiveButton(null); // 🆕 reset ปุ่ม Viewing
+    setActiveButton(null);
   }, [selectedBranchCode]);
 
   /* Reset UI */
   const resetUI = useCallback(() => {
     setShowType("");
-    setActiveButton(null); // 🆕 reset Viewing button
+    setActiveButton(null);
     setSalesData([]);
     setProductMonthData([]);
     setProductDayData([]);
@@ -87,7 +99,7 @@ const MainFilterSales = () => {
       e.preventDefault();
       if (!selectedBranchCode || submitLocked) return;
 
-      setSubmitLocked(true); // 🆕 ล็อกปุ่มทันทีหลัง submit
+      setSubmitLocked(true);
       resetUI();
 
       try {
@@ -100,8 +112,7 @@ const MainFilterSales = () => {
         });
 
         setSalesData(sortedData);
-
-        setActiveButton(null); // 🆕 รีเซ็ตปุ่ม
+        setActiveButton(null);
       } catch (err) {
         console.error("Fetch month sales error:", err);
       }
@@ -114,15 +125,14 @@ const MainFilterSales = () => {
     async (key, type) => {
       try {
         const k = normalizeKey(key);
+        const label = toDateOnlyLabel(key); // ✅ เอาไว้แสดงผล (ไม่ส่งเข้า API)
 
-        // 🆕 เวลากดปุ่มใหม่ ให้ reset viewing ปุ่มเก่า
         setActiveButton(`${k}:${type}`);
         setShowType(type);
 
-        // NOTE: ปุ่ม Show ไม่เกี่ยวกับ submitLocked เลย
-
         if (type === "day") {
-          setDate("");
+          // ✅ ให้ date เป็น label (ถ้า component ปลายทางเอาไปแสดง จะไม่เห็นเวลา)
+          setDate(label);
           setProductMonthData([]);
           setProductDayData([]);
 
@@ -131,30 +141,20 @@ const MainFilterSales = () => {
         }
 
         if (type === "month-product") {
-          setDate(key);
+          setDate(label);
           setShowDay([]);
           setProductDayData([]);
 
-          const data = await fetchBranchSalesMonthProduct(
-            selectedBranchCode,
-            key
-          );
-          setProductMonthData(
-            data.slice().sort((a, b) => b.sale_quantity - a.sale_quantity)
-          );
+          const data = await fetchBranchSalesMonthProduct(selectedBranchCode, key);
+          setProductMonthData(data.slice().sort((a, b) => b.sale_quantity - a.sale_quantity));
         }
 
         if (type === "day-product") {
-          setDate(key);
+          setDate(label);
           setProductMonthData([]);
 
-          const data = await fetchBranchSalesDayProduct(
-            selectedBranchCode,
-            key
-          );
-          setProductDayData(
-            data.slice().sort((a, b) => b.sale_quantity - a.sale_quantity)
-          );
+          const data = await fetchBranchSalesDayProduct(selectedBranchCode, key);
+          setProductDayData(data.slice().sort((a, b) => b.sale_quantity - a.sale_quantity));
         }
       } catch (err) {
         console.error("Fetch detail error:", err);
@@ -173,9 +173,8 @@ const MainFilterSales = () => {
   const monthRows = useMemo(() => salesData, [salesData]);
 
   return (
-    <div className="min-h-screen bg-slate-50/80 px-3 py-4 md:px-6 md:py-6 text-sm">
+    <div className="min-h-screen bg-slate-50 px-3 py-4 md:px-6 md:py-6 text-sm">
       <div className="max-w-7xl mx-auto space-y-4 md:space-y-6">
-
         {/* Select Branch */}
         <BranchSelectForm
           branches={branches}
@@ -197,7 +196,7 @@ const MainFilterSales = () => {
         {/* DAILY */}
         {showType === "day" && showDay.length > 0 && (
           <DailySalesSection
-            date={date}
+            date={date} // ✅ ตอนนี้จะเป็น “วันล้วนๆ” ไม่ติดเวลา
             showDay={showDay}
             activeButton={activeButton}
             onShowData={handleShowDataCall}
@@ -206,18 +205,12 @@ const MainFilterSales = () => {
 
         {/* MONTH PRODUCT */}
         {showType === "month-product" && (
-          <ProductTable
-            title={`Month product (${date})`}
-            data={productMonthData}
-          />
+          <ProductTable title={`Month product (${date})`} data={productMonthData} />
         )}
 
         {/* DAY PRODUCT */}
         {showType === "day-product" && (
-          <ProductTable
-            title={`Day product (${date})`}
-            data={productDayData}
-          />
+          <ProductTable title={`Day product (${date})`} data={productDayData} />
         )}
       </div>
     </div>

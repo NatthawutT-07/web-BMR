@@ -9,6 +9,13 @@ import TopFiltersAndKpi from "./second/DateFilter";
 import { Section, ProductListTable } from "./second/UISections";
 import BranchMonthlySalesChart from "./second/BranchMonthlySalesChart";
 
+import {
+  toLocalISODate,
+  getYesterdayISO,
+  filterDashboardData,
+  useCompareModeSmart,
+} from "./dashboardSalesUtils";
+
 // โหลด chart.js ไว้ครั้งเดียวตอน mount เพื่อไม่ให้ block การโหลดข้อมูลบ่อย ๆ
 const registerChart = async () => {
   const chart = await import("chart.js");
@@ -29,147 +36,6 @@ const scrollToSection = (id) => {
   const el = document.getElementById(id);
   if (!el) return;
   el.scrollIntoView({ behavior: "smooth", block: "start" });
-};
-
-// ✅ helper แปลง Date → YYYY-MM-DD แบบใช้เวลา Local (กัน timezone เพี้ยน)
-const toLocalISODate = (d) => {
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const getYesterdayISO = () => {
-  const d = new Date();
-  d.setDate(d.getDate() - 1);
-  return toLocalISODate(d); // ✅ ใช้ local date
-};
-
-// filter data จาก baseData ตามช่วงวันที่ที่เลือก + โหมดเปรียบเทียบ
-// compareMode:
-//   - "overview"  = ใช้เฉพาะช่วง start–end ตามเดิม
-//   - "range_yoy" = ใช้ช่วง start–end + ช่วงเดียวกันของปีก่อน
-const filterDashboardData = (baseData, start, end, compareMode = "overview") => {
-  if (!baseData) return null;
-
-  const startDate = new Date(start + "T00:00:00");
-  const endDate = new Date(end + "T23:59:59");
-
-  let prevStartDate = null;
-  let prevEndDate = null;
-
-  if (compareMode === "range_yoy") {
-    prevStartDate = new Date(startDate);
-    prevStartDate.setFullYear(prevStartDate.getFullYear() - 1);
-
-    prevEndDate = new Date(endDate);
-    prevEndDate.setFullYear(prevEndDate.getFullYear() - 1);
-  }
-
-  const inCurrentRange = (value) => {
-    if (!value) return false;
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return false;
-    return d >= startDate && d <= endDate;
-  };
-
-  const inRange = (value) => {
-    if (!value) return false;
-    const d = new Date(value);
-    if (Number.isNaN(d.getTime())) return false;
-
-    if (compareMode === "range_yoy" && prevStartDate && prevEndDate) {
-      // โหมดเทียบช่วงเวลา → รวมทั้งช่วงปัจจุบัน + ช่วงเดียวกันของปีก่อน
-      return (
-        (d >= startDate && d <= endDate) ||
-        (d >= prevStartDate && d <= prevEndDate)
-      );
-    }
-
-    // โหมดปกติ → ใช้เฉพาะช่วง start–end
-    return d >= startDate && d <= endDate;
-  };
-
-  // 1) ยอดรวมตามวัน (รวมทั้ง 2 ช่วงถ้าเป็น range_yoy)
-  const allSalesRows = (baseData.salesByDate || []).filter((r) => inRange(r.bill_date));
-  const salesByDate = allSalesRows;
-
-  // 2) ยอดตามสาขา+วันที่
-  const salesByBranchDate = (baseData.salesByBranchDate || []).filter((r) => inRange(r.bill_date));
-
-  // 3) ยอดตามช่องทาง+วันที่ (ใช้ทำ Sales by Channel ปี/ปี)
-  const salesByChannelDate = (baseData.salesByChannelDate || []).filter((r) => inRange(r.bill_date));
-
-  // สร้าง map: { [year]: { [channelName]: totalSales } }
-  const salesByChannelYear = {};
-
-  salesByChannelDate.forEach((r) => {
-    if (!r.bill_date) return;
-    const d = new Date(r.bill_date);
-    if (Number.isNaN(d.getTime())) return;
-
-    const year = d.getFullYear();
-
-    let name = r.channel_name || r.channel_code || "Unknown";
-    const lower = String(name || "").trim().toLowerCase();
-
-    // ✅ รวม Unknown + "หน้าบ้าน" → "หน้าร้าน"
-    if (!name || lower === "unknown") {
-      name = "หน้าร้าน";
-    } else if (name === "หน้าบ้าน") {
-      name = "หน้าร้าน";
-    }
-
-    const val = Number(r.total_payment || 0);
-
-    if (!salesByChannelYear[year]) salesByChannelYear[year] = {};
-    salesByChannelYear[year][name] = (salesByChannelYear[year][name] || 0) + val;
-  });
-
-  // 4) ยอดรวมตามสาขา
-  const branchMap = {};
-  salesByBranchDate.forEach((r) => {
-    const key = r.branch_name || r.branch_code || "-";
-    const val = Number(r.total_payment || 0);
-    branchMap[key] = (branchMap[key] || 0) + val;
-  });
-  const salesByBranch = Object.entries(branchMap).map(([branch_name, branch_sales]) => ({
-    branch_name,
-    branch_sales,
-  }));
-
-  // 5) summary = ใช้เฉพาะ "ช่วงปัจจุบัน" ให้ตรงกับ template เดิม
-  const summaryRows =
-    compareMode === "range_yoy"
-      ? allSalesRows.filter((r) => inCurrentRange(r.bill_date))
-      : allSalesRows;
-
-  const total_payment = summaryRows.reduce((sum, r) => sum + Number(r.total_payment || 0), 0);
-  const rounding_sum = summaryRows.reduce((sum, r) => sum + Number(r.rounding_sum || 0), 0);
-  const discount_sum = summaryRows.reduce((sum, r) => sum + Number(r.discount_sum || 0), 0);
-
-  // bill_count / sale_count เฉพาะช่วงปัจจุบัน
-  const bill_count_total = summaryRows.reduce((sum, r) => sum + Number(r.bill_count || 0), 0);
-  const sale_count_total = summaryRows.reduce((sum, r) => sum + Number(r.sale_count || 0), 0);
-
-  // ✅ ให้ตรงกับเงื่อนไข:
-  // - Bill Count = นับบิลขายอย่างเดียว
-  // - Net bill count = จำนวนบิลทั้งหมด (ขาย + คืน)
-  const summary = {
-    total_payment,
-    rounding_sum,
-    discount_sum,
-    bill_count: sale_count_total,     // ใช้เฉพาะ "เอกสารขาย"
-    net_bill_count: bill_count_total, // รวมขาย + คืน
-  };
-
-  return {
-    summary,
-    salesByDate,        // มีทั้งปัจจุบัน + ปีก่อน ตามช่วงที่เลือก
-    salesByBranchDate,
-    salesByBranch,
-    salesByChannelYear, // ใช้เปรียบเทียบปี/ปี
-  };
 };
 
 const DashboardSales = () => {
@@ -200,6 +66,19 @@ const DashboardSales = () => {
   // - "overview"  = เหมือนเดิม ปีล่าสุด vs ปีก่อน ตามช่วงที่ฟิลเตอร์
   // - "range_yoy" = ช่วงวันที่ที่เลือก + ช่วงเดียวกันของปีก่อน
   const [compareMode, setCompareMode] = useState("overview");
+
+  // ✅ handler: เข้า range_yoy → ปรับ start ให้อยู่ปีเดียวกับ end
+  // ✅ กลับ overview → คืนค่าเดิมที่เลือกไว้ก่อนเข้า compare
+  const setCompareModeSmart = useCompareModeSmart({
+    start,
+    end,
+    setStart,
+    setEnd,
+    MIN_DATE,
+    MAX_DATE,
+    compareMode,
+    setCompareMode,
+  });
 
   // ===== state สำหรับ dashboard "สินค้า" =====
   const [productList, setProductList] = useState(null); // { summary, rows, mode? }
@@ -310,8 +189,7 @@ const DashboardSales = () => {
 
         const productMap = new Map();
 
-        const makeKey = (row) =>
-          row.product_code || row.productId || row.id || row.product_name;
+        const makeKey = (row) => row.product_code || row.productId || row.id || row.product_name;
 
         // ใส่ข้อมูลช่วงปัจจุบัน (✔ เซ็ตค่า ไม่บวกสะสม)
         curRows.forEach((row) => {
@@ -410,8 +288,7 @@ const DashboardSales = () => {
     if (baseData) {
       const filtered = filterDashboardData(baseData, start, end, compareMode);
       if (filtered) {
-        const days =
-          (new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24) + 1;
+        const days = (new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24) + 1;
         setDailyAvgSales(filtered.summary.total_payment / days || 0);
         setData(filtered);
       }
@@ -424,15 +301,13 @@ const DashboardSales = () => {
 
         const filtered = filterDashboardData(res, start, end, compareMode);
         if (filtered) {
-          const days =
-            (new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24) + 1;
+          const days = (new Date(end) - new Date(start)) / (1000 * 60 * 60 * 24) + 1;
           setDailyAvgSales(filtered.summary.total_payment / days || 0);
           setData(filtered);
         }
       } catch (err) {
-        // console.error("Dashboard load error:", err);
+        if (err?.response?.status === 401) return; // ให้ axios interceptor logout เอง
         logout();
-        // window.location. = "/";
       } finally {
         setLoading(false);
       }
@@ -485,15 +360,11 @@ const DashboardSales = () => {
     0;
 
   const normalizedProductList = (productList?.rows || []).map((p, index) => {
-    const baseName = p.product_brand
-      ? `${p.product_brand}: ${p.product_name}`
-      : p.product_name;
+    const baseName = p.product_brand ? `${p.product_brand}: ${p.product_name}` : p.product_name;
 
-    const currentSales =
-      p[`sales_${currentYearForProducts}`] ?? p.sales ?? 0;
+    const currentSales = p[`sales_${currentYearForProducts}`] ?? p.sales ?? 0;
 
-    const ratio =
-      totalSalesAllProducts > 0 ? currentSales / totalSalesAllProducts : 0;
+    const ratio = totalSalesAllProducts > 0 ? currentSales / totalSalesAllProducts : 0;
 
     return {
       ...p,
@@ -502,15 +373,9 @@ const DashboardSales = () => {
 
       // ให้ field ปัจจุบันพร้อมใช้ sort / UI
       sales: currentSales,
-      sales_ratio:
-        p[`sales_ratio_${currentYearForProducts}`] ??
-        p.sales_ratio ??
-        ratio,
+      sales_ratio: p[`sales_ratio_${currentYearForProducts}`] ?? p.sales_ratio ?? ratio,
       qty: p.qty ?? p[`qty_${currentYearForProducts}`] ?? 0,
-      discount_total:
-        p.discount_total ??
-        p[`discount_total_${currentYearForProducts}`] ??
-        0,
+      discount_total: p.discount_total ?? p[`discount_total_${currentYearForProducts}`] ?? 0,
     };
   });
 
@@ -531,8 +396,7 @@ const DashboardSales = () => {
   // ✅ Totals ตาม FILTER
   // - Total products ต้อง "แยกปี" (แก้ปัญหา SKU รวม 2 ปี)
   // =========================
-  const sumBy = (arr, picker) =>
-    arr.reduce((acc, x) => acc + Number(picker(x) || 0), 0);
+  const sumBy = (arr, picker) => arr.reduce((acc, x) => acc + Number(picker(x) || 0), 0);
 
   const isRangeYoy = productList?.mode === "range_yoy";
 
@@ -575,8 +439,7 @@ const DashboardSales = () => {
   // =========================
   const rebasedFilteredProductList = filteredProductList.map((p) => {
     const curSales = Number(p.sales || 0);
-    const curRatio =
-      filteredTotalSalesCur > 0 ? curSales / filteredTotalSalesCur : 0;
+    const curRatio = filteredTotalSalesCur > 0 ? curSales / filteredTotalSalesCur : 0;
 
     const next = {
       ...p,
@@ -586,8 +449,7 @@ const DashboardSales = () => {
 
     if (isRangeYoy) {
       const prevSales = Number(p[`sales_${prevYearForProducts}`] || 0);
-      const prevRatio =
-        filteredTotalSalesPrev > 0 ? prevSales / filteredTotalSalesPrev : 0;
+      const prevRatio = filteredTotalSalesPrev > 0 ? prevSales / filteredTotalSalesPrev : 0;
       next[`sales_ratio_${prevYearForProducts}`] = prevRatio;
     }
 
@@ -610,11 +472,9 @@ const DashboardSales = () => {
     }
 
     if (productListSort === "name_asc") {
-      return (a.product_name || "").localeCompare(
-        b.product_name || "",
-        undefined,
-        { sensitivity: "base" }
-      );
+      return (a.product_name || "").localeCompare(b.product_name || "", undefined, {
+        sensitivity: "base",
+      });
     }
 
     // default: sales_desc
@@ -628,10 +488,7 @@ const DashboardSales = () => {
   const totalPages = totalRows > 0 ? Math.ceil(totalRows / PAGE_SIZE) : 1;
   const safePage = Math.min(Math.max(productListPage, 1), totalPages);
 
-  const pagedProductList = sortedProductList.slice(
-    (safePage - 1) * PAGE_SIZE,
-    safePage * PAGE_SIZE
-  );
+  const pagedProductList = sortedProductList.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   // =========================
   // ✅ summary ที่ส่งเข้า ProductListTable (override ให้เป็นค่าตาม FILTER)
@@ -682,9 +539,7 @@ const DashboardSales = () => {
           <div className="w-full max-w-[1280px] space-y-8">
             {/* Header + quick nav buttons */}
             <div className="flex items-center justify-between gap-4 flex-wrap">
-              <h1 className="text-2xl font-bold text-gray-800 tracking-tight">
-                📊 Dashboard
-              </h1>
+              <h1 className="text-2xl font-bold text-gray-800 tracking-tight">📊 Dashboard</h1>
 
               <div className="flex flex-wrap gap-2 text-sm">
                 <button
@@ -736,7 +591,7 @@ const DashboardSales = () => {
                 salesByChannelYear={data?.salesByChannelYear || {}}
                 // ✅ โหมดเปรียบเทียบ
                 compareMode={compareMode}
-                setCompareMode={setCompareMode}
+                setCompareMode={setCompareModeSmart}
               />
             </div>
 
@@ -763,7 +618,7 @@ const DashboardSales = () => {
               <Section title="🧾 Product dashboard">
                 <ProductListTable
                   loading={productListLoading || loading}
-                  summary={productTableSummary}   // ✅ totals + sku แยกปีตาม filter
+                  summary={productTableSummary} // ✅ totals + sku แยกปีตาม filter
                   rows={pagedProductList}
                   page={safePage}
                   pageSize={PAGE_SIZE}
@@ -784,4 +639,3 @@ const DashboardSales = () => {
 };
 
 export default DashboardSales;
-    
