@@ -1,852 +1,809 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 
 // Helper แปลง Date → YYYY-MM-DD แบบใช้เวลา Local (กัน timezone เพี้ยน)
 const toLocalISO = (d) => {
-    const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, "0");
-    const day = String(d.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
 // แปลง "2025-12-06" → "06/12/2025"
 const formatDisplayDate = (isoStr) => {
-    if (!isoStr) return "";
-    const [y, m, d] = isoStr.split("-");
-    if (!y || !m || !d) return isoStr;
-    return `${d}/${m}/${y}`;
+  if (!isoStr) return "";
+  const [y, m, d] = isoStr.split("-");
+  if (!y || !m || !d) return isoStr;
+  return `${d}/${m}/${y}`;
 };
 
 // =================== Date Filter ===================
 const DateFilter = ({
-    start,
-    end,
-    setStart,
-    setEnd,
-    load,
-    minDate,
-    maxDate,
-    disabled,
-    compareMode,
-    setCompareMode,
+  start,
+  end,
+  setStart,
+  setEnd,
+  load,
+  minDate,
+  maxDate,
+  disabled,
+  compareMode,
+  setCompareMode,
 }) => {
-    const clampDate = (dateStr) => {
-        if (!dateStr) return dateStr;
-        const d = new Date(dateStr);
-        const min = minDate ? new Date(minDate) : null;
-        const max = maxDate ? new Date(maxDate) : null;
+  const clampDate = (dateStr) => {
+    if (!dateStr) return dateStr;
+    const d = new Date(dateStr);
+    const min = minDate ? new Date(minDate) : null;
+    const max = maxDate ? new Date(maxDate) : null;
 
-        if (min && d < min) return minDate;
-        if (max && d > max) return maxDate;
-        return toLocalISO(d);
-    };
+    if (min && d < min) return minDate;
+    if (max && d > max) return maxDate;
+    return toLocalISO(d);
+  };
 
-    const applyPreset = (type) => {
-        const now = new Date();
-        // end = วันนี้ - 1 เสมอ
-        const endBase = new Date(now);
-        endBase.setDate(endBase.getDate() - 1);
+  const applyPreset = (type) => {
+    const now = new Date();
+    // end = วันนี้ - 1 เสมอ
+    const endBase = new Date(now);
+    endBase.setDate(endBase.getDate() - 1);
 
-        let startDate = new Date(endBase);
-        let endDate = new Date(endBase);
+    let startDate = new Date(endBase);
+    let endDate = new Date(endBase);
 
-        if (type === "7d") {
-            startDate.setDate(endBase.getDate() - 6); // รวม 7 วัน
-        } else if (type === "30d") {
-            startDate.setDate(endBase.getDate() - 29); // รวม 30 วัน
-        } else if (type === "60d") {
-            startDate.setDate(endBase.getDate() - 59); // รวม 60 วัน
-        } else if (type === "90d") {
-            startDate.setDate(endBase.getDate() - 89); // รวม 90 วัน
-        } else if (type === "month") {
-            // เดือนนี้ = ตั้งแต่วันที่ 1 ของเดือนปัจจุบัน ถึง เมื่อวาน
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-        } else if (type === "year") {
-            // ปีนี้ = 1 ม.ค. ปีปัจจุบัน ถึง เมื่อวาน
-            startDate = new Date(now.getFullYear(), 0, 1);
-        } else if (type === "all") {
-            // ทั้งหมด = 1/1/2024 - ปัจจุบัน - 1
-            if (minDate) {
-                startDate = new Date(minDate);
-            } else {
-                startDate = new Date(2024, 0, 1); // 1 ม.ค. 2024
-            }
-        }
+    if (type === "7d") {
+      startDate.setDate(endBase.getDate() - 6); // รวม 7 วัน
+    } else if (type === "30d") {
+      startDate.setDate(endBase.getDate() - 29); // รวม 30 วัน
+    } else if (type === "60d") {
+      startDate.setDate(endBase.getDate() - 59); // รวม 60 วัน
+    } else if (type === "90d") {
+      startDate.setDate(endBase.getDate() - 89); // รวม 90 วัน
+    } else if (type === "month") {
+      // เดือนนี้ = ตั้งแต่วันที่ 1 ของเดือนปัจจุบัน ถึง เมื่อวาน
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+    } else if (type === "year") {
+      // ปีนี้ = 1 ม.ค. ปีปัจจุบัน ถึง เมื่อวาน
+      startDate = new Date(now.getFullYear(), 0, 1);
+    } else if (type === "all") {
+      // ทั้งหมด = minDate (ถ้ามี) ไม่งั้น 1/1/2024
+      if (minDate) startDate = new Date(minDate);
+      else startDate = new Date(2024, 0, 1);
+    }
 
-        const startStr = clampDate(toLocalISO(startDate));
-        const endStr = clampDate(toLocalISO(endDate));
+    const startStr = clampDate(toLocalISO(startDate));
+    const endStr = clampDate(toLocalISO(endDate));
 
-        setStart(startStr);
-        setEnd(endStr);
-    };
+    setStart(startStr);
+    setEnd(endStr);
+  };
 
-    return (
-        <div className="bg-white/90 backdrop-blur shadow-sm rounded-xl border border-slate-200 px-4 py-3 md:px-6 md:py-4">
-            <div className="space-y-3">
-                {/* โหมดการดูข้อมูล (อันดับ 1) */}
-                <div className="flex flex-wrap items-center gap-2 text-xs mb-1">
-                    <span className="text-[11px] text-slate-500 mr-1">
-                        View mode :
-                    </span>
-                    <button
-                        type="button"
-                        onClick={() => setCompareMode("overview")}
-                        className={`px-3 py-1.5 rounded-full border text-xs transition ${compareMode === "overview"
-                                ? "bg-blue-600 border-blue-600 text-white shadow-sm"
-                                : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                            }`}
-                    >
-                        Year overview
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => setCompareMode("range_yoy")}
-                        className={`px-3 py-1.5 rounded-full border text-xs transition ${compareMode === "range_yoy"
-                                ? "bg-blue-600 border-blue-600 text-white shadow-sm"
-                                : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                            }`}
-                    >
-                        Compare selected period vs last year
-                    </button>
-                </div>
+  return (
+    <div className="bg-white/90 backdrop-blur shadow-sm rounded-xl border border-slate-200 px-4 py-3 md:px-6 md:py-4">
+      <div className="space-y-3">
+        {/* โหมดการดูข้อมูล */}
+        <div className="flex flex-wrap items-center gap-2 text-xs mb-1">
+          <span className="text-[11px] text-slate-500 mr-1">View mode :</span>
 
-                {/* แถว: วันที่เริ่มต้น + วันที่สิ้นสุด + ปุ่มแสดงข้อมูล (ชิดกัน) */}
-                <div className="flex flex-wrap gap-3 items-end">
-                    <div className="flex flex-col">
-                        <label className="text-xs font-medium text-slate-600 mb-1">
-                            Start Date
-                        </label>
-                        <input
-                            type="date"
-                            value={start}
-                            min={minDate}
-                            max={maxDate}
-                            onChange={(e) => setStart(e.target.value)}
-                            className="border border-slate-200 px-3 py-2 rounded-lg w-full shadow-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-500"
-                        />
-                    </div>
+          <button
+            type="button"
+            onClick={() => setCompareMode("overview")}
+            className={`px-3 py-1.5 rounded-full border text-xs transition ${
+              compareMode === "overview"
+                ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+            }`}
+          >
+            Year overview
+          </button>
 
-                    <div className="flex flex-col">
-                        <label className="text-xs font-medium text-slate-600 mb-1">
-                            End Date
-                        </label>
-                        <input
-                            type="date"
-                            value={end}
-                            min={minDate}
-                            max={maxDate}
-                            onChange={(e) => setEnd(e.target.value)}
-                            className="border border-slate-200 px-3 py-2 rounded-lg w-full shadow-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-500"
-                        />
-                    </div>
-
-                    {/* ปุ่มแสดงข้อมูล อยู่ข้าง ๆ ช่องวันที่ */}
-                    <div className="flex flex-col">
-                        <label className="text-xs font-medium text-transparent mb-1">
-                            .
-                        </label>
-                        <button
-                            onClick={load}
-                            disabled={disabled}
-                            className={`inline-flex items-center justify-center px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all
-                                ${disabled
-                                    ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                                    : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-[0.98]"
-                                }`}
-                        >
-                            Show Data
-                        </button>
-                    </div>
-                </div>
-
-                {/* แสดงช่วงวันที่ในรูปแบบ วัน/เดือน/ปี */}
-                <div className="text-[11px] text-slate-500">
-                    ช่วงวันที่ที่เลือก:{" "}
-                    <span className="font-medium text-slate-700">
-                        {formatDisplayDate(start)} - {formatDisplayDate(end)}
-                    </span>
-                    {compareMode === "range_yoy" && (
-                        <span className="ml-1 text-[10px] text-slate-400">
-                            (เทียบช่วงเดียวกันของปีที่แล้วอัตโนมัติ)
-                        </span>
-                    )}
-                </div>
-
-                {/* ปุ่มลัดช่วงวันที่ */}
-                <div className="flex flex-wrap gap-2 text-xs mt-1">
-                    <span className="self-center text-[11px] text-slate-500 mr-1">
-                        Quick Range :
-                    </span>
-
-                    <button
-                        type="button"
-                        onClick={() => applyPreset("7d")}
-                        className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition text-xs"
-                    >
-                        Last 7 Days
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => applyPreset("30d")}
-                        className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition text-xs"
-                    >
-                        Last 30 Days
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => applyPreset("60d")}
-                        className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition text-xs"
-                    >
-                        Last 60 Days
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => applyPreset("90d")}
-                        className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition text-xs"
-                    >
-                        Last 90 Days
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => applyPreset("month")}
-                        className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition text-xs"
-                    >
-                        This Month
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => applyPreset("year")}
-                        className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition text-xs"
-                    >
-                        This Year
-                    </button>
-
-                    <button
-                        type="button"
-                        onClick={() => applyPreset("all")}
-                        className="px-3 py-1.5 rounded-full border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium transition text-xs"
-                    >
-                        All
-                    </button>
-                </div>
-            </div>
+          <button
+            type="button"
+            onClick={() => setCompareMode("range_yoy")}
+            className={`px-3 py-1.5 rounded-full border text-xs transition ${
+              compareMode === "range_yoy"
+                ? "bg-blue-600 border-blue-600 text-white shadow-sm"
+                : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+            }`}
+          >
+            Compare selected period vs last year
+          </button>
         </div>
-    );
+
+        {/* วันที่เริ่มต้น/สิ้นสุด + ปุ่มแสดงข้อมูล */}
+        <div className="flex flex-wrap gap-3 items-end">
+          <div className="flex flex-col">
+            <label className="text-xs font-medium text-slate-600 mb-1">
+              Start Date
+            </label>
+            <input
+              type="date"
+              value={start}
+              min={minDate}
+              max={maxDate}
+              onChange={(e) => setStart(e.target.value)}
+              className="border border-slate-200 px-3 py-2 rounded-lg w-full shadow-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-500"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-xs font-medium text-slate-600 mb-1">
+              End Date
+            </label>
+            <input
+              type="date"
+              value={end}
+              min={minDate}
+              max={maxDate}
+              onChange={(e) => setEnd(e.target.value)}
+              className="border border-slate-200 px-3 py-2 rounded-lg w-full shadow-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/70 focus:border-blue-500"
+            />
+          </div>
+
+          <div className="flex flex-col">
+            <label className="text-xs font-medium text-transparent mb-1">.</label>
+            <button
+              onClick={load}
+              disabled={disabled}
+              className={`inline-flex items-center justify-center px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all
+                ${
+                  disabled
+                    ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-[0.98]"
+                }`}
+            >
+              Show Data
+            </button>
+          </div>
+        </div>
+
+        {/* แสดงช่วงวันที่ */}
+        <div className="text-[11px] text-slate-500">
+          ช่วงวันที่ที่เลือก:{" "}
+          <span className="font-medium text-slate-700">
+            {formatDisplayDate(start)} - {formatDisplayDate(end)}
+          </span>
+          {compareMode === "range_yoy" && (
+            <span className="ml-1 text-[10px] text-slate-400">
+              (เทียบช่วงเดียวกันของปีที่แล้วอัตโนมัติ)
+            </span>
+          )}
+        </div>
+
+        {/* ปุ่มลัด */}
+        <div className="flex flex-wrap gap-2 text-xs mt-1">
+          <span className="self-center text-[11px] text-slate-500 mr-1">
+            Quick Range :
+          </span>
+
+          <button
+            type="button"
+            onClick={() => applyPreset("7d")}
+            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition text-xs"
+          >
+            Last 7 Days
+          </button>
+
+          <button
+            type="button"
+            onClick={() => applyPreset("30d")}
+            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition text-xs"
+          >
+            Last 30 Days
+          </button>
+
+          <button
+            type="button"
+            onClick={() => applyPreset("60d")}
+            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition text-xs"
+          >
+            Last 60 Days
+          </button>
+
+          <button
+            type="button"
+            onClick={() => applyPreset("90d")}
+            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition text-xs"
+          >
+            Last 90 Days
+          </button>
+
+          <button
+            type="button"
+            onClick={() => applyPreset("month")}
+            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition text-xs"
+          >
+            This Month
+          </button>
+
+          <button
+            type="button"
+            onClick={() => applyPreset("year")}
+            className="px-3 py-1.5 rounded-full border border-slate-200 bg-slate-50 hover:bg-blue-50 text-slate-700 hover:text-blue-700 transition text-xs"
+          >
+            This Year
+          </button>
+
+          <button
+            type="button"
+            onClick={() => applyPreset("all")}
+            className="px-3 py-1.5 rounded-full border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium transition text-xs"
+          >
+            All
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // =================== Helper สำหรับ KPI รายปี ===================
 const buildYearStats = (salesByDate) => {
-    const stats = {};
+  const stats = {};
 
-    if (!Array.isArray(salesByDate)) {
-        return { years: [], latestYear: null, prevYear: null, stats: {} };
+  if (!Array.isArray(salesByDate)) {
+    return { years: [], latestYear: null, prevYear: null, stats: {} };
+  }
+
+  salesByDate.forEach((row) => {
+    if (!row.bill_date) return;
+    const d = new Date(row.bill_date);
+    if (Number.isNaN(d.getTime())) return;
+    const y = d.getFullYear();
+
+    if (!stats[y]) {
+      stats[y] = {
+        total_payment: 0,
+        discount_sum: 0,
+        rounding_sum: 0,
+        bill_count: 0,
+        net_bill_count: 0,
+      };
     }
 
-    salesByDate.forEach((row) => {
-        if (!row.bill_date) return;
-        const d = new Date(row.bill_date);
-        if (Number.isNaN(d.getTime())) return;
-        const y = d.getFullYear();
+    const total = Number(row.total_payment || 0);
+    const discount = Number(row.discount_sum || 0);
+    const rounding = Number(row.rounding_sum || 0);
+    const saleCount = Number(row.sale_count || 0);
+    const returnCount = Number(row.return_count || 0);
 
-        if (!stats[y]) {
-            stats[y] = {
-                total_payment: 0,
-                discount_sum: 0,
-                rounding_sum: 0,
-                bill_count: 0,
-                net_bill_count: 0,
-            };
-        }
+    stats[y].total_payment += total;
+    stats[y].discount_sum += discount;
+    stats[y].rounding_sum += rounding;
 
-        const total = Number(row.total_payment || 0);
-        const discount = Number(row.discount_sum || 0);
-        const rounding = Number(row.rounding_sum || 0);
-        const saleCount = Number(row.sale_count || 0);
-        const returnCount = Number(row.return_count || 0);
+    // Bill Count = นับเฉพาะบิลขาย
+    stats[y].bill_count += saleCount;
 
-        stats[y].total_payment += total;
-        stats[y].discount_sum += discount;
-        stats[y].rounding_sum += rounding;
+    // net_bill_count = บิลขาย + บิลคืน
+    stats[y].net_bill_count += saleCount + returnCount;
+  });
 
-        // ✅ Bill Count = นับเฉพาะบิลขาย (ให้ตรงกับ backend summary.bill_count)
-        stats[y].bill_count += saleCount;
+  const years = Object.keys(stats)
+    .map((y) => parseInt(y, 10))
+    .sort((a, b) => a - b);
 
-        // ✅ net_bill_count = บิลขาย + บิลคืน (ใช้เป็น “จำนวนบิลทั้งหมด”)
-        stats[y].net_bill_count += saleCount + returnCount;
-    });
+  const latestYear = years.length ? years[years.length - 1] : null;
+  const prevYear = years.length > 1 ? years[years.length - 2] : null;
 
-    const years = Object.keys(stats)
-        .map((y) => parseInt(y, 10))
-        .sort((a, b) => a - b);
-    const latestYear = years.length ? years[years.length - 1] : null;
-    const prevYear = years.length > 1 ? years[years.length - 2] : null;
-
-    return { years, latestYear, prevYear, stats };
+  return { years, latestYear, prevYear, stats };
 };
 
 const getYearMetric = (yearInfo, key) => {
-    if (!yearInfo || !yearInfo.latestYear) return null;
+  if (!yearInfo || !yearInfo.latestYear) return null;
 
-    const { latestYear, prevYear, stats } = yearInfo;
-    const currentYearData = stats[latestYear] || {};
-    const prevYearData = prevYear != null ? stats[prevYear] || {} : {};
+  const { latestYear, prevYear, stats } = yearInfo;
+  const currentYearData = stats[latestYear] || {};
+  const prevYearData = prevYear != null ? stats[prevYear] || {} : {};
 
-    const current = Number(currentYearData[key] || 0);
-    const prev = prevYear != null ? Number(prevYearData[key] || 0) : null;
+  const current = Number(currentYearData[key] || 0);
+  const prev = prevYear != null ? Number(prevYearData[key] || 0) : null;
 
-    let diff = null;
-    let pct = null;
+  let diff = null;
+  let pct = null;
 
-    if (prevYear != null && prev !== 0) {
-        diff = current - prev;
-        pct = (diff / prev) * 100;
-    }
+  if (prevYear != null && prev !== 0) {
+    diff = current - prev;
+    pct = (diff / prev) * 100;
+  }
 
-    return {
-        latestYear,
-        prevYear,
-        current,
-        prev,
-        diff,
-        pct,
-    };
+  return { latestYear, prevYear, current, prev, diff, pct };
 };
 
-// ✅ Daily Average Sales per year: คิดเฉลี่ยรายวันแบบปีต่อปี + เทียบย้อนหลัง
+// Daily Average Sales per year
 const buildDailyAvgYearMetric = (salesByDate) => {
-    if (!Array.isArray(salesByDate) || salesByDate.length === 0) return null;
+  if (!Array.isArray(salesByDate) || salesByDate.length === 0) return null;
 
-    const perYear = {};
+  const perYear = {};
 
-    salesByDate.forEach((row) => {
-        if (!row.bill_date) return;
-        const d = new Date(row.bill_date);
-        if (Number.isNaN(d.getTime())) return;
+  salesByDate.forEach((row) => {
+    if (!row.bill_date) return;
+    const d = new Date(row.bill_date);
+    if (Number.isNaN(d.getTime())) return;
 
-        const y = d.getFullYear();
-        const dayKey = d.toISOString().slice(0, 10); // ใช้เฉพาะ YYYY-MM-DD กันซ้ำ
+    const y = d.getFullYear();
+    const dayKey = d.toISOString().slice(0, 10); // YYYY-MM-DD กันซ้ำ
 
-        if (!perYear[y]) {
-            perYear[y] = {
-                totalSales: 0,
-                days: new Set(),
-            };
-        }
-
-        perYear[y].totalSales += Number(row.total_payment || 0);
-        perYear[y].days.add(dayKey);
-    });
-
-    const years = Object.keys(perYear)
-        .map((y) => parseInt(y, 10))
-        .sort((a, b) => a - b);
-
-    if (!years.length) return null;
-
-    const latestYear = years[years.length - 1];
-    const prevYear = years.length > 1 ? years[years.length - 2] : null;
-
-    const currentTotal = perYear[latestYear].totalSales;
-    const currentDays = perYear[latestYear].days.size || 1;
-    const currentAvg = currentTotal / currentDays;
-
-    let prevAvg = null;
-    if (prevYear != null) {
-        const prevTotal = perYear[prevYear].totalSales;
-        const prevDays = perYear[prevYear].days.size || 1;
-        prevAvg = prevTotal / prevDays;
+    if (!perYear[y]) {
+      perYear[y] = { totalSales: 0, days: new Set() };
     }
 
-    let diff = null;
-    let pct = null;
-    if (prevAvg != null && prevAvg !== 0) {
-        diff = currentAvg - prevAvg;
-        pct = (diff / prevAvg) * 100;
-    }
+    perYear[y].totalSales += Number(row.total_payment || 0);
+    perYear[y].days.add(dayKey);
+  });
 
-    return {
-        latestYear,
-        prevYear,
-        current: currentAvg,
-        prev: prevAvg,
-        diff,
-        pct,
-    };
+  const years = Object.keys(perYear)
+    .map((y) => parseInt(y, 10))
+    .sort((a, b) => a - b);
+
+  if (!years.length) return null;
+
+  const latestYear = years[years.length - 1];
+  const prevYear = years.length > 1 ? years[years.length - 2] : null;
+
+  const currentTotal = perYear[latestYear].totalSales;
+  const currentDays = perYear[latestYear].days.size || 1;
+  const currentAvg = currentTotal / currentDays;
+
+  let prevAvg = null;
+  if (prevYear != null) {
+    const prevTotal = perYear[prevYear].totalSales;
+    const prevDays = perYear[prevYear].days.size || 1;
+    prevAvg = prevTotal / prevDays;
+  }
+
+  let diff = null;
+  let pct = null;
+  if (prevAvg != null && prevAvg !== 0) {
+    diff = currentAvg - prevAvg;
+    pct = (diff / prevAvg) * 100;
+  }
+
+  return { latestYear, prevYear, current: currentAvg, prev: prevAvg, diff, pct };
 };
 
-// กล่องแสดงยอดขายตามช่องทาง (Year / Year) แบบอ่านง่าย
-const SalesChannelSummary = ({ salesByChannelYear, yearInfo }) => {
-    if (!salesByChannelYear || !yearInfo || !yearInfo.latestYear) return null;
+// =================== Sales by Channel (Year/Year) + Tip (Selected Range) ===================
+const SalesChannelSummary = ({
+  salesByChannelYear,
+  yearInfo,
+  salesByChannelPaymentMethodDate = [],
+}) => {
+  if (!salesByChannelYear || !yearInfo || !yearInfo.latestYear) return null;
 
-    const { latestYear, prevYear, stats } = yearInfo;
+  const [openTip, setOpenTip] = useState({}); // { [channelName]: true/false }
 
-    const latestMap = salesByChannelYear[latestYear] || {};
-    const prevMap = prevYear != null ? salesByChannelYear[prevYear] || {} : {};
-
-    const latestTotalNet = Number(
-        (stats[latestYear] && stats[latestYear].total_payment) || 0
-    );
-    const prevTotalNet =
-        prevYear != null
-            ? Number(
-                (stats[prevYear] && stats[prevYear].total_payment) || 0
-            )
-            : 0;
-
-    // รวมชื่อช่องทางของ 2 ปี
-    const channelNamesSet = new Set([
-        ...Object.keys(latestMap),
-        ...Object.keys(prevMap),
-    ]);
-
-    const channels = Array.from(channelNamesSet).map((name) => {
-        const current = Number(latestMap[name] || 0);
-        const prev = prevYear != null ? Number(prevMap[name] || 0) : 0;
-
-        // % share ต่อยอดรวมแต่ละปี (ใช้โชว์บนขวาเหมือนเดิม)
-        const currentPct =
-            latestTotalNet > 0 ? (current / latestTotalNet) * 100 : 0;
-        const prevPct =
-            prevYear != null && prevTotalNet > 0
-                ? (prev / prevTotalNet) * 100
-                : 0;
-
-        // ✅ ส่วนต่างยอดขายจริง (ปีล่าสุด - ปีก่อน)
-        const diffAmount = prevYear != null ? current - prev : null;
-
-        // ✅ % เปลี่ยนแปลงของ "ยอดขายจริง" เทียบปีที่แล้ว
-        let diffPct = null;
-        if (prevYear != null && prev > 0) {
-            diffPct = (diffAmount / prev) * 100;
-        }
-
-        return {
-            name,
-            current,
-            prev,
-            currentPct,
-            prevPct,
-            diffAmount,
-            diffPct,
-        };
+  const formatMoney = (v) =>
+    Number(v || 0).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     });
 
-    // ✅ เรียงจากยอดปีล่าสุดมาก → น้อย
-    channels.sort((a, b) => b.current - a.current);
+  const normalizeChannel = (name, code) => {
+    let n = (name || code || "Unknown").trim();
+    const lower = n.toLowerCase();
+    if (!n || lower === "unknown") n = "หน้าร้าน";
+    if (n === "หน้าบ้าน") n = "หน้าร้าน";
+    return n;
+  };
 
-    if (channels.length === 0) return null;
+  const normalizeMethod = (m) => {
+    const mm = String(m || "").trim();
+    if (!mm || mm.toLowerCase() === "unknown") return "Unknown";
+    return mm;
+  };
 
-    return (
-        <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 md:px-4 md:py-4 h-full">
-            <div className="flex items-center justify-between mb-2">
-                <div className="text-xs font-semibold text-slate-600">
-                    Sales by Channel
-                </div>
-                <div className="text-[11px] text-slate-500">
-                    {prevYear
-                        ? `${prevYear} vs ${latestYear}`
-                        : `Year ${latestYear}`}
-                </div>
-            </div>
+  const toggleTip = (ch) =>
+    setOpenTip((prev) => ({ ...prev, [ch]: !prev[ch] }));
 
-            <div className="space-y-2 text-xs max-h-[320px] overflow-auto pr-1">
-                {channels.map((c) => {
-                    // ✅ สี & label ตาม "ยอดล่าสุดมากกว่าหรือน้อยกว่า"
-                    let diffColor = "text-slate-400";
-                    let diffLabel = "-";
+  const { latestYear, prevYear, stats } = yearInfo;
 
-                    if (
-                        prevYear &&
-                        c.diffPct != null &&
-                        !Number.isNaN(c.diffPct) &&
-                        c.diffAmount != null
-                    ) {
-                        const sign =
-                            c.diffAmount > 0
-                                ? "+"
-                                : c.diffAmount < 0
-                                    ? "-"
-                                    : "";
-                        const absPct = Math.abs(c.diffPct).toFixed(1);
-                        const absAmt = Math.abs(c.diffAmount).toLocaleString(
-                            undefined,
-                            {
-                                minimumFractionDigits: 0,
-                                maximumFractionDigits: 0,
-                            }
-                        );
+  // --- normalize map ของแต่ละปี ---
+  const normYearMap = (obj) => {
+    const out = new Map();
+    if (!obj || typeof obj !== "object") return out;
+    Object.entries(obj).forEach(([name, val]) => {
+      const ch = normalizeChannel(name, name);
+      out.set(ch, (out.get(ch) || 0) + Number(val || 0));
+    });
+    return out;
+  };
 
-                        if (c.diffAmount > 0) {
-                            // ✅ ยอดปีล่าสุดมากกว่า → เขียว
-                            diffColor = "text-emerald-600";
-                        } else if (c.diffAmount < 0) {
-                            // ✅ ยอดปีล่าสุดน้อยกว่า → แดง
-                            diffColor = "text-red-500";
-                        } else {
-                            diffColor = "text-slate-400";
-                        }
+  const latestMap = normYearMap(salesByChannelYear[latestYear] || {});
+  const prevMap = normYearMap(prevYear != null ? salesByChannelYear[prevYear] || {} : {});
 
-                        diffLabel = `${sign}${absPct}% (${absAmt})`;
-                    }
+  const latestTotalNet = Number((stats[latestYear] && stats[latestYear].total_payment) || 0);
+  const prevTotalNet =
+    prevYear != null
+      ? Number((stats[prevYear] && stats[prevYear].total_payment) || 0)
+      : 0;
 
-                    const barWidth = Math.max(
-                        4,
-                        Math.min(c.currentPct, 100)
-                    );
+  // --- method breakdown ของช่วงที่เลือก (ถ้าไม่มีจะไม่โชว์ tip) ---
+  const methodMap = useMemo(() => {
+    const m = new Map(); // channel -> Map(method -> total)
+    (salesByChannelPaymentMethodDate || []).forEach((r) => {
+      const ch = normalizeChannel(r.channel_name, r.channel_code);
+      const method = normalizeMethod(r.payment_method);
+      const amount = Number(r.total_payment || 0);
 
-                    return (
-                        <div
-                            key={c.name}
-                            className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2"
-                        >
-                            {/* บรรทัดบน: ชื่อ + % share ปีล่าสุด */}
-                            <div className="flex items-center justify-between">
-                                <span className="font-medium text-slate-700">
-                                    {c.name}
-                                </span>
-                                <span className="tabular-nums text-slate-900">
-                                    {c.currentPct.toFixed(1)}%
-                                </span>
-                            </div>
+      if (!m.has(ch)) m.set(ch, new Map());
+      const mm = m.get(ch);
+      mm.set(method, (mm.get(method) || 0) + amount);
+    });
+    return m;
+  }, [salesByChannelPaymentMethodDate]);
 
-                            {/* Bar แสดงสัดส่วนปีล่าสุด */}
-                            <div className="mt-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
-                                <div
-                                    className="h-full rounded-full bg-blue-500"
-                                    style={{ width: `${barWidth}%` }}
-                                />
-                            </div>
+  const hasTip = (salesByChannelPaymentMethodDate?.length || 0) > 0;
 
-                            {/* บรรทัดล่าง: ยอดเงิน + ปีที่แล้ว */}
-                            <div className="mt-1 flex flex-wrap justify-between gap-x-2 gap-y-0.5 text-[11px]">
-                                <span className="tabular-nums text-slate-600">
-                                    {latestYear}:{" "}
-                                    {c.current.toLocaleString(undefined, {
-                                        minimumFractionDigits: 2,
-                                        maximumFractionDigits: 2,
-                                    })}
-                                </span>
+  // รวมชื่อ channel ของ 2 ปี
+  const channelNamesSet = new Set([
+    ...Array.from(latestMap.keys()),
+    ...Array.from(prevMap.keys()),
+  ]);
 
-                                {prevYear && (
-                                    <span className="tabular-nums text-slate-500">
-                                        {prevYear}:{" "}
-                                        {c.prev.toLocaleString(undefined, {
-                                            minimumFractionDigits: 2,
-                                            maximumFractionDigits: 2,
-                                        })}
-                                    </span>
-                                )}
-                            </div>
+  const channels = Array.from(channelNamesSet).map((name) => {
+    const current = Number(latestMap.get(name) || 0);
+    const prev = prevYear != null ? Number(prevMap.get(name) || 0) : 0;
 
-                            {/* บรรทัดสุดท้าย: ส่วนต่าง % + ยอดเงิน */}
-                            {prevYear && (
-                                <div
-                                    className={`mt-0.5 text-[11px] ${diffColor}`}
-                                >
-                                    {diffLabel}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
+    const currentPct = latestTotalNet > 0 ? (current / latestTotalNet) * 100 : 0;
+
+    const diffAmount = prevYear != null ? current - prev : null;
+
+    let diffPct = null;
+    if (prevYear != null && prev > 0) diffPct = (diffAmount / prev) * 100;
+
+    return { name, current, prev, currentPct, diffAmount, diffPct };
+  });
+
+  channels.sort((a, b) => b.current - a.current);
+  if (channels.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 md:px-4 md:py-4 h-full">
+      <div className="flex items-center justify-between mb-2">
+        <div className="text-xs font-semibold text-slate-600">Sales by Channel</div>
+        <div className="text-[11px] text-slate-500">
+          {prevYear ? `${prevYear} vs ${latestYear}` : `Year ${latestYear}`}
         </div>
-    );
-};
+      </div>
 
+      {hasTip && (
+        <div className="mb-2 text-[11px] text-slate-400">
+          กด <span className="font-medium text-slate-500">Tip</span> เพื่อดูวิธีชำระเงิน (ช่วงวันที่ที่เลือก)
+        </div>
+      )}
+
+      <div className="space-y-2 text-xs max-h-[320px] overflow-auto pr-1">
+        {channels.map((c) => {
+          let diffColor = "text-slate-400";
+          let diffLabel = "-";
+
+          if (prevYear && c.diffPct != null && !Number.isNaN(c.diffPct) && c.diffAmount != null) {
+            const sign = c.diffAmount > 0 ? "+" : c.diffAmount < 0 ? "-" : "";
+            const absPct = Math.abs(c.diffPct).toFixed(1);
+            const absAmt = Math.abs(c.diffAmount).toLocaleString(undefined, {
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            });
+
+            if (c.diffAmount > 0) diffColor = "text-emerald-600";
+            else if (c.diffAmount < 0) diffColor = "text-red-500";
+
+            diffLabel = `${sign}${absPct}% (${absAmt})`;
+          }
+
+          const barWidth = Math.max(4, Math.min(c.currentPct, 100));
+          const isOpen = !!openTip[c.name];
+
+          const mm = methodMap.get(c.name) || new Map();
+          const methods = Array.from(mm.entries())
+            .map(([method, total]) => ({ method, total }))
+            .sort((a, b) => b.total - a.total);
+
+          const periodTotal = methods.reduce((acc, x) => acc + Number(x.total || 0), 0);
+
+          return (
+            <div key={c.name} className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium text-slate-700 truncate">{c.name}</span>
+
+                <div className="flex items-center gap-2">
+                  <span className="tabular-nums text-slate-900 whitespace-nowrap">
+                    {c.currentPct.toFixed(1)}%
+                  </span>
+
+                  {hasTip && (
+                    <button
+                      type="button"
+                      onClick={() => toggleTip(c.name)}
+                      className="px-2 py-1 rounded-md border border-slate-200 bg-white hover:bg-slate-100 text-[11px] text-slate-600 whitespace-nowrap"
+                      title="ดูวิธีชำระเงิน (ช่วงวันที่ที่เลือก)"
+                    >
+                      {isOpen ? "ซ่อน" : "Tip"}
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
+                <div className="h-full rounded-full bg-blue-500" style={{ width: `${barWidth}%` }} />
+              </div>
+
+              <div className="mt-1 flex flex-wrap justify-between gap-x-2 gap-y-0.5 text-[11px]">
+                <span className="tabular-nums text-slate-600">
+                  {latestYear}: {formatMoney(c.current)}
+                </span>
+
+                {prevYear != null && (
+                  <span className="tabular-nums text-slate-500">
+                    {prevYear}: {formatMoney(c.prev)}
+                  </span>
+                )}
+              </div>
+
+              {prevYear != null && (
+                <div className={`mt-0.5 text-[11px] ${diffColor}`}>{diffLabel}</div>
+              )}
+
+              {hasTip && isOpen && (
+                <div className="mt-2 rounded-lg border border-slate-200 bg-white/70 overflow-hidden">
+                  <div className="px-3 py-2 text-[11px] text-slate-500 flex items-center justify-between border-b border-slate-200">
+                    <span className="font-semibold text-slate-600">Payment Methods</span>
+                    <span className="tabular-nums">
+                      รวม:{" "}
+                      <span className="font-semibold text-slate-800">
+                        ฿ {formatMoney(periodTotal)}
+                      </span>
+                    </span>
+                  </div>
+
+                  {methods.length === 0 ? (
+                    <div className="px-3 py-3 text-[11px] text-slate-500">
+                      ไม่มีข้อมูลวิธีชำระเงิน
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-slate-200">
+                      {methods.map((m) => {
+                        const pctInChannel = periodTotal > 0 ? (m.total / periodTotal) * 100 : 0;
+                        const label = m.method === "Unknown" ? "ไม่ระบุ" : m.method;
+
+                        return (
+                          <div
+                            key={m.method}
+                            className="grid grid-cols-[1fr,140px,80px] gap-2 px-3 py-2 text-[11px]"
+                          >
+                            <div className="text-slate-700 break-words">{label}</div>
+                            <div className="text-right tabular-nums whitespace-nowrap text-slate-800">
+                              ฿ {formatMoney(m.total)}
+                            </div>
+                            <div className="text-right tabular-nums whitespace-nowrap text-slate-500">
+                              {pctInChannel.toFixed(1)}%
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
 
 // =================== KPI Card ===================
 const KpiCard = ({ title, metric, format, highlight, variant }) => {
-    if (!metric) {
-        return (
-            <div className="relative overflow-hidden rounded-xl border bg-white border-slate-200 text-sm shadow-sm p-4 md:p-5">
-                <div className="text-slate-500 text-xs font-medium mb-1">
-                    {title}
-                </div>
-                <div className="mt-2 text-lg md:text-xl font-semibold text-slate-400">
-                    -
-                </div>
-            </div>
-        );
-    }
-
-    const { latestYear, prevYear, current, prev, diff, pct } = metric;
-
-    // ฟอร์แมตค่าหลัก
-    const currentText =
-        format && typeof current === "number"
-            ? format(current)
-            : typeof current === "number"
-                ? current.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })
-                : "-";
-
-    const prevText =
-        prevYear != null && typeof prev === "number"
-            ? format
-                ? format(prev)
-                : prev.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })
-            : "-";
-
-    // ฟอร์แมต diff text
-    const diffAmountFormatted =
-        diff != null
-            ? format
-                ? format(diff)
-                : diff.toLocaleString(undefined, {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                })
-            : null;
-
-    const diffText =
-        pct == null
-            ? "-"
-            : `${pct > 0 ? "+" : ""}${pct.toFixed(1)}%${diffAmountFormatted != null
-                ? ` (${diff > 0 ? "+" : ""}${diffAmountFormatted})`
-                : ""
-            }`;
-
-    // กำหนดสี diff ตาม variant
-    let diffColor = "text-slate-500";
-
-    if (variant === "rounding") {
-        diffColor = "text-slate-400";
-    } else if (variant === "discount") {
-        if (
-            prevYear != null &&
-            typeof current === "number" &&
-            typeof prev === "number"
-        ) {
-            let improved = false;
-
-            if (prev < 0 && current < 0) {
-                improved = Math.abs(current) < Math.abs(prev);
-            } else if (prev < 0 && current >= 0) {
-                improved = true;
-            } else if (prev >= 0 && current >= 0) {
-                improved = current < prev;
-            } else if (prev >= 0 && current < 0) {
-                improved = false;
-            }
-
-            if (improved && pct !== 0) {
-                diffColor = "text-emerald-600 font-semibold";
-            } else if (!improved && pct !== 0) {
-                diffColor = "text-red-500 font-semibold";
-            } else {
-                diffColor = "text-slate-500";
-            }
-        }
-    } else {
-        if (pct == null) diffColor = "text-slate-500";
-        else if (pct > 0) diffColor = "text-emerald-600 font-semibold";
-        else if (pct < 0) diffColor = "text-red-500 font-semibold";
-        else diffColor = "text-slate-500";
-    }
-
+  if (!metric) {
     return (
-        <div
-            className={`relative overflow-hidden rounded-xl border text-sm shadow-sm p-4 md:p-5
-        ${highlight
-                    ? "bg-gradient-to-br from-blue-50 via-emerald-50 to-white border-blue-100"
-                    : "bg-white border-slate-200"
-                }`}
-        >
-            {highlight && (
-                <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-emerald-100/60" />
-            )}
-
-            <div className="flex items-start justify-between gap-2">
-                <div>
-                    <div className="text-slate-500 text-xs font-medium mb-1">
-                        {title}
-                    </div>
-                    <div className="text-[11px] text-slate-500">
-                        ปีล่าสุด:{" "}
-                        <span className="font-semibold text-slate-700">
-                            {latestYear ?? "-"}
-                        </span>
-                    </div>
-                    <div
-                        className="mt-1 text-xl md:text-2xl font-semibold text-gray-900"
-                        style={{ wordBreak: "break-word" }}
-                    >
-                        {currentText}
-                    </div>
-                </div>
-
-                <div className="text-right">
-                    <div className="text-[10px] uppercase tracking-wide text-slate-400">
-                        {prevYear != null ? `ปี ${prevYear}` : "ปีที่ผ่านมา"}
-                    </div>
-                    <div className="text-[11px] font-medium text-slate-600">
-                        {prevText}
-                    </div>
-                    <div className={`mt-1 text-[11px] ${diffColor}`}>
-                        {diffText}
-                    </div>
-                </div>
-            </div>
-        </div>
+      <div className="relative overflow-hidden rounded-xl border bg-white border-slate-200 text-sm shadow-sm p-4 md:p-5">
+        <div className="text-slate-500 text-xs font-medium mb-1">{title}</div>
+        <div className="mt-2 text-lg md:text-xl font-semibold text-slate-400">-</div>
+      </div>
     );
+  }
+
+  const { latestYear, prevYear, current, prev, diff, pct } = metric;
+
+  const currentText =
+    format && typeof current === "number"
+      ? format(current)
+      : typeof current === "number"
+      ? current.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : "-";
+
+  const prevText =
+    prevYear != null && typeof prev === "number"
+      ? format
+        ? format(prev)
+        : prev.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : "-";
+
+  const diffAmountFormatted =
+    diff != null
+      ? format
+        ? format(diff)
+        : diff.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : null;
+
+  const diffText =
+    pct == null
+      ? "-"
+      : `${pct > 0 ? "+" : ""}${pct.toFixed(1)}%${
+          diffAmountFormatted != null ? ` (${diff > 0 ? "+" : ""}${diffAmountFormatted})` : ""
+        }`;
+
+  let diffColor = "text-slate-500";
+
+  if (variant === "rounding") {
+    diffColor = "text-slate-400";
+  } else if (variant === "discount") {
+    if (prevYear != null && typeof current === "number" && typeof prev === "number") {
+      let improved = false;
+
+      if (prev < 0 && current < 0) improved = Math.abs(current) < Math.abs(prev);
+      else if (prev < 0 && current >= 0) improved = true;
+      else if (prev >= 0 && current >= 0) improved = current < prev;
+      else if (prev >= 0 && current < 0) improved = false;
+
+      if (improved && pct !== 0) diffColor = "text-emerald-600 font-semibold";
+      else if (!improved && pct !== 0) diffColor = "text-red-500 font-semibold";
+      else diffColor = "text-slate-500";
+    }
+  } else {
+    if (pct == null) diffColor = "text-slate-500";
+    else if (pct > 0) diffColor = "text-emerald-600 font-semibold";
+    else if (pct < 0) diffColor = "text-red-500 font-semibold";
+    else diffColor = "text-slate-500";
+  }
+
+  return (
+    <div
+      className={`relative overflow-hidden rounded-xl border text-sm shadow-sm p-4 md:p-5
+        ${
+          highlight
+            ? "bg-gradient-to-br from-blue-50 via-emerald-50 to-white border-blue-100"
+            : "bg-white border-slate-200"
+        }`}
+    >
+      {highlight && (
+        <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-emerald-100/60" />
+      )}
+
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <div className="text-slate-500 text-xs font-medium mb-1">{title}</div>
+          <div className="text-[11px] text-slate-500">
+            ปีล่าสุด: <span className="font-semibold text-slate-700">{latestYear ?? "-"}</span>
+          </div>
+          <div className="mt-1 text-xl md:text-2xl font-semibold text-gray-900" style={{ wordBreak: "break-word" }}>
+            {currentText}
+          </div>
+        </div>
+
+        <div className="text-right">
+          <div className="text-[10px] uppercase tracking-wide text-slate-400">
+            {prevYear != null ? `ปี ${prevYear}` : "ปีที่ผ่านมา"}
+          </div>
+          <div className="text-[11px] font-medium text-slate-600">{prevText}</div>
+          <div className={`mt-1 text-[11px] ${diffColor}`}>{diffText}</div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 // =================== MAIN COMPONENT ===================
 const TopFiltersAndKpi = ({
-    start,
-    end,
-    setStart,
-    setEnd,
-    load,
-    minDate,
-    maxDate,
-    disabled,
-    summary,
-    dailyAvgSales,
-    salesByDate,
-    // ✅ map: { [year]: { [channelName]: totalSales } }
-    salesByChannelYear,
-    compareMode,
-    setCompareMode,
+  start,
+  end,
+  setStart,
+  setEnd,
+  load,
+  minDate,
+  maxDate,
+  disabled,
+  summary,
+  salesByDate,
+  salesByChannelYear,
+  salesByChannelPaymentMethodDate,
+  compareMode,
+  setCompareMode,
 }) => {
-    const yearInfo = useMemo(
-        () => buildYearStats(salesByDate || []),
-        [salesByDate]
-    );
+  const yearInfo = useMemo(() => buildYearStats(salesByDate || []), [salesByDate]);
 
-    const netSalesMetric = getYearMetric(yearInfo, "total_payment");
-    const billCountMetric = getYearMetric(yearInfo, "bill_count");
-    const discountMetric = getYearMetric(yearInfo, "discount_sum");
-    const roundingMetric = getYearMetric(yearInfo, "rounding_sum");
+  const netSalesMetric = getYearMetric(yearInfo, "total_payment");
+  const billCountMetric = getYearMetric(yearInfo, "bill_count");
+  const discountMetric = getYearMetric(yearInfo, "discount_sum");
+  const roundingMetric = getYearMetric(yearInfo, "rounding_sum");
 
-    const dailyAvgMetric = useMemo(
-        () => buildDailyAvgYearMetric(salesByDate || []),
-        [salesByDate]
-    );
+  const dailyAvgMetric = useMemo(() => buildDailyAvgYearMetric(salesByDate || []), [salesByDate]);
 
-    const avgPerBillMetric =
-        netSalesMetric && billCountMetric
-            ? (() => {
-                const { latestYear, prevYear } = netSalesMetric;
-                const currentBills = billCountMetric.current || 0;
-                const prevBills =
-                    billCountMetric.prev != null
-                        ? billCountMetric.prev
-                        : null;
+  const avgPerBillMetric =
+    netSalesMetric && billCountMetric
+      ? (() => {
+          const { latestYear, prevYear } = netSalesMetric;
+          const currentBills = billCountMetric.current || 0;
+          const prevBills = billCountMetric.prev != null ? billCountMetric.prev : null;
 
-                const currentAvg =
-                    currentBills > 0
-                        ? netSalesMetric.current / currentBills
-                        : 0;
+          const currentAvg = currentBills > 0 ? netSalesMetric.current / currentBills : 0;
 
-                let prevAvg = null;
-                if (prevYear != null && prevBills && prevBills > 0) {
-                    prevAvg = netSalesMetric.prev / prevBills;
-                }
+          let prevAvg = null;
+          if (prevYear != null && prevBills && prevBills > 0) {
+            prevAvg = netSalesMetric.prev / prevBills;
+          }
 
-                let diff = null;
-                let pct = null;
-                if (prevAvg != null && prevAvg !== 0) {
-                    diff = currentAvg - prevAvg;
-                    pct = (diff / prevAvg) * 100;
-                }
+          let diff = null;
+          let pct = null;
+          if (prevAvg != null && prevAvg !== 0) {
+            diff = currentAvg - prevAvg;
+            pct = (diff / prevAvg) * 100;
+          }
 
-                return {
-                    latestYear,
-                    prevYear,
-                    current: currentAvg,
-                    prev: prevAvg,
-                    diff,
-                    pct,
-                };
-            })()
-            : null;
+          return { latestYear, prevYear, current: currentAvg, prev: prevAvg, diff, pct };
+        })()
+      : null;
 
-    return (
-        <div className="space-y-6">
-            {/* Date Filter */}
-            <DateFilter
-                start={start}
-                end={end}
-                setStart={setStart}
-                setEnd={setEnd}
-                load={load}
-                minDate={minDate}
-                maxDate={maxDate}
-                disabled={disabled}
-                compareMode={compareMode}
-                setCompareMode={setCompareMode}
-            />
+  return (
+    <div className="space-y-6">
+      <DateFilter
+        start={start}
+        end={end}
+        setStart={setStart}
+        setEnd={setEnd}
+        load={load}
+        minDate={minDate}
+        maxDate={maxDate}
+        disabled={disabled}
+        compareMode={compareMode}
+        setCompareMode={setCompareMode}
+      />
 
-            {/* KPI Cards + Sales by Channel (layout 30/70 ในจอใหญ่) */}
-            {summary && (
-                <div className="space-y-3">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
-                        {/* ซ้าย: Sales by Channel (ประมาณ 1/3) */}
-                        <div className="lg:col-span-1">
-                            <SalesChannelSummary
-                                salesByChannelYear={salesByChannelYear}
-                                yearInfo={yearInfo}
-                            />
-                        </div>
+      {summary && (
+        <div className="space-y-3">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-start">
+            <div className="lg:col-span-1">
+              <SalesChannelSummary
+                salesByChannelYear={salesByChannelYear}
+                yearInfo={yearInfo}
+                salesByChannelPaymentMethodDate={salesByChannelPaymentMethodDate || []}
+              />
+            </div>
 
-                        {/* ขวา: KPI Cards (ประมาณ 2/3) */}
-                        <div className="lg:col-span-2">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
-                                <KpiCard
-                                    title="Net Sales"
-                                    metric={netSalesMetric}
-                                    highlight
-                                />
+            <div className="lg:col-span-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-4">
+                <KpiCard title="Net Sales" metric={netSalesMetric} highlight />
 
-                                <KpiCard
-                                    title="Bill Count"
-                                    metric={billCountMetric}
-                                    format={(v) =>
-                                        v.toLocaleString(undefined, {
-                                            maximumFractionDigits: 0,
-                                        })
-                                    }
-                                />
+                <KpiCard
+                  title="Bill Count"
+                  metric={billCountMetric}
+                  format={(v) =>
+                    v.toLocaleString(undefined, {
+                      maximumFractionDigits: 0,
+                    })
+                  }
+                />
 
-                                <KpiCard
-                                    title="Average per Bill"
-                                    metric={avgPerBillMetric}
-                                />
+                <KpiCard title="Average per Bill" metric={avgPerBillMetric} />
 
-                                <KpiCard
-                                    title="Total Discounts End Bill"
-                                    metric={discountMetric}
-                                    variant="discount"
-                                />
+                <KpiCard
+                  title="Total Discounts End Bill"
+                  metric={discountMetric}
+                  variant="discount"
+                />
 
-                                <KpiCard
-                                    title="Total Rounding"
-                                    metric={roundingMetric}
-                                    variant="rounding"
-                                />
+                <KpiCard
+                  title="Total Rounding"
+                  metric={roundingMetric}
+                  variant="rounding"
+                />
 
-                                <KpiCard
-                                    title="Daily Average Sales"
-                                    metric={dailyAvgMetric}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
+                <KpiCard title="Daily Average Sales" metric={dailyAvgMetric} />
+              </div>
+            </div>
+          </div>
         </div>
-    );
+      )}
+    </div>
+  );
 };
 
 export default TopFiltersAndKpi;

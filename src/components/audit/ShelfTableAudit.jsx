@@ -1,179 +1,8 @@
 import React, { useMemo, useState, useCallback } from "react";
+import { AddProductModal, DeleteConfirmModal } from "./second/AddDelect";
 
 /* ===========================
-   Delete Confirm Modal
-=========================== */
-const DeleteConfirmModal = React.memo(
-  ({ isOpen, onClose, onConfirm, productName }) => {
-    if (!isOpen) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Confirm Delete
-          </h3>
-
-          <p className="text-gray-600 mb-6">
-            Delete{" "}
-            <span className="font-semibold">"{productName || "-"}"</span>?
-            <br />
-            <span className="text-red-600 text-sm">
-              การดำเนินการนี้ไม่สามารถย้อนกลับได้
-            </span>
-          </p>
-
-          <div className="flex gap-3 justify-end">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
-            >
-              Cancel
-            </button>
-
-            <button
-              type="button"
-              onClick={onConfirm}
-              className="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-);
-
-/* ===========================
-   Add Product Modal
-=========================== */
-const AddProductModal = React.memo(
-  ({
-    isOpen,
-    onClose,
-    onSubmit,
-    nextIndex,
-    branchCode,
-    shelfCode,
-    rowNo,
-    shelfProducts = [],
-  }) => {
-    const [codeProduct, setCodeProduct] = useState("");
-    const [error, setError] = useState("");
-
-    React.useEffect(() => {
-      if (isOpen) {
-        setCodeProduct("");
-        setError("");
-      }
-    }, [isOpen]);
-
-    const handleSubmit = (e) => {
-      e.preventDefault();
-
-      const code = codeProduct.trim();
-      if (!code) {
-        setError("กรุณากรอกรหัสสินค้า");
-        return;
-      }
-
-      const codeNum = Number(code);
-      if (Number.isNaN(codeNum)) {
-        setError("กรุณากรอกรหัสสินค้าให้ถูกต้อง");
-        return;
-      }
-
-      const duplicate = shelfProducts.some(
-        (p) => Number(p.codeProduct) === codeNum
-      );
-      if (duplicate) {
-        setError("❌ รหัสสินค้านี้มีอยู่แล้วใน Shelf นี้");
-        return;
-      }
-
-      onSubmit?.({
-        codeProduct: codeNum,
-        index: nextIndex,
-        branchCode,
-        shelfCode,
-        rowNo,
-      });
-
-      onClose();
-    };
-
-    if (!isOpen) return null;
-
-    return (
-      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-        <div className="bg-white p-6 rounded-lg max-w-sm w-full shadow-lg">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">
-            ➕ New Item
-          </h2>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1 text-gray-700">
-                Code Product : xxxxx
-              </label>
-
-              <input
-                type="number"
-                value={codeProduct}
-                onChange={(e) => setCodeProduct(e.target.value)}
-                placeholder="Code Item"
-                className={`w-full border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-300 ${
-                  error ? "border-red-300" : "border-gray-300"
-                }`}
-              />
-
-              {error && (
-                <span className="text-red-600 text-sm mt-1">{error}</span>
-              )}
-            </div>
-
-            <div className="text-sm text-gray-600 space-y-1">
-              <p>
-                Branch: <b>{branchCode}</b>
-              </p>
-              <p>
-                Shelf: <b>{shelfCode}</b>
-              </p>
-              <p>
-                Row: <b>{rowNo}</b>
-              </p>
-              <p>
-                Index: <b>{nextIndex}</b>
-              </p>
-            </div>
-
-            <div className="flex justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300"
-              >
-                Cancel
-              </button>
-
-              <button
-                type="submit"
-                className="px-3 py-1.5 bg-emerald-500 text-white text-sm rounded hover:bg-emerald-600"
-              >
-                Add
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  }
-);
-
-/* ===========================
-   Helper
+   Helpers
 =========================== */
 const zeroToDash = (v) => {
   if (v === null || v === undefined) return "-";
@@ -181,7 +10,6 @@ const zeroToDash = (v) => {
   return v;
 };
 
-// ปัดเศษเป็น int สำหรับ Target
 const formatInt = (v) => {
   if (v === null || v === undefined) return "-";
   const n = Number(v);
@@ -190,15 +18,38 @@ const formatInt = (v) => {
   return Math.round(n);
 };
 
+const normalizeDraft = (arr) => {
+  const rows = {};
+  arr.forEach((it) => {
+    const r = Number(it.rowNo || 1);
+    if (!rows[r]) rows[r] = [];
+    rows[r].push(it);
+  });
+
+  const out = [];
+  Object.keys(rows)
+    .map(Number)
+    .sort((a, b) => a - b)
+    .forEach((r) => {
+      rows[r].forEach((it, idx) => {
+        out.push({ ...it, rowNo: r, index: idx + 1 });
+      });
+    });
+
+  return out;
+};
+
 /* ===========================
-   ShelfTableAudit with Add/Delete
+   ShelfTableAudit
 =========================== */
 const ShelfTableAudit = ({
   shelfProducts = [],
   branchCode,
   shelfCode,
+  rowQty = 1,
   onAddProduct,
   onDeleteProduct,
+  onUpdateProducts, // ✅ จะเรียก updateProducts ของคุณผ่าน LayoutAudit
 }) => {
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
@@ -211,41 +62,48 @@ const ShelfTableAudit = ({
     nextIndex: 1,
   });
 
+  // ✅ โหมดลากเมาส์จัดเรียง
+  const [editMode, setEditMode] = useState(false);
+  const [draft, setDraft] = useState([]);
+  const [dirty, setDirty] = useState(false);
+  const [savingLayout, setSavingLayout] = useState(false);
+
+  const [draggingUid, setDraggingUid] = useState(null);
+
   if (!Array.isArray(shelfProducts)) {
     return <div className="text-xs text-red-500">Invalid data.</div>;
   }
 
-  // เอาเฉพาะตัวที่มี rowNo
   const valid = useMemo(
     () => shelfProducts.filter((p) => p.rowNo !== undefined),
     [shelfProducts]
   );
 
-  // จำนวนแถวทั้งหมด (Row)
   const rowCount = useMemo(() => {
     if (!valid.length) return 0;
     return Math.max(...valid.map((p) => p.rowNo || 0), 0);
   }, [valid]);
 
-  // group ตาม rowNo
+  const totalRows = useMemo(() => {
+    return Math.max(Number(rowQty || 1), Number(rowCount || 0), 1);
+  }, [rowQty, rowCount]);
+
   const groupedRows = useMemo(() => {
     const result = {};
     valid.forEach((p) => {
-      const rowNo = p.rowNo || 0;
-      if (!result[rowNo]) result[rowNo] = [];
-      result[rowNo].push(p);
+      const r = Number(p.rowNo || 1);
+      if (!result[r]) result[r] = [];
+      result[r].push(p);
     });
 
-    // sort index ในแต่ละ row ให้เป็นระเบียบ
-    Object.keys(result).forEach((rowNo) => {
-      result[rowNo].sort((a, b) => (a.index || 0) - (b.index || 0));
+    Object.keys(result).forEach((k) => {
+      result[k].sort((a, b) => (a.index || 0) - (b.index || 0));
     });
 
     return result;
   }, [valid]);
 
   /* ========= Add / Delete handlers ========= */
-
   const handleAddClick = useCallback(
     (rowNo) => {
       const items = groupedRows[rowNo] || [];
@@ -268,8 +126,8 @@ const ShelfTableAudit = ({
   );
 
   const handleAddSubmit = useCallback(
-    (item) => {
-      onAddProduct?.(item);
+    async (item) => {
+      return onAddProduct?.(item);
     },
     [onAddProduct]
   );
@@ -283,7 +141,6 @@ const ShelfTableAudit = ({
 
   const confirmDelete = useCallback(() => {
     if (deleteModal.product) {
-      // ใส่ branchCode เผื่อใน product ไม่มี
       onDeleteProduct?.({
         ...deleteModal.product,
         branchCode: deleteModal.product.branchCode || branchCode,
@@ -293,11 +150,156 @@ const ShelfTableAudit = ({
     setDeleteModal({ isOpen: false, product: null });
   }, [deleteModal, onDeleteProduct, branchCode, shelfCode]);
 
-  /* ========= RENDER ========= */
+  /* ========= Reorder Mode ========= */
+  const openEditMode = () => {
+    const base = [...valid]
+      .sort(
+        (a, b) =>
+          Number(a.rowNo || 0) - Number(b.rowNo || 0) ||
+          Number(a.index || 0) - Number(b.index || 0)
+      )
+      .map((x, i) => ({
+        uid: `${Date.now()}-${i}-${x.codeProduct}-${x.rowNo}-${x.index}`,
+        codeProduct: Number(x.codeProduct),
+        barcode: x.barcode ?? null,
+        nameProduct: x.nameProduct ?? null,
+        nameBrand: x.nameBrand ?? null,
+        rowNo: Number(x.rowNo || 1),
+        index: Number(x.index || 1),
+        prevRowNo: Number(x.rowNo || 1),
+        prevIndex: Number(x.index || 1),
+      }));
 
+    setDraft(normalizeDraft(base));
+    setEditMode(true);
+    setDirty(false);
+    setDraggingUid(null);
+  };
+
+  const cancelEdit = () => {
+    setEditMode(false);
+    setDraft([]);
+    setDirty(false);
+    setDraggingUid(null);
+  };
+
+  const groupDraftRows = useMemo(() => {
+    const r = {};
+    (draft || []).forEach((it) => {
+      const row = Number(it.rowNo || 1);
+      if (!r[row]) r[row] = [];
+      r[row].push(it);
+    });
+    Object.keys(r).forEach((k) => {
+      r[k].sort((a, b) => (a.index || 0) - (b.index || 0));
+    });
+    return r;
+  }, [draft]);
+
+  const moveInDraft = (dragUid, toRowNo, toIndex) => {
+    setDraft((prev) => {
+      const list = [...prev];
+      const dragged = list.find((x) => x.uid === dragUid);
+      if (!dragged) return prev;
+
+      const without = list.filter((x) => x.uid !== dragUid);
+
+      const targetRowItems = without
+        .filter((x) => Number(x.rowNo) === Number(toRowNo))
+        .sort((a, b) => (a.index || 0) - (b.index || 0));
+
+      const idx = Math.max(0, Math.min(Number(toIndex), targetRowItems.length));
+
+      const newTargetRow = [
+        ...targetRowItems.slice(0, idx),
+        { ...dragged, rowNo: Number(toRowNo) },
+        ...targetRowItems.slice(idx),
+      ];
+
+      const other = without.filter((x) => Number(x.rowNo) !== Number(toRowNo));
+      const merged = [...other, ...newTargetRow];
+
+      const normalized = normalizeDraft(merged);
+      setDirty(true);
+      return normalized;
+    });
+  };
+
+  const allowDrop = (e) => {
+    e.preventDefault();
+    try {
+      e.dataTransfer.dropEffect = "move";
+    } catch {}
+  };
+
+  const handleDragStart = (e, uid) => {
+    setDraggingUid(uid);
+    try {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", uid);
+    } catch {}
+  };
+
+  const handleDragEnd = () => setDraggingUid(null);
+
+  const dropOnRowEnd = (e, rowNo) => {
+    e.preventDefault();
+    const uid = e.dataTransfer.getData("text/plain");
+    if (!uid) return;
+
+    const rowItems = (groupDraftRows[rowNo] || []).sort(
+      (a, b) => (a.index || 0) - (b.index || 0)
+    );
+    moveInDraft(uid, rowNo, rowItems.length);
+    setDraggingUid(null);
+  };
+
+  const dropBeforeItem = (e, rowNo, beforeUid) => {
+    e.preventDefault();
+    const uid = e.dataTransfer.getData("text/plain");
+    if (!uid) return;
+
+    const rowItems = (groupDraftRows[rowNo] || []).sort(
+      (a, b) => (a.index || 0) - (b.index || 0)
+    );
+    const beforeIdx = rowItems.findIndex((x) => x.uid === beforeUid);
+    moveInDraft(uid, rowNo, beforeIdx < 0 ? rowItems.length : beforeIdx);
+    setDraggingUid(null);
+  };
+
+  const saveLayout = async () => {
+    if (!dirty || savingLayout) return;
+    if (!onUpdateProducts) {
+      alert("ยังไม่ได้ต่อ onUpdateProducts");
+      return;
+    }
+
+    setSavingLayout(true);
+    try {
+      const serverItems = (draft || []).map((x) => ({
+        branchCode,
+        shelfCode,
+        rowNo: Number(x.rowNo),
+        index: Number(x.index),
+        codeProduct: Number(x.codeProduct),
+      }));
+
+      await onUpdateProducts(serverItems, draft);
+      setEditMode(false);
+      setDraft([]);
+      setDirty(false);
+    } catch (e) {
+      console.error("saveLayout failed:", e);
+      alert("❌ Save layout ไม่สำเร็จ (เช็ค server log)");
+    } finally {
+      setSavingLayout(false);
+    }
+  };
+
+  /* ========= RENDER ========= */
   return (
     <div className="overflow-x-auto w-full px-1 sm:px-3 print:px-0 print:overflow-visible">
-      {/* Modals */}
+      {/* Modals (มาจาก AddDelect.jsx) */}
       <AddProductModal
         isOpen={addModal.isOpen}
         onClose={() =>
@@ -309,6 +311,9 @@ const ShelfTableAudit = ({
         }
         onSubmit={handleAddSubmit}
         nextIndex={addModal.nextIndex}
+        onIncNextIndex={() =>
+          setAddModal((m) => ({ ...m, nextIndex: (m.nextIndex || 1) + 1 }))
+        }
         branchCode={branchCode}
         shelfCode={shelfCode}
         rowNo={addModal.rowNo}
@@ -322,240 +327,364 @@ const ShelfTableAudit = ({
         productName={deleteModal.product?.nameProduct}
       />
 
-      <table
-        className="
-          w-full border text-[11px] sm:text-xs lg:text-sm text-gray-700
-          print:text-[8px] print:leading-tight
-        "
-      >
-        <thead className="bg-gray-200 sticky top-0 z-20 print:static">
-          <tr>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              ID
-            </th>
-            <th className="border py-1 text-center print:px-[2px] align-middle">
-              Barcode
-            </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              Code
-            </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              Name
-            </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              Brand
-            </th>
-            <th className="border py-1 text-center print:px-[2px] align-middle">
-              Life
-            </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              RSP
-            </th>
-
-            <th className="border py-1 text-center print:px-[2px] align-middle">
-              Target
-            </th>
-            <th className="border py-1 text-center print:px-[2px] align-middle">
-              Sales
-            </th>
-
-            <th className="border py-1 text-center print:px-[2px] align-middle">
-              With..
-            </th>
-            <th className="border py-1 text-center print:px-[2px] align-middle">
-              Min
-            </th>
-            <th className="border py-1 text-center print:px-[2px] align-middle">
-              Max
-            </th>
-            <th className="border py-1 text-center print:px-[2px] align-middle">
-              Stock
-            </th>
-
-            {/* Audit checkbox column */}
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              Audit
-            </th>
-
-            {/* Delete column */}
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle print:hidden">
-              Delete
-            </th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {rowCount === 0 && (
-            <tr>
-              <td
-                colSpan={15}
-                className="border p-1 text-center text-gray-500 text-xs"
-              >
-                No products.
-              </td>
-            </tr>
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-2 print:hidden">
+        <div className="text-xs text-slate-600">
+          {editMode ? (
+            <span className="font-semibold text-emerald-700">
+              โหมดจัดเรียง: ลากสินค้าเพื่อเปลี่ยน Row/Index แล้วกด Save
+            </span>
+          ) : (
+            <span>
+              Tip: กด <b>Reorder</b> เพื่อจัดเรียงสินค้าแบบลากเมาส์
+            </span>
           )}
+        </div>
 
-          {Array.from({ length: rowCount }).map((_, idx) => {
-            const rowNo = idx + 1;
-            const items = groupedRows[rowNo] || [];
+        <div className="flex items-center gap-2">
+          {!editMode ? (
+            <button
+              type="button"
+              onClick={openEditMode}
+              className="px-3 py-1.5 rounded text-xs font-semibold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+            >
+              🖱️ Reorder
+            </button>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={cancelEdit}
+                disabled={savingLayout}
+                className="px-3 py-1.5 rounded text-xs font-semibold border border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+              >
+                Cancel
+              </button>
 
-            return (
-              <React.Fragment key={rowNo}>
-                {/* หัว row (แยกแต่ละ Row) + ปุ่ม Add */}
-                <tr className="bg-blue-50 print:bg-slate-200">
-                  <td
-                    colSpan={15}
-                    className="border p-1 print:py-[2px] font-semibold italic text-left"
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>➤ Row {rowNo}</span>
-                      <button
-                        type="button"
-                        onClick={() => handleAddClick(rowNo)}
-                        className="px-2 py-0.5 text-[11px] rounded bg-emerald-500 text-white hover:bg-emerald-600 print:hidden"
-                      >
-                        ➕ Add item
-                      </button>
+              <button
+                type="button"
+                onClick={saveLayout}
+                disabled={!dirty || savingLayout}
+                className={[
+                  "px-3 py-1.5 rounded text-xs font-semibold",
+                  dirty && !savingLayout
+                    ? "bg-emerald-600 text-white hover:bg-emerald-500"
+                    : "bg-slate-200 text-slate-500 cursor-not-allowed",
+                ].join(" ")}
+              >
+                {savingLayout ? "Saving..." : "Save layout"}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Edit mode (Drag UI) */}
+      {editMode ? (
+        <div className="border rounded-lg bg-white p-3 print:hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {Array.from({ length: totalRows }).map((_, idx) => {
+              const rowNo = idx + 1;
+              const items = (groupDraftRows[rowNo] || []).sort(
+                (a, b) => (a.index || 0) - (b.index || 0)
+              );
+
+              return (
+                <div
+                  key={rowNo}
+                  className="border rounded-lg bg-slate-50 overflow-hidden"
+                  onDragOver={allowDrop}
+                  onDrop={(e) => dropOnRowEnd(e, rowNo)}
+                >
+                  <div className="px-3 py-2 bg-slate-100 border-b flex items-center justify-between">
+                    <div className="font-semibold text-slate-700 text-sm">
+                      Row {rowNo}
                     </div>
-                  </td>
-                </tr>
+                    <div className="text-[11px] text-slate-500">
+                      {items.length} items
+                    </div>
+                  </div>
 
-                {items.length > 0 ? (
-                  items.map((p, i) => {
-                    const currentSales = Number(p.salesCurrentMonthQty ?? 0);
-                    const targetVal = Number(p.salesTargetQty ?? 0);
-                    const hitTarget =
-                      targetVal > 0 &&
-                      !Number.isNaN(currentSales) &&
-                      currentSales >= targetVal;
+                  <div className="p-2 space-y-2 min-h-[70px]">
+                    {items.length === 0 ? (
+                      <div className="text-center text-xs text-slate-400 py-4">
+                        ลากมาวางใน Row นี้ได้เลย
+                      </div>
+                    ) : (
+                      items.map((it) => {
+                        const isDragging = draggingUid === it.uid;
 
-                    return (
-                      <tr
-                        key={`${rowNo}-${p.codeProduct || i}`}
-                        className={
-                          i % 2
-                            ? "bg-gray-50 print:bg-gray-100"
-                            : "bg-white print:bg-white"
-                        }
-                      >
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
-                          {zeroToDash(p.index)}
-                        </td>
-
-                        <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle">
-                          {zeroToDash(p.barcode)}
-                        </td>
-
-                        <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle">
-                          {p.codeProduct
-                            ? String(p.codeProduct).padStart(5, "0")
-                            : "-"}
-                        </td>
-
-                        {/* Name */}
-                        <td
-                          className="
-                            border p-1 print:px-[2px] align-middle
-                            max-w-[140px] sm:max-w-[200px] lg:max-w-[260px]
-                            whitespace-nowrap overflow-hidden text-ellipsis
-                            print:whitespace-normal print:max-w-none
-                          "
-                          title={p.nameProduct}
-                        >
-                          {p.nameProduct}
-                        </td>
-
-                        {/* Brand */}
-                        <td
-                          className="
-                            border p-1 print:px-[2px] align-middle
-                            max-w-[100px] sm:max-w-[140px] lg:max-w-[180px]
-                            whitespace-nowrap overflow-hidden text-ellipsis
-                            print:whitespace-normal print:max-w-none
-                          "
-                          title={p.nameBrand}
-                        >
-                          {p.nameBrand}
-                        </td>
-
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
-                          {zeroToDash(p.shelfLife)}
-                        </td>
-
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
-                          {zeroToDash(p.salesPriceIncVAT)}
-                        </td>
-
-                        {/* Target */}
-                        <td className="border p-1 print:px-[2px] text-center text-purple-700 align-middle">
-                          {formatInt(p.salesTargetQty)}
-                        </td>
-
-                        {/* Sales เดือนนี้ + ไฮไลต์ถ้าถึงเป้า */}
-                        <td
-                          className={`
-                            border p-1 print:px-[2px] text-center font-semibold align-middle
-                            text-blue-600
-                            ${hitTarget ? "bg-green-50" : ""}
-                          `}
-                        >
-                          {zeroToDash(p.salesCurrentMonthQty)}
-                        </td>
-
-                        <td className="border p-1 print:px-[2px] text-center text-red-600 align-middle">
-                          {zeroToDash(p.withdrawQuantity)}
-                        </td>
-
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
-                          {zeroToDash(p.minStore)}
-                        </td>
-
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
-                          {zeroToDash(p.maxStore)}
-                        </td>
-
-                        <td className="border p-1 print:px-[2px] text-center text-yellow-700 align-middle">
-                          {zeroToDash(p.stockQuantity)}
-                        </td>
-
-                        {/* Audit */}
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 accent-emerald-600 print:hidden cursor-pointer"
-                          />
-                          <span className="hidden print:inline-block">☐</span>
-                        </td>
-
-                        {/* Delete button */}
-                        <td className="border p-1 print:px-[2px] text-center align-middle print:hidden">
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteClick(p)}
-                            className="text-red-600 hover:underline text-[11px]"
+                        return (
+                          <div
+                            key={it.uid}
+                            className={[
+                              "rounded-md border bg-white p-2 cursor-move select-none",
+                              isDragging
+                                ? "opacity-60 border-emerald-300"
+                                : "border-slate-200 hover:border-slate-300",
+                            ].join(" ")}
+                            draggable
+                            onDragStart={(e) => handleDragStart(e, it.uid)}
+                            onDragEnd={handleDragEnd}
+                            onDragOver={allowDrop}
+                            onDrop={(e) => dropBeforeItem(e, rowNo, it.uid)}
+                            title="ลากเพื่อย้ายตำแหน่ง"
                           >
-                            Delete
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="min-w-0">
+                                <div className="text-xs text-slate-500">
+                                  #{String(it.codeProduct || "").padStart(5, "0")} •{" "}
+                                  {it.barcode || "-"}
+                                </div>
+                                <div className="text-sm font-semibold text-slate-800 truncate">
+                                  {it.nameProduct || "-"}
+                                </div>
+                                <div className="text-xs text-slate-500 truncate">
+                                  {it.nameBrand || "-"}
+                                </div>
+                              </div>
+
+                              <div className="text-[11px] font-semibold text-slate-600">
+                                {rowNo}.{it.index}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+
+                    <div
+                      className="rounded-md border border-dashed border-slate-300 bg-white/60 p-2 text-center text-[11px] text-slate-500"
+                      onDragOver={allowDrop}
+                      onDrop={(e) => dropOnRowEnd(e, rowNo)}
+                    >
+                      วางท้าย Row {rowNo}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-3 text-[11px] text-slate-500">
+            • ลากการ์ดไป Row อื่นเพื่อย้าย Row • วาง “บนการ์ด” = แทรกก่อนการ์ดนั้น • กด Save layout เพื่ออัปเดต backend
+          </div>
+        </div>
+      ) : null}
+
+      {/* Normal Table */}
+      {!editMode ? (
+        <table
+          className="
+            w-full border text-[11px] sm:text-xs lg:text-sm text-gray-700
+            print:text-[8px] print:leading-tight
+          "
+        >
+          <thead className="bg-gray-200 sticky top-0 z-20 print:static">
+            <tr>
+              <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+                ID
+              </th>
+              <th className="border py-1 text-center print:px-[2px] align-middle">
+                Barcode
+              </th>
+              <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+                Code
+              </th>
+              <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+                Name
+              </th>
+              <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+                Brand
+              </th>
+              <th className="border py-1 text-center print:px-[2px] align-middle">
+                Life
+              </th>
+              <th className="border py-1 text-center print:px-[2px] align-middle">
+                RSP
+              </th>
+              <th className="border py-1 text-center print:px-[2px] align-middle">
+                Target
+              </th>
+              <th className="border py-1 text-center print:px-[2px] align-middle">
+                Sales
+              </th>
+              <th className="border py-1 text-center print:px-[2px] align-middle">
+                With..
+              </th>
+              <th className="border py-1 text-center print:px-[2px] align-middle">
+                Min
+              </th>
+              <th className="border py-1 text-center print:px-[2px] align-middle">
+                Max
+              </th>
+              <th className="border py-1 text-center print:px-[2px] align-middle">
+                Stock
+              </th>
+              <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+                Audit
+              </th>
+              <th className="border px-1 py-1 text-center print:px-[2px] align-middle print:hidden">
+                Delete
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {Array.from({ length: totalRows }).map((_, idx) => {
+              const rowNo = idx + 1;
+              const items = groupedRows[rowNo] || [];
+
+              return (
+                <React.Fragment key={rowNo}>
+                  <tr className="bg-blue-50 print:bg-slate-200">
                     <td
                       colSpan={15}
-                      className="border p-1 print:py-[2px] text-center text-gray-500 text-xs"
+                      className="border p-1 print:py-[2px] font-semibold italic text-left"
                     >
-                      No products in this row
+                      <div className="flex items-center justify-between">
+                        <span>➤ Row {rowNo}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleAddClick(rowNo)}
+                          className="px-2 py-0.5 text-[11px] rounded bg-emerald-500 text-white hover:bg-emerald-600 print:hidden"
+                        >
+                          ➕ Add item
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </tbody>
-      </table>
+
+                  {items.length > 0 ? (
+                    items.map((p, i) => {
+                      const currentSales = Number(p.salesCurrentMonthQty ?? 0);
+                      const targetVal = Number(p.salesTargetQty ?? 0);
+                      const hitTarget =
+                        targetVal > 0 &&
+                        !Number.isNaN(currentSales) &&
+                        currentSales >= targetVal;
+
+                      return (
+                        <tr
+                          key={`${rowNo}-${p.codeProduct || i}-${p.index || 0}`}
+                          className={
+                            i % 2
+                              ? "bg-gray-50 print:bg-gray-100"
+                              : "bg-white print:bg-white"
+                          }
+                        >
+                          <td className="border p-1 print:px-[2px] text-center align-middle">
+                            {zeroToDash(p.index)}
+                          </td>
+
+                          <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle">
+                            {zeroToDash(p.barcode)}
+                          </td>
+
+                          <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle">
+                            {p.codeProduct
+                              ? String(p.codeProduct).padStart(5, "0")
+                              : "-"}
+                          </td>
+
+                          <td
+                            className="
+                              border p-1 print:px-[2px] align-middle
+                              max-w-[140px] sm:max-w-[200px] lg:max-w-[260px]
+                              whitespace-nowrap overflow-hidden text-ellipsis
+                              print:whitespace-normal print:max-w-none
+                            "
+                            title={p.nameProduct}
+                          >
+                            {p.nameProduct}
+                          </td>
+
+                          <td
+                            className="
+                              border p-1 print:px-[2px] align-middle
+                              max-w-[100px] sm:max-w-[140px] lg:max-w-[180px]
+                              whitespace-nowrap overflow-hidden text-ellipsis
+                              print:whitespace-normal print:max-w-none
+                            "
+                            title={p.nameBrand}
+                          >
+                            {p.nameBrand}
+                          </td>
+
+                          <td className="border p-1 print:px-[2px] text-center align-middle">
+                            {zeroToDash(p.shelfLife)}
+                          </td>
+
+                          <td className="border p-1 print:px-[2px] text-center align-middle">
+                            {zeroToDash(p.salesPriceIncVAT)}
+                          </td>
+
+                          <td className="border p-1 print:px-[2px] text-center text-purple-700 align-middle">
+                            {formatInt(p.salesTargetQty)}
+                          </td>
+
+                          <td
+                            className={`
+                              border p-1 print:px-[2px] text-center font-semibold align-middle
+                              text-blue-600
+                              ${hitTarget ? "bg-green-50" : ""}
+                            `}
+                          >
+                            {zeroToDash(p.salesCurrentMonthQty)}
+                          </td>
+
+                          <td className="border p-1 print:px-[2px] text-center text-red-600 align-middle">
+                            {zeroToDash(p.withdrawQuantity)}
+                          </td>
+
+                          <td className="border p-1 print:px-[2px] text-center align-middle">
+                            {zeroToDash(p.minStore)}
+                          </td>
+
+                          <td className="border p-1 print:px-[2px] text-center align-middle">
+                            {zeroToDash(p.maxStore)}
+                          </td>
+
+                          <td className="border p-1 print:px-[2px] text-center text-yellow-700 align-middle">
+                            {zeroToDash(p.stockQuantity)}
+                          </td>
+
+                          <td className="border p-1 print:px-[2px] text-center align-middle">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4 accent-emerald-600 print:hidden cursor-pointer"
+                            />
+                            <span className="hidden print:inline-block">☐</span>
+                          </td>
+
+                          <td className="border p-1 print:px-[2px] text-center align-middle print:hidden">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteClick(p)}
+                              className="text-red-600 hover:underline text-[11px]"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td
+                        colSpan={15}
+                        className="border p-1 print:py-[2px] text-center text-gray-500 text-xs"
+                      >
+                        No products in this row
+                      </td>
+                    </tr>
+                  )}
+                </React.Fragment>
+              );
+            })}
+          </tbody>
+        </table>
+      ) : null}
     </div>
   );
 };

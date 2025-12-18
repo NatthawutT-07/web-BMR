@@ -66,3 +66,16 @@ export const updateProducts = async (data) => {
         return error;
     }
 };
+
+
+// ------------------------------------------------------------
+// GET: Master items by barcode/name/codeProduct
+// ------------------------------------------------------------
+export const getMasterItem = async (q) => {
+    try {
+        const response = await api.get("/shelf-getMasterItem", { params: { q } });
+        return response.data; // { items: [...] }
+    } catch (error) {
+        return error;
+    }
+};

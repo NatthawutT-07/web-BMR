@@ -140,7 +140,7 @@ const Template = () => {
 
   return (
     <div className="min-h-screen bg-slate-100 print:bg-white">
-      <div className="max-w-6xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
+      <div className="max-w-8xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {/* HEADER + ปุ่ม PRINT (ซ่อนปุ่มตอนพิมพ์) */}
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 print:gap-1">
           <div>

@@ -7,6 +7,7 @@ const ShelfCardAudit = React.memo(function ShelfCardAudit({
   branchCode,
   onAddProduct,
   onDeleteProduct,
+  onUpdateProducts, // ✅ เพิ่ม
 }) {
   const shelfProducts = useMemo(
     () => (Array.isArray(template.shelfProducts) ? template.shelfProducts : []),
@@ -35,7 +36,6 @@ const ShelfCardAudit = React.memo(function ShelfCardAudit({
         print:shadow-none print:border-black
       "
     >
-      {/* HEADER (คลิกเปิด/ปิด) */}
       <button
         type="button"
         onClick={toggleOpen}
@@ -51,7 +51,6 @@ const ShelfCardAudit = React.memo(function ShelfCardAudit({
           Shelf: {shelfCode} – {fullName} ({rowQty} แถว)
         </h2>
 
-        {/* caret icon */}
         <div
           className={`
             ml-2 print:hidden
@@ -69,13 +68,12 @@ const ShelfCardAudit = React.memo(function ShelfCardAudit({
         </div>
       </button>
 
-      {/* TABLE */}
       <div
         className={`
           px-2 sm:px-3 pb-3 sm:pb-4
           overflow-hidden
           transition-all duration-300 ease-out
-          ${isOpen ? "max-h-[2000px] opacity-100" : "max-h-0 opacity-0"}
+          ${isOpen ? "max-h-[4000px] opacity-100" : "max-h-0 opacity-0"}
           print:block print:max-h-none print:opacity-100
         `}
       >
@@ -84,8 +82,10 @@ const ShelfCardAudit = React.memo(function ShelfCardAudit({
             shelfProducts={shelfProducts}
             branchCode={branchCode}
             shelfCode={shelfCode}
+            rowQty={rowQty} // ✅ ส่ง rowQty เพื่อให้ลากลงแถวว่างได้
             onAddProduct={onAddProduct}
             onDeleteProduct={onDeleteProduct}
+            onUpdateProducts={onUpdateProducts} // ✅ NEW
           />
         </div>
       </div>

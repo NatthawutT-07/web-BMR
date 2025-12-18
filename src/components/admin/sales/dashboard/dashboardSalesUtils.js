@@ -46,10 +46,7 @@ export const filterDashboardData = (baseData, start, end, compareMode = "overvie
     if (Number.isNaN(d.getTime())) return false;
 
     if (compareMode === "range_yoy" && prevStartDate && prevEndDate) {
-      return (
-        (d >= startDate && d <= endDate) ||
-        (d >= prevStartDate && d <= prevEndDate)
-      );
+      return (d >= startDate && d <= endDate) || (d >= prevStartDate && d <= prevEndDate);
     }
 
     return d >= startDate && d <= endDate;
@@ -60,6 +57,11 @@ export const filterDashboardData = (baseData, start, end, compareMode = "overvie
 
   const salesByBranchDate = (baseData.salesByBranchDate || []).filter((r) => inRange(r.bill_date));
   const salesByChannelDate = (baseData.salesByChannelDate || []).filter((r) => inRange(r.bill_date));
+
+  // ✅ NEW: แยกตามช่องทางขาย + วิธีชำระเงิน
+  const salesByChannelPaymentMethodDate = (baseData.salesByChannelPaymentMethodDate || []).filter((r) =>
+    inRange(r.bill_date)
+  );
 
   const salesByChannelYear = {};
   salesByChannelDate.forEach((r) => {
@@ -92,10 +94,7 @@ export const filterDashboardData = (baseData, start, end, compareMode = "overvie
     branch_sales,
   }));
 
-  const summaryRows =
-    compareMode === "range_yoy"
-      ? allSalesRows.filter((r) => inCurrentRange(r.bill_date))
-      : allSalesRows;
+  const summaryRows = compareMode === "range_yoy" ? allSalesRows.filter((r) => inCurrentRange(r.bill_date)) : allSalesRows;
 
   const total_payment = summaryRows.reduce((sum, r) => sum + Number(r.total_payment || 0), 0);
   const rounding_sum = summaryRows.reduce((sum, r) => sum + Number(r.rounding_sum || 0), 0);
@@ -108,8 +107,8 @@ export const filterDashboardData = (baseData, start, end, compareMode = "overvie
     total_payment,
     rounding_sum,
     discount_sum,
-    bill_count: sale_count_total,      // เฉพาะบิลขาย
-    net_bill_count: bill_count_total,  // ขาย+คืน
+    bill_count: sale_count_total, // เฉพาะบิลขาย
+    net_bill_count: bill_count_total, // ขาย+คืน
   };
 
   return {
@@ -118,6 +117,8 @@ export const filterDashboardData = (baseData, start, end, compareMode = "overvie
     salesByBranchDate,
     salesByBranch,
     salesByChannelYear,
+    salesByChannelDate,
+    salesByChannelPaymentMethodDate, // ✅ ส่งให้หน้าใช้
   };
 };
 
@@ -163,9 +164,7 @@ export const useCompareModeSmart = ({
       if (nextMode === compareMode) return;
 
       if (nextMode === "range_yoy") {
-        overviewRangeRef.current = overviewRangeRef.current.start
-          ? overviewRangeRef.current
-          : { start, end };
+        overviewRangeRef.current = overviewRangeRef.current.start ? overviewRangeRef.current : { start, end };
 
         const endD = new Date(end + "T00:00:00");
         if (!Number.isNaN(endD.getTime())) {

@@ -1,13 +1,5 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useCallback
-} from "react";
-import {
-  calcTotalSales,
-  calcTotalWithdraw
-} from "../../../../../utils/shelfUtils";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
+import { calcTotalSales, calcTotalWithdraw } from "../../../../../utils/shelfUtils";
 
 /* ===========================
    Helper: number formatter
@@ -25,6 +17,20 @@ const getSafeStockCost = (p) => {
   return qtyForCost * unit;
 };
 
+// ✅ หาเลข index ตัวถัดไปแบบ "ไม่ให้ขาด" (ใช้เลขว่างตัวแรก)
+// เช่นมี [1,2,3] ลบ 2 เหลือ [1,3] => next = 2
+const getNextAvailableIndex = (rowProducts = []) => {
+  const used = new Set(
+    rowProducts
+      .map((p) => Number(p.index))
+      .filter((n) => Number.isFinite(n) && n > 0)
+  );
+
+  let i = 1;
+  while (used.has(i)) i += 1;
+  return i;
+};
+
 /* ===========================
    Delete Confirm Modal
 =========================== */
@@ -40,8 +46,7 @@ const DeleteConfirmModal = React.memo(
           </h3>
 
           <p className="text-gray-600 mb-6">
-            Delete{" "}
-            <span className="font-semibold">"{productName}"</span>?<br />
+            Delete <span className="font-semibold">"{productName}"</span>?<br />
             <span className="text-red-600 text-sm">
               การดำเนินการนี้ไม่สามารถย้อนกลับได้
             </span>
@@ -80,7 +85,7 @@ const AddProductModal = React.memo(
     branchCode,
     shelfCode,
     rowNo,
-    shelfProducts = []
+    shelfProducts = [],
   }) => {
     const [codeProduct, setCodeProduct] = useState("");
     const [error, setError] = useState("");
@@ -110,7 +115,6 @@ const AddProductModal = React.memo(
       const duplicate = shelfProducts.some(
         (p) => Number(p.codeProduct) === codeNum
       );
-
       if (duplicate) {
         setError("❌ รหัสสินค้านี้มีอยู่แล้วใน Shelf นี้");
         return;
@@ -121,7 +125,7 @@ const AddProductModal = React.memo(
         index: nextIndex,
         branchCode,
         shelfCode,
-        rowNo
+        rowNo,
       });
 
       onClose();
@@ -132,9 +136,7 @@ const AddProductModal = React.memo(
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
         <div className="bg-white p-6 rounded-lg max-w-sm w-full shadow-lg">
-          <h2 className="text-lg font-semibold mb-4 text-gray-800">
-            ➕ New Item
-          </h2>
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">➕ New Item</h2>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -152,9 +154,7 @@ const AddProductModal = React.memo(
                 }`}
               />
 
-              {error && (
-                <span className="text-red-600 text-sm mt-1">{error}</span>
-              )}
+              {error && <span className="text-red-600 text-sm mt-1">{error}</span>}
             </div>
 
             <div className="text-sm text-gray-600 space-y-1">
@@ -198,27 +198,23 @@ const AddProductModal = React.memo(
 /* ===========================
    Shelf Table (Main)
 =========================== */
-
 const ShelfTable = ({
   rows,
   shelfProducts,
   onDelete,
   onAdd,
   shelfCode,
-  branchCode
+  branchCode,
 }) => {
-  const [deleteModal, setDeleteModal] = useState({
-    isOpen: false,
-    product: null
-  });
+  const [deleteModal, setDeleteModal] = useState({ isOpen: false, product: null });
 
   const [addModal, setAddModal] = useState({
     isOpen: false,
     rowNo: null,
-    nextIndex: 1
+    nextIndex: 1,
   });
 
-  /* Memo: group products by row */
+  /* ✅ Memo: group products by row + sort + ใส่ displayIndex ให้เรียง 1..n ใหม่เสมอ */
   const productsByRow = useMemo(() => {
     const map = {};
     shelfProducts.forEach((p) => {
@@ -226,10 +222,16 @@ const ShelfTable = ({
       map[p.rowNo].push(p);
     });
 
-    // sort each row by index
-    Object.values(map).forEach((arr) =>
-      arr.sort((a, b) => Number(a.index) - Number(b.index))
-    );
+    Object.keys(map).forEach((rowNo) => {
+      // sort by stored index (ยังใช้เพื่อจัดลำดับ)
+      map[rowNo].sort((a, b) => Number(a.index) - Number(b.index));
+
+      // ใส่ displayIndex: 1..n (เลขที่แสดงจะ “ชิดกัน” หลังลบทันที)
+      map[rowNo] = map[rowNo].map((p, idx) => ({
+        ...p,
+        displayIndex: idx + 1,
+      }));
+    });
 
     return map;
   }, [shelfProducts]);
@@ -237,19 +239,9 @@ const ShelfTable = ({
   /* Memo: calculate totals for entire shelf
      – Stock Cost ใช้ getSafeStockCost (qty ติดลบ → คิดเป็น 0) */
   const totalAll = useMemo(() => {
-    const sales = shelfProducts.reduce(
-      (a, b) => a + (b.salesTotalPrice || 0),
-      0
-    );
-    const withdraw = shelfProducts.reduce(
-      (a, b) => a + (b.withdrawValue || 0),
-      0
-    );
-    const stockCost = shelfProducts.reduce(
-      (sum, p) => sum + getSafeStockCost(p),
-      0
-    );
-
+    const sales = shelfProducts.reduce((a, b) => a + (b.salesTotalPrice || 0), 0);
+    const withdraw = shelfProducts.reduce((a, b) => a + (b.withdrawValue || 0), 0);
+    const stockCost = shelfProducts.reduce((sum, p) => sum + getSafeStockCost(p), 0);
     return { sales, withdraw, stockCost };
   }, [shelfProducts]);
 
@@ -257,11 +249,7 @@ const ShelfTable = ({
   const handleAddClick = useCallback(
     (rowNo) => {
       const row = productsByRow[rowNo] || [];
-      const nextIndex =
-        row.length > 0
-          ? Math.max(...row.map((p) => Number(p.index))) + 1
-          : 1;
-
+      const nextIndex = getNextAvailableIndex(row);
       setAddModal({ isOpen: true, rowNo, nextIndex });
     },
     [productsByRow]
@@ -276,10 +264,7 @@ const ShelfTable = ({
     setDeleteModal({ isOpen: false, product: null });
   }, [deleteModal, onDelete]);
 
-  const handleAddSubmit = useCallback(
-    (item) => onAdd && onAdd(item),
-    [onAdd]
-  );
+  const handleAddSubmit = useCallback((item) => onAdd && onAdd(item), [onAdd]);
 
   const format = useCallback((v) => {
     if (v === null || v === undefined || v === "-") return "-";
@@ -299,11 +284,7 @@ const ShelfTable = ({
   const renderRow = (rowNo) => {
     const rowProducts = productsByRow[rowNo] || [];
 
-    // ❗ Row total: ใช้ getSafeStockCost เช่นกัน
-    const totalRowStock = rowProducts.reduce(
-      (sum, p) => sum + getSafeStockCost(p),
-      0
-    );
+    const totalRowStock = rowProducts.reduce((sum, p) => sum + getSafeStockCost(p), 0);
     const totalRowSales = calcTotalSales(rowProducts);
     const totalRowWithdraw = calcTotalWithdraw(rowProducts);
 
@@ -328,26 +309,23 @@ const ShelfTable = ({
         {/* Products */}
         {rowProducts.length > 0 ? (
           rowProducts.map((prod) => {
-            // cost: ถ้า stockQuantity < 0 → ใช้ 0 ในการคูณ
             const cost = getSafeStockCost(prod);
 
             const salesTargetQty = Number(prod.salesTargetQty ?? 0);
-            const salesCurrentMonthQty = Number(
-              prod.salesCurrentMonthQty ?? 0
-            );
+            const salesCurrentMonthQty = Number(prod.salesCurrentMonthQty ?? 0);
 
             const targetRounded = Math.round(salesTargetQty);
-            const meetTarget =
-              targetRounded > 0 &&
-              salesCurrentMonthQty >= targetRounded;
+            const meetTarget = targetRounded > 0 && salesCurrentMonthQty >= targetRounded;
+
+            const rowKey = prod.id
+              ? `prod-${prod.id}`
+              : `prod-${prod.codeProduct}-${prod.index}`;
 
             return (
-              <tr
-                key={`prod-${prod.codeProduct}-${prod.index}`}
-                className="even:bg-gray-50"
-              >
+              <tr key={rowKey} className="even:bg-gray-50">
+                {/* ✅ แสดงเลขที่ชิดกันเสมอ */}
                 <td className="p-1 border text-center w-10">
-                  {prod.index}
+                  {prod.displayIndex ?? prod.index}
                 </td>
 
                 <td className="p-1 border text-center w-24 whitespace-nowrap">
@@ -355,16 +333,11 @@ const ShelfTable = ({
                 </td>
 
                 <td className="p-1 border text-center w-16 whitespace-nowrap">
-                  {prod.codeProduct
-                    ? String(prod.codeProduct).padStart(5, "0")
-                    : "-"}
+                  {prod.codeProduct ? String(prod.codeProduct).padStart(5, "0") : "-"}
                 </td>
 
                 <td
-                  className="
-                    p-1 border whitespace-nowrap text-ellipsis overflow-hidden
-                    max-w-[320px]
-                  "
+                  className="p-1 border whitespace-nowrap text-ellipsis overflow-hidden max-w-[320px]"
                   title={prod.nameProduct ?? "-"}
                 >
                   {prod.nameProduct ?? "-"}
@@ -374,9 +347,7 @@ const ShelfTable = ({
                   {prod.nameBrand ?? "-"}
                 </td>
 
-                <td className="border text-center w-12">
-                  {prod.shelfLife ?? "-"}
-                </td>
+                <td className="border text-center w-12">{prod.shelfLife ?? "-"}</td>
 
                 <td className="p-1 border text-center w-16">
                   {prod.salesPriceIncVAT ?? "-"}
@@ -391,41 +362,28 @@ const ShelfTable = ({
                 <td
                   className={[
                     "p-1 border text-center w-14 font-semibold",
-                    meetTarget
-                      ? "bg-green-100 text-green-700"
-                      : "text-blue-600"
+                    meetTarget ? "bg-green-100 text-green-700" : "text-blue-600",
                   ].join(" ")}
                 >
-                  {salesCurrentMonthQty
-                    ? salesCurrentMonthQty.toLocaleString()
-                    : "-"}
+                  {salesCurrentMonthQty ? salesCurrentMonthQty.toLocaleString() : "-"}
                 </td>
 
                 {/* Sales Qty เดิม (90 วัน / 3M) */}
                 <td className="p-1 border text-center w-14 text-green-600">
-                  {prod.salesQuantity
-                    ? prod.salesQuantity.toLocaleString()
-                    : "-"}
+                  {prod.salesQuantity ? prod.salesQuantity.toLocaleString() : "-"}
                 </td>
 
                 <td className="p-1 border text-center w-14 text-red-600">
-                  {prod.withdrawQuantity
-                    ? prod.withdrawQuantity.toLocaleString()
-                    : "-"}
+                  {prod.withdrawQuantity ? prod.withdrawQuantity.toLocaleString() : "-"}
                 </td>
 
-                <td className="p-1 border text-center w-12">
-                  {prod.minStore ?? "-"}
-                </td>
+                <td className="p-1 border text-center w-12">{prod.minStore ?? "-"}</td>
 
-                <td className="p-1 border text-center w-12">
-                  {prod.maxStore ?? "-"}
-                </td>
+                <td className="p-1 border text-center w-12">{prod.maxStore ?? "-"}</td>
 
                 {/* Stock Qty แสดงตามจริง (ติดลบได้) */}
                 <td className="p-1 border text-center w-14 text-yellow-700">
-                  {prod.stockQuantity !== null &&
-                  prod.stockQuantity !== undefined
+                  {prod.stockQuantity !== null && prod.stockQuantity !== undefined
                     ? prod.stockQuantity.toLocaleString()
                     : "-"}
                 </td>
@@ -440,9 +398,7 @@ const ShelfTable = ({
                 </td>
 
                 <td className="p-1 border text-right w-24 text-green-600">
-                  {prod.salesTotalPrice
-                    ? prod.salesTotalPrice.toFixed(2)
-                    : "-"}
+                  {prod.salesTotalPrice ? prod.salesTotalPrice.toFixed(2) : "-"}
                 </td>
 
                 <td className="p-1 border text-right w-24 text-orange-600">
@@ -462,10 +418,7 @@ const ShelfTable = ({
           })
         ) : (
           <tr>
-            <td
-              colSpan={19}
-              className="p-2 border text-center italic text-gray-500"
-            >
+            <td colSpan={19} className="p-2 border text-center italic text-gray-500">
               No products in this Row
             </td>
           </tr>
@@ -473,30 +426,24 @@ const ShelfTable = ({
 
         {/* Row total */}
         <tr className="bg-gray-100 font-semibold">
-          {/* ข้ามคอลัมน์ข้อมูลทั้งหมดก่อน Unit Cost */}
           <td colSpan={12}></td>
 
-          {/* Label */}
           <td colSpan={3} className="p-2 border text-right">
             Total Row {rowNo}
           </td>
 
-          {/* Stock Cost */}
           <td className="p-2 border text-yellow-600 text-right">
             {format(totalRowStock)}
           </td>
 
-          {/* Sales Amount */}
           <td className="p-2 border text-green-700 text-right">
             {format(totalRowSales)}
           </td>
 
-          {/* Withdraw Amount */}
           <td className="p-2 border text-orange-600 text-right">
             {format(totalRowWithdraw)}
           </td>
 
-          {/* Delete col */}
           <td></td>
         </tr>
       </React.Fragment>
@@ -507,9 +454,7 @@ const ShelfTable = ({
     <>
       <AddProductModal
         isOpen={addModal.isOpen}
-        onClose={() =>
-          setAddModal({ isOpen: false, rowNo: null, nextIndex: 1 })
-        }
+        onClose={() => setAddModal({ isOpen: false, rowNo: null, nextIndex: 1 })}
         onSubmit={handleAddSubmit}
         nextIndex={addModal.nextIndex}
         branchCode={branchCode}
@@ -520,9 +465,7 @@ const ShelfTable = ({
 
       <DeleteConfirmModal
         isOpen={deleteModal.isOpen}
-        onClose={() =>
-          setDeleteModal({ isOpen: false, product: null })
-        }
+        onClose={() => setDeleteModal({ isOpen: false, product: null })}
         onConfirm={confirmDelete}
         productName={deleteModal.product?.nameProduct}
       />
@@ -535,19 +478,15 @@ const ShelfTable = ({
               <th className="border p-1 text-center w-10">ID</th>
               <th className="border p-1 text-center w-24">Barcode</th>
               <th className="border p-1 text-center w-16">Code</th>
-              <th className="border p-1 text-center w-44">
-                Name
-              </th>
+              <th className="border p-1 text-center w-44">Name</th>
 
               <th className="border p-1 text-center w-32">Brand</th>
               <th className="border text-center w-12">Shelf</th>
               <th className="border p-1 text-center w-16">RSP</th>
 
-              {/* Target / Sales เดือนปัจจุบัน */}
               <th className="border p-1 text-center w-12">Target</th>
               <th className="border p-1 text-center w-14">Sales M</th>
 
-              {/* เดิม: Sales Qty (90 วัน / 3M) */}
               <th className="border p-1 text-center w-14">Sales 3M</th>
               <th className="border p-1 text-center w-14">W. Qty</th>
               <th className="border p-1 text-center w-12">MIN</th>
@@ -572,18 +511,14 @@ const ShelfTable = ({
                 <span className="block leading-tight">Amount</span>
               </th>
 
-              <th className="border p-1 text-center w-24">
-                Withdraw Amount
-              </th>
+              <th className="border p-1 text-center w-24">Withdraw Amount</th>
               <th className="border p-1 text-center w-16">Delete</th>
             </tr>
           </thead>
 
           <tbody>
             {/* Rows */}
-            {Array.from({ length: Number(rows) || 0 }, (_, i) =>
-              renderRow(i + 1)
-            )}
+            {Array.from({ length: Number(rows) || 0 }, (_, i) => renderRow(i + 1))}
 
             {/* Total all rows */}
             <tr className="bg-gray-200 font-semibold">

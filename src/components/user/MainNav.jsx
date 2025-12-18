@@ -26,7 +26,7 @@
 
     return (
       <nav className="bg-emerald-600 text-white shadow-md print:hidden">
-        <div className="max-w-6xl mx-auto px-3 sm:px-6">
+        <div className="max-w-8xl mx-auto px-3 sm:px-6">
           <div className="flex items-center justify-between h-12 sm:h-14">
             {/* ซ้าย: โลโก้ + ชื่อระบบ */}
             <div className="flex items-center gap-2 sm:gap-3">
