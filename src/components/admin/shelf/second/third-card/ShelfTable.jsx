@@ -387,20 +387,20 @@ const ShelfTable = ({
                     ? prod.stockQuantity.toLocaleString()
                     : "-"}
                 </td>
-
+{/* 
                 <td className="p-1 border text-right w-16">
                   {format(prod.purchasePriceExcVAT)}
-                </td>
+                </td> */}
 
                 {/* Stock Cost = 0 ถ้า stockQuantity < 0 */}
-                <td className="p-1 border text-right w-20 text-yellow-600">
+                {/* <td className="p-1 border text-right w-20 text-yellow-600">
                   {format(cost)}
-                </td>
+                </td> */}
 
-                <td className="p-1 border text-right w-24 text-green-600">
+                {/* <td className="p-1 border text-right w-24 text-green-600">
                   {prod.salesTotalPrice ? prod.salesTotalPrice.toFixed(2) : "-"}
-                </td>
-
+                </td> */}
+{/* 
                 <td className="p-1 border text-right w-24 text-orange-600">
                   {format(prod.withdrawValue)}
                 </td>
@@ -412,7 +412,7 @@ const ShelfTable = ({
                   >
                     Delete
                   </button>
-                </td>
+                </td> */}
               </tr>
             );
           })

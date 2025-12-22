@@ -3,25 +3,28 @@ import MainFilterSales from "../../../components/admin/sales/sales-branch/MainFi
 import DashboardSales from "../../../components/admin/sales/dashboard/DashboardSales";
 import MainSalesProduct from "../../../components/admin/sales/product/MainSalesProduct";
 import CalculatorSales from "../../../components/admin/sales/calculator/CalculatorSales";
+import Member from "../../../components/admin/sales/member/Member";
 
 const FilterSales = () => {
-    const [activePage, setActivePage] = useState("sales");
+    const [activePage, setActivePage] = useState("dashboard-sales");
 
     const tabs = [
         { id: "dashboard-sales", label: "Dashboard" },
         { id: "sales", label: "Sales by branch" },
         { id: "product-sales", label: "Product Quantity" },
+        { id: "member", label: "Member" },
         { id: "calculator-sales", label: "Calculator" },
+
     ];
 
     return (
         <div className="min-h-screen bg-slate-50/80 flex flex-col !mt-0">
-            
+
             {/* Top nav always stick top 0 with no gap */}
             <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
                 <div className="px-3 md:px-6 py-2 md:py-1.5">
                     <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-                        
+
                         {/* Title */}
                         <h1 className="text-base md:text-lg font-semibold text-slate-800">
                             Sales tools
@@ -60,6 +63,7 @@ const FilterSales = () => {
                 {activePage === "dashboard-sales" && <DashboardSales />}
                 {activePage === "sales" && <MainFilterSales />}
                 {activePage === "product-sales" && <MainSalesProduct />}
+                {activePage === "member" && <Member />}
                 {activePage === "calculator-sales" && <CalculatorSales />}
             </main>
         </div>

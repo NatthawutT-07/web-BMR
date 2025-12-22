@@ -1,6 +1,6 @@
-// src/components/admin/dashboard/DashboardSales.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { getDashboard } from "../../../../api/admin/dashboard";
+import useDashboardSalesStore from "../../../../store/dashboard_sales_store";
 
 import DashboardSalesTop from "./parts/DashboardSalesTop";
 import DashboardSalesBody from "./parts/DashboardSalesBody";
@@ -36,69 +36,76 @@ const LoadingBar = ({ show, text = "กำลังโหลดข้อมู�
 };
 
 export default function DashboardSales() {
-  // ✅ baseDate = เมื่อวานเสมอ
+  const cacheStore = useDashboardSalesStore();
+
+  // ✅ baseDate = เมื่อวาน
   const baseDate = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() - 1);
     return d;
   }, []);
 
-  const defaultStart = useMemo(() => startOfMonthISO(baseDate), [baseDate]);
-  const defaultEnd = useMemo(() => toLocalISO(baseDate), [baseDate]);
+  // ✅ โหลดค่าล่าสุดจาก localStorage ถ้ามี
+  const defaultMode = cacheStore.lastSelection?.mode || "diff_month";
+  const defaultStart = cacheStore.lastSelection?.start || startOfMonthISO(baseDate);
+  const defaultEnd = cacheStore.lastSelection?.end || toLocalISO(baseDate);
 
-  // ---------------- pending (UI) ----------------
-  const [mode, setMode] = useState("diff_month");
+  // ---------------- pending ----------------
+  const [mode, setMode] = useState(defaultMode);
   const [start, setStart] = useState(defaultStart);
   const [end, setEnd] = useState(defaultEnd);
 
-  // ---------------- applied (ใช้จริงกับ KPI/กราฟ/ข้อมูล) ----------------
-  const [appliedMode, setAppliedMode] = useState("diff_month");
+  // ---------------- applied ----------------
+  const [appliedMode, setAppliedMode] = useState(defaultMode);
   const [appliedStart, setAppliedStart] = useState(defaultStart);
   const [appliedEnd, setAppliedEnd] = useState(defaultEnd);
 
-  const appliedRanges = useMemo(() => {
-    return getRangesByMode({ mode: appliedMode, start: appliedStart, end: appliedEnd, baseDate });
-  }, [appliedMode, appliedStart, appliedEnd, baseDate]);
+  const appliedRanges = useMemo(
+    () =>
+      getRangesByMode({
+        mode: appliedMode,
+        start: appliedStart,
+        end: appliedEnd,
+        baseDate,
+      }),
+    [appliedMode, appliedStart, appliedEnd, baseDate]
+  );
 
-  // ✅ เปลี่ยนโหมด month/quarter ให้ “pending” เปลี่ยนตามเมื่อวาน (แต่ยังไม่โหลดจนกด Show Data)
-  useEffect(() => {
-    if (mode === "diff_month") {
-      setStart(startOfMonthISO(baseDate));
-      setEnd(toLocalISO(baseDate));
-    } else if (mode === "diff_quarter") {
-      setStart(toLocalISO(quarterStart(baseDate)));
-      setEnd(toLocalISO(baseDate));
-    }
-  }, [mode, baseDate]);
-
-  // ---------------- chart ready (โหลด chart.js ครั้งเดียว) ----------------
+  // ---------------- chart.js ----------------
   const [chartReady, setChartReady] = useState(false);
   useEffect(() => {
     let alive = true;
-    registerChart()
-      .then(() => alive && setChartReady(true))
-      .catch(() => alive && setChartReady(false));
-    return () => {
-      alive = false;
-    };
+    registerChart().then(() => alive && setChartReady(true));
+    return () => (alive = false);
   }, []);
 
   // ---------------- data ----------------
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
-
   const [primaryDash, setPrimaryDash] = useState(null);
   const [compareDash, setCompareDash] = useState(null);
 
-  // prevent race
   const reqIdRef = useRef(0);
 
-  const loadBy = async ({ mode: m, start: s, end: e }) => {
+  const makeCacheKey = (m, s, e) => `${m}:${s}→${e}`;
+
+  const loadBy = async ({ mode: m, start: s, end: e, force = false }) => {
     setErr("");
 
     if (m === "diff_year" && !isValidRange(s, e)) {
-      setErr("ช่วงวันที่ไม่ถูกต้อง (Start ต้องไม่มากกว่า End)");
+      setErr("ช่วงวันที่ไม่ถูกต้อง");
       return;
+    }
+
+    const key = makeCacheKey(m, s, e);
+
+    if (!force) {
+      const cached = cacheStore.getCache(key);
+      if (cached) {
+        setPrimaryDash(cached.primaryDash);
+        setCompareDash(cached.compareDash);
+        return;
+      }
     }
 
     const myId = ++reqIdRef.current;
@@ -106,84 +113,104 @@ export default function DashboardSales() {
 
     try {
       const ranges = getRangesByMode({ mode: m, start: s, end: e, baseDate });
-      const p = ranges.primary;
-      const c = ranges.compare;
-
       const [pRes, cRes] = await Promise.all([
-        getDashboard(p.start, p.end),
-        getDashboard(c.start, c.end),
+        getDashboard(ranges.primary.start, ranges.primary.end),
+        getDashboard(ranges.compare.start, ranges.compare.end),
       ]);
+
       if (reqIdRef.current !== myId) return;
 
       setPrimaryDash(pRes);
       setCompareDash(cRes);
-    } catch (e2) {
+      cacheStore.setCache(key, pRes, cRes);
+    } catch {
       if (reqIdRef.current !== myId) return;
       setPrimaryDash(null);
       setCompareDash(null);
-      setErr("โหลดข้อมูลไม่สำเร็จ (เช็ค API / token / network)");
+      setErr("โหลดข้อมูลไม่สำเร็จ");
     } finally {
       if (reqIdRef.current === myId) setLoading(false);
     }
   };
 
-  // ✅ กด Show Data เท่านั้น => apply + load
+  // ✅ โหลดครั้งแรก
+  useEffect(() => {
+    loadBy({
+      mode: appliedMode,
+      start: appliedStart,
+      end: appliedEnd,
+    });
+    // eslint-disable-next-line
+  }, []);
+
+  // ✅ Show Data = apply + เก็บ recent + load ใหม่
   const applyAndLoad = () => {
     setAppliedMode(mode);
     setAppliedStart(start);
     setAppliedEnd(end);
+    cacheStore.setLastSelection(mode, start, end); // ✅ save ล่าสุด
     loadBy({ mode, start, end });
   };
 
-  // ✅ โหลดครั้งแรกอัตโนมัติ (ค่า default เมื่อวาน)
-  useEffect(() => {
-    loadBy({ mode: appliedMode, start: appliedStart, end: appliedEnd });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // ✅ Refresh
+  const refreshNow = () => {
+    cacheStore.clearCache();
+    loadBy({
+      mode: appliedMode,
+      start: appliedStart,
+      end: appliedEnd,
+      force: true,
+    });
+  };
 
   const showCompare = useMemo(() => hasCompareData(compareDash), [compareDash]);
 
-  // ✅ KPI ใช้ appliedRanges เท่านั้น
   const kpi = useMemo(() => {
     const s = primaryDash?.summary || {};
     const netSales = Number(s.total_payment || 0);
     const billSaleCount = Number(s.bill_count || 0);
     const endBillDiscount = Number(s.discount_sum || 0);
+    const dayCount = daysBetweenInclusive(
+      appliedRanges.primary.start,
+      appliedRanges.primary.end
+    );
 
-    const dayCount = daysBetweenInclusive(appliedRanges.primary.start, appliedRanges.primary.end);
-    const avgPerBill = billSaleCount ? safeDiv(netSales, billSaleCount) : 0;
-    const dailyAvgSales = dayCount ? safeDiv(netSales, dayCount) : 0;
-
-    return { netSales, billSaleCount, avgPerBill, dailyAvgSales, endBillDiscount, dayCount };
-  }, [primaryDash, appliedRanges.primary.start, appliedRanges.primary.end]);
+    return {
+      netSales,
+      billSaleCount,
+      endBillDiscount,
+      dayCount,
+      avgPerBill: billSaleCount ? safeDiv(netSales, billSaleCount) : 0,
+      dailyAvgSales: dayCount ? safeDiv(netSales, dayCount) : 0,
+    };
+  }, [primaryDash, appliedRanges]);
 
   const kpiCompare = useMemo(() => {
     const s = compareDash?.summary || {};
     const netSales = Number(s.total_payment || 0);
     const billSaleCount = Number(s.bill_count || 0);
     const endBillDiscount = Number(s.discount_sum || 0);
+    const dayCount = daysBetweenInclusive(
+      appliedRanges.compare.start,
+      appliedRanges.compare.end
+    );
 
-    const dayCount = daysBetweenInclusive(appliedRanges.compare.start, appliedRanges.compare.end);
-    const avgPerBill = billSaleCount ? safeDiv(netSales, billSaleCount) : 0;
-    const dailyAvgSales = dayCount ? safeDiv(netSales, dayCount) : 0;
+    return {
+      netSales,
+      billSaleCount,
+      endBillDiscount,
+      dayCount,
+      avgPerBill: billSaleCount ? safeDiv(netSales, billSaleCount) : 0,
+      dailyAvgSales: dayCount ? safeDiv(netSales, dayCount) : 0,
+    };
+  }, [compareDash, appliedRanges]);
 
-    return { netSales, billSaleCount, avgPerBill, dailyAvgSales, endBillDiscount, dayCount };
-  }, [compareDash, appliedRanges.compare.start, appliedRanges.compare.end]);
-
-  const disabled = loading;
-
-  const isDirty = useMemo(() => {
-    if (mode !== appliedMode) return true;
-    return start !== appliedStart || end !== appliedEnd;
-  }, [mode, start, end, appliedMode, appliedStart, appliedEnd]);
-
-  const appliedRangeLabel = useMemo(() => {
-    return `${appliedRanges.primary.start} → ${appliedRanges.primary.end}`;
-  }, [appliedRanges.primary.start, appliedRanges.primary.end]);
+  const isDirty =
+    mode !== appliedMode || start !== appliedStart || end !== appliedEnd;
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-8 py-4 space-y-4">
+      <div className="mx-auto max-w-7xl px-3 py-4 space-y-4">
         <DashboardSalesTop
           mode={mode}
           setMode={setMode}
@@ -192,7 +219,8 @@ export default function DashboardSales() {
           setStart={setStart}
           setEnd={setEnd}
           onShowData={applyAndLoad}
-          disabled={disabled}
+          onRefresh={refreshNow}
+          disabled={loading}
           appliedMode={appliedMode}
           appliedStart={appliedRanges.primary.start}
           appliedEnd={appliedRanges.primary.end}
@@ -202,27 +230,17 @@ export default function DashboardSales() {
           showCompare={showCompare}
           kpi={kpi}
           kpiCompare={kpiCompare}
-          appliedRangeLabel={appliedRangeLabel}
+          appliedRangeLabel={`${appliedRanges.primary.start} → ${appliedRanges.primary.end}`}
         />
 
-        <LoadingBar
-          show={loading}
-          text={
-            appliedMode === "diff_year"
-              ? "กำลังโหลด YoY ตามช่วงวันที่ที่เลือก..."
-              : appliedMode === "diff_month"
-                ? "กำลังโหลด Diff Month..."
-                : "กำลังโหลด Diff Quarter..."
-          }
-        />
+        <LoadingBar show={loading} />
 
-        {err ? (
+        {err && (
           <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-rose-800">
             {err}
           </div>
-        ) : null}
+        )}
 
-        {/* ✅ FIX: ส่ง mode + ranges ให้ Body เพื่อเทียบวันให้ตรง */}
         <DashboardSalesBody
           mode={appliedMode}
           primaryStart={appliedRanges.primary.start}
@@ -234,39 +252,15 @@ export default function DashboardSales() {
           showCompare={showCompare}
           loading={loading}
         />
+
         <DashboardProductList
           mode={appliedMode}
           primaryStart={appliedRanges.primary.start}
           primaryEnd={appliedRanges.primary.end}
           compareStart={appliedRanges.compare.start}
           compareEnd={appliedRanges.compare.end}
-          disabled={disabled}
+          disabled={loading}
         />
-
-        {/* <details className="bg-white/90 backdrop-blur shadow-sm rounded-xl border border-slate-200 p-4">
-          <summary className="cursor-pointer text-sm font-semibold text-slate-800">Debug summary</summary>
-          <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-              <div className="text-xs font-semibold text-slate-700 mb-2">Primary</div>
-              <pre className="text-[11px] overflow-auto">
-                {JSON.stringify(primaryDash?.summary || {}, null, 2)}
-              </pre>
-            </div>
-
-            {showCompare ? (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                <div className="text-xs font-semibold text-slate-700 mb-2">Compare</div>
-                <pre className="text-[11px] overflow-auto">
-                  {JSON.stringify(compareDash?.summary || {}, null, 2)}
-                </pre>
-              </div>
-            ) : (
-              <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-500">
-                ไม่มีข้อมูลช่วงเทียบ
-              </div>
-            )}
-          </div>
-        </details> */}
       </div>
     </div>
   );

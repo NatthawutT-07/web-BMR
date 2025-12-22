@@ -1,36 +1,68 @@
-// src/store/useDashboardSalesStore.js
+// src/store/dashboard_sales_store.jsx
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
-const getYesterdayISO = () => {
-  // ✅ ได้ YYYY-MM-DD ตามเวลาไทย (ไม่ติดเวลา และไม่เพี้ยนวัน)
-  const todayBkk = new Date(
-    new Date().toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
-  );
-  const y = new Date(todayBkk);
-  y.setDate(y.getDate() - 1);
+/**
+ * Dashboard Sales Store
+ *
+ * ✅ cache แบบ in-memory
+ *    - อยู่จนกว่า reload tab
+ *    - key = mode:start→end
+ *
+ * ✅ lastSelection (persist)
+ *    - จำ mode / start / end ล่าสุด
+ *    - reload หน้า / กลับมาหน้าเดิม → ค่าเดิมยังอยู่
+ */
 
-  // en-CA จะได้รูปแบบ YYYY-MM-DD
-  return y.toLocaleDateString("en-CA", { timeZone: "Asia/Bangkok" });
-};
+const useDashboardSalesStore = create(
+  persist(
+    (set, get) => ({
+      /* =========================
+         🔹 last selection (persist)
+      ========================= */
+      lastSelection: {
+        mode: "diff_month",
+        start: "",
+        end: "",
+      },
 
-const useDashboardSalesStore = create((set) => ({
-  start: "2024-01-01",
-  end: getYesterdayISO(),
+      setLastSelection: (mode, start, end) =>
+        set({
+          lastSelection: { mode, start, end },
+        }),
 
-  data: null,
-  baseData: null,
+      /* =========================
+         🔹 in-memory cache
+      ========================= */
+      cache: null, // { key, primaryDash, compareDash, ts }
 
-  loading: false,
-  buttonDisabled: false,
-  dailyAvgSales: 0,
+      getCache: (key) => {
+        const c = get().cache;
+        if (!c) return null;
+        if (c.key !== key) return null;
+        return c;
+      },
 
-  setStart: (val) => set({ start: val }),
-  setEnd: (val) => set({ end: val }),
-  setData: (val) => set({ data: val }),
-  setBaseData: (val) => set({ baseData: val }),
-  setLoading: (val) => set({ loading: val }),
-  setButtonDisabled: (val) => set({ buttonDisabled: val }),
-  setDailyAvgSales: (val) => set({ dailyAvgSales: val }),
-}));
+      setCache: (key, primaryDash, compareDash) =>
+        set({
+          cache: {
+            key,
+            primaryDash,
+            compareDash,
+            ts: Date.now(),
+          },
+        }),
+
+      clearCache: () => set({ cache: null }),
+    }),
+    {
+      name: "dashboard-sales-store", // 🔐 localStorage key
+      partialize: (state) => ({
+        // ✅ persist เฉพาะค่าที่ต้องจำ
+        lastSelection: state.lastSelection,
+      }),
+    }
+  )
+);
 
 export default useDashboardSalesStore;

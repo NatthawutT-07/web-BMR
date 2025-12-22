@@ -107,3 +107,22 @@ export const fetchSalesProductDetail = async ({ productId, start, end }) => {
         throw error;
     }
 };
+
+
+// ------------------------------------------------
+// POST: Member sales summary / detail
+// - ถ้าส่ง customerId => detail mode
+// - ถ้าไม่ส่ง => summary mode
+// ------------------------------------------------
+export const fetchSalesMember = async ({ start, end, customerId }) => {
+    try {
+        const res = await api.post("/sales-member", {
+            startDate: start,
+            endDate: end,
+            ...(customerId ? { customerId } : {}),
+        });
+        return res.data;
+    } catch (error) {
+        throw error;
+    }
+};
