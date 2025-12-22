@@ -33,6 +33,21 @@ const fmtDateTime = (v) => {
     minute: "2-digit",
   });
 };
+const fmtPct = (ratio, digits = 1) => {
+  const n = Number(ratio || 0);
+  if (!Number.isFinite(n)) return "0%";
+  return `${(n * 100).toFixed(digits)}%`;
+};
+
+// ✅ จำนวนวันในช่วง (inclusive)
+const daysInRangeInclusive = (startISO, endISO) => {
+  if (!startISO || !endISO) return 0;
+  if (startISO > endISO) return 0;
+  const s = new Date(`${startISO}T00:00:00`);
+  const e = new Date(`${endISO}T00:00:00`);
+  const diffDays = Math.round((e - s) / (24 * 60 * 60 * 1000)) + 1;
+  return Math.max(0, diffDays || 0);
+};
 
 const Spinner = ({ className = "" }) => (
   <span
@@ -63,8 +78,17 @@ const Pill = ({ children, tone = "slate" }) => {
 /**
  * Card (ปกติ = ขาวทั้งหมด)
  * - จะมีสีเฉพาะเมื่อส่ง soft + tone มา (เราจะใช้แค่ "ยอดสุทธิรวม" บล็อกเดียว)
+ * ✅ เพิ่ม className เพื่อสั่ง col-span ได้
  */
-const Card = ({ title, value, sub, tone = "emerald", soft = false, emphasize = false }) => {
+const Card = ({
+  title,
+  value,
+  sub,
+  tone = "emerald",
+  soft = false,
+  emphasize = false,
+  className = "",
+}) => {
   const softMap = {
     emerald: {
       bg: "bg-emerald-50/60",
@@ -89,12 +113,12 @@ const Card = ({ title, value, sub, tone = "emerald", soft = false, emphasize = f
   const softCls = `${s.bg} ${s.border} ${s.ring}`;
 
   return (
-    <div className={`${baseCls} ${soft ? softCls : normalCls}`}>
+    <div className={`${baseCls} ${soft ? softCls : normalCls} ${className}`}>
       <div className={`text-xs ${soft ? s.title : "text-slate-500"}`}>{title}</div>
       <div
-        className={`mt-1 font-semibold ${
-          emphasize ? "text-xl" : "text-lg"
-        } ${soft ? s.value : "text-slate-800"}`}
+        className={`mt-1 font-semibold ${emphasize ? "text-xl" : "text-lg"} ${
+          soft ? s.value : "text-slate-800"
+        }`}
       >
         {value}
       </div>
@@ -105,10 +129,11 @@ const Card = ({ title, value, sub, tone = "emerald", soft = false, emphasize = f
 
 /* =========================
    Tier helpers
+   ✅ ไม่แสดงยอดติดลบ: ตัด NEG ออกทั้งหมด
 ========================= */
 const getTier = (netAmount) => {
   const net = Number(netAmount || 0);
-  if (net < 0) return "NEG";
+  // หมายเหตุ: เราจะกรอง net < 0 ออกก่อนถึงจุดนี้แล้ว
   if (net <= 9999) return "T1";
   if (net <= 29999) return "T2";
   return "T3";
@@ -118,7 +143,6 @@ const tierLabel = (tier) => {
   if (tier === "T1") return "Tier 1 (0–9,999)";
   if (tier === "T2") return "Tier 2 (10,000–29,999)";
   if (tier === "T3") return "Tier 3 (30,000+)";
-  if (tier === "NEG") return "ติดลบ (<0)";
   return "ทั้งหมด";
 };
 
@@ -126,7 +150,6 @@ const tierTone = (tier) => {
   if (tier === "T1") return "amber";
   if (tier === "T2") return "purple";
   if (tier === "T3") return "green";
-  if (tier === "NEG") return "red";
   return "slate";
 };
 
@@ -189,7 +212,6 @@ const DetailModal = ({ open, onClose, data, loading }) => {
             </div>
           ) : (
             <>
-              {/* ✅ ใน modal ไม่ใส่สีพิเศษ (ตามที่ขอ: สีแค่บล็อกเดียวบนหน้า main) */}
               <div className="grid grid-cols-2 md:grid-cols-6 gap-2 mb-4">
                 <Card title="จำนวนครั้ง" value={fmtInt(totals?.visits)} />
                 <Card title="ยอดขาย" value={fmtMoney(totals?.salesAmount)} />
@@ -209,7 +231,7 @@ const DetailModal = ({ open, onClose, data, loading }) => {
                 </div>
 
                 <div className="overflow-auto">
-                  <table className="min-w-[1100px] w-full text-sm">
+                  <table className="min-w-[980px] w-full text-sm">
                     <thead className="bg-white sticky top-0">
                       <tr className="border-b border-slate-200 text-xs text-slate-500">
                         <th className="px-3 py-2 text-left">วันที่</th>
@@ -218,7 +240,6 @@ const DetailModal = ({ open, onClose, data, loading }) => {
                         <th className="px-3 py-2 text-left">เลขที่บิล</th>
                         <th className="px-3 py-2 text-right">ยอด (สุทธิ)</th>
                         <th className="px-3 py-2 text-left">ช่องทาง</th>
-                        <th className="px-3 py-2 text-left">การชำระ</th>
                       </tr>
                     </thead>
 
@@ -229,12 +250,12 @@ const DetailModal = ({ open, onClose, data, loading }) => {
                           <tr key={v.billId} className="border-b border-slate-100 hover:bg-slate-50/70">
                             <td className="px-3 py-2">{fmtDateTime(v.date)}</td>
                             <td className="px-3 py-2">
-                              <div className="text-slate-800">{v.branch?.branch_name || "-"}</div>
-                              <div className="text-xs text-slate-500">{v.branch?.branch_code || ""}</div>
+                              <div className="text-xs text-slate-500">
+                                ({v.branch?.branch_code || ""}) {v.branch?.branch_name || "-"}
+                              </div>
                             </td>
                             <td className="px-3 py-2">
                               {v.isReturn ? <Pill tone="red">คืน</Pill> : <Pill tone="green">ขาย</Pill>}
-                              <div className="text-xs text-slate-500 mt-0.5">{v.docType || "-"}</div>
                             </td>
                             <td className="px-3 py-2 font-mono text-xs">{v.billNumber || "-"}</td>
                             <td className="px-3 py-2 text-right font-semibold">
@@ -242,21 +263,6 @@ const DetailModal = ({ open, onClose, data, loading }) => {
                             </td>
                             <td className="px-3 py-2">
                               <div className="text-slate-800">{v.channel?.channel_name || "-"}</div>
-                              <div className="text-xs text-slate-500">{v.channel?.channel_code || ""}</div>
-                            </td>
-                            <td className="px-3 py-2">
-                              {Array.isArray(v.payments) && v.payments.length ? (
-                                <div className="space-y-1">
-                                  {v.payments.map((p) => (
-                                    <div key={p.id} className="flex items-center justify-between gap-2">
-                                      <Pill tone="blue">{p.method || "payment"}</Pill>
-                                      <span className="text-slate-700">{fmtMoney(p.amount)}</span>
-                                    </div>
-                                  ))}
-                                </div>
-                              ) : (
-                                <span className="text-slate-400">-</span>
-                              )}
                             </td>
                           </tr>
                         );
@@ -264,7 +270,7 @@ const DetailModal = ({ open, onClose, data, loading }) => {
 
                       {!visits.length ? (
                         <tr>
-                          <td colSpan={7} className="px-3 py-6 text-center text-slate-500">
+                          <td colSpan={6} className="px-3 py-6 text-center text-slate-500">
                             ไม่มีข้อมูลในช่วงวันที่เลือก
                           </td>
                         </tr>
@@ -313,11 +319,14 @@ const Member = () => {
   // sortKey: "visits" | "return" | "net"
   const [sortKey, setSortKey] = useState("visits");
 
-  // tierFilter: "ALL" | "T1" | "T2" | "T3" | "NEG"
+  // tierFilter: "ALL" | "T1" | "T2" | "T3"
   const [tierFilter, setTierFilter] = useState("ALL");
 
   // dayFilter: "ALL" | 30 | 60 | 90 | 120 | 180
   const [dayFilter, setDayFilter] = useState("ALL");
+
+  // ✅ search (ชื่อ/รหัสลูกค้า)
+  const [search, setSearch] = useState("");
 
   const pageSize = 10;
   const [page, setPage] = useState(1);
@@ -326,20 +335,25 @@ const Member = () => {
   const [jumpPage, setJumpPage] = useState("");
 
   const rows = summary?.rows || [];
-  const totalsAll = summary?.totals || null;
-
   const canLoad = useMemo(() => Boolean(start && end && start <= end), [start, end]);
 
-  // base rows after dayFilter
+  // ✅ จำนวนวันของช่วงวันที่ที่เลือก
+  const rangeDays = useMemo(() => daysInRangeInclusive(start, end), [start, end]);
+
+  // ✅ ไม่แสดงยอดติดลบ: กรองออกตั้งแต่ต้น
+  const nonNegativeRows = useMemo(() => rows.filter((r) => Number(r.netAmount || 0) >= 0), [rows]);
+
+  // base rows after dayFilter (บนฐานที่ตัดติดลบแล้ว)
   const dayBaseRows = useMemo(() => {
-    if (dayFilter === "ALL") return rows;
+    const base = nonNegativeRows;
+    if (dayFilter === "ALL") return base;
     const limit = Number(dayFilter || 0);
-    return rows.filter((r) => Number(r.absentDays || 0) <= limit);
-  }, [rows, dayFilter]);
+    return base.filter((r) => Number(r.absentDays || 0) <= limit);
+  }, [nonNegativeRows, dayFilter]);
 
   // Tier counts under dayFilter
   const tierCounts = useMemo(() => {
-    const counts = { ALL: dayBaseRows.length, T1: 0, T2: 0, T3: 0, NEG: 0 };
+    const counts = { ALL: dayBaseRows.length, T1: 0, T2: 0, T3: 0 };
     for (const r of dayBaseRows) {
       const t = getTier(r.netAmount);
       counts[t] = (counts[t] || 0) + 1;
@@ -347,33 +361,67 @@ const Member = () => {
     return counts;
   }, [dayBaseRows]);
 
-  // tier filtered
+  // tier filtered (ยังไม่ search)
   const tierFilteredRows = useMemo(() => {
     if (tierFilter === "ALL") return dayBaseRows;
     return dayBaseRows.filter((r) => getTier(r.netAmount) === tierFilter);
   }, [dayBaseRows, tierFilter]);
 
-  // KPI totals: if (ALL tier + ALL day) use backend totals (fast), else compute from filtered rows
-  const scopeTotals = useMemo(() => {
-    if (tierFilter === "ALL" && dayFilter === "ALL") {
-      if (totalsAll) {
-        const customers = totalsAll.customers ?? totalsAll.customersAll ?? rows.length;
-        return {
-          customers,
-          visits: totalsAll.visits ?? 0,
-          salesAmount: totalsAll.salesAmount ?? 0,
-          returnAmount: totalsAll.returnAmount ?? 0,
-          netAmount: totalsAll.netAmount ?? 0,
-          avgNetPerVisitAll: totalsAll.avgNetPerVisitAll ?? 0,
-        };
-      }
-      return computeScopeTotals(rows);
+  // ✅ search filtered (กระทบ “ตาราง”)
+  const searchedRows = useMemo(() => {
+    const q = String(search || "").trim().toLowerCase();
+    if (!q) return tierFilteredRows;
+
+    return tierFilteredRows.filter((r) => {
+      const name = String(r.customer_name || "").toLowerCase();
+      const code = String(r.customer_code || "").toLowerCase();
+      return name.includes(q) || code.includes(q);
+    });
+  }, [tierFilteredRows, search]);
+
+  // ✅ KPI totals: ใช้ชุดที่ตัดติดลบแล้วเสมอ
+  const scopeTotals = useMemo(() => computeScopeTotals(tierFilteredRows), [tierFilteredRows]);
+
+  // ✅ Tier stats (เทียบ % ของลูกค้ารวม + สุทธิรวม) อิง dayBaseRows
+  const tierStats = useMemo(() => {
+    const base = dayBaseRows || [];
+
+    const init = { customers: 0, netAmount: 0 };
+    const byTier = { T1: { ...init }, T2: { ...init }, T3: { ...init } };
+
+    let totalCustomers = 0;
+    let totalNet = 0;
+
+    for (const r of base) {
+      const net = Number(r.netAmount || 0);
+      const t = getTier(net);
+
+      totalCustomers += 1;
+      totalNet += net;
+
+      if (!byTier[t]) byTier[t] = { ...init };
+      byTier[t].customers += 1;
+      byTier[t].netAmount += net;
     }
-    return computeScopeTotals(tierFilteredRows);
-  }, [tierFilter, dayFilter, totalsAll, rows, tierFilteredRows]);
+
+    const tiers = ["T1", "T2", "T3"];
+    const tRows = tiers.map((t) => {
+      const c = byTier[t]?.customers || 0;
+      const n = byTier[t]?.netAmount || 0;
+      return {
+        tier: t,
+        customers: c,
+        netAmount: n,
+        customerPct: totalCustomers ? c / totalCustomers : 0,
+        netPct: totalNet ? n / totalNet : 0,
+      };
+    });
+
+    return { totalCustomers, totalNet, rows: tRows };
+  }, [dayBaseRows]);
 
   const sortedRows = useMemo(() => {
-    const arr = [...tierFilteredRows];
+    const arr = [...searchedRows];
 
     const keyFn = (r) => {
       if (sortKey === "return") return Number(r.returnAmount || 0);
@@ -389,7 +437,7 @@ const Member = () => {
     });
 
     return arr;
-  }, [tierFilteredRows, sortKey]);
+  }, [searchedRows, sortKey]);
 
   const totalPages = useMemo(() => Math.max(1, Math.ceil(sortedRows.length / pageSize)), [sortedRows.length]);
 
@@ -424,6 +472,7 @@ const Member = () => {
       setTierFilter("ALL");
       setDayFilter("ALL");
       setSortKey("visits");
+      setSearch("");
       setJumpPage("");
     } catch (e) {
       setError(e?.response?.data?.message || e?.message || "โหลดข้อมูลไม่สำเร็จ");
@@ -464,7 +513,7 @@ const Member = () => {
         }`}
         title={tierLabel(value)}
       >
-        {value === "NEG" ? "ติดลบ" : value}
+        {value}
         <span className={`ml-2 ${active ? "text-white/80" : "text-slate-400"}`}>{fmtInt(tierCounts[value] || 0)}</span>
       </button>
     );
@@ -496,6 +545,11 @@ const Member = () => {
     if (tierFilter !== "ALL") parts.push(`Tier: ${tierFilter}`);
     return parts.join(" • ");
   }, [tierFilter, dayFilter]);
+
+  const kpiRangeSub = useMemo(() => {
+    const base = `${start} ถึง ${end}`;
+    return filterSummaryText ? `${base} • ${filterSummaryText}` : base;
+  }, [start, end, filterSummaryText]);
 
   const applyJumpPage = () => {
     const n = Number(jumpPage);
@@ -559,14 +613,12 @@ const Member = () => {
       </header>
 
       <main className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6 py-4 space-y-4">
-        {/* ✅ KPI: สีแค่บล็อกเดียว (ยอดสุทธิรวม) */}
+        {/* ✅ KPI: ขยายให้เต็มแถว + ย้าย “ระยะเวลาที่ฟิลเตอร์” ไปท้ายสุด */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
           <Card title="จำนวนลูกค้า" value={fmtInt(scopeTotals.customers)} sub={filterSummaryText} />
           <Card title="จำนวนบิลรวม" value={fmtInt(scopeTotals.visits)} sub={filterSummaryText} />
-          <Card title="ยอดขายรวม" value={fmtMoney(scopeTotals.salesAmount)} sub={filterSummaryText} />
-          <Card title="ยอดคืนรวม" value={fmtMoney(scopeTotals.returnAmount)} sub={filterSummaryText} />
 
-          {/* ✅ สีเฉพาะบล็อกนี้ */}
+          {/* ✅ ให้ “ยอดสุทธิรวม” กิน 2 ช่อง เพื่อให้เต็มแถวพอดี */}
           <Card
             title="ยอดสุทธิรวม"
             value={fmtMoney(scopeTotals.netAmount)}
@@ -574,9 +626,13 @@ const Member = () => {
             tone={netTone}
             soft
             emphasize
+            className="sm:col-span-2 md:col-span-2"
           />
 
           <Card title="เฉลี่ยสุทธิ/ครั้ง" value={fmtMoney(scopeTotals.avgNetPerVisitAll)} sub={filterSummaryText} />
+
+          {/* ✅ กล่องใหม่: ระยะเวลาที่ฟิลเตอร์ (ไว้ท้ายสุด) */}
+          <Card title="ระยะเวลาที่ฟิลเตอร์" value={`${fmtInt(rangeDays)} วัน`} sub={kpiRangeSub} />
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -669,13 +725,100 @@ const Member = () => {
                 <TierButton value="T1" />
                 <TierButton value="T2" />
                 <TierButton value="T3" />
-                <TierButton value="NEG" />
               </div>
 
               <div className="text-xs text-slate-500">
                 กำลังดู: <span className="font-semibold text-slate-700">{tierLabel(tierFilter)}</span>
               </div>
             </div>
+
+            {/* Tier % Summary */}
+            <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/60 overflow-hidden">
+              <div className="px-3 py-2 text-xs text-slate-600 flex flex-wrap items-center gap-2">
+                <span className="font-semibold text-slate-700">สรุปสัดส่วน Tier</span>
+                <span className="text-slate-500">
+                  ฐานเทียบ: ลูกค้า {fmtInt(tierStats.totalCustomers)} • สุทธิ {fmtMoney(tierStats.totalNet)}
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-[680px] w-full text-[12px]">
+                  <thead className="bg-white">
+                    <tr className="border-t border-slate-200 text-[11px] text-slate-600">
+                      <th className="px-3 py-2 text-left w-[160px]">Tier</th>
+                      <th className="px-3 py-2 text-right w-[120px]">ลูกค้า</th>
+                      <th className="px-3 py-2 text-right w-[120px]">%ลูกค้า</th>
+                      <th className="px-3 py-2 text-right w-[160px]">สุทธิ</th>
+                      <th className="px-3 py-2 text-right w-[120px]">%สุทธิ</th>
+                    </tr>
+                  </thead>
+
+                  <tbody className="bg-white">
+                    {tierStats.rows.map((r) => {
+                      const net = Number(r.netAmount || 0);
+                      return (
+                        <tr key={r.tier} className="border-t border-slate-100">
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <Pill tone={tierTone(r.tier)}>{r.tier}</Pill>
+                              <span className="text-slate-700">{tierLabel(r.tier)}</span>
+                            </div>
+                          </td>
+
+                          <td className="px-3 py-2 text-right font-semibold text-slate-800 tabular-nums">
+                            {fmtInt(r.customers)}
+                          </td>
+
+                          <td className="px-3 py-2 text-right text-slate-700 tabular-nums">{fmtPct(r.customerPct)}</td>
+
+                          <td className="px-3 py-2 text-right font-semibold tabular-nums">
+                            <span className="text-emerald-700">{fmtMoney(net)}</span>
+                          </td>
+
+                          <td className="px-3 py-2 text-right text-slate-700 tabular-nums">{fmtPct(r.netPct)}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Search */}
+            <div className="flex flex-col md:flex-row md:items-center gap-2">
+              <div className="text-xs text-slate-500 shrink-0">ค้นหา (ชื่อ/รหัสลูกค้า):</div>
+              <div className="flex items-center gap-2 w-full">
+                <input
+                  value={search}
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    setPage(1);
+                    setJumpPage("");
+                  }}
+                  placeholder="พิมพ์ชื่อ หรือ รหัสลูกค้า..."
+                  className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+                />
+                {search ? (
+                  <button
+                    onClick={() => {
+                      setSearch("");
+                      setPage(1);
+                      setJumpPage("");
+                    }}
+                    className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 hover:bg-slate-50"
+                    title="ล้างค้นหา"
+                  >
+                    ล้าง
+                  </button>
+                ) : null}
+              </div>
+            </div>
+
+            {search ? (
+              <div className="text-[11px] text-slate-500">
+                * ค้นหา: <span className="font-semibold text-slate-700">{search}</span> (มีผลเฉพาะ “ตาราง”)
+              </div>
+            ) : null}
           </div>
 
           {/* compact table */}
@@ -688,7 +831,7 @@ const Member = () => {
                   <th className="px-2 py-2 text-left">ชื่อลูกค้า</th>
                   <th className="px-2 py-2 text-right w-[84px]">ครั้ง</th>
                   <th className="px-2 py-2 text-left w-[140px]">ล่าสุด</th>
-                  <th className="px-2 py-2 text-right w-[72px]">ขาด</th>
+                  <th className="px-2 py-2 text-right w-[72px]">ขาด(วัน)</th>
                   <th className="px-2 py-2 text-right w-[110px]">ยอดคืน</th>
                   <th className="px-2 py-2 text-right w-[120px]">สุทธิ</th>
                   <th className="px-2 py-2 text-right w-[120px]">เฉลี่ย/ครั้ง</th>
@@ -725,7 +868,6 @@ const Member = () => {
 
                         <td className="px-2 py-2">
                           <div className="text-slate-800 truncate">{r.customer_name || "-"}</div>
-                          <div className="text-[10px] text-slate-500 truncate">ID: {r.customerId}</div>
                         </td>
 
                         <td className="px-2 py-2 text-right font-semibold text-slate-800 tabular-nums">
@@ -741,7 +883,7 @@ const Member = () => {
                         <td className="px-2 py-2 text-right text-slate-700 tabular-nums">{fmtMoney(r.returnAmount)}</td>
 
                         <td className="px-2 py-2 text-right font-semibold tabular-nums">
-                          <span className={net < 0 ? "text-rose-700" : "text-emerald-700"}>{fmtMoney(net)}</span>
+                          <span className="text-emerald-700">{fmtMoney(net)}</span>
                         </td>
 
                         <td className="px-2 py-2 text-right text-slate-700 tabular-nums">{fmtMoney(r.avgNetPerVisit)}</td>
