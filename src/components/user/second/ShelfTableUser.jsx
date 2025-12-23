@@ -83,7 +83,7 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
 
             {/* ⭐ ใหม่: Avg 3 เดือน, Target, ยอดขายเดือนนี้ */}
             {/* <th className="border px-1 py-1 text-center print:px-[2px] align-middle"> */}
-              {/* 3M
+            {/* 3M
             </th> */}
             {/* <th className="border py-1 text-center print:px-[2px] align-middle">
               Target
@@ -174,15 +174,16 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
                         {/* Name */}
                         <td
                           className="
-                            border p-1 print:px-[2px] align-middle
-                            max-w-[140px] sm:max-w-[200px] lg:max-w-[260px]
-                            whitespace-nowrap overflow-hidden text-ellipsis
-                            print:whitespace-normal print:max-w-none
-                          "
+    border p-1 print:px-[2px] align-middle
+    whitespace-nowrap
+    min-w-[240px] sm:min-w-[230px] lg:min-w-[260px]
+    print:min-w-0
+  "
                           title={p.nameProduct}
                         >
                           {p.nameProduct}
                         </td>
+
 
                         {/* Brand */}
                         <td
