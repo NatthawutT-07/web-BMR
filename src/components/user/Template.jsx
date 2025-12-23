@@ -46,10 +46,7 @@ const Template = () => {
   const [searchText, setSearchText] = useState("");
 
   // 🕒 ช่วงเดือนสำหรับ logic ใหม่ (3 เดือนก่อนหน้า + เดือนปัจจุบัน)
-  const { currentStart, prev3Start } = useMemo(
-    () => getBangkokMonthWindows(),
-    []
-  );
+  const { currentStart, prev3Start } = useMemo(() => getBangkokMonthWindows(), []);
 
   // เดือนสุดท้ายของช่วง 3 เดือนก่อนหน้า = เดือนก่อนหน้าเดือนปัจจุบัน
   const prev3EndMonth = useMemo(() => {
@@ -109,9 +106,10 @@ const Template = () => {
     });
   }, [data]);
 
-  // Filter + Search
+  // ✅ Filter + Search (ค้นหา: บาร์โค้ด + แบรนด์)
   const displayedShelves = useMemo(() => {
-    const lower = searchText.toLowerCase();
+    const qRaw = searchText.trim(); // สำหรับ barcode (ตัวเลข/ตัวอักษร)
+    const q = qRaw.toLowerCase();  // สำหรับ brand (case-insensitive)
 
     return groupedShelves
       .filter(
@@ -121,17 +119,20 @@ const Template = () => {
       )
       .map((shelf) => {
         const matched = shelf.shelfProducts.filter((item) => {
+          if (!qRaw) return true;
+
+          const barcodeStr = item.barcode != null ? String(item.barcode) : "";
+          const brandStr = item.nameBrand != null ? String(item.nameBrand).toLowerCase() : "";
+
           return (
-            item.codeProduct?.toString().includes(lower) ||
-            item.nameBrand?.toLowerCase().includes(lower)
+            barcodeStr.includes(qRaw) ||
+            brandStr.includes(q)
           );
         });
 
         return { ...shelf, matchedProducts: matched };
       })
-      .filter(
-        (shelf) => searchText === "" || shelf.matchedProducts.length > 0
-      );
+      .filter((shelf) => qRaw === "" || shelf.matchedProducts.length > 0);
   }, [groupedShelves, selectedShelves, searchText]);
 
   const handlePrint = () => {
@@ -188,15 +189,6 @@ const Template = () => {
                 <h3 className="font-semibold text-gray-700 mb-1 text-sm text-center">
                   โครงสร้าง Shelf
                 </h3>
-
-                {/* ช่วงเวลาสำหรับ logic ใหม่ */}
-                <p className="text-[11px] text-center text-slate-500 mb-1">
-                  Target ใช้ยอดขาย 3 เดือนก่อนหน้า:{" "}
-                  {formatMMYYYY(prev3Start)} - {formatMMYYYY(prev3EndMonth)}
-                </p>
-                <p className="text-[11px] text-center text-slate-500 mb-2">
-                  ยอดขายปัจจุบัน (เดือนนี้): {formatMMYYYY(currentStart)}
-                </p>
 
                 {groupedShelves.map((shelf) => (
                   <div
@@ -260,7 +252,7 @@ const Template = () => {
           <div className="w-full max-w-xl mx-auto">
             <input
               type="text"
-              placeholder="ค้นหาแบรนด์ / รหัสสินค้า..."
+              placeholder="ค้นหาแบรนด์ / บาร์โค้ด..."
               className="w-full px-4 py-2 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
               value={searchText}
               onChange={(e) => setSearchText(e.target.value)}

@@ -85,16 +85,16 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
             {/* <th className="border px-1 py-1 text-center print:px-[2px] align-middle"> */}
               {/* 3M
             </th> */}
-            <th className="border py-1 text-center print:px-[2px] align-middle">
+            {/* <th className="border py-1 text-center print:px-[2px] align-middle">
               Target
             </th>
             <th className="border py-1 text-center print:px-[2px] align-middle">
               Sales
-            </th>
+            </th> */}
 
-            <th className="border py-1 text-center print:px-[2px] align-middle">
+            {/* <th className="border py-1 text-center print:px-[2px] align-middle">
               With..
-            </th>
+            </th> */}
             <th className="border py-1 text-center print:px-[2px] align-middle">
               Min
             </th>
@@ -211,12 +211,12 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
                         </td> */}
 
                         {/* ⭐ Target (80% ของ avg 3 เดือน) ปัดเป็น int */}
-                        <td className=" border p-1 print:px-[2px] text-center text-purple-700 align-middle">
+                        {/* <td className=" border p-1 print:px-[2px] text-center text-purple-700 align-middle">
                           {formatInt(p.salesTargetQty)}
-                        </td>
+                        </td> */}
 
                         {/* ⭐ Sales เดือนนี้เท่านั้น + ไฮไลต์ถ้าถึงเป้า */}
-                        <td
+                        {/* <td
                           className={`
                             border p-1 print:px-[2px] text-center font-semibold align-middle
                             text-blue-600
@@ -224,11 +224,11 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
                           `}
                         >
                           {zeroToDash(p.salesCurrentMonthQty)}
-                        </td>
+                        </td> */}
 
-                        <td className="border p-1 print:px-[2px] text-center text-red-600 align-middle">
+                        {/* <td className="border p-1 print:px-[2px] text-center text-red-600 align-middle">
                           {zeroToDash(p.withdrawQuantity)}
-                        </td>
+                        </td> */}
 
                         <td className="border p-1 print:px-[2px] text-center align-middle">
                           {zeroToDash(p.minStore)}

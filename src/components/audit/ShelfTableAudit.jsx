@@ -49,7 +49,7 @@ const ShelfTableAudit = ({
   rowQty = 1,
   onAddProduct,
   onDeleteProduct,
-  onUpdateProducts, // ✅ จะเรียก updateProducts ของคุณผ่าน LayoutAudit
+  onUpdateProducts,
 }) => {
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
@@ -69,6 +69,9 @@ const ShelfTableAudit = ({
   const [savingLayout, setSavingLayout] = useState(false);
 
   const [draggingUid, setDraggingUid] = useState(null);
+
+  // ✅ keep reference ของ drag ghost เพื่อ cleanup ตอน dragEnd (กันบาง browser ไม่ลบ)
+  const [dragGhost, setDragGhost] = useState(null);
 
   if (!Array.isArray(shelfProducts)) {
     return <div className="text-xs text-red-500">Invalid data.</div>;
@@ -125,12 +128,9 @@ const ShelfTableAudit = ({
     [groupedRows]
   );
 
-  const handleAddSubmit = useCallback(
-    async (item) => {
-      return onAddProduct?.(item);
-    },
-    [onAddProduct]
-  );
+  const handleAddSubmit = useCallback(async (item) => onAddProduct?.(item), [
+    onAddProduct,
+  ]);
 
   const handleDeleteClick = useCallback((prod) => {
     setDeleteModal({
@@ -181,6 +181,14 @@ const ShelfTableAudit = ({
     setDraft([]);
     setDirty(false);
     setDraggingUid(null);
+
+    // cleanup ghost
+    if (dragGhost) {
+      try {
+        document.body.removeChild(dragGhost);
+      } catch {}
+      setDragGhost(null);
+    }
   };
 
   const groupDraftRows = useMemo(() => {
@@ -232,15 +240,61 @@ const ShelfTableAudit = ({
     } catch {}
   };
 
+  // ✅ DragStart: ทำ drag image ให้ “ชัด” + “ยกขึ้น” เหมือนยกทั้งกล่อง
   const handleDragStart = (e, uid) => {
     setDraggingUid(uid);
+
     try {
       e.dataTransfer.effectAllowed = "move";
       e.dataTransfer.setData("text/plain", uid);
+
+      const el = e.currentTarget;
+      if (el && typeof e.dataTransfer.setDragImage === "function") {
+        // ลบ ghost เก่าถ้ามี
+        if (dragGhost) {
+          try {
+            document.body.removeChild(dragGhost);
+          } catch {}
+          setDragGhost(null);
+        }
+
+        const clone = el.cloneNode(true);
+
+        // สไตล์ให้ “เหมือนยกทั้งกล่อง”
+        clone.style.position = "absolute";
+        clone.style.top = "-1000px";
+        clone.style.left = "-1000px";
+        clone.style.width = `${el.offsetWidth}px`;
+        clone.style.opacity = "1";
+        clone.style.transform = "scale(1.05)";
+        clone.style.background = "white";
+        clone.style.boxShadow = "0 18px 45px rgba(0,0,0,0.28)";
+        clone.style.border = "2px solid rgb(16 185 129)";
+        clone.style.borderRadius = "12px";
+
+        // เพิ่มความชัดของตัวอักษร/คอนทราสต์
+        clone.style.filter = "contrast(1.15) saturate(1.1)";
+
+        document.body.appendChild(clone);
+        setDragGhost(clone);
+
+        // x/y offset ของรูปตอนลาก (ยกให้เห็นชัด)
+        e.dataTransfer.setDragImage(clone, 28, 22);
+      }
     } catch {}
   };
 
-  const handleDragEnd = () => setDraggingUid(null);
+  const handleDragEnd = () => {
+    setDraggingUid(null);
+
+    // ✅ cleanup ghost (สำคัญ: กันค้าง)
+    if (dragGhost) {
+      try {
+        document.body.removeChild(dragGhost);
+      } catch {}
+      setDragGhost(null);
+    }
+  };
 
   const dropOnRowEnd = (e, rowNo) => {
     e.preventDefault();
@@ -299,7 +353,7 @@ const ShelfTableAudit = ({
   /* ========= RENDER ========= */
   return (
     <div className="overflow-x-auto w-full px-1 sm:px-3 print:px-0 print:overflow-visible">
-      {/* Modals (มาจาก AddDelect.jsx) */}
+      {/* Modals */}
       <AddProductModal
         isOpen={addModal.isOpen}
         onClose={() =>
@@ -379,7 +433,7 @@ const ShelfTableAudit = ({
         </div>
       </div>
 
-      {/* Edit mode (Drag UI) */}
+      {/* Edit mode */}
       {editMode ? (
         <div className="border rounded-lg bg-white p-3 print:hidden">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
@@ -418,10 +472,10 @@ const ShelfTableAudit = ({
                           <div
                             key={it.uid}
                             className={[
-                              "rounded-md border bg-white p-2 cursor-move select-none",
+                              "rounded-md border bg-white p-2 select-none transition-all duration-150",
                               isDragging
-                                ? "opacity-60 border-emerald-300"
-                                : "border-slate-200 hover:border-slate-300",
+                                ? "opacity-100 border-emerald-600 ring-2 ring-emerald-400 shadow-2xl scale-[1.04] -translate-y-1 cursor-grabbing relative z-50"
+                                : "border-slate-200 hover:border-slate-300 cursor-grab hover:shadow-md",
                             ].join(" ")}
                             draggable
                             onDragStart={(e) => handleDragStart(e, it.uid)}
@@ -503,7 +557,7 @@ const ShelfTableAudit = ({
               <th className="border py-1 text-center print:px-[2px] align-middle">
                 RSP
               </th>
-              <th className="border py-1 text-center print:px-[2px] align-middle">
+              {/* <th className="border py-1 text-center print:px-[2px] align-middle">
                 Target
               </th>
               <th className="border py-1 text-center print:px-[2px] align-middle">
@@ -511,7 +565,7 @@ const ShelfTableAudit = ({
               </th>
               <th className="border py-1 text-center print:px-[2px] align-middle">
                 With..
-              </th>
+              </th> */}
               <th className="border py-1 text-center print:px-[2px] align-middle">
                 Min
               </th>
@@ -619,7 +673,7 @@ const ShelfTableAudit = ({
                             {zeroToDash(p.salesPriceIncVAT)}
                           </td>
 
-                          <td className="border p-1 print:px-[2px] text-center text-purple-700 align-middle">
+                          {/* <td className="border p-1 print:px-[2px] text-center text-purple-700 align-middle">
                             {formatInt(p.salesTargetQty)}
                           </td>
 
@@ -635,7 +689,7 @@ const ShelfTableAudit = ({
 
                           <td className="border p-1 print:px-[2px] text-center text-red-600 align-middle">
                             {zeroToDash(p.withdrawQuantity)}
-                          </td>
+                          </td> */}
 
                           <td className="border p-1 print:px-[2px] text-center align-middle">
                             {zeroToDash(p.minStore)}
