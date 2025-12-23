@@ -1,3 +1,4 @@
+// src/components/admin/dashboard/DashboardSales.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { getDashboard } from "../../../../api/admin/dashboard";
 import useDashboardSalesStore from "../../../../store/dashboard_sales_store";
@@ -14,7 +15,6 @@ import {
   registerChart,
   safeDiv,
   toLocalISO,
-  quarterStart,
   startOfMonthISO,
 } from "./dashboardSalesUtils";
 
@@ -38,7 +38,7 @@ const LoadingBar = ({ show, text = "กำลังโหลดข้อมู�
 export default function DashboardSales() {
   const cacheStore = useDashboardSalesStore();
 
-  // ✅ baseDate = เมื่อวาน
+  // ✅ baseDate = เมื่อวาน (latest)
   const baseDate = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() - 1);
@@ -54,6 +54,16 @@ export default function DashboardSales() {
   const [mode, setMode] = useState(defaultMode);
   const [start, setStart] = useState(defaultStart);
   const [end, setEnd] = useState(defaultEnd);
+
+  // ✅ sync pending start/end ให้ตรงกับ mode ที่ไม่ใช่ diff_year
+  useEffect(() => {
+    if (mode !== "diff_year") {
+      const r = getRangesByMode({ mode, start, end, baseDate });
+      setStart(r.primary.start);
+      setEnd(r.primary.end);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mode, baseDate]);
 
   // ---------------- applied ----------------
   const [appliedMode, setAppliedMode] = useState(defaultMode);
@@ -145,10 +155,20 @@ export default function DashboardSales() {
 
   // ✅ Show Data = apply + เก็บ recent + load ใหม่
   const applyAndLoad = () => {
+    // ✅ ค่าที่จะใช้จริง
+    const r = getRangesByMode({ mode, start, end, baseDate });
+
     setAppliedMode(mode);
-    setAppliedStart(start);
-    setAppliedEnd(end);
-    cacheStore.setLastSelection(mode, start, end); // ✅ save ล่าสุด
+    setAppliedStart(mode === "diff_year" ? start : r.primary.start);
+    setAppliedEnd(mode === "diff_year" ? end : r.primary.end);
+
+    // ✅ save ล่าสุดให้ตรงความจริง
+    cacheStore.setLastSelection(
+      mode,
+      mode === "diff_year" ? start : r.primary.start,
+      mode === "diff_year" ? end : r.primary.end
+    );
+
     loadBy({ mode, start, end });
   };
 
@@ -170,10 +190,7 @@ export default function DashboardSales() {
     const netSales = Number(s.total_payment || 0);
     const billSaleCount = Number(s.bill_count || 0);
     const endBillDiscount = Number(s.discount_sum || 0);
-    const dayCount = daysBetweenInclusive(
-      appliedRanges.primary.start,
-      appliedRanges.primary.end
-    );
+    const dayCount = daysBetweenInclusive(appliedRanges.primary.start, appliedRanges.primary.end);
 
     return {
       netSales,
@@ -190,10 +207,7 @@ export default function DashboardSales() {
     const netSales = Number(s.total_payment || 0);
     const billSaleCount = Number(s.bill_count || 0);
     const endBillDiscount = Number(s.discount_sum || 0);
-    const dayCount = daysBetweenInclusive(
-      appliedRanges.compare.start,
-      appliedRanges.compare.end
-    );
+    const dayCount = daysBetweenInclusive(appliedRanges.compare.start, appliedRanges.compare.end);
 
     return {
       netSales,
@@ -205,8 +219,7 @@ export default function DashboardSales() {
     };
   }, [compareDash, appliedRanges]);
 
-  const isDirty =
-    mode !== appliedMode || start !== appliedStart || end !== appliedEnd;
+  const isDirty = mode !== appliedMode || start !== appliedStart || end !== appliedEnd;
 
   return (
     <div className="min-h-screen bg-slate-50">

@@ -113,6 +113,11 @@ const DateFilter = ({
   appliedMode,
   appliedStart,
   appliedEnd,
+
+  // ✅ NEW: pending ranges (สำหรับโหมด A)
+  pendingStart,
+  pendingEnd,
+
   isDirty,
 }) => {
   const pillBase = "px-3 py-1.5 rounded-full border text-xs transition whitespace-nowrap";
@@ -127,6 +132,10 @@ const DateFilter = ({
         ? "Diff Quarter"
         : "Diff Year (YoY)";
 
+  // ✅ โหมด A: ถ้าไม่ใช่ diff_year ให้โชว์ "ช่วงจริง" (pendingStart/pendingEnd)
+  const displayStart = mode === "diff_year" ? start : pendingStart;
+  const displayEnd = mode === "diff_year" ? end : pendingEnd;
+
   return (
     <div className="bg-white/90 backdrop-blur shadow-sm rounded-xl border border-slate-200 px-4 py-3 md:px-6 md:py-4">
       <div className="space-y-3">
@@ -137,8 +146,7 @@ const DateFilter = ({
             type="button"
             onClick={() => !disabled && setMode("diff_month")}
             disabled={disabled}
-            className={`${pillBase} ${disabled ? pillDisabled : mode === "diff_month" ? pillActive : pillIdle
-              }`}
+            className={`${pillBase} ${disabled ? pillDisabled : mode === "diff_month" ? pillActive : pillIdle}`}
           >
             Diff Month
           </button>
@@ -147,8 +155,7 @@ const DateFilter = ({
             type="button"
             onClick={() => !disabled && setMode("diff_quarter")}
             disabled={disabled}
-            className={`${pillBase} ${disabled ? pillDisabled : mode === "diff_quarter" ? pillActive : pillIdle
-              }`}
+            className={`${pillBase} ${disabled ? pillDisabled : mode === "diff_quarter" ? pillActive : pillIdle}`}
           >
             Diff Quarter
           </button>
@@ -157,8 +164,7 @@ const DateFilter = ({
             type="button"
             onClick={() => !disabled && setMode("diff_year")}
             disabled={disabled}
-            className={`${pillBase} ${disabled ? pillDisabled : mode === "diff_year" ? pillActive : pillIdle
-              }`}
+            className={`${pillBase} ${disabled ? pillDisabled : mode === "diff_year" ? pillActive : pillIdle}`}
           >
             Diff Year (YoY)
           </button>
@@ -169,7 +175,7 @@ const DateFilter = ({
             <label className="text-xs font-medium text-slate-600 mb-1">Start Date</label>
             <input
               type="date"
-              value={start}
+              value={displayStart}
               min={minDate || undefined}
               max={maxDate || undefined}
               onChange={(e) => setStart(clampISO(e.target.value, minDate, maxDate))}
@@ -183,7 +189,7 @@ const DateFilter = ({
             <label className="text-xs font-medium text-slate-600 mb-1">End Date</label>
             <input
               type="date"
-              value={end}
+              value={displayEnd}
               min={minDate || undefined}
               max={maxDate || undefined}
               onChange={(e) => setEnd(clampISO(e.target.value, minDate, maxDate))}
@@ -199,8 +205,8 @@ const DateFilter = ({
               onClick={onShowData}
               disabled={disabled}
               className={`inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all ${disabled
-                ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-[0.98]"
+                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-[0.98]"
                 }`}
               title="กดเพื่อ apply ช่วงวันที่/โหมด แล้วโหลดข้อมูล"
             >
@@ -213,7 +219,7 @@ const DateFilter = ({
         <div className="text-[11px] text-slate-500">
           ตั้งค่าไว้:{" "}
           <span className="font-medium text-slate-700">
-            {formatDisplayDate(start)} - {formatDisplayDate(end)}
+            {formatDisplayDate(displayStart)} - {formatDisplayDate(displayEnd)}
           </span>
           {isDirty ? (
             <span className="ml-2 text-[10px] text-amber-600">*ยังไม่กด Show Data</span>
@@ -230,6 +236,7 @@ const DateFilter = ({
     </div>
   );
 };
+
 
 /* =========================================================
    Sales by Channel + Payment (คงเดิม)
@@ -458,7 +465,7 @@ const SalesChannelSummary = ({ primaryDash, compareDash, showCompare }) => {
               <div className="flex items-center justify-between gap-2">
                 <span className="font-medium text-slate-700 truncate">{label}</span>
                 <span className="tabular-nums text-slate-900 whitespace-nowrap">฿ {fmtMoney(r.total)}</span>
-                
+
               </div>
 
               <div className="mt-1 h-1.5 rounded-full bg-slate-200 overflow-hidden">
@@ -526,12 +533,18 @@ export default function DashboardSalesTop({
   setStart,
   setEnd,
   onShowData,
+  onRefresh,
   disabled,
 
   // applied display
   appliedMode,
   appliedStart,
   appliedEnd,
+
+  // ✅ NEW
+  pendingStart,
+  pendingEnd,
+
   isDirty,
 
   // data
@@ -560,6 +573,8 @@ export default function DashboardSalesTop({
         appliedMode={appliedMode}
         appliedStart={appliedStart}
         appliedEnd={appliedEnd}
+        pendingStart={pendingStart}
+        pendingEnd={pendingEnd}
         isDirty={isDirty}
       />
 
