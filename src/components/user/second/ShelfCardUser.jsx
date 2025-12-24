@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ShelfTableUser from "./ShelfTableUser";
 
-const ShelfCardUser = React.memo(function ShelfCardUser({ template, autoOpen }) {
+// ✅ รับ isPrinting จาก parent (Template) เพื่อให้ทุก shelf เรนเดอร์ตารางทันตอน print
+const ShelfCardUser = React.memo(function ShelfCardUser({ template, autoOpen, isPrinting }) {
   const shelfProducts = useMemo(
     () => (Array.isArray(template.shelfProducts) ? template.shelfProducts : []),
     [template.shelfProducts]
@@ -13,45 +14,21 @@ const ShelfCardUser = React.memo(function ShelfCardUser({ template, autoOpen }) 
 
   const [isOpen, setIsOpen] = useState(false);
 
-  // ✅ สำหรับ print: เรนเดอร์ตารางตอน print ด้วย (ไม่งั้นถ้าปิดอยู่จะไม่เห็นใน PDF)
-  const [isPrinting, setIsPrinting] = useState(false);
-
-  // ✅ ทำ animation แบบ "วัดความสูงจริง" แทน max-h fix 2000px (กันตัด)
+  // ✅ ทำ animation แบบ "วัดความสูงจริง"
   const contentRef = useRef(null);
   const [maxH, setMaxH] = useState(0);
 
-  // auto open ตอนค้นหา
+  // auto open ตอนค้นหา (หน้าจอ)
   useEffect(() => {
     if (autoOpen) setIsOpen(true);
   }, [autoOpen]);
 
-  // จับเหตุการณ์ print
-  useEffect(() => {
-    const before = () => setIsPrinting(true);
-    const after = () => setIsPrinting(false);
-
-    window.addEventListener("beforeprint", before);
-    window.addEventListener("afterprint", after);
-
-    // บาง browser รองรับ matchMedia print
-    const mql = window.matchMedia?.("print");
-    const onMql = (e) => setIsPrinting(!!e.matches);
-    if (mql?.addEventListener) mql.addEventListener("change", onMql);
-
-    return () => {
-      window.removeEventListener("beforeprint", before);
-      window.removeEventListener("afterprint", after);
-      if (mql?.removeEventListener) mql.removeEventListener("change", onMql);
-    };
-  }, []);
-
-  // ✅ คำนวณ maxHeight ใหม่เมื่อเปิด/ปิด หรือเมื่อสินค้าข้างในเปลี่ยน (ค้นหา)
+  // ✅ คำนวณ maxHeight ใหม่เมื่อเปิด/ปิด หรือเมื่อสินค้าข้างในเปลี่ยน หรือเมื่อเข้าโหมดพิมพ์
   useEffect(() => {
     const el = contentRef.current;
     if (!el) return;
 
     if (isOpen || isPrinting) {
-      // รอ 1 เฟรมให้ DOM วางตัวก่อนค่อยวัด
       requestAnimationFrame(() => {
         const h = el.scrollHeight || 0;
         setMaxH(h);
@@ -63,7 +40,7 @@ const ShelfCardUser = React.memo(function ShelfCardUser({ template, autoOpen }) 
 
   const toggleOpen = () => setIsOpen((o) => !o);
 
-  // ✅ เรนเดอร์ตารางเฉพาะตอน "เปิด" หรือ "กำลัง print" = ลื่นขึ้นมาก
+  // ✅ เรนเดอร์ตารางตอน "เปิด" หรือ "กำลัง print"
   const shouldRenderTable = isOpen || isPrinting;
 
   return (

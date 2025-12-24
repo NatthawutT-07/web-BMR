@@ -84,7 +84,7 @@ const BranchSelector = React.memo(
         className="mb-4 bg-white p-6 rounded-xl shadow-md w-full max-w-2xl mx-auto space-y-4 border border-gray-200"
       >
         <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-          <h2 className="text-lg font-semibold text-gray-800">Select branch (audit)</h2>
+          <h2 className="text-lg font-semibold text-gray-800">Select branch</h2>
           {selectedBranchCode && (
             <p className="text-xs text-gray-500 mt-1 sm:mt-0">
               Current: <span className="font-medium">{selectedBranchCode}</span>
@@ -176,13 +176,6 @@ const getBangkokMonthWindows = () => {
   return { currentStart, prev3Start };
 };
 
-const formatMMYYYY = (d) => {
-  if (!d) return "";
-  const month = String(d.getMonth() + 1).padStart(2, "0");
-  const year = d.getFullYear();
-  return `${month}/${year}`;
-};
-
 const LayoutAudit = () => {
   const defaultStorecode = useBmrStore((s) => s.user?.storecode);
   const user = useBmrStore((s) => s.user);
@@ -192,27 +185,21 @@ const LayoutAudit = () => {
   const fetchBranches = useShelfStore((s) => s.fetchBranches);
 
   const [selectedBranchCode, setSelectedBranchCode] = useState(defaultStorecode || "");
-  const [data, setData] = useState([]);
+  const [data, setData] = useState([]); // ✅ จะเก็บเฉพาะ items[] ตาม backend ใหม่
   const [selectedShelves, setSelectedShelves] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // ✅ search + ทำให้ลื่น (defer)
   const [searchText, setSearchText] = useState("");
   const deferredSearch = useDeferredValue(searchText);
 
   const [okLocked, setOkLocked] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
-  // ✅ stock last update meta (ยิงครั้งเดียว)
+  // ✅ stock last update meta
   const [stockMeta, setStockMeta] = useState({ updatedAt: null, rowCount: 0 });
   const [stockMetaLoading, setStockMetaLoading] = useState(false);
 
-  const { currentStart, prev3Start } = useMemo(() => getBangkokMonthWindows(), []);
-  const prev3EndMonth = useMemo(() => {
-    const d = new Date(currentStart);
-    d.setMonth(d.getMonth() - 1);
-    return d;
-  }, [currentStart]);
+  useMemo(() => getBangkokMonthWindows(), []);
 
   useEffect(() => {
     fetchBranches();
@@ -241,6 +228,7 @@ const LayoutAudit = () => {
     };
   }, []);
 
+  // เปลี่ยนสาขา -> reset
   useEffect(() => {
     setOkLocked(false);
     setData([]);
@@ -248,22 +236,29 @@ const LayoutAudit = () => {
     setSearchText("");
   }, [selectedBranchCode]);
 
+  // ✅ FIX: รับ payload ให้ตรง backend ใหม่
   const handleLoadBranchData = async (e) => {
     e.preventDefault();
     if (!selectedBranchCode) return;
 
     setLoading(true);
-    setOkLocked(true);
+    setOkLocked(false); // ✅ เริ่มโหลด = ยังไม่ locked
     setData([]);
     setSelectedShelves([]);
     setSearchText("");
 
     try {
-      const res = await getTemplateAndProduct(selectedBranchCode);
-      setData(res || []);
+      // backend: { branchCode, branchName, items }
+      const payload = await getTemplateAndProduct(selectedBranchCode);
+
+      const items = Array.isArray(payload?.items) ? payload.items : [];
+      setData(items);
+
+      setOkLocked(true); // ✅ สำเร็จแล้วค่อย lock
     } catch (error) {
       console.error("Template Load Error:", error);
       setOkLocked(false);
+      setData([]);
     } finally {
       setLoading(false);
     }
@@ -290,6 +285,8 @@ const LayoutAudit = () => {
       };
 
       setData((state) => {
+        if (!Array.isArray(state)) return [updatedItem];
+
         if (updatedItem.id != null && state.some((p) => p.id === updatedItem.id)) return state;
 
         const key = `${updatedItem.branchCode}-${updatedItem.shelfCode}-${updatedItem.rowNo}-${updatedItem.codeProduct}-${updatedItem.index}`;
@@ -325,6 +322,8 @@ const LayoutAudit = () => {
       await deleteTemplate(payload);
 
       setData((state) => {
+        if (!Array.isArray(state)) return state;
+
         const delKey = getDeleteKey(payload);
 
         const kept = state.filter((p) => getDeleteKey(p) !== delKey);
@@ -350,6 +349,8 @@ const LayoutAudit = () => {
     await updateProducts(serverItems);
 
     setData((state) => {
+      if (!Array.isArray(state)) return state;
+
       const branch = serverItems?.[0]?.branchCode;
       const shelf = serverItems?.[0]?.shelfCode;
       if (!branch || !shelf) return state;
@@ -382,11 +383,12 @@ const LayoutAudit = () => {
 
   // Group ตาม shelfCode
   const groupedShelves = useMemo(() => {
-    if (!data.length) return [];
+    if (!Array.isArray(data) || !data.length) return [];
 
     const groups = data.reduce((acc, item) => {
-      if (!acc[item.shelfCode]) acc[item.shelfCode] = [];
-      acc[item.shelfCode].push(item);
+      const code = item?.shelfCode || "-";
+      if (!acc[code]) acc[code] = [];
+      acc[code].push(item);
       return acc;
     }, {});
 
@@ -412,7 +414,7 @@ const LayoutAudit = () => {
     });
   }, [data]);
 
-  // ✅ ค้นหา: barcode + brand (ใช้ deferredSearch ให้ลื่น)
+  // ค้นหา: barcode + brand (ใช้ deferredSearch ให้ลื่น)
   const displayedShelves = useMemo(() => {
     const qRaw = String(deferredSearch || "").trim();
     const q = qRaw.toLowerCase();
@@ -425,8 +427,7 @@ const LayoutAudit = () => {
             ? shelf.shelfProducts
             : shelf.shelfProducts.filter((item) => {
                 const barcodeStr = item?.barcode != null ? String(item.barcode) : "";
-                const brandStr =
-                  item?.nameBrand != null ? String(item.nameBrand).toLowerCase() : "";
+                const brandStr = item?.nameBrand != null ? String(item.nameBrand).toLowerCase() : "";
                 return barcodeStr.includes(qRaw) || brandStr.includes(q);
               });
 
@@ -449,7 +450,6 @@ const LayoutAudit = () => {
                 <img src="/icon.png" alt="Logo" className="h-7 w-7 object-contain" />
               </div>
 
-              {/* ✅ ปรับให้ "ตรวจสอบและปรับปรุง POG" + "Stock อัปเดตล่าสุด" อยู่บรรทัดเดียวกัน */}
               <div className="flex flex-col leading-tight">
                 <span className="text-sm sm:text-base font-semibold text-slate-800">
                   Shelf audit tools
@@ -472,7 +472,6 @@ const LayoutAudit = () => {
                   </span>
                 </div>
 
-                {/* มือถือ: branch แสดงบรรทัดถัดไป */}
                 {selectedBranch && (
                   <div className="md:hidden mt-0.5 text-[11px] text-slate-500">
                     {selectedBranch.branch_code} — {selectedBranch.branch_name}
@@ -542,65 +541,6 @@ const LayoutAudit = () => {
 
           {hasLoadedBranch && (
             <>
-              {/* SUMMARY + IMAGE */}
-              {!loading && groupedShelves.length > 0 && selectedBranchCode && (
-                <section className="w-full flex justify-center print:hidden">
-                  <div
-                    className="bg-white p-4 rounded-lg shadow-sm border justify-center
-                    flex flex-col md:flex-row gap-4 mx-auto w-full max-w-4xl"
-                  >
-                    <div className="flex justify-center md:w-[260px]">
-                      <img
-                        src={`/images/branch/${selectedBranchCode?.toUpperCase()}.png`}
-                        alt={`Branch ${selectedBranchCode}`}
-                        className="w-full max-w-[260px] object-contain rounded"
-                        loading="lazy"
-                      />
-                    </div>
-
-                    <div
-                      className="bg-gray-50 border rounded p-3 shadow-inner 
-                      max-h-[420px] md:max-h-[480px] w-full md:w-[260px] overflow-y-auto"
-                    >
-                      <h3 className="font-semibold text-gray-700 mb-1 text-sm text-center">
-                        โครงสร้าง Shelf
-                      </h3>
-
-                      {groupedShelves.map((shelf) => (
-                        <div key={shelf.shelfCode} className="mb-2 pb-2 border-b last:border-b-0">
-                          <div className="font-semibold text-blue-700 text-sm leading-tight">
-                            Shelf {shelf.shelfCode}
-                          </div>
-
-                          <div className="ml-2 mt-1 text-xs leading-tight">
-                            <div className="font-semibold text-gray-600">
-                              จำนวน : {shelf.rowQty} เเถว
-                            </div>
-
-                            {Array.from({ length: shelf.rowQty }).map((_, idx) => {
-                              const rowNo = idx + 1;
-                              const rowProducts = shelf.shelfProducts.filter(
-                                (p) => (p.rowNo || 0) === rowNo
-                              );
-
-                              return (
-                                <div
-                                  key={rowNo}
-                                  className="ml-1 flex text-gray-700 leading-tight py-[1px]"
-                                >
-                                  <span className="pr-4">• Row {rowNo}</span>
-                                  <span>{rowProducts.length} รายการ</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </section>
-              )}
-
               {/* FILTER + SEARCH */}
               <section className="space-y-3 print:hidden">
                 {!loading && groupedShelves.length > 0 && (
@@ -610,9 +550,7 @@ const LayoutAudit = () => {
                       selectedShelves={selectedShelves}
                       onToggle={(code) =>
                         setSelectedShelves((prev) =>
-                          prev.includes(code)
-                            ? prev.filter((s) => s !== code)
-                            : [...prev, code]
+                          prev.includes(code) ? prev.filter((s) => s !== code) : [...prev, code]
                         )
                       }
                       onClear={() => setSelectedShelves([])}
@@ -635,9 +573,7 @@ const LayoutAudit = () => {
               {/* SHELF LIST */}
               <section className="space-y-4">
                 {loading && (
-                  <div className="text-center text-sm text-gray-500">
-                    กำลังโหลดข้อมูลชั้นวาง...
-                  </div>
+                  <div className="text-center text-sm text-gray-500">กำลังโหลดข้อมูลชั้นวาง...</div>
                 )}
 
                 {!loading && selectedBranchCode && displayedShelves.length === 0 && (

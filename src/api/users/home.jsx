@@ -1,12 +1,32 @@
+// src/api/users/home.jsx
 import api from "../../utils/axios";
 
+/**
+ * ✅ NEW backend:
+ * POST -> { branchCode }
+ * return -> { branchCode, branchName, items: [...] }
+ */
 export const getTemplateAndProduct = async (branchCode) => {
-  const res = await api.post("/template-item", { branchCode });
-  return res.data;
+  try {
+    const res = await api.post("/template-item", { branchCode });
+    return res.data; // { branchCode, branchName, items }
+  } catch (error) {
+    console.error("getTemplateAndProduct error:", error);
+    throw error;
+  }
 };
 
-// ✅ NEW: สำหรับ MainNav โชว์เวลา stock ล่าสุด
+/**
+ * ✅ NEW backend:
+ * GET -> return { updatedAt, rowCount }
+ * updatedAt เป็น ISO ที่มี +07:00 แล้ว
+ */
 export const getStockLastUpdate = async () => {
-  const res = await api.get("/stock-last-update");
-  return res.data; // { updatedAt, rowCount }
+  try {
+    const res = await api.get("/stock-last-update");
+    return res.data; // { updatedAt, rowCount }
+  } catch (error) {
+    console.error("getStockLastUpdate error:", error);
+    throw error;
+  }
 };
