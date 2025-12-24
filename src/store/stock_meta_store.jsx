@@ -4,14 +4,14 @@ import { getStockLastUpdate } from "../api/users/home";
 
 /**
  * ฟอร์แมตเวลาไทย: "23/12/2568 13:45"
- * - ใช้ th-TH + timeZone Asia/Bangkok
+ * - ใช้ th-TH + Buddhist calendar + timeZone Asia/Bangkok
  */
 export const fmtThaiDateTime = (v) => {
   if (!v) return "-";
   const d = new Date(v);
   if (Number.isNaN(d.getTime())) return "-";
 
-  const parts = new Intl.DateTimeFormat("th-TH", {
+  const parts = new Intl.DateTimeFormat("th-TH-u-ca-buddhist", {
     timeZone: "Asia/Bangkok",
     day: "2-digit",
     month: "2-digit",
@@ -39,12 +39,15 @@ const useStockMetaStore = create((set, get) => ({
   // ✅ ยิงแค่ครั้งเดียวต่อ "การเปิดเว็บรอบนั้น" (จนกว่าจะ refresh)
   loadedOnce: false,
 
+  // ✅ กัน async ซ้อน (เผื่อ StrictMode หรือหลาย component เรียกพร้อมกัน)
+  _inFlight: false,
+
   // ✅ call หลัก
   loadOnce: async () => {
-    const { loadedOnce, status } = get();
-    if (loadedOnce || status === "loading") return;
+    const { loadedOnce, status, _inFlight } = get();
+    if (loadedOnce || status === "loading" || _inFlight) return;
 
-    set({ status: "loading", error: null });
+    set({ status: "loading", error: null, _inFlight: true });
 
     try {
       const meta = await getStockLastUpdate(); // { updatedAt, rowCount }
@@ -53,6 +56,7 @@ const useStockMetaStore = create((set, get) => ({
         rowCount: meta?.rowCount ?? null,
         status: "loaded",
         loadedOnce: true,
+        _inFlight: false,
       });
     } catch (e) {
       set({
@@ -61,13 +65,16 @@ const useStockMetaStore = create((set, get) => ({
         status: "error",
         error: e,
         loadedOnce: true,
+        _inFlight: false,
       });
     }
   },
 
   // ✅ เผื่อคุณอยาก “รีเฟรชจริง ๆ” จากปุ่ม/หน้า admin
   refresh: async () => {
-    set({ status: "loading", error: null, loadedOnce: false });
+    // ตั้งให้เป็น loading และกันซ้อน
+    set({ status: "loading", error: null, loadedOnce: false, _inFlight: true });
+
     try {
       const meta = await getStockLastUpdate();
       set({
@@ -75,6 +82,7 @@ const useStockMetaStore = create((set, get) => ({
         rowCount: meta?.rowCount ?? null,
         status: "loaded",
         loadedOnce: true,
+        _inFlight: false,
       });
     } catch (e) {
       set({
@@ -83,6 +91,7 @@ const useStockMetaStore = create((set, get) => ({
         status: "error",
         error: e,
         loadedOnce: true,
+        _inFlight: false,
       });
     }
   },
@@ -95,6 +104,7 @@ const useStockMetaStore = create((set, get) => ({
       status: "idle",
       error: null,
       loadedOnce: false,
+      _inFlight: false,
     }),
 }));
 

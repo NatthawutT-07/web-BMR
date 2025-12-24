@@ -4,12 +4,29 @@ import useBmrStore from "../../store/bmr_store";
 
 function LoginPage() {
   const actionLogin = useBmrStore((state) => state.actionLogin);
+  const refreshAccessToken = useBmrStore((state) => state.refreshAccessToken);
+
   const accessToken = useBmrStore((state) => state.accessToken);
   const user = useBmrStore((state) => state.user);
+
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ name: "", password: "" });
   const [errorMsg, setErrorMsg] = useState("");
+
+  // ✅ ถ้ามี user แต่ไม่มี token (เช่น reload หน้า) -> ขอ token ใหม่จาก cookie
+  useEffect(() => {
+    const run = async () => {
+      if (user && !accessToken) {
+        try {
+          await refreshAccessToken();
+        } catch {
+          // ถ้าไม่ได้ล็อกอินจริง ๆ จะ 401 -> ปล่อยให้อยู่หน้า login
+        }
+      }
+    };
+    run();
+  }, [user, accessToken, refreshAccessToken]);
 
   // ถ้าล็อกอินค้างอยู่แล้ว → เด้งตาม role ทันที
   useEffect(() => {
@@ -34,7 +51,6 @@ function LoginPage() {
       const res = await actionLogin(form);
       const role = res?.data?.payload?.role;
 
-      // 👉 หลัง login สำเร็จ เด้งตาม role ทันที
       if (role === "admin") {
         navigate("/admin", { replace: true });
       } else if (role === "manager") {
@@ -42,10 +58,8 @@ function LoginPage() {
       } else if (role === "audit") {
         navigate("/audit", { replace: true });
       } else if (role === "user") {
-        // ตอนนี้ใช้ name เป็น branch/store code ตามโค้ดเดิม
         navigate(`/store/${form.name}`, { replace: true });
       } else {
-        // กัน role แปลก ๆ
         navigate("/", { replace: true });
       }
     } catch (err) {
@@ -84,14 +98,9 @@ function LoginPage() {
               className="w-full px-4 py-3 border rounded-md bg-gray-50"
             />
 
-            {errorMsg && (
-              <p className="text-red-500 text-sm text-center">{errorMsg}</p>
-            )}
+            {errorMsg && <p className="text-red-500 text-sm text-center">{errorMsg}</p>}
 
-            <button
-              type="submit"
-              className="w-full py-3 bg-indigo-600 text-white rounded-lg"
-            >
+            <button type="submit" className="w-full py-3 bg-indigo-600 text-white rounded-lg">
               Login
             </button>
           </div>

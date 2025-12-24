@@ -1,47 +1,58 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import api from "../utils/axios";
+import axios from "axios";
 
 const BmrStore = (set, get) => ({
   user: null,
 
-  // token แบบเก่า (หน้าเก่าที่ยังไม่ได้แก้จะใช้ตัวนี้)
-  token: null,
-
-  // token แบบใหม่ (สำหรับ refresh token system)
+  // ✅ access token อยู่ใน memory เท่านั้น (ไม่ persist)
   accessToken: null,
 
-  // setter สำหรับ accessToken
   setAccessToken: (token) => set({ accessToken: token }),
-
-  // setter สำหรับ token แบบเก่า
-  setLegacyToken: (token) => set({ token }),
 
   // ---------- LOGIN ----------
   actionLogin: async (form) => {
-    const res = await api.post("/login", form);
+    const res = await api.post("/login", form, { withCredentials: true });
 
     const userData = {
       ...res.data.payload,
       storecode: form.name,
     };
 
-    const newToken = res.data.accessToken;
-
-    // sync token ทั้งสองแบบ
     set({
       user: userData,
-      accessToken: newToken,
-      token: newToken, // ตัวนี้ทำให้หน้าเก่าใช้งานได้ทันที
+      accessToken: res.data.accessToken,
     });
 
     return res;
   },
 
+  // ---------- REFRESH ACCESS TOKEN (ใช้ตอน reload หน้า) ----------
+  refreshAccessToken: async () => {
+    const res = await axios.post(
+      (import.meta.env.VITE_API_URL || "") + "/api/refresh-token",
+      {},
+      { withCredentials: true }
+    );
+
+    const newToken = res.data.accessToken;
+
+    set((state) => ({
+      accessToken: newToken,
+      user: {
+        ...state.user,
+        ...(res.data.payload || {}),
+        storecode: state.user?.storecode || res.data.payload?.name,
+      },
+    }));
+
+    return newToken;
+  },
+
   // ---------- CURRENT USER ----------
   fetchCurrentUser: async () => {
     const res = await api.post("/current-user");
-
     const user = res.data.user;
 
     set((state) => ({
@@ -58,7 +69,7 @@ const BmrStore = (set, get) => ({
   // ---------- LOGOUT ----------
   logout: async () => {
     try {
-      await api.post("/logout");
+      await api.post("/logout", {}, { withCredentials: true });
     } catch (e) {
       console.error("Logout error:", e);
     }
@@ -66,7 +77,6 @@ const BmrStore = (set, get) => ({
     set({
       user: null,
       accessToken: null,
-      token: null,
     });
 
     if (typeof window !== "undefined") {
@@ -77,12 +87,9 @@ const BmrStore = (set, get) => ({
       const deleteRequest = indexedDB.deleteDatabase("dashboardDataDB");
       deleteRequest.onsuccess = () => console.log("IndexedDB deleted successfully");
 
-      // ✅ เด้งกลับหน้า Login ทันที
       window.location.replace("/");
-      // หรือจะใช้ window.location.href = "/" ก็ได้ แต่ replace ดีกว่า เพราะกด back แล้วไม่ย้อนกลับเข้าหน้าเดิม
     }
   },
-
 });
 
 const useBmrStore = create(
@@ -90,9 +97,8 @@ const useBmrStore = create(
     name: "bmr-store",
     storage: createJSONStorage(() => localStorage),
     partialize: (state) => ({
+      // ✅ เก็บแค่ user (ไม่เก็บ accessToken)
       user: state.user,
-      token: state.token,
-      accessToken: state.accessToken,
     }),
   })
 );

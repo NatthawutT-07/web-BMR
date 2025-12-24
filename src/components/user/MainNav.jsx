@@ -1,8 +1,10 @@
 // MainNav.jsx  (ทุกอย่างเหมือนเดิม + เพิ่มโชว์เวลา Stock อัปเดตล่าสุด)
+// ✅ ปรับ: ยิง stock meta แค่ครั้งเดียว (ใช้ useStockMetaStore.loadOnce)
+
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useBmrStore from "../../store/bmr_store";
-import { getStockLastUpdate } from "../../api/users/home";
+import useStockMetaStore from "../../store/stock_meta_store";
 
 const formatBangkokTime = (value) => {
   if (!value) return "-";
@@ -23,16 +25,16 @@ const formatBangkokTime = (value) => {
   return `${get("day")}/${get("month")}/${get("year")} ${get("hour")}:${get("minute")}`;
 };
 
-
 function MainNav() {
   const navigate = useNavigate();
   const user = useBmrStore((state) => state.user);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-
-  // ✅ NEW: เวลา Stock อัปเดตล่าสุด (1 ค่า)
-  const [stockUpdatedAt, setStockUpdatedAt] = useState(null);
-  const [loadingStockMeta, setLoadingStockMeta] = useState(false);
   const menuRef = useRef(null);
+
+  // ✅ ดึงจาก store (ยิงครั้งเดียวทั้งแอป)
+  const stockUpdatedAt = useStockMetaStore((s) => s.updatedAt);
+  const stockStatus = useStockMetaStore((s) => s.status); // idle | loading | loaded | error
+  const loadStockMetaOnce = useStockMetaStore((s) => s.loadOnce);
 
   const clearStorageAndLogout = () => {
     // เคลียร์ localStorage + Zustand (ตามของเดิม)
@@ -40,7 +42,6 @@ function MainNav() {
       useBmrStore.persist.clearStorage();
     }
     useBmrStore.getState().logout();
-
     navigate("/", { replace: true });
   };
 
@@ -61,41 +62,17 @@ function MainNav() {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [userMenuOpen]);
 
-  // ✅ NEW: โหลดเวลา stock อัปเดตล่าสุด (ดึงครั้งแรก + รีเฟรชทุก 30 วิ)
+  // ✅ โหลด stock meta แค่ครั้งเดียวตอนเข้าระบบ/มี user
   useEffect(() => {
     if (!user) return;
-
-    let alive = true;
-    let timer = null;
-
-    const loadMeta = async () => {
-      setLoadingStockMeta(true);
-      try {
-        const meta = await getStockLastUpdate(); // { updatedAt, rowCount }
-        if (!alive) return;
-        setStockUpdatedAt(meta?.updatedAt || null);
-      } catch (e) {
-        if (!alive) return;
-        setStockUpdatedAt(null);
-      } finally {
-        if (!alive) return;
-        setLoadingStockMeta(false);
-      }
-    };
-
-    loadMeta();
-    timer = setInterval(loadMeta, 30_000);
-
-    return () => {
-      alive = false;
-      if (timer) clearInterval(timer);
-    };
-  }, [user]);
+    loadStockMetaOnce?.(); // store จะกันยิงซ้ำให้เอง (loadedOnce / loading)
+  }, [user, loadStockMetaOnce]);
 
   const stockTimeText = useMemo(() => {
-    if (loadingStockMeta) return "กำลังเช็ค...";
+    if (stockStatus === "loading") return "กำลังเช็ค...";
+    if (stockStatus === "error") return "-";
     return formatBangkokTime(stockUpdatedAt);
-  }, [loadingStockMeta, stockUpdatedAt]);
+  }, [stockStatus, stockUpdatedAt]);
 
   return (
     <nav className="bg-emerald-600 text-white shadow-md print:hidden">
@@ -121,7 +98,7 @@ function MainNav() {
                   ตรวจสินค้า & สต็อกหน้าร้าน
                 </span>
 
-                {/* ✅ NEW: เวลาอัปเดต Stock ล่าสุด */}
+                {/* ✅ เวลาอัปเดต Stock ล่าสุด */}
                 <span className="text-[10px] sm:text-xs text-emerald-100/90">
                   • Stock ล่าสุด {stockTimeText}
                 </span>
