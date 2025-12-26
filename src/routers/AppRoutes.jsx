@@ -20,12 +20,8 @@ import ProtectRouteAudit from "./ProtectRouteAudit";
 import Upload from "../pages/admin/Upload";
 import Template from "../pages/admin/Template";
 import FilterSales from "../pages/admin/sales/FilterSales";
-import DashboardSales from "../components/admin/sales/dashboard/DashboardSales";
-import MainSalesProduct from "../components/admin/sales/product/MainSalesProduct";
-import { Calculator } from "lucide-react";
 import LayoutManager from "../layouts/LayoutManager";
 import Stock from "../pages/admin/Stock";
-import Member from "../components/admin/sales/member/Member";
 
 const router = createBrowserRouter([
     // หน้า Login
