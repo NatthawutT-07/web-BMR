@@ -1,0 +1,162 @@
+// CameraBarcodeScannerModal.jsx
+import React, { useEffect, useRef, useState } from "react";
+import { BrowserMultiFormatReader } from "@zxing/browser";
+import { BarcodeFormat, DecodeHintType } from "@zxing/library";
+
+const cx = (...a) => a.filter(Boolean).join(" ");
+
+export default function CameraBarcodeScannerModal({ open, onClose, onDetected }) {
+  const videoRef = useRef(null);
+  const readerRef = useRef(null);
+
+  // กันสแกนซ้ำรัว ๆ
+  const lastRef = useRef({ code: "", ts: 0 });
+
+  const [err, setErr] = useState(null);
+
+  // ✅ โชว์ตัวเลขที่อ่านได้ระหว่างสแกน
+  const [liveText, setLiveText] = useState("");
+  const [liveDigits, setLiveDigits] = useState("");
+
+  useEffect(() => {
+    if (!open) return;
+
+    setErr(null);
+    setLiveText("");
+    setLiveDigits("");
+
+    // ✅ จำกัดฟอร์แมตที่ใช้จริงในร้าน
+    const hints = new Map();
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+      BarcodeFormat.EAN_13,
+      BarcodeFormat.EAN_8,
+      BarcodeFormat.UPC_A,
+      BarcodeFormat.UPC_E,
+      BarcodeFormat.CODE_128,
+    ]);
+
+    const reader = new BrowserMultiFormatReader(hints, 80); // 80ms interval
+    readerRef.current = reader;
+
+    let stopped = false;
+
+    const start = async () => {
+      try {
+        await reader.decodeFromConstraints(
+          {
+            audio: false,
+            video: {
+              facingMode: { ideal: "environment" },
+              width: { ideal: 1280 },
+              height: { ideal: 720 },
+            },
+          },
+          videoRef.current,
+          (result, _error) => {
+            if (stopped) return;
+            if (!result) return;
+
+            const raw = String(result.getText() || "").trim();
+            if (!raw) return;
+
+            // ✅ เอาเฉพาะตัวเลข (EAN/UPC จะเป็นเลขล้วน)
+            const digits = raw.replace(/\D/g, "");
+            setLiveText(raw);
+            setLiveDigits(digits);
+
+            // cooldown กันเด้งซ้ำ
+            const now = Date.now();
+            const key = digits || raw;
+            if (lastRef.current.code === key && now - lastRef.current.ts < 1200) return;
+            lastRef.current = { code: key, ts: now };
+
+            // ✅ ส่งกลับเป็น "ตัวเลข" ก่อน ถ้าไม่มีเลขค่อยส่ง raw
+            onDetected?.(digits || raw);
+          }
+        );
+      } catch (e) {
+        console.error("camera start error:", e);
+        setErr(
+          e?.name === "NotAllowedError"
+            ? "ไม่ได้อนุญาตใช้กล้อง (Allow Camera ก่อน)"
+            : e?.name === "NotFoundError"
+            ? "ไม่พบกล้องในอุปกรณ์"
+            : "เปิดกล้องไม่สำเร็จ"
+        );
+      }
+    };
+
+    start();
+
+    return () => {
+      stopped = true;
+      try {
+        readerRef.current?.reset?.();
+      } catch {}
+      readerRef.current = null;
+    };
+  }, [open, onDetected]);
+
+  if (!open) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose} />
+
+      <div className="relative w-[94vw] max-w-lg bg-white rounded-2xl shadow-xl border overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <div>
+            <div className="text-sm font-semibold text-slate-800">สแกนบาร์โค้ดด้วยกล้อง</div>
+            <div className="text-xs text-slate-500">เล็งบาร์โค้ดให้อยู่ในกรอบแนวนอน</div>
+          </div>
+          <button
+            className="px-3 py-2 rounded-lg text-xs font-semibold border bg-white hover:bg-slate-50"
+            onClick={onClose}
+          >
+            ปิด
+          </button>
+        </div>
+
+        <div className="p-3">
+          <div className="relative rounded-xl overflow-hidden bg-black">
+            <video ref={videoRef} className="w-full aspect-[3/4] object-cover" muted playsInline />
+
+            {/* ✅ กรอบสแกน “แนวนอน” สำหรับบาร์โค้ด */}
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
+              <div
+                className={cx(
+                  "w-[86%] max-w-[380px]",
+                  "h-[22%] max-h-[120px]",
+                  "rounded-2xl border-2 border-white/85",
+                  "shadow-[0_0_0_9999px_rgba(0,0,0,0.28)]"
+                )}
+              />
+            </div>
+
+            {/* ✅ แถบโชว์ตัวเลขที่อ่านได้ */}
+            <div className="absolute bottom-0 left-0 right-0 p-3 bg-black/55">
+              <div className="text-[11px] text-white/80">ตัวเลขบาร์โค้ด</div>
+              <div className="text-2xl font-extrabold text-white tracking-wider">
+                {liveDigits || (liveText ? liveText : "กำลังอ่าน...")}
+              </div>
+            </div>
+          </div>
+
+          {err && (
+            <div className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200">
+              <div className="text-sm font-semibold text-rose-700">เปิดกล้องไม่ได้</div>
+              <div className="text-xs text-rose-700 mt-1">{err}</div>
+              <div className="text-[11px] text-rose-700 mt-2">
+                * บนมือถือ ต้องเป็น HTTPS (ยกเว้น localhost)
+              </div>
+            </div>
+          )}
+
+          <div className="mt-3 text-xs text-slate-500">
+            เคล็ดลับ: ให้บาร์โค้ดอยู่กลางกรอบ, แสงพอ, ขยับเข้า-ออกเล็กน้อยช่วยโฟกัส
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

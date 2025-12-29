@@ -1,5 +1,5 @@
 // Template.jsx
-import React, { useState, useEffect, useMemo, Suspense } from "react";
+import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import useBmrStore from "../../store/bmr_store";
 import useStockMetaStore from "../../store/stock_meta_store";
 import { getTemplateAndProduct } from "../../api/users/home";
@@ -7,6 +7,9 @@ import { getTemplateAndProduct } from "../../api/users/home";
 // Lazy load component หนัก ๆ
 const ShelfCardUser = React.lazy(() => import("./second/ShelfCardUser"));
 const ShelfFilterUser = React.lazy(() => import("./ShelfFilterUser"));
+
+// ✅ แยกบาร์โค้ดออกไปไฟล์ข้าง ๆ
+import TemplateBarcodePanel from "./TemplateBarcodePanel";
 
 /* =========================
    Helpers: Thai/BKK datetime
@@ -27,15 +30,15 @@ const fmtThaiDateTime = (value) => {
   }).formatToParts(d);
 
   const get = (type) => parts.find((p) => p.type === type)?.value ?? "";
-
   const dd = get("day");
   const mm = get("month");
   const yyyy = get("year");
   const hh = get("hour");
   const min = get("minute");
-
   return `${dd}/${mm}/${yyyy} ${hh}:${min}`;
 };
+
+const cx = (...a) => a.filter(Boolean).join(" ");
 
 const Template = () => {
   const storecode = useBmrStore((s) => s.user?.storecode);
@@ -47,6 +50,9 @@ const Template = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
 
+  // ✅ โหมด 2 ปุ่ม
+  const [mode, setMode] = useState("shelf"); // "barcode" | "shelf"
+
   // ===== Stock Meta (ยิงครั้งเดียว) =====
   const stockUpdatedAt = useStockMetaStore((s) => s.updatedAt);
   const stockStatus = useStockMetaStore((s) => s.status);
@@ -57,11 +63,13 @@ const Template = () => {
   const [printPick, setPrintPick] = useState([]);
   const [printAll, setPrintAll] = useState(true);
   const [printTargetShelves, setPrintTargetShelves] = useState(null); // null=all
-
-  // ✅ isPrinting คุมจาก Template (ส่งลงให้ทุก ShelfCardUser)
   const [isPrinting, setIsPrinting] = useState(false);
 
-  // โหลด Template + Product (NEW SHAPE)
+  // ใช้ scroll ไป shelf (ตอนมาจาก barcode -> ไป shelf)
+  const shelfRefs = useRef({});
+  const [jumpShelfCode, setJumpShelfCode] = useState(null);
+
+  // โหลด Template + Product
   useEffect(() => {
     if (!storecode) return;
 
@@ -89,7 +97,7 @@ const Template = () => {
     loadStockMetaOnce?.();
   }, [storecode, loadStockMetaOnce]);
 
-  // จับเหตุการณ์ print เพื่อ reset state หลังพิมพ์ (รองรับ Ctrl+P ด้วย)
+  // จับเหตุการณ์ print เพื่อ reset state หลังพิมพ์
   useEffect(() => {
     const before = () => setIsPrinting(true);
     const after = () => {
@@ -115,6 +123,18 @@ const Template = () => {
     };
   }, []);
 
+  // scroll ไป shelf card หลังสลับมา shelf
+  useEffect(() => {
+    if (mode !== "shelf") return;
+    if (!jumpShelfCode) return;
+
+    requestAnimationFrame(() => {
+      const el = shelfRefs.current?.[jumpShelfCode];
+      el?.scrollIntoView?.({ behavior: "smooth", block: "start" });
+      setJumpShelfCode(null);
+    });
+  }, [mode, jumpShelfCode]);
+
   // Group ตาม shelfCode
   const groupedShelves = useMemo(() => {
     if (!data.length) return [];
@@ -128,11 +148,9 @@ const Template = () => {
 
     return Object.keys(groups).map((shelfCode) => {
       const items = groups[shelfCode];
-
       const rowNumbers = items
         .map((i) => i.rowNo || 1)
         .filter((n) => typeof n === "number");
-
       const rowQty = rowNumbers.length ? Math.max(...rowNumbers) : 1;
 
       return {
@@ -154,12 +172,10 @@ const Template = () => {
 
     let base = groupedShelves;
 
-    // ✅ ตอนพิมพ์: กรองตาม printTargetShelves (ถ้าเป็น array และมีค่า)
     if (isPrinting && Array.isArray(printTargetShelves) && printTargetShelves.length > 0) {
       base = base.filter((s) => printTargetShelves.includes(s.shelfCode));
     }
 
-    // ✅ ตอนอยู่หน้าจอ: ใช้ selectedShelves
     if (!isPrinting) {
       base = base.filter(
         (shelf) => selectedShelves.length === 0 || selectedShelves.includes(shelf.shelfCode)
@@ -170,10 +186,8 @@ const Template = () => {
       .map((shelf) => {
         const matched = shelf.shelfProducts.filter((item) => {
           if (!qRaw) return true;
-
           const barcodeStr = item.barcode != null ? String(item.barcode) : "";
           const brandStr = item.nameBrand != null ? String(item.nameBrand).toLowerCase() : "";
-
           return barcodeStr.includes(qRaw) || brandStr.includes(q);
         });
 
@@ -193,15 +207,10 @@ const Template = () => {
 
   const confirmPrint = () => {
     const target = printAll ? null : [...printPick];
-
     setPrintTargetShelves(target);
     setPrintModalOpen(false);
 
-    // ✅ สำคัญ: เปิดโหมดพิมพ์ “ก่อน” สั่ง window.print()
-    // เพื่อให้ทุก ShelfCardUser เรนเดอร์ตารางทัน
     setIsPrinting(true);
-
-    // ✅ รอ 1–2 เฟรมให้ React render ครบทุก shelf แล้วค่อย print
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         window.print();
@@ -215,20 +224,13 @@ const Template = () => {
 
   const allShelfCodes = useMemo(() => groupedShelves.map((s) => s.shelfCode), [groupedShelves]);
 
-  const printTargetText = useMemo(() => {
-    if (!isPrinting) return "";
-    if (!printTargetShelves || printTargetShelves.length === 0) return "ทุก Shelf";
-    return `Shelf: ${printTargetShelves.join(", ")}`;
-  }, [isPrinting, printTargetShelves]);
-
   return (
     <div className="min-h-screen bg-slate-100 print:bg-white">
-      <div className="max-w-8xl mx-auto px-3 sm:px-4 lg:px-8 py-1 sm:py-1 space-y-1 sm:space-y-1">
+      <div className="max-w-8xl mx-auto px-3 sm:px-4 lg:px-8 py-1 sm:py-1 space-y-2 sm:space-y-2">
         {/* ===== PRINT HEADER (แสดงเฉพาะตอนพิมพ์) ===== */}
-        <div className="hidden print:block  pb-1 mb-1">
+        <div className="hidden print:block pb-1 mb-1">
           <p className="text-xs sm:text-sm text-slate-500">
-            สาขา:{" "}
-            <span className="font-semibold text-slate-700">{storecode || "-"}</span>
+            สาขา: <span className="font-semibold text-slate-700">{storecode || "-"}</span>
             {branchName ? <span className="ml-2 text-slate-600">({branchName})</span> : null}
           </p>
 
@@ -240,26 +242,54 @@ const Template = () => {
           </p>
         </div>
 
-        {/* HEADER + ปุ่ม PRINT (ซ่อนปุ่มตอนพิมพ์) */}
-        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 ">
+        {/* HEADER + ปุ่มโหมด + ปุ่ม PRINT */}
+        <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2 print:hidden">
             <p className="text-xs sm:text-sm text-slate-500">
-              สาขา:{" "}
-              <span className="font-semibold text-slate-700">{storecode || "-"}</span>
+              สาขา: <span className="font-semibold text-slate-700">{storecode || "-"}</span>
               {branchName ? <span className="ml-2 text-slate-600">({branchName})</span> : null}
             </p>
           </div>
 
+          {/* ✅ ปุ่ม 2 โหมด */}
           <div className="flex items-center gap-2 print:hidden">
-            <button
-              type="button"
-              onClick={openPrintModal}
-              className="inline-flex items-center justify-center px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm"
-            >
-              🖨 พิมพ์ PDF / กระดาษ
-            </button>
+            <div className="inline-flex rounded-lg border bg-white p-1 shadow-sm">
+              <button
+                type="button"
+                onClick={() => setMode("barcode")}
+                className={cx(
+                  "px-3 py-2 text-xs sm:text-sm font-semibold rounded-md",
+                  mode === "barcode" ? "bg-emerald-600 text-white" : "text-slate-700 hover:bg-slate-50"
+                )}
+              >
+                📦 บาร์โค้ด
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode("shelf")}
+                className={cx(
+                  "px-3 py-2 text-xs sm:text-sm font-semibold rounded-md",
+                  mode === "shelf" ? "bg-emerald-600 text-white" : "text-slate-700 hover:bg-slate-50"
+                )}
+              >
+                🧱 Shelf
+              </button>
+            </div>
+
+            {/* ปุ่มพิมพ์ เฉพาะโหมด shelf */}
+            {mode === "shelf" && (
+              <button
+                type="button"
+                onClick={openPrintModal}
+                className="inline-flex items-center justify-center px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm"
+              >
+                🖨 พิมพ์ PDF / กระดาษ
+              </button>
+            )}
           </div>
         </header>
+
+
 
         {/* ===== PRINT MODAL ===== */}
         {printModalOpen && (
@@ -269,9 +299,7 @@ const Template = () => {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-slate-800">เลือก Shelf ที่ต้องการพิมพ์</div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    เลือกได้หลาย Shelf หรือเลือก “พิมพ์ทุก Shelf”
-                  </div>
+                  <div className="text-xs text-slate-500 mt-1">เลือกได้หลาย Shelf หรือเลือก “พิมพ์ทุก Shelf”</div>
                 </div>
                 <button
                   className="text-slate-500 hover:text-slate-700 text-lg leading-none"
@@ -298,8 +326,10 @@ const Template = () => {
                 </label>
 
                 <div
-                  className={`border rounded-lg p-3 bg-slate-50 max-h-[320px] overflow-y-auto ${printAll ? "opacity-50 pointer-events-none" : ""
-                    }`}
+                  className={cx(
+                    "border rounded-lg p-3 bg-slate-50 max-h-[320px] overflow-y-auto",
+                    printAll ? "opacity-50 pointer-events-none" : ""
+                  )}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs text-slate-600">Shelf ทั้งหมด: {allShelfCodes.length}</div>
@@ -368,112 +398,132 @@ const Template = () => {
           </div>
         )}
 
-        {/* SUMMARY + IMAGE */}
-        {!loading && groupedShelves.length > 0 && (
-          <section className="w-full flex justify-center print:hidden">
-            <div
-              className="bg-white p-4 rounded-lg shadow-sm border justify-center
-              flex flex-col md:flex-row gap-4 mx-auto w-full max-w-4xl"
-            >
-              <div className="flex justify-center md:w-[260px]">
-                <img
-                  src={`/images/branch/${storecode?.toUpperCase()}.png`}
-                  alt={`Branch ${storecode}`}
-                  className="w-full max-w-[260px] object-contain rounded"
-                  loading="lazy"
-                />
-              </div>
-
-              <div
-                className="bg-gray-50 border rounded p-3 shadow-inner 
-                max-h-[420px] md:max-h-[480px] w-full md:w-[260px] overflow-y-auto"
-              >
-                <h3 className="font-semibold text-gray-700 mb-1 text-sm text-center">
-                  โครงสร้าง Shelf
-                </h3>
-
-                {groupedShelves.map((shelf) => (
-                  <div key={shelf.shelfCode} className="mb-2 pb-2 border-b last:border-b-0">
-                    <div className="font-semibold text-blue-700 text-sm leading-tight">
-                      Shelf {shelf.shelfCode}
-                    </div>
-
-                    <div className="ml-2 mt-1 text-xs leading-tight">
-                      <div className="font-semibold text-gray-600">จำนวน : {shelf.rowQty} เเถว</div>
-
-                      {Array.from({ length: shelf.rowQty }).map((_, idx) => {
-                        const rowNo = idx + 1;
-                        const rowProducts = shelf.shelfProducts.filter(
-                          (p) => (p.rowNo || 0) === rowNo
-                        );
-
-                        return (
-                          <div key={rowNo} className="ml-1 flex text-gray-700 leading-tight py-[1px]">
-                            <span className="pr-4">• Row {rowNo}</span>
-                            <span>{rowProducts.length} รายการ</span>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
+        {/* ✅ โหมดบาร์โค้ด: แยกเป็น component */}
+        {mode === "barcode" && (
+          <TemplateBarcodePanel
+            storecode={storecode}
+            onGoShelf={(shelfCode) => {
+              setMode("shelf");
+              setSelectedShelves([shelfCode]);
+              setSearchText("");
+              setJumpShelfCode(shelfCode);
+            }}
+          />
         )}
 
-        {/* FILTER + SEARCH */}
-        <section className="space-y-3 print:hidden">
-          {!loading && groupedShelves.length > 0 && (
-            <Suspense fallback={<div className="text-sm text-gray-500">Loading filter...</div>}>
-              <ShelfFilterUser
-                shelves={groupedShelves.map((s) => s.shelfCode)}
-                selectedShelves={selectedShelves}
-                onToggle={(code) =>
-                  setSelectedShelves((prev) =>
-                    prev.includes(code) ? prev.filter((s) => s !== code) : [...prev, code]
-                  )
-                }
-                onClear={() => setSelectedShelves([])}
-              />
-            </Suspense>
-          )}
+        {/* ✅ โหมด shelf: ของเดิม */}
+        {mode === "shelf" && (
+          <>
+            {/* SUMMARY + IMAGE */}
+            {!loading && groupedShelves.length > 0 && (
+              <section className="w-full flex justify-center print:hidden">
+                <div
+                  className="bg-white p-4 rounded-lg shadow-sm border justify-center
+              flex flex-col md:flex-row gap-4 mx-auto w-full max-w-4xl"
+                >
+                  <div className="flex justify-center md:w-[260px]">
+                    <img
+                      src={`/images/branch/${storecode?.toUpperCase()}.png`}
+                      alt={`Branch ${storecode}`}
+                      className="w-full max-w-[260px] object-contain rounded"
+                      loading="lazy"
+                    />
+                  </div>
 
-          <div className="w-full max-w-xl mx-auto">
-            <input
-              type="text"
-              placeholder="ค้นหาแบรนด์ / บาร์โค้ด..."
-              className="w-full px-4 py-2 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-            />
-          </div>
-        </section>
+                  <div
+                    className="bg-gray-50 border rounded p-3 shadow-inner 
+                max-h-[420px] md:max-h-[480px] w-full md:w-[260px] overflow-y-auto"
+                  >
+                    <h3 className="font-semibold text-gray-700 mb-1 text-sm text-center">
+                      โครงสร้าง Shelf
+                    </h3>
 
-        {/* SHELF LIST */}
-        <section className="space-y-4">
-          {loading && (
-            <div className="text-center text-sm text-gray-500">กำลังโหลดข้อมูลชั้นวาง...</div>
-          )}
+                    {groupedShelves.map((shelf) => (
+                      <div key={shelf.shelfCode} className="mb-2 pb-2 border-b last:border-b-0">
+                        <div className="font-semibold text-blue-700 text-sm leading-tight">
+                          Shelf {shelf.shelfCode}
+                        </div>
 
-          {!loading && displayedShelves.length === 0 && (
-            <div className="text-center text-sm text-gray-500">
-              ไม่พบข้อมูล (ลองล้าง Filter หรือเคลียร์คำค้นหา)
-            </div>
-          )}
+                        <div className="ml-2 mt-1 text-xs leading-tight">
+                          <div className="font-semibold text-gray-600">จำนวน : {shelf.rowQty} เเถว</div>
 
-          <Suspense fallback={<div className="text-sm text-gray-500">Loading shelves...</div>}>
-            {displayedShelves.map((shelf) => (
-              <ShelfCardUser
-                key={shelf.shelfCode}
-                template={{ ...shelf, shelfProducts: shelf.matchedProducts }}
-                autoOpen={searchText.length > 0}
-                // ✅ ส่ง isPrinting จาก Template ลงไปให้ทุกการ์ด
-                isPrinting={isPrinting}
-              />
-            ))}
-          </Suspense>
-        </section>
+                          {Array.from({ length: shelf.rowQty }).map((_, idx) => {
+                            const rowNo = idx + 1;
+                            const rowProducts = shelf.shelfProducts.filter(
+                              (p) => (p.rowNo || 0) === rowNo
+                            );
+
+                            return (
+                              <div key={rowNo} className="ml-1 flex text-gray-700 leading-tight py-[1px]">
+                                <span className="pr-4">• Row {rowNo}</span>
+                                <span>{rowProducts.length} รายการ</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            )}
+            {/* FILTER + SEARCH */}
+            <section className="space-y-3 print:hidden">
+              {!loading && groupedShelves.length > 0 && (
+                <Suspense fallback={<div className="text-sm text-gray-500">Loading filter...</div>}>
+                  <ShelfFilterUser
+                    shelves={groupedShelves.map((s) => s.shelfCode)}
+                    selectedShelves={selectedShelves}
+                    onToggle={(code) =>
+                      setSelectedShelves((prev) =>
+                        prev.includes(code) ? prev.filter((s) => s !== code) : [...prev, code]
+                      )
+                    }
+                    onClear={() => setSelectedShelves([])}
+                  />
+                </Suspense>
+              )}
+
+              <div className="w-full max-w-xl mx-auto">
+                <input
+                  type="text"
+                  placeholder="ค้นหาแบรนด์ / บาร์โค้ด..."
+                  className="w-full px-4 py-2 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                />
+              </div>
+            </section>
+
+            {/* SHELF LIST */}
+            <section className="space-y-4">
+              {loading && <div className="text-center text-sm text-gray-500">กำลังโหลดข้อมูลชั้นวาง...</div>}
+
+              {!loading && displayedShelves.length === 0 && (
+                <div className="text-center text-sm text-gray-500">
+                  ไม่พบข้อมูล (ลองล้าง Filter หรือเคลียร์คำค้นหา)
+                </div>
+              )}
+
+              <Suspense fallback={<div className="text-sm text-gray-500">Loading shelves...</div>}>
+                {displayedShelves.map((shelf) => (
+                  <div
+                    key={shelf.shelfCode}
+                    ref={(el) => {
+                      if (el) shelfRefs.current[shelf.shelfCode] = el;
+                    }}
+                  >
+                    <ShelfCardUser
+                      template={{ ...shelf, shelfProducts: shelf.matchedProducts }}
+                      autoOpen={searchText.length > 0}
+                      isPrinting={isPrinting}
+                    />
+                  </div>
+                ))}
+              </Suspense>
+            </section>
+          </>
+        )}
       </div>
     </div>
   );
