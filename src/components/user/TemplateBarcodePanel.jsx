@@ -127,7 +127,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
       <div className="bg-white border rounded-xl shadow-sm p-3">
         <div className="text-sm font-semibold text-slate-800">สแกน/พิมพ์บาร์โค้ด หรือใช้กล้อง</div>
         <div className="text-xs text-slate-500 mt-1">
-          สแกนติดแล้วจะขึ้น Popup และแสดงสถานะกำลังโหลดข้อมูลจากระบบ
+          {/* สแกนติดแล้วจะขึ้น Popup และแสดงสถานะกำลังโหลดข้อมูลจากระบบ */}
         </div>
 
         <div className="mt-3 flex flex-col sm:flex-row gap-2">
@@ -209,7 +209,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
             ) : !lookupRes.found ? (
               <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200">
                 <div className="text-sm font-semibold text-rose-700">ไม่พบตำแหน่ง</div>
-                <div className="text-xs text-rose-700 mt-1">{reasonText(lookupRes.reason)}</div>
+                {/* <div className="text-xs text-rose-700 mt-1">{reasonText(lookupRes.reason)}</div> */}
               </div>
             ) : (
               <>

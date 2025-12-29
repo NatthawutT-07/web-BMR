@@ -1,3 +1,4 @@
+
 // Template.jsx
 import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import useBmrStore from "../../store/bmr_store";
@@ -68,6 +69,9 @@ const Template = () => {
   // ใช้ scroll ไป shelf (ตอนมาจาก barcode -> ไป shelf)
   const shelfRefs = useRef({});
   const [jumpShelfCode, setJumpShelfCode] = useState(null);
+
+  // ✅ สั่ง “เปิดการ์ด shelf” 1 ครั้ง เมื่อมาจาก barcode
+  const [openShelfOnce, setOpenShelfOnce] = useState({ code: null, nonce: 0 });
 
   // โหลด Template + Product
   useEffect(() => {
@@ -262,7 +266,7 @@ const Template = () => {
                   mode === "barcode" ? "bg-emerald-600 text-white" : "text-slate-700 hover:bg-slate-50"
                 )}
               >
-              Barcode
+                Barcode
               </button>
               <button
                 type="button"
@@ -272,7 +276,7 @@ const Template = () => {
                   mode === "shelf" ? "bg-emerald-600 text-white" : "text-slate-700 hover:bg-slate-50"
                 )}
               >
-              Shelf
+                Shelf
               </button>
             </div>
 
@@ -396,7 +400,7 @@ const Template = () => {
           </div>
         )}
 
-        {/* ✅ โหมดบาร์โค้ด: ส่ง branchName เข้าไป */}
+        {/* ✅ โหมดบาร์โค้ด */}
         {mode === "barcode" && (
           <TemplateBarcodePanel
             storecode={storecode}
@@ -406,6 +410,9 @@ const Template = () => {
               setSelectedShelves([shelfCode]);
               setSearchText("");
               setJumpShelfCode(shelfCode);
+
+              // ✅ สั่งเปิดการ์ด shelf นี้ 1 ครั้ง
+              setOpenShelfOnce({ code: shelfCode, nonce: Date.now() });
             }}
           />
         )}
@@ -413,6 +420,7 @@ const Template = () => {
         {/* ✅ โหมด shelf */}
         {mode === "shelf" && (
           <>
+
             {/* SUMMARY + IMAGE */}
             {!loading && groupedShelves.length > 0 && (
               <section className="w-full flex justify-center print:hidden">
@@ -517,6 +525,8 @@ const Template = () => {
                       template={{ ...shelf, shelfProducts: shelf.matchedProducts }}
                       autoOpen={searchText.length > 0}
                       isPrinting={isPrinting}
+                      // ✅ ส่งสัญญาณเปิดให้เฉพาะ shelf ที่ถูก jump มาจาก barcode
+                      openNonce={openShelfOnce.code === shelf.shelfCode ? openShelfOnce.nonce : 0}
                     />
                   </div>
                 ))}

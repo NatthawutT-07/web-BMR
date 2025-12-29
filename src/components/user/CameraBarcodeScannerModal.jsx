@@ -144,10 +144,10 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
 
           {err && (
             <div className="mt-3 p-3 rounded-xl bg-rose-50 border border-rose-200">
-              <div className="text-sm font-semibold text-rose-700">เปิดกล้องไม่ได้</div>
+              <div className="text-sm font-semibold text-rose-700">เปิดกล้องไม่สำเร็จ</div>
               <div className="text-xs text-rose-700 mt-1">{err}</div>
               <div className="text-[11px] text-rose-700 mt-2">
-                * บนมือถือ ต้องเป็น HTTPS (ยกเว้น localhost)
+                {/* * บนมือถือ ต้องเป็น HTTPS (ยกเว้น localhost) */}
               </div>
             </div>
           )}

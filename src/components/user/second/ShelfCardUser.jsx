@@ -1,8 +1,13 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ShelfTableUser from "./ShelfTableUser";
 
-// ✅ รับ isPrinting จาก parent (Template) เพื่อให้ทุก shelf เรนเดอร์ตารางทันตอน print
-const ShelfCardUser = React.memo(function ShelfCardUser({ template, autoOpen, isPrinting }) {
+// ✅ รับ isPrinting + openNonce จาก parent (Template)
+const ShelfCardUser = React.memo(function ShelfCardUser({
+  template,
+  autoOpen,
+  isPrinting,
+  openNonce, // ✅ ใหม่
+}) {
   const shelfProducts = useMemo(
     () => (Array.isArray(template.shelfProducts) ? template.shelfProducts : []),
     [template.shelfProducts]
@@ -22,6 +27,11 @@ const ShelfCardUser = React.memo(function ShelfCardUser({ template, autoOpen, is
   useEffect(() => {
     if (autoOpen) setIsOpen(true);
   }, [autoOpen]);
+
+  // ✅ auto open ตอน “กดไปหน้า shelf”
+  useEffect(() => {
+    if (openNonce) setIsOpen(true);
+  }, [openNonce]);
 
   // ✅ คำนวณ maxHeight ใหม่เมื่อเปิด/ปิด หรือเมื่อสินค้าข้างในเปลี่ยน หรือเมื่อเข้าโหมดพิมพ์
   useEffect(() => {
@@ -99,9 +109,7 @@ const ShelfCardUser = React.memo(function ShelfCardUser({ template, autoOpen, is
           opacity: isOpen || isPrinting ? 1 : 0,
         }}
       >
-        <div className="mt-2">
-          {shouldRenderTable ? <ShelfTableUser shelfProducts={shelfProducts} /> : null}
-        </div>
+        <div className="mt-2">{shouldRenderTable ? <ShelfTableUser shelfProducts={shelfProducts} /> : null}</div>
       </div>
     </div>
   );
