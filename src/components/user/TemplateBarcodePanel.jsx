@@ -5,7 +5,7 @@ import CameraBarcodeScannerModal from "./CameraBarcodeScannerModal";
 
 const cx = (...a) => a.filter(Boolean).join(" ");
 
-const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
+const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
   const barcodeInputRef = useRef(null);
 
   const [barcode, setBarcode] = useState("");
@@ -34,9 +34,15 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
     };
   }, [lookupRes]);
 
+  const branchText = useMemo(() => {
+    const code = storecode || "-";
+    return branchName ? `${code} (${branchName})` : code;
+  }, [storecode, branchName]);
+
   const reasonText = (r) => {
     if (r === "BARCODE_NOT_FOUND") return "ไม่พบบาร์โค้ดในรายการสินค้า";
     if (r === "NO_LOCATION_IN_POG") return "พบสินค้า แต่ยังไม่มีตำแหน่งใน POG";
+    if (r === "TIMEOUT") return "ระบบตอบช้าเกินไป (ลองสแกนใหม่อีกครั้ง)";
     if (r === "REQUEST_ERROR") return "ยิง API ไม่สำเร็จ";
     return "ไม่พบข้อมูล";
   };
@@ -49,7 +55,7 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
     requestAnimationFrame(() => barcodeInputRef.current?.focus?.());
   };
 
-  const lookupByBarcode = async (bc, { openPopup = false } = {}) => {
+  const lookupByBarcode = async (bc) => {
     const code = String(bc || "").trim();
     if (!storecode || !code) return;
 
@@ -60,13 +66,13 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
     try {
       const res = await api.get("/lookup", {
         params: { branchCode: storecode, barcode: code },
+        timeout: 15000,
       });
       setLookupRes(res.data);
-      if (openPopup) setPopupOpen(true);
     } catch (e) {
       console.error("lookup error:", e);
-      setLookupRes({ found: false, reason: "REQUEST_ERROR" });
-      if (openPopup) setPopupOpen(true);
+      const isTimeout = e?.code === "ECONNABORTED";
+      setLookupRes({ found: false, reason: isTimeout ? "TIMEOUT" : "REQUEST_ERROR" });
     } finally {
       setLookupLoading(false);
     }
@@ -78,6 +84,7 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
     try {
       const res = await api.get("/shelf-blocks", {
         params: { branchCode: storecode, shelfCode },
+        timeout: 15000,
       });
       setShelfBlocks(res.data);
     } catch (e) {
@@ -88,17 +95,24 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
     }
   };
 
-  // ✅ สแกนจากกล้องแล้ว: เซ็ตค่า + lookup + เปิด popup
+  // ✅ สแกนจากกล้องแล้ว: เปิด popup “ก่อน” แล้วค่อยยิง API (ให้ user เห็นสปิน)
   const onCameraDetected = (code) => {
     setCameraOpen(false);
     setBarcode(code);
-    lookupByBarcode(code, { openPopup: true });
+
+    // เปิด popup ทันทีเพื่อโชว์สปิน
+    setPopupOpen(true);
+
+    // ยิง lookup รอ backend
+    lookupByBarcode(code);
   };
 
-  const onEnter = (e) => {
-    if (e.key === "Enter") {
-      lookupByBarcode(barcode, { openPopup: true });
-    }
+  const openPopupAndLookup = (bc) => {
+    const code = String(bc || "").trim();
+    if (!code) return;
+    setBarcode(code);
+    setPopupOpen(true);
+    lookupByBarcode(code);
   };
 
   return (
@@ -112,7 +126,9 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
 
       <div className="bg-white border rounded-xl shadow-sm p-3">
         <div className="text-sm font-semibold text-slate-800">สแกน/พิมพ์บาร์โค้ด หรือใช้กล้อง</div>
-        <div className="text-xs text-slate-500 mt-1">สแกนแล้วระบบจะแสดง Popup รายละเอียดสินค้า + ตำแหน่ง</div>
+        <div className="text-xs text-slate-500 mt-1">
+          สแกนติดแล้วจะขึ้น Popup และแสดงสถานะกำลังโหลดข้อมูลจากระบบ
+        </div>
 
         <div className="mt-3 flex flex-col sm:flex-row gap-2">
           <input
@@ -121,7 +137,9 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
             inputMode="numeric"
             value={barcode}
             onChange={(e) => setBarcode(e.target.value)}
-            onKeyDown={onEnter}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") openPopupAndLookup(barcode);
+            }}
             placeholder="พิมพ์/หัวสแกนบาร์โค้ด..."
             className="flex-1 px-4 py-3 border rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-emerald-400"
           />
@@ -129,7 +147,7 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
           <div className="flex gap-2">
             <button
               type="button"
-              onClick={() => lookupByBarcode(barcode, { openPopup: true })}
+              onClick={() => openPopupAndLookup(barcode)}
               disabled={!String(barcode).trim() || lookupLoading}
               className="px-4 py-3 rounded-xl font-semibold text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
             >
@@ -163,7 +181,8 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-slate-800">ผลการสแกน</div>
-                <div className="text-xs text-slate-500 mt-1">สาขา: {storecode || "-"}</div>
+                {/* ✅ แสดงชื่อสาขา */}
+                <div className="text-xs text-slate-500 mt-1">สาขา: {branchText}</div>
               </div>
               <button
                 className="text-slate-500 hover:text-slate-700 text-lg leading-none"
@@ -174,8 +193,19 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
               </button>
             </div>
 
-            {!lookupRes ? (
-              <div className="mt-4 text-sm text-slate-500">กำลังโหลด...</div>
+            {/* ✅ สปินตอนรอ backend */}
+            {lookupLoading || !lookupRes ? (
+              <div className="mt-4 p-4 rounded-xl border bg-slate-50">
+                <div className="flex items-center gap-3">
+                  <div className="h-5 w-5 rounded-full border-2 border-slate-300 border-t-slate-700 animate-spin" />
+                  <div>
+                    <div className="text-sm font-semibold text-slate-800">กำลังดึงข้อมูลจากระบบ…</div>
+                    <div className="text-xs text-slate-500 mt-1">
+                      บาร์โค้ด: <span className="font-semibold text-slate-700">{barcode || "-"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             ) : !lookupRes.found ? (
               <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200">
                 <div className="text-sm font-semibold text-rose-700">ไม่พบตำแหน่ง</div>
@@ -206,7 +236,7 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
                     ) : null}
 
                     <div className="mt-3 flex flex-col sm:flex-row gap-2">
-                      <button
+                      {/* <button
                         type="button"
                         onClick={async () => {
                           await loadShelfBlocks(primaryLoc.shelfCode);
@@ -214,7 +244,7 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
                         className="flex-1 px-4 py-3 rounded-xl font-semibold text-sm bg-emerald-600 text-white hover:bg-emerald-500"
                       >
                         ดูเป็นบล็อก
-                      </button>
+                      </button> */}
 
                       <button
                         type="button"
@@ -233,9 +263,7 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
                 {(blocksLoading || shelfBlocks) && (
                   <div className="mt-3 border rounded-xl p-3">
                     <div className="text-sm font-semibold text-slate-800">
-                      {blocksLoading
-                        ? "กำลังโหลด Shelf..."
-                        : `Shelf ${shelfBlocks?.shelf?.shelfCode || "-"}`}
+                      {blocksLoading ? "กำลังโหลด Shelf..." : `Shelf ${shelfBlocks?.shelf?.shelfCode || "-"}`}
                     </div>
 
                     {!blocksLoading && Array.isArray(shelfBlocks?.rows) && (
@@ -298,7 +326,7 @@ const TemplateBarcodePanel = ({ storecode, onGoShelf }) => {
                 className="px-3 py-2 rounded-lg text-xs font-semibold border bg-white hover:bg-slate-50"
                 onClick={() => {
                   setPopupOpen(false);
-                  setCameraOpen(true); // สแกนต่อด้วยกล้อง
+                  setCameraOpen(true);
                 }}
               >
                 สแกนต่อ

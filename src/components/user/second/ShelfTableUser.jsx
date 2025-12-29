@@ -106,7 +106,7 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
             </th>
             {/* Audit */}
             <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              Audit
+              check
             </th>
           </tr>
         </thead>

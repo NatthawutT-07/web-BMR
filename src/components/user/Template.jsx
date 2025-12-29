@@ -262,7 +262,7 @@ const Template = () => {
                   mode === "barcode" ? "bg-emerald-600 text-white" : "text-slate-700 hover:bg-slate-50"
                 )}
               >
-                📦 บาร์โค้ด
+              Barcode
               </button>
               <button
                 type="button"
@@ -272,7 +272,7 @@ const Template = () => {
                   mode === "shelf" ? "bg-emerald-600 text-white" : "text-slate-700 hover:bg-slate-50"
                 )}
               >
-                🧱 Shelf
+              Shelf
               </button>
             </div>
 
@@ -288,8 +288,6 @@ const Template = () => {
             )}
           </div>
         </header>
-
-
 
         {/* ===== PRINT MODAL ===== */}
         {printModalOpen && (
@@ -398,10 +396,11 @@ const Template = () => {
           </div>
         )}
 
-        {/* ✅ โหมดบาร์โค้ด: แยกเป็น component */}
+        {/* ✅ โหมดบาร์โค้ด: ส่ง branchName เข้าไป */}
         {mode === "barcode" && (
           <TemplateBarcodePanel
             storecode={storecode}
+            branchName={branchName}
             onGoShelf={(shelfCode) => {
               setMode("shelf");
               setSelectedShelves([shelfCode]);
@@ -411,7 +410,7 @@ const Template = () => {
           />
         )}
 
-        {/* ✅ โหมด shelf: ของเดิม */}
+        {/* ✅ โหมด shelf */}
         {mode === "shelf" && (
           <>
             {/* SUMMARY + IMAGE */}
@@ -419,7 +418,7 @@ const Template = () => {
               <section className="w-full flex justify-center print:hidden">
                 <div
                   className="bg-white p-4 rounded-lg shadow-sm border justify-center
-              flex flex-col md:flex-row gap-4 mx-auto w-full max-w-4xl"
+                  flex flex-col md:flex-row gap-4 mx-auto w-full max-w-4xl"
                 >
                   <div className="flex justify-center md:w-[260px]">
                     <img
@@ -432,7 +431,7 @@ const Template = () => {
 
                   <div
                     className="bg-gray-50 border rounded p-3 shadow-inner 
-                max-h-[420px] md:max-h-[480px] w-full md:w-[260px] overflow-y-auto"
+                    max-h-[420px] md:max-h-[480px] w-full md:w-[260px] overflow-y-auto"
                   >
                     <h3 className="font-semibold text-gray-700 mb-1 text-sm text-center">
                       โครงสร้าง Shelf
@@ -467,6 +466,7 @@ const Template = () => {
                 </div>
               </section>
             )}
+
             {/* FILTER + SEARCH */}
             <section className="space-y-3 print:hidden">
               {!loading && groupedShelves.length > 0 && (
