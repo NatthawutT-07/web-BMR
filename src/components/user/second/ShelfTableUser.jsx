@@ -35,8 +35,8 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
   }, [valid]);
 
   const zeroToDash = (v) => {
-    if (v === null || v === undefined) return "-";
-    if (v === 0 || v === "0") return "-";
+    if (v === null || v === undefined) return "0";
+    if (v === 0 || v === "0") return "0";
     return v;
   };
 

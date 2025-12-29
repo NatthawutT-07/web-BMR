@@ -699,7 +699,7 @@ const ShelfTable = ({
                 <td className="p-1 border text-center w-14 text-yellow-700">
                   {prod.stockQuantity !== null && prod.stockQuantity !== undefined
                     ? prod.stockQuantity.toLocaleString()
-                    : "-"}
+                    : "0"}
                 </td>
                 <td colSpan={4}>
                 </td>
