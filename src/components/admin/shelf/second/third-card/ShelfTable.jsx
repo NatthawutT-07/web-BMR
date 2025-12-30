@@ -701,24 +701,24 @@ const ShelfTable = ({
                     ? prod.stockQuantity.toLocaleString()
                     : "0"}
                 </td>
-                <td colSpan={4}>
-                </td>
-                {/* 
+                {/* <td colSpan={4}>  </td> */}
+               
+                
                 <td className="p-1 border text-right w-16">
                   {format(prod.purchasePriceExcVAT)}
                 </td>
 
                 <td className="p-1 border text-right w-20 text-yellow-600">
                   {format(cost)}
-                </td> */}
-                {/* 
+                </td>
+                
                 <td className="p-1 border text-right w-24 text-green-600">
                   {prod.salesTotalPrice ? prod.salesTotalPrice.toFixed(2) : "-"}
                 </td>
 
                 <td className="p-1 border text-right w-24 text-orange-600">
                   {format(prod.withdrawValue)}
-                </td> */}
+                </td>
 
                 <td className="border p-1 text-center w-16">
                   <button

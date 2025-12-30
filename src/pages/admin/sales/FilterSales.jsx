@@ -63,7 +63,7 @@ const FilterSales = () => {
                 {activePage === "dashboard-sales" && <DashboardSales />}
                 {activePage === "sales" && <MainFilterSales />}
                 {activePage === "product-sales" && <MainSalesProduct />}
-                {/* {activePage === "member" && <Member />} */}
+                {activePage === "member" && <Member />}
                 {activePage === "calculator-sales" && <CalculatorSales />}
             </main>
         </div>
