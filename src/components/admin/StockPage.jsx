@@ -572,13 +572,13 @@ const StockPage = () => {
 
                                 <td className="border px-2 py-1 text-center">{formatInt(item.sales90dQty)}</td>
 
-                                {/* <td className="border px-2 py-1 text-right">{formatMoney(item.purchasePriceExcVAT)}</td> */}
+                                <td className="border px-2 py-1 text-right">{formatMoney(item.purchasePriceExcVAT)}</td>
 
-                                {/* <td className="border px-2 py-1 text-right text-emerald-700 font-semibold">
+                                <td className="border px-2 py-1 text-right text-emerald-700 font-semibold">
                                   {formatMoney(item.stockCost)}
-                                </td> */}
+                                </td>
 
-                                {/* <td className="border px-2 py-1 text-right">{formatMoney(item.salesPriceIncVAT)}</td> */}
+                                <td className="border px-2 py-1 text-right">{formatMoney(item.salesPriceIncVAT)}</td>
                               </tr>
                             );
                           })}

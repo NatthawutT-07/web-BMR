@@ -44,17 +44,20 @@ const LoadingToRedirect = ({ to = "/", seconds = 0, forceRedirect = false }) => 
         <div className="flex items-center justify-center gap-3">
           <div className="w-5 h-5 rounded-full border-2 border-gray-300 border-t-transparent animate-spin" />
           <p className="text-lg text-gray-700 font-medium">
-            กำลังตรวจสอบสิทธิ์...
+            {/* กำลังตรวจสอบสิทธิ์... */}
           </p>
         </div>
 
         <div className="mt-3 text-sm text-gray-500">
           {!authReady || refreshing ? (
-            <span>กำลังเช็คโทเคน / รีเฟรชโทเคน</span>
+            <span></span>
+            // <span>กำลังเช็คโทเคน / รีเฟรชโทเคน</span>
           ) : accessToken ? (
-            <span>พร้อมใช้งาน</span>
+            <span></span>
+            // <span>พร้อมใช้งาน</span>
           ) : (
-            <span>ไม่พบโทเคน (กำลังพาไปหน้าเข้าสู่ระบบ)</span>
+            <span></span>
+            // <span>ไม่พบโทเคน (กำลังพาไปหน้าเข้าสู่ระบบ)</span>
           )}
         </div>
       </div>
