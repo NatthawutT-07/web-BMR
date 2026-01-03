@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import useBmrStore from "../../store/bmr_store";
-import LoadingToRedirect from "../../routers/LoadingToRedirect";
 
 function LoginPage() {
   const actionLogin = useBmrStore((s) => s.actionLogin);
@@ -9,21 +8,10 @@ function LoginPage() {
   const accessToken = useBmrStore((s) => s.accessToken);
   const user = useBmrStore((s) => s.user);
 
-  // ✅ รอการ hydrate + initAuth ก่อน (กัน login กระพริบ)
-  const hasHydrated = useBmrStore((s) => s.hasHydrated);
-  const authReady = useBmrStore((s) => s.authReady);
-  const refreshing = useBmrStore((s) => s.refreshing);
-  const initAuth = useBmrStore((s) => s.initAuth);
-
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ name: "", password: "" });
   const [errorMsg, setErrorMsg] = useState("");
-
-  // ✅ เรียก initAuth ตอนเปิดหน้า (ถ้ามี user ค้างอยู่จะพยายาม refresh-token ให้)
-  useEffect(() => {
-    if (hasHydrated && !authReady) initAuth();
-  }, [hasHydrated, authReady, initAuth]);
 
   // ✅ ถ้าล็อกอินค้างอยู่แล้ว → เด้งตาม role
   useEffect(() => {
@@ -35,11 +23,6 @@ function LoginPage() {
       else navigate("/", { replace: true });
     }
   }, [accessToken, user, navigate]);
-
-  // ✅ ระหว่างรอ hydrate/refresh-token → โชว์ Loading (ไม่โชว์ login แวบ ๆ)
-  if (!hasHydrated || !authReady || refreshing) {
-    return <LoadingToRedirect />;
-  }
 
   const handleSubmit = async (e) => {
     e.preventDefault();

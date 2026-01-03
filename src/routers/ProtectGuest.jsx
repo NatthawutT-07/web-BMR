@@ -1,6 +1,5 @@
 // C:\BMR\bmr_data\edit\web-BMR\src\routers\ProtectGuest.jsx
 import { Navigate } from "react-router-dom";
-import { useEffect } from "react";
 import useBmrStore from "../store/bmr_store";
 import LoadingToRedirect from "./LoadingToRedirect";
 
@@ -9,15 +8,9 @@ const ProtectGuest = ({ element }) => {
   const user = useBmrStore((s) => s.user);
 
   const hasHydrated = useBmrStore((s) => s.hasHydrated);
-  const authReady = useBmrStore((s) => s.authReady);
-  const initAuth = useBmrStore((s) => s.initAuth);
 
-  useEffect(() => {
-    if (hasHydrated && !authReady) initAuth();
-  }, [hasHydrated, authReady, initAuth]);
-
-  // ✅ ระหว่างรอ hydrate/refresh-token → โชว์ Loading (ไม่เด้งไป login)
-  if (!hasHydrated || !authReady) {
+  // ✅ รอ hydrate ให้เสร็จก่อน (กันกระพริบ)
+  if (!hasHydrated) {
     return <LoadingToRedirect />;
   }
 

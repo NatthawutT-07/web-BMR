@@ -166,9 +166,6 @@ const useBmrStore = create(
 
       // ✅ hydrate เสร็จแล้วแน่นอน
       state?.setHasHydrated?.(true);
-
-      // ✅ เริ่มตรวจสอบสิทธิ์ทันที (มี guard กันซ้ำใน initAuth แล้ว)
-      state?.initAuth?.();
     },
   })
 );
