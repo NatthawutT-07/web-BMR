@@ -332,8 +332,8 @@ const StockPage = () => {
             <h1 className="text-base sm:text-lg font-semibold text-slate-800">Stock overview</h1>
           </div>
 
-          <div className="flex items-stretch gap-2">
-            <div className="bg-slate-100 rounded-lg px-3 py-2 text-right min-w-[190px]">
+          <div className="flex flex-col sm:flex-row sm:items-stretch gap-2 w-full sm:w-auto">
+            <div className="bg-slate-100 rounded-lg px-3 py-2 text-right w-full sm:min-w-[190px]">
               <div className="text-[11px] text-slate-500">Total stock cost</div>
               <div className="text-base sm:text-lg font-semibold text-emerald-700">
                 ฿ {formatMoney(grandTotalCostAll)}
@@ -346,7 +346,7 @@ const StockPage = () => {
               </div>
             </div>
 
-            <div className="bg-slate-100 rounded-lg px-3 py-2 text-right min-w-[190px]">
+            <div className="bg-slate-100 rounded-lg px-3 py-2 text-right w-full sm:min-w-[190px]">
               <div className="text-[11px] text-slate-500">Total stock cost</div>
               <div className="text-base sm:text-lg font-semibold text-emerald-700">
                 ฿ {formatMoney(excludeTotals.excludeCost)}

@@ -359,7 +359,7 @@ const ShelfManager = () => {
               )}
             </div>
 
-            <div className="bg-gray-50 border rounded p-3 shadow-sm max-h-[450px] w-[400px] overflow-y-auto">
+            <div className="bg-gray-50 border rounded p-3 shadow-sm max-h-[450px] w-full sm:w-[400px] max-w-full overflow-y-auto">
               <h3 className="text-sm font-semibold text-center mb-1">
                 Summary
               </h3>

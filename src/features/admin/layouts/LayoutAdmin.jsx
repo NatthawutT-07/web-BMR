@@ -29,7 +29,7 @@ const LayoutAdmin = () => {
   }, [location.pathname, isMobile]);
 
   return (
-    <div className="relative min-h-screen flex bg-gray-100 overflow-hidden">
+    <div className="relative min-h-screen flex bg-gray-100 overflow-hidden min-w-0">
 
       {/* 🔥 Mobile Hamburger button */}
       {isMobile && (
@@ -55,13 +55,13 @@ const LayoutAdmin = () => {
 
       {/* Desktop content shift (only when expanded) */}
       <div
-        className="flex-1 min-h-screen transition-all duration-300"
+        className="flex-1 min-w-0 min-h-screen transition-all duration-300"
         style={{
           marginLeft:
             !isMobile ? (sidebarExpanded ? 192 : 64) : 0,
         }}
       >
-        <main className="h-full min-h-screen overflow-y-auto overflow-x-hidden">
+        <main className="h-full min-h-screen min-w-0 overflow-y-auto overflow-x-hidden">
           <Outlet />
         </main>
       </div>
