@@ -554,6 +554,7 @@ export default function DashboardSalesTop({
   kpi,
   kpiCompare,
   appliedRangeLabel,
+  compareRangeLabel,
 }) {
   const compareDays = showCompare ? Number(kpiCompare?.dayCount ?? 0) : 0;
 
@@ -645,7 +646,9 @@ export default function DashboardSalesTop({
                     <div className="mt-2 text-lg md:text-xl font-semibold text-slate-700 tabular-nums">
                       {fmtInt(compareDays)}
                     </div>
-                    <div className="mt-1 text-[11px] text-slate-400">days</div>
+                    <div className="mt-1 text-[11px] text-slate-500 whitespace-normal break-words">
+                      {compareRangeLabel}
+                    </div>
                   </div>
                 ) : null}
               </div>

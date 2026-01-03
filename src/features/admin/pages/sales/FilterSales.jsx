@@ -19,20 +19,20 @@ const FilterSales = () => {
 
     return (
         <div className="min-h-screen bg-slate-50/80 flex flex-col !mt-0">
-
             {/* Top nav always stick top 0 with no gap */}
             <header className="sticky top-0 z-30 border-b border-slate-200 bg-white/80 backdrop-blur">
-                <div className="px-3 md:px-6 py-2 md:py-1.5">
-                    <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-
-                        {/* Title */}
-                        <h1 className="text-base md:text-lg font-semibold text-slate-800">
-                            Sales tools
-                        </h1>
+                <div className="px-3 md:px-6 py-2 md:py-2.5">
+                    <div className="mx-auto max-w-7xl flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div>
+                            <h1 className="text-base md:text-lg font-semibold text-slate-800">
+                                Sales tools
+                            </h1>
+                           
+                        </div>
 
                         {/* Tabs */}
-                        <nav>
-                            <div className="flex items-center gap-1 md:gap-2 overflow-x-auto no-scrollbar py-1">
+                        <nav className="w-full md:w-auto">
+                            <div className="flex items-center gap-1.5 md:gap-2 overflow-x-auto no-scrollbar py-1">
                                 {tabs.map((tab) => {
                                     const isActive = activePage === tab.id;
                                     return (
@@ -59,12 +59,14 @@ const FilterSales = () => {
             </header>
 
             {/* Content */}
-            <main className="flex-1 ">
-                {activePage === "dashboard-sales" && <DashboardSales />}
-                {activePage === "sales" && <MainFilterSales />}
-                {activePage === "product-sales" && <MainSalesProduct />}
-                {activePage === "member" && <Member />}
-                {activePage === "calculator-sales" && <CalculatorSales />}
+            <main className="flex-1">
+                <div className="mx-auto max-w-8xl w-full">
+                    {activePage === "dashboard-sales" && <DashboardSales />}
+                    {activePage === "sales" && <MainFilterSales />}
+                    {activePage === "product-sales" && <MainSalesProduct />}
+                    {activePage === "member" && <Member />}
+                    {activePage === "calculator-sales" && <CalculatorSales />}
+                </div>
             </main>
         </div>
     );

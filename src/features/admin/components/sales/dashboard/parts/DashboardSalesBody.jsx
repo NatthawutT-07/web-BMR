@@ -199,8 +199,8 @@ const SalesCompareTable = ({ tableMode, showCompare, dailyRows, monthRows }) => 
           </div>
           <div className="text-[11px] text-slate-500 mt-0.5">
             {tableMode === "month"
-              ? "ตารางรายเดือน (สอดคล้องกับโหมดกราฟ)"
-              : "Daily แบบ union: ถ้าฝั่งไหนไม่มี => 0 และแสดงครบทั้งสองฝั่ง + แสดงวัน (Mon/Tue...)"} {/* ✅ */}
+              ? "Monthly sales data summary"
+              : "Daily sales data summary"} {/* ✅ */}
           </div>
         </div>
 

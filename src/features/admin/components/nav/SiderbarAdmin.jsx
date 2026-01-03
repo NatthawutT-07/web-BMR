@@ -37,7 +37,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
         >
           {/* header */}
           <div className="flex items-center justify-between px-4 h-16 border-b border-gray-700">
-            <span className="text-lg font-bold">BMR Menu</span>
+            <span className="text-lg font-bold">BMR</span>
             <button onClick={closeMobile} className="p-2 hover:bg-gray-700 rounded">
               <X size={20} />
             </button>

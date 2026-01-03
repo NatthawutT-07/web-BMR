@@ -244,6 +244,7 @@ export default function DashboardSales() {
           kpi={kpi}
           kpiCompare={kpiCompare}
           appliedRangeLabel={`${appliedRanges.primary.start} → ${appliedRanges.primary.end}`}
+          compareRangeLabel={`${appliedRanges.compare.start} → ${appliedRanges.compare.end}`}
         />
 
         <LoadingBar show={loading} />
