@@ -7,20 +7,16 @@ import LayoutAdmin from "../layouts/LayoutAdmin";
 import Dashboard from "../pages/admin/Dashboard";
 import LayoutUser from "../layouts/LayoutUser";
 import LoginPage from "../pages/auth/LoginPage";
-import LayoutAudit from "../layouts/LayoutAudit";
 
 // Protect
 import ProtectRouteAdmin from "./ProtectRouteAdmin";
 import ProtectRouteUser from "./ProtectRouteUser";
 import ProtectGuest from "./ProtectGuest";
-import ProtectRouteManager from "./ProtectRouteManager";
-import ProtectRouteAudit from "./ProtectRouteAudit";
 
 // Admin Components
 import Upload from "../pages/admin/Upload";
 import Template from "../pages/admin/Template";
 import FilterSales from "../pages/admin/sales/FilterSales";
-import LayoutManager from "../layouts/LayoutManager";
 import Stock from "../pages/admin/Stock";
 
 const router = createBrowserRouter([
@@ -33,17 +29,6 @@ const router = createBrowserRouter([
                 element: <ProtectGuest element={<LoginPage />} />,
             },
         ],
-    },
-
-    // Manager → ดู dashboard admin อย่างเดียว (ตัวอย่างใช้ Dashboard)
-    {
-        path: "/manager",
-        element: <ProtectRouteManager element={<LayoutManager />} />,
-        // children: [
-        // { index: true, element: <DashboardSales /> },
-        // ถ้าต้องการให้ manager ดูแค่บางหน้าก็เพิ่ม route แยกเฉพาะที่นี่
-        // เช่น { path: "dashboard-sales", element: <DashboardSales /> },
-        // ],
     },
 
     // Admin เต็มสิทธิ์
@@ -60,16 +45,6 @@ const router = createBrowserRouter([
             // { path: "calculator-sales", element: <Calculator /> },
             { path: "stock", element: <Stock /> },
             // { path: "member", element: <Member /> },
-        ],
-    },
-
-    // Audit → จัดการ shelf ตาม LayoutAudit
-    {
-        path: "/audit",
-        element: <ProtectRouteAudit element={<LayoutAudit />} />,
-        children: [
-            // ใส่หน้า child ของ audit ที่ต้องใช้เพิ่มได้
-            // เช่น { index: true, element: <AuditShelf /> }
         ],
     },
 

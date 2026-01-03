@@ -17,8 +17,6 @@ const ProtectGuest = ({ element }) => {
   // ถ้ามี token + user แล้ว → ส่งตาม role
   if (token && user) {
     if (user.role === "admin") return <Navigate to="/admin" replace />;
-    if (user.role === "manager") return <Navigate to="/manager" replace />;
-    if (user.role === "audit") return <Navigate to="/audit" replace />;
     if (user.role === "user") return <Navigate to={`/store/${user.storecode}`} replace />;
     return <Navigate to="/" replace />;
   }

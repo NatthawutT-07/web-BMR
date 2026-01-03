@@ -17,8 +17,6 @@ function LoginPage() {
   useEffect(() => {
     if (accessToken && user) {
       if (user.role === "admin") navigate("/admin", { replace: true });
-      else if (user.role === "manager") navigate("/manager", { replace: true });
-      else if (user.role === "audit") navigate("/audit", { replace: true });
       else if (user.role === "user") navigate(`/store/${user.storecode}`, { replace: true });
       else navigate("/", { replace: true });
     }
@@ -33,8 +31,6 @@ function LoginPage() {
       const role = res?.data?.payload?.role;
 
       if (role === "admin") navigate("/admin", { replace: true });
-      else if (role === "manager") navigate("/manager", { replace: true });
-      else if (role === "audit") navigate("/audit", { replace: true });
       else if (role === "user") navigate(`/store/${form.name}`, { replace: true });
       else navigate("/", { replace: true });
     } catch (err) {
