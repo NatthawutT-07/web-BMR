@@ -126,7 +126,9 @@ const ShelfManager = () => {
       const salesTotal = p.salesTotalPrice ?? p.sales_total_price ?? 0;
       const withdrawVal = p.withdrawValue ?? p.withdraw_value ?? 0;
 
-      summaryMap[shelf].totalStockCost += stockQty * purchasePrice;
+      if (stockQty > 0) {
+        summaryMap[shelf].totalStockCost += stockQty * purchasePrice;
+      }
       summaryMap[shelf].totalSales += salesTotal;
       summaryMap[shelf].totalWithdraw += withdrawVal;
     });

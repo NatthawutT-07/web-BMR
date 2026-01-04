@@ -18,6 +18,7 @@ import Upload from "../features/admin/pages/Upload";
 import Template from "../features/admin/pages/Template";
 import FilterSales from "../features/admin/pages/sales/FilterSales";
 import Stock from "../features/admin/pages/Stock";
+import ShelfDashboard from "../features/admin/pages/ShelfDashboard";
 
 const router = createBrowserRouter([
     // หน้า Login
@@ -38,6 +39,7 @@ const router = createBrowserRouter([
         children: [
             { index: true, element: <Dashboard /> },
             { path: "shelf", element: <Template /> },
+            { path: "dashboard-shelf", element: <ShelfDashboard /> },
             { path: "upload", element: <Upload /> },
             { path: "sales", element: <FilterSales /> },
             // { path: "dashboard-sales", element: <DashboardSales /> },

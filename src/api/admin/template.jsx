@@ -79,3 +79,15 @@ export const getMasterItem = async (q) => {
         return error;
     }
 };
+
+// ------------------------------------------------------------
+// GET: Shelf dashboard summary (all branches)
+// ------------------------------------------------------------
+export const getShelfDashboardSummary = async () => {
+    try {
+        const response = await api.get("/shelf-dashboard-summary");
+        return response.data;
+    } catch (error) {
+        return error;
+    }
+};

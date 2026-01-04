@@ -14,6 +14,13 @@ const Dashboard = () => {
       badge: "Sales",
     },
     {
+      key: "dashboard-shelf",
+      title: "Shelf dashboard",
+      desc: "ภาพรวมสต็อก, ยอดขาย และการเบิกทุกสาขา",
+      color: "from-violet-400 to-violet-500",
+      badge: "Shelf",
+    },
+    {
       key: "shelf",
       title: "Store & shelf",
       desc: "จัดการชั้นวาง, สินค้าหน้าร้าน และภาพรวมสต็อก",

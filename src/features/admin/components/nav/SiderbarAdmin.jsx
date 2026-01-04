@@ -7,7 +7,8 @@ import {
   Store,
   FileUp,
   ChartNoAxesCombined,
-  Package2
+  Package2,
+  LayoutDashboard
 } from "lucide-react";
 import useBmrStore from "../../../../store/bmr_store";
 
@@ -46,6 +47,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
           {/* items */}
           <nav className="p-4 space-y-2">
             <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} close={closeMobile} />
+            <SidebarItem to="dashboard-shelf" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} close={closeMobile} />
             <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} close={closeMobile} />
             <SidebarItem to="upload" label="Upload CSV" icon={<FileUp size={20} />} close={closeMobile} />
             <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} close={closeMobile} />
@@ -83,6 +85,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
       {/* items */}
       <nav className="flex-1 px-2 py-4 space-y-2">
         <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} expanded={isOpen} />
+        <SidebarItem to="dashboard-shelf" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} expanded={isOpen} />
         <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} expanded={isOpen} />
         <SidebarItem to="upload" label="Upload CSV" icon={<FileUp size={20} />} expanded={isOpen} />
         <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} />
