@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { getShelfDashboardSummary } from "../../../api/admin/template";
+import { getShelfDashboardSummary, getShelfDashboardShelfSales } from "../../../api/admin/template";
 
 const fmtNumber = (value) => Number(value || 0).toLocaleString();
 const fmtMoney2 = (value) => {
@@ -18,6 +18,9 @@ const ShelfDashboard = () => {
   const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const [expandedBranch, setExpandedBranch] = useState(null);
+  const [shelfSalesByBranch, setShelfSalesByBranch] = useState({});
+  const [shelfSalesLoading, setShelfSalesLoading] = useState({});
+  const [shelfSalesError, setShelfSalesError] = useState({});
 
   const loadSummary = async () => {
     setLoading(true);
@@ -36,6 +39,29 @@ const ShelfDashboard = () => {
   useEffect(() => {
     loadSummary();
   }, []);
+
+  const loadShelfSales = async (branchCode) => {
+    const code = String(branchCode || "").trim();
+    if (!code) return;
+    if (shelfSalesLoading[code]) return;
+    if (shelfSalesByBranch[code]) return;
+
+    setShelfSalesLoading((prev) => ({ ...prev, [code]: true }));
+    setShelfSalesError((prev) => ({ ...prev, [code]: "" }));
+
+    try {
+      const res = await getShelfDashboardShelfSales(code);
+      const shelves = Array.isArray(res?.shelves) ? res.shelves : [];
+      setShelfSalesByBranch((prev) => ({ ...prev, [code]: shelves }));
+    } catch (err) {
+      setShelfSalesError((prev) => ({
+        ...prev,
+        [code]: err?.message || "โหลดข้อมูล shelf ไม่สำเร็จ",
+      }));
+    } finally {
+      setShelfSalesLoading((prev) => ({ ...prev, [code]: false }));
+    }
+  };
 
   const totals = useMemo(() => {
     return rows.reduce(
@@ -143,9 +169,12 @@ const ShelfDashboard = () => {
               <tbody className="divide-y divide-slate-100">
                 {filteredRows.map((row) => {
                   const isOpen = expandedBranch === row.branchCode;
-                  const shelfSales = Array.isArray(row.shelfSales)
-                    ? row.shelfSales.filter((s) => Number(s.skuCount || 0) > 0)
-                    : [];
+                  const shelfSalesRaw = shelfSalesByBranch[row.branchCode] || [];
+                  const shelfSales = shelfSalesRaw.filter(
+                    (s) => Number(s.skuCount || 0) > 0
+                  );
+                  const isShelfLoading = !!shelfSalesLoading[row.branchCode];
+                  const shelfError = shelfSalesError[row.branchCode];
 
                   return (
                     <React.Fragment key={row.branchCode}>
@@ -174,13 +203,17 @@ const ShelfDashboard = () => {
                           <button
                             type="button"
                             onClick={() =>
-                              setExpandedBranch(isOpen ? null : row.branchCode)
+                              setExpandedBranch((prev) => {
+                                const next = isOpen ? null : row.branchCode;
+                                if (next) loadShelfSales(next);
+                                return next;
+                              })
                             }
                             className="text-xs text-slate-600 hover:text-slate-900"
                           >
                             {isOpen
                               ? "ซ่อนรายละเอียด"
-                              : `ดู ${shelfSales.length} shelf`}
+                              : "ดูรายละเอียด"}
                           </button>
                         </td>
                       </tr>
@@ -188,7 +221,15 @@ const ShelfDashboard = () => {
                       {isOpen && (
                         <tr>
                           <td colSpan={7} className="px-4 py-3 bg-slate-50">
-                            {shelfSales.length === 0 ? (
+                            {isShelfLoading ? (
+                              <div className="text-xs text-slate-500">
+                                กำลังโหลดข้อมูล...
+                              </div>
+                            ) : shelfError ? (
+                              <div className="text-xs text-red-600">
+                                {shelfError}
+                              </div>
+                            ) : shelfSales.length === 0 ? (
                               <div className="text-xs text-slate-500">
                                 ไม่พบข้อมูลยอดขายราย shelf
                               </div>

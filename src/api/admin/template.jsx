@@ -91,3 +91,17 @@ export const getShelfDashboardSummary = async () => {
         return error;
     }
 };
+
+// ------------------------------------------------------------
+// GET: Shelf dashboard shelf sales (per branch)
+// ------------------------------------------------------------
+export const getShelfDashboardShelfSales = async (branchCode) => {
+    try {
+        const response = await api.get("/shelf-dashboard-shelf-sales", {
+            params: { branchCode },
+        });
+        return response.data;
+    } catch (error) {
+        return error;
+    }
+};
