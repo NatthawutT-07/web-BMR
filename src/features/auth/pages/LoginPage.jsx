@@ -13,6 +13,7 @@ function LoginPage() {
   const [form, setForm] = useState({ name: "", password: "" });
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [nameError, setNameError] = useState("");
 
   // ✅ ถ้าล็อกอินค้างอยู่แล้ว → เด้งตาม role
   useEffect(() => {
@@ -26,18 +27,62 @@ function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setErrorMsg("");
+    setNameError("");
+
+    const rawInput = String(form.name || "").trim();
+    if (!rawInput) {
+      setNameError("กรุณากรอกรหัสสาขา");
+      return;
+    }
+    const branchCandidate = rawInput.replace(/\s+/g, "");
+    const isBranchCode = /^[A-Za-z]{2}\d{3}$/.test(branchCandidate);
+    const branchCode = isBranchCode ? branchCandidate.toUpperCase() : "";
+    const isAdminUser = /^admin$/i.test(branchCandidate);
+    if (!isBranchCode && !isAdminUser) {
+      setNameError("รูปแบบรหัสสาขาไม่ถูกต้อง (เช่น ST002) หรือ admin");
+      return;
+    }
 
     try {
       setIsSubmitting(true);
-      const res = await actionLogin(form);
+      const nameForAuth = isBranchCode ? branchCode : "admin";
+      const res = await actionLogin({
+        name: nameForAuth,
+        password: form.password,
+        storecode: branchCode || undefined,
+      });
       const role = res?.data?.payload?.role;
 
       if (role === "admin") navigate("/admin", { replace: true });
-      else if (role === "user") navigate(`/store/${form.name}`, { replace: true });
+      else if (role === "user") navigate(`/store/${branchCode}`, { replace: true });
       else navigate("/", { replace: true });
     } catch (err) {
-      const errMsg = err?.response?.data?.msg || "Login failed";
-      setErrorMsg(errMsg);
+      const payload = err?.response?.data;
+      let errMsg =
+        payload?.message ||
+        payload?.msg ||
+        (typeof payload === "string" ? payload : "") ||
+        err?.userMessage ||
+        err?.message ||
+        "เข้าสู่ระบบไม่สำเร็จ";
+
+      if (typeof errMsg === "string" && errMsg.startsWith("{")) {
+        try {
+          const parsed = JSON.parse(errMsg);
+          errMsg = parsed?.message || parsed?.msg || errMsg;
+        } catch {}
+      }
+
+      const lowered = String(errMsg || "").toLowerCase();
+      if (lowered.includes("user not found") || lowered.includes("not enabled")) {
+        errMsg = "ไม่พบผู้ใช้หรือยังไม่เปิดใช้งาน";
+      } else if (lowered.includes("password invalid")) {
+        errMsg = "รหัสผ่านไม่ถูกต้อง";
+      } else if (lowered.includes("csrf")) {
+        errMsg = "เซสชันหมดอายุ กรุณาลองใหม่";
+      }
+
+      setErrorMsg(String(errMsg || "เข้าสู่ระบบไม่สำเร็จ"));
     } finally {
       setIsSubmitting(false);
     }
@@ -46,6 +91,18 @@ function LoginPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     if (errorMsg) setErrorMsg("");
+    if (nameError && name === "name") setNameError("");
+    if (name === "name") {
+      const cleaned = String(value || "");
+      const compact = cleaned.replace(/\s+/g, "");
+      const normalized = /^[A-Za-z]{2}\d{3}$/.test(compact)
+        ? compact.toUpperCase()
+        : compact.toLowerCase() === "admin"
+        ? "admin"
+        : compact;
+      setForm((prev) => ({ ...prev, [name]: normalized }));
+      return;
+    }
     setForm((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -55,7 +112,7 @@ function LoginPage() {
         <div className="flex flex-col items-center text-center">
           <img src="/Bringmindlogo.png" alt="Logo" className="h-40 sm:h-48" />
         </div>
-        <form onSubmit={handleSubmit} className="mt-2 space-y-4">
+        <form onSubmit={handleSubmit} autoComplete="off" className="mt-2 space-y-4">
           <div>
             <input
               placeholder="รหัสสาขา ST001"
@@ -63,9 +120,13 @@ function LoginPage() {
               value={form.name}
               type="text"
               name="name"
-              autoComplete="username"
+              autoComplete="off"
+              data-lpignore="true"
               className=" w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             />
+            {nameError && (
+              <div className="mt-1 text-xs text-rose-600">{nameError}</div>
+            )}
           </div>
 
           <div>
@@ -75,7 +136,8 @@ function LoginPage() {
               value={form.password}
               type="password"
               name="password"
-              autoComplete="current-password"
+              autoComplete="off"
+              data-lpignore="true"
               className=" w-full rounded-lg border border-slate-200 bg-white px-4 py-3 text-base shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
             />
           </div>

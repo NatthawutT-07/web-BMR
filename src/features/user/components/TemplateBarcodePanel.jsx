@@ -9,6 +9,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
   const barcodeInputRef = useRef(null);
 
   const [barcode, setBarcode] = useState("");
+  const [barcodeError, setBarcodeError] = useState("");
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupRes, setLookupRes] = useState(null);
 
@@ -43,12 +44,13 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
     if (r === "BARCODE_NOT_FOUND") return "ไม่พบบาร์โค้ดในรายการสินค้า";
     if (r === "NO_LOCATION_IN_POG") return "พบสินค้า แต่ยังไม่มีตำแหน่งใน POG";
     if (r === "TIMEOUT") return "ระบบตอบช้าเกินไป (ลองสแกนใหม่อีกครั้ง)";
-    if (r === "REQUEST_ERROR") return "ยิง API ไม่สำเร็จ";
+    if (r === "REQUEST_ERROR") return "โหลดไม่สำเร็จ";
     return "ไม่พบข้อมูล";
   };
 
   const clearAll = () => {
     setBarcode("");
+    setBarcodeError("");
     setLookupRes(null);
     setShelfBlocks(null);
     setPopupOpen(false);
@@ -58,10 +60,15 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
   const lookupByBarcode = async (bc) => {
     const code = String(bc || "").trim();
     if (!storecode || !code) return;
+    if (code.length < 6) {
+      setBarcodeError("บาร์โค้ดควรมีอย่างน้อย 6 หลัก");
+      return;
+    }
 
     setLookupLoading(true);
     setLookupRes(null);
     setShelfBlocks(null);
+    setBarcodeError("");
 
     try {
       const res = await api.get("/lookup", {
@@ -136,7 +143,16 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
             type="text"
             inputMode="numeric"
             value={barcode}
-            onChange={(e) => setBarcode(e.target.value)}
+            onChange={(e) => {
+              const raw = e.target.value || "";
+              const digitsOnly = raw.replace(/\D/g, "");
+              if (raw !== digitsOnly) {
+                setBarcodeError("กรอกได้เฉพาะตัวเลขเท่านั้น");
+              } else if (barcodeError) {
+                setBarcodeError("");
+              }
+              setBarcode(digitsOnly);
+            }}
             onKeyDown={(e) => {
               if (e.key === "Enter") openPopupAndLookup(barcode);
             }}
@@ -171,6 +187,9 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
             </button>
           </div>
         </div>
+        {barcodeError && (
+          <div className="mt-2 text-xs text-rose-600">{barcodeError}</div>
+        )}
       </div>
 
       {/* Popup ผลลัพธ์ */}

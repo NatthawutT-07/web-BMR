@@ -50,6 +50,7 @@ const Template = () => {
   const [selectedShelves, setSelectedShelves] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
+  const [searchHint, setSearchHint] = useState("");
 
   // ✅ โหมด 2 ปุ่ม
   const [mode, setMode] = useState("shelf"); // "barcode" | "shelf"
@@ -201,6 +202,15 @@ const Template = () => {
 
     return mapped;
   }, [groupedShelves, selectedShelves, searchText, isPrinting, printTargetShelves]);
+
+  useEffect(() => {
+    const q = searchText.trim();
+    if (q.length === 1) {
+      setSearchHint("พิมพ์อย่างน้อย 2 ตัวอักษรเพื่อค้นหา");
+    } else {
+      setSearchHint("");
+    }
+  }, [searchText]);
 
   // ===== Print flow =====
   const openPrintModal = () => {
@@ -500,6 +510,9 @@ const Template = () => {
                   value={searchText}
                   onChange={(e) => setSearchText(e.target.value)}
                 />
+                {searchHint && (
+                  <div className="mt-1 text-xs text-amber-600">{searchHint}</div>
+                )}
               </div>
             </section>
 

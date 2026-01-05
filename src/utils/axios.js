@@ -61,6 +61,18 @@ api.interceptors.response.use(
   (res) => res,
   async (error) => {
     const original = error.config;
+    const status = error?.response?.status;
+    const payload = error?.response?.data;
+    const normalizedMessage =
+      payload?.message ||
+      payload?.msg ||
+      payload?.error ||
+      (status ? "เกิดข้อผิดพลาด" : "เชื่อมต่อไม่ได้");
+
+    if (normalizedMessage) {
+      error.message = normalizedMessage;
+      error.userMessage = normalizedMessage;
+    }
 
     // ถ้าไม่มี config หรือเป็น refresh เองแล้วพัง -> logout
     if (!original || isRefreshEndpoint(original)) {
