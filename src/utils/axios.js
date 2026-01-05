@@ -6,12 +6,23 @@ const api = axios.create({
   withCredentials: true, // ✅ ให้ส่ง cookie refresh token ไปด้วย
 });
 
+const getCookieValue = (name) => {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie
+    .split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${name}=`));
+  return match ? decodeURIComponent(match.split("=")[1] || "") : null;
+};
+
 // ======================
 //  REQUEST INTERCEPTOR
 // ======================
 api.interceptors.request.use((config) => {
   const token = useBmrStore.getState().accessToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  const csrfToken = getCookieValue("csrfToken");
+  if (csrfToken) config.headers["x-csrf-token"] = csrfToken;
   return config;
 });
 

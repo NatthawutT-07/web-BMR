@@ -4,8 +4,31 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import api from "../utils/axios";
 import axios from "axios";
 
+const getCookieValue = (name) => {
+  if (typeof document === "undefined") return null;
+  const match = document.cookie
+    .split(";")
+    .map((c) => c.trim())
+    .find((c) => c.startsWith(`${name}=`));
+  return match ? decodeURIComponent(match.split("=")[1] || "") : null;
+};
+
+const ensureCsrfToken = async () => {
+  const existing = getCookieValue("csrfToken");
+  if (existing) return existing;
+  try {
+    await axios.get((import.meta.env.VITE_API_URL || "") + "/api/csrf-token", {
+      withCredentials: true,
+    });
+  } catch (e) {
+    console.error("CSRF token fetch failed:", e);
+  }
+  return getCookieValue("csrfToken");
+};
+
 const BmrStore = (set, get) => ({
   user: null,
+  storecodeHint: null,
 
   // ✅ access token อยู่ใน memory เท่านั้น (ไม่ persist)
   accessToken: null,
@@ -23,15 +46,17 @@ const BmrStore = (set, get) => ({
 
   // ---------- LOGIN ----------
   actionLogin: async (form) => {
+    await ensureCsrfToken();
     const res = await api.post("/login", form, { withCredentials: true });
 
     const userData = {
       ...res.data.payload,
-      storecode: form.name,
+      storecode: form.storecode || form.name,
     };
 
     set({
       user: userData,
+      storecodeHint: form.storecode || form.name,
       accessToken: res.data.accessToken,
       authReady: true,
       refreshing: false,
@@ -43,10 +68,15 @@ const BmrStore = (set, get) => ({
 
   // ---------- REFRESH ACCESS TOKEN (ใช้ตอน reload หน้า) ----------
   refreshAccessToken: async () => {
+    await ensureCsrfToken();
+    const csrfToken = getCookieValue("csrfToken");
     const res = await axios.post(
       (import.meta.env.VITE_API_URL || "") + "/api/refresh-token",
       {},
-      { withCredentials: true }
+      {
+        withCredentials: true,
+        headers: csrfToken ? { "x-csrf-token": csrfToken } : {},
+      }
     );
 
     const newToken = res.data.accessToken;
@@ -56,7 +86,7 @@ const BmrStore = (set, get) => ({
       user: {
         ...state.user,
         ...(res.data.payload || {}),
-        storecode: state.user?.storecode || res.data.payload?.name,
+        storecode: state.storecodeHint || state.user?.storecode || res.data.payload?.name,
       },
     }));
 
@@ -95,22 +125,17 @@ const BmrStore = (set, get) => ({
         return;
       }
 
-      // ถ้ามี user ที่ persist ไว้ → ลอง refresh-token
-      if (user) {
-        await get().refreshAccessToken();
-        // ถ้าต้องการชัวร์มากขึ้นค่อยเปิดบรรทัดนี้
-        // await get().fetchCurrentUser();
+      // ลอง refresh-token เสมอ (ถ้ามี cookie จะผ่าน ถ้าไม่มีก็ 401 แล้วเคลียร์เอง)
+      await get().refreshAccessToken();
+      // ถ้าต้องการชัวร์มากขึ้นค่อยเปิดบรรทัดนี้
+      // await get().fetchCurrentUser();
 
-        set({ authReady: true, refreshing: false });
-        return;
-      }
-
-      // ไม่มี user เลย → ไม่ต้อง refresh
       set({ authReady: true, refreshing: false });
     } catch (e) {
       // refresh ไม่ผ่าน → เคลียร์สถานะให้ไปหน้า login ได้แบบไม่กระพริบ
       set({
         user: null,
+        storecodeHint: null,
         accessToken: null,
         authReady: true,
         refreshing: false,
@@ -122,6 +147,7 @@ const BmrStore = (set, get) => ({
   // ---------- LOGOUT ----------
   logout: async () => {
     try {
+      await ensureCsrfToken();
       await api.post("/logout", {}, { withCredentials: true });
     } catch (e) {
       console.error("Logout error:", e);
@@ -129,6 +155,7 @@ const BmrStore = (set, get) => ({
 
     set({
       user: null,
+      storecodeHint: null,
       accessToken: null,
       authReady: true,
       refreshing: false,
@@ -156,8 +183,8 @@ const useBmrStore = create(
     name: "bmr-store",
     storage: createJSONStorage(() => localStorage),
     partialize: (state) => ({
-      // ✅ เก็บแค่ user (ไม่เก็บ accessToken)
-      user: state.user,
+      // ✅ เก็บเฉพาะ storecode ที่จำเป็นต่อการผูกสาขา
+      storecodeHint: state.storecodeHint,
     }),
     onRehydrateStorage: () => (state, error) => {
       if (error) {

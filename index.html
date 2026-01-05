@@ -5,6 +5,19 @@
     <!-- <link rel="icon" type="image/svg+xml" href="/icon.svg" /> -->
     <link rel="icon" type="image/png" href="icon.png">
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="
+        default-src 'self';
+        base-uri 'self';
+        object-src 'none';
+        frame-ancestors 'none';
+        img-src 'self' data: https:;
+        script-src 'self';
+        style-src 'self' 'unsafe-inline';
+        connect-src 'self' https: http: ws: wss:;
+      "
+    />
     <title>BMR</title>
   </head>
   <body>

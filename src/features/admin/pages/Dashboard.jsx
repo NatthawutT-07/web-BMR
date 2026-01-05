@@ -6,13 +6,13 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const shortcuts = [
-    {
-      key: "sales",
-      title: "Sales dashboard",
-      desc: "ดูยอดขาย, เปรียบเทียบสาขา, สรุปรายได้รายวัน/เดือน",
-      color: "from-emerald-400 to-emerald-500",
-      badge: "Sales",
-    },
+    // {
+    //   key: "sales",
+    //   title: "Sales dashboard",
+    //   desc: "ดูยอดขาย, เปรียบเทียบสาขา, สรุปรายได้รายวัน/เดือน",
+    //   color: "from-emerald-400 to-emerald-500",
+    //   badge: "Sales",
+    // },
     {
       key: "dashboard-shelf",
       title: "Shelf dashboard",
@@ -27,13 +27,13 @@ const Dashboard = () => {
       color: "from-sky-400 to-sky-500",
       badge: "Store",
     },
-    {
-      key: "upload",
-      title: "Upload CSV",
-      desc: "นำเข้าข้อมูลบิลขาย / สินค้า จากไฟล์ CSV",
-      color: "from-amber-400 to-amber-500",
-      badge: "Data",
-    },
+    // {
+    //   key: "upload",
+    //   title: "Upload CSV",
+    //   desc: "นำเข้าข้อมูลบิลขาย / สินค้า จากไฟล์ CSV",
+    //   color: "from-amber-400 to-amber-500",
+    //   badge: "Data",
+    // },
   ];
 
   return (

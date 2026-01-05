@@ -66,7 +66,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
     <div
       className={`
         bg-gray-900 text-gray-100 h-screen fixed left-0 top-0 z-30
-        transition-all duration-300 flex flex-col
+        transition-[width] duration-200 ease-out flex flex-col
         ${isOpen ? "w-48" : "w-16"}
       `}
     >
@@ -83,7 +83,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
       </div>
 
       {/* items */}
-      <nav className="flex-1 px-2 py-4 space-y-2">
+      <nav className="flex-1 px-1 py-1 space-y-2">
         <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} expanded={isOpen} />
         <SidebarItem to="dashboard-shelf" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} expanded={isOpen} />
         <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} expanded={isOpen} />
@@ -99,30 +99,50 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
 };
 
 const SidebarItem = ({ to, label, icon, expanded, close }) => {
+  const showLabel = expanded !== false;
   return (
     <NavLink
       to={to}
       onClick={() => close && close()}
       className={({ isActive }) =>
-        `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition
+        `flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition min-w-0
         ${isActive ? "bg-gray-800 text-white" : "text-gray-300 hover:bg-gray-700 hover:text-white"}
       `
       }
     >
-      {icon}
-      {expanded !== false && <span>{label}</span>}
+      <span className="w-5 h-5 flex items-center justify-center shrink-0">
+        {icon}
+      </span>
+      <span
+        className={`overflow-hidden whitespace-nowrap transition-all duration-200 ${
+          showLabel ? "max-w-[160px] opacity-100" : "max-w-0 opacity-0"
+        }`}
+      >
+        {label}
+      </span>
     </NavLink>
   );
 };
 
-const SidebarButton = ({ onClick, label, icon, expanded }) => (
+const SidebarButton = ({ onClick, label, icon, expanded }) => {
+  const showLabel = expanded !== false;
+  return (
   <button
     onClick={onClick}
-    className="flex items-center w-full gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition"
+    className="flex items-center w-full gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition min-w-0"
   >
-    {icon}
-    {expanded !== false && <span>{label}</span>}
+    <span className="w-5 h-5 flex items-center justify-center shrink-0">
+      {icon}
+    </span>
+    <span
+      className={`overflow-hidden whitespace-nowrap transition-all duration-200 ${
+        showLabel ? "max-w-[160px] opacity-100" : "max-w-0 opacity-0"
+      }`}
+    >
+      {label}
+    </span>
   </button>
-);
+  );
+};
 
 export default SiderbarAdmin;

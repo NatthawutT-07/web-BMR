@@ -95,9 +95,9 @@ function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-5 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+        {/* <div className="mt-5 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
           เคล็ดลับ: หากพิมพ์รหัสแล้วเข้าสู่ระบบไม่ได้ ให้ตรวจสอบตัวอักษรและตัวเลขอีกครั้ง
-        </div>
+        </div> */}
       </div>
     </div>
   );
