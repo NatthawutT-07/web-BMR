@@ -47,6 +47,15 @@ const formatDDMMYYYY = (d) => {
   return `${day}/${month}/${year}`;
 };
 
+const fmtMoney2 = (value) => {
+  const n = Number(value || 0);
+  if (n === 0) return "0";
+  return n.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 const ShelfManager = () => {
   const accessToken = useBmrStore((s) => s.accessToken);
 
@@ -393,13 +402,13 @@ const ShelfManager = () => {
                   >
                     <span>{s.shelfCode}</span>
                     <span className="text-right text-yellow-700">
-                      {s.totalStockCost.toLocaleString()}
+                      {fmtMoney2(s.totalStockCost)}
                     </span>
                     <span className="text-right text-green-700">
-                      {s.totalSales.toLocaleString()}
+                      {fmtMoney2(s.totalSales)}
                     </span>
                     <span className="text-right text-red-700">
-                      {s.totalWithdraw.toLocaleString()}
+                      {fmtMoney2(s.totalWithdraw)}
                     </span>
                   </div>
                 ))}

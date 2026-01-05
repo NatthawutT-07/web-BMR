@@ -4,7 +4,9 @@ import { getStockData } from "../../../api/admin/download";
 
 const formatMoney = (v) => {
   if (v === null || v === undefined || Number.isNaN(Number(v))) return "-";
-  return Number(v).toLocaleString(undefined, {
+  const n = Number(v);
+  if (n === 0) return "0";
+  return n.toLocaleString(undefined, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

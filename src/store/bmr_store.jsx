@@ -163,11 +163,7 @@ const BmrStore = (set, get) => ({
     });
 
     if (typeof window !== "undefined") {
-      localStorage.removeItem("bmr-store");
-      localStorage.removeItem("shelf-store");
-      localStorage.removeItem("sales-store");
-      localStorage.removeItem("dashboard-sales-store");
-
+      localStorage.clear();
 
       const deleteRequest = indexedDB.deleteDatabase("dashboardDataDB");
       deleteRequest.onsuccess = () =>

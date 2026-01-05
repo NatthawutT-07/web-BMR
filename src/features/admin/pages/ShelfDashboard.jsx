@@ -2,6 +2,14 @@ import React, { useEffect, useMemo, useState } from "react";
 import { getShelfDashboardSummary } from "../../../api/admin/template";
 
 const fmtNumber = (value) => Number(value || 0).toLocaleString();
+const fmtMoney2 = (value) => {
+  const n = Number(value || 0);
+  if (n === 0) return "0";
+  return n.toLocaleString(undefined, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
 
 const ShelfDashboard = () => {
   const [rows, setRows] = useState([]);
@@ -93,12 +101,12 @@ const ShelfDashboard = () => {
       </div>
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        <SummaryCard label="Branches" value={fmtNumber(totals.branches)} />
+        <SummaryCard label="Branches" value={fmtNumber(filteredRows.length)} />
         <SummaryCard label="Shelves" value={fmtNumber(totals.shelves)} />
         <SummaryCard label="Products" value={fmtNumber(totals.products)} />
-        <SummaryCard label="Stock Cost" value={fmtNumber(totals.stockCost)} />
-        <SummaryCard label="Sales (90D)" value={fmtNumber(totals.salesTotal)} />
-        <SummaryCard label="Withdraw" value={fmtNumber(totals.withdrawValue)} />
+        <SummaryCard label="Stock Cost" value={fmtMoney2(totals.stockCost)} />
+        <SummaryCard label="Sales (90D)" value={fmtMoney2(totals.salesTotal)} />
+        <SummaryCard label="Withdraw" value={fmtMoney2(totals.withdrawValue)} />
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
@@ -154,13 +162,13 @@ const ShelfDashboard = () => {
                           {fmtNumber(row.productCount)}
                         </td>
                         <td className="px-4 py-3 text-right text-amber-700">
-                          {fmtNumber(row.stockCost)}
+                          {fmtMoney2(row.stockCost)}
                         </td>
                         <td className="px-4 py-3 text-right text-emerald-700">
-                          {fmtNumber(row.salesTotal)}
+                          {fmtMoney2(row.salesTotal)}
                         </td>
                         <td className="px-4 py-3 text-right text-rose-600">
-                          {fmtNumber(row.withdrawValue)}
+                          {fmtMoney2(row.withdrawValue)}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <button
@@ -198,13 +206,13 @@ const ShelfDashboard = () => {
                                       <div>
                                         <div className="text-slate-400">Sales</div>
                                         <div className="text-emerald-700">
-                                          {fmtNumber(shelf.salesTotal)}
+                                          {fmtMoney2(shelf.salesTotal)}
                                         </div>
                                       </div>
                                       <div>
                                         <div className="text-slate-400">Stock</div>
                                         <div className="text-amber-700">
-                                          {fmtNumber(shelf.stockCost)}
+                                          {fmtMoney2(shelf.stockCost)}
                                         </div>
                                       </div>
                                       <div>

@@ -576,6 +576,16 @@ const ShelfTable = ({
     return Number(v).toLocaleString();
   }, []);
 
+  const formatMoney2 = useCallback((v) => {
+    if (v === null || v === undefined || v === "-") return "-";
+    const n = Number(v);
+    if (n === 0) return "0";
+    return n.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  }, []);
+
   const formatIntLocal = (v) => {
     if (v === null || v === undefined) return "-";
     const n = Number(v);
@@ -705,19 +715,19 @@ const ShelfTable = ({
                
                 
                 <td className="p-1 border text-right w-16">
-                  {format(prod.purchasePriceExcVAT)}
+                  {formatMoney2(prod.purchasePriceExcVAT)}
                 </td>
 
                 <td className="p-1 border text-right w-20 text-yellow-600">
-                  {format(cost)}
+                  {formatMoney2(cost)}
                 </td>
                 
                 <td className="p-1 border text-right w-24 text-green-600">
-                  {prod.salesTotalPrice ? prod.salesTotalPrice.toFixed(2) : "-"}
+                  {formatMoney2(prod.salesTotalPrice)}
                 </td>
 
                 <td className="p-1 border text-right w-24 text-orange-600">
-                  {format(prod.withdrawValue)}
+                  {formatMoney2(prod.withdrawValue)}
                 </td>
 
                 <td className="border p-1 text-center w-16">
@@ -748,15 +758,15 @@ const ShelfTable = ({
           </td>
 
           <td className="p-2 border text-yellow-600 text-right">
-            {format(totalRowStock)}
+            {formatMoney2(totalRowStock)}
           </td>
 
           <td className="p-2 border text-green-700 text-right">
-            {format(totalRowSales)}
+            {formatMoney2(totalRowSales)}
           </td>
 
           <td className="p-2 border text-orange-600 text-right">
-            {format(totalRowWithdraw)}
+            {formatMoney2(totalRowWithdraw)}
           </td>
 
           <td></td>
@@ -841,15 +851,15 @@ const ShelfTable = ({
               </td>
 
               <td className="p-2 border text-yellow-600 text-right">
-                {format(totalAll.stockCost)}
+                {formatMoney2(totalAll.stockCost)}
               </td>
 
               <td className="p-2 border text-green-700 text-right">
-                {format(totalAll.sales)}
+                {formatMoney2(totalAll.sales)}
               </td>
 
               <td className="p-2 border text-orange-600 text-right">
-                {format(totalAll.withdraw)}
+                {formatMoney2(totalAll.withdraw)}
               </td>
 
               <td className="border"></td>
