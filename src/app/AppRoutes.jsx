@@ -41,7 +41,7 @@ const router = createBrowserRouter([
             { path: "shelf", element: <Template /> },
             { path: "dashboard-shelf", element: <ShelfDashboard /> },
             { path: "upload", element: <Upload /> },
-            { path: "sales", element: <FilterSales /> },
+            // { path: "sales", element: <FilterSales /> },
             // { path: "dashboard-sales", element: <DashboardSales /> },
             // { path: "product-sales", element: <MainSalesProduct /> },
             // { path: "calculator-sales", element: <Calculator /> },
