@@ -88,7 +88,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
         <SidebarItem to="dashboard-shelf" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} expanded={isOpen} />
         <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} expanded={isOpen} />
         <SidebarItem to="upload" label="Upload CSV" icon={<FileUp size={20} />} expanded={isOpen} />
-        <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} />
+        {/* <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} /> */}
 
         <div className="pt-8">
           <SidebarButton onClick={handleLogout} label="Logout" icon={<LogOut size={20} />} expanded={isOpen} />

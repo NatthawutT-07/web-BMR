@@ -3,16 +3,13 @@ import { toast } from "react-toastify";
 
 // upload APIs
 import {
-  uploadSalesDayXLSX,
   uploadWithdrawXLSX,
   uploadStockXLSX,
   uploadTemplateXLSX,
   uploadItemSKUXLSX,
-  uploadStationXLSX,
   uploadItemMinMaxXLSX,
   uploadMasterItemXLSX,
   uploadBillXLSX,
-  uploadGourmetXLSX,
   getUploadStatus,
 } from "../../../api/admin/upload";
 
@@ -54,16 +51,13 @@ const UploadCSV = () => {
 
   // อัปโหลด map
   const uploadFunctions = {
-    sales: uploadSalesDayXLSX,
     withdraw: uploadWithdrawXLSX,
     stock: uploadStockXLSX,
     Template: uploadTemplateXLSX,
     SKU: uploadItemSKUXLSX,
-    store: uploadStationXLSX,
     minMax: uploadItemMinMaxXLSX,
     masterItem: uploadMasterItemXLSX,
     bill: uploadBillXLSX,
-    gourmet: uploadGourmetXLSX,
   };
 
   const makeJobId = () => {
@@ -401,14 +395,12 @@ const UploadCSV = () => {
         <option value="">-- Select --</option>
         <option value="Template">POG Shelf XLSX</option>
         <option value="SKU">POG SKU XLSX</option>
-        {/* <option value="sales">Sales XLSX</option> */}
+        <option value="">-</option>
         <option value="withdraw">Withdraw XLSX</option>
         <option value="stock">Stock XLSX</option>
-        {/* <option value="store">Station XLSX</option> */}
         <option value="minMax">ItemMinMax XLSX</option>
         <option value="masterItem">MasterItem XLSX</option>
-        {/* <option value="bill">Bill XLSX</option> */}
-        {/* <option value="gourmet">Gourmet XLSX</option> */}
+        <option value="bill">Bill XLSX</option>
       </select>
 
       {selectedFileType && renderFileUploadForm(selectedFileType)}
