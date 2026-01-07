@@ -21,19 +21,18 @@
       'self'
       https://static.cloudflareinsights.com;
 
+    worker-src
+      'self';
+
     style-src
-      'self'
-      'unsafe-inline';
+      'self';
 
     connect-src
       'self'
       https://api.bmrpog.com
-      https://server-bmr.onrender.com
-      https://static.cloudflareinsights.com
-      http://localhost:5001
-      ws:
-      wss:;
+      https://server-bmr.onrender.com;
   " />
+
     <title>BMR</title>
   </head>
   <body>
@@ -41,3 +40,62 @@
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+
+<!-- production -->
+<!-- <meta
+      http-equiv="Content-Security-Policy"
+      content="
+    default-src 'self';
+    base-uri 'self';
+    object-src 'none';
+
+    img-src
+      'self'
+      data:
+      https:;
+
+    script-src
+      'self'
+      https://static.cloudflareinsights.com;
+
+    worker-src
+      'self';
+
+    style-src
+      'self';
+
+    connect-src
+      'self'
+      https://api.bmrpog.com
+      https://server-bmr.onrender.com;
+  " /> -->
+
+<!-- localhost -->
+<!-- <meta
+  http-equiv="Content-Security-Policy"
+  content="
+    default-src 'self';
+
+    script-src
+      'self'
+      'unsafe-eval'
+      blob:;
+
+    worker-src
+      'self'
+      blob:;
+
+    style-src
+      'self'
+      'unsafe-inline';
+
+    connect-src
+      'self'
+      ws:
+      wss:
+      http://localhost:5173
+      http://localhost:5001
+      https://api.bmrpog.com
+      https://server-bmr.onrender.com;
+  "
+/> -->

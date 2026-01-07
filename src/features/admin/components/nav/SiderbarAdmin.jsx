@@ -49,7 +49,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
             {/* <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} close={closeMobile} /> */}
             <SidebarItem to="dashboard-shelf" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} close={closeMobile} />
             <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} close={closeMobile} />
-            <SidebarItem to="upload" label="Upload CSV" icon={<FileUp size={20} />} close={closeMobile} />
+            <SidebarItem to="upload" label="Upload XLSX" icon={<FileUp size={20} />} close={closeMobile} />
             {/* <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} close={closeMobile} /> */}
 
             <div className="pt-4">
@@ -87,7 +87,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
         {/* <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} expanded={isOpen} /> */}
         <SidebarItem to="dashboard-shelf" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} expanded={isOpen} />
         <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} expanded={isOpen} />
-        <SidebarItem to="upload" label="Upload CSV" icon={<FileUp size={20} />} expanded={isOpen} />
+        <SidebarItem to="upload" label="Upload XLSX" icon={<FileUp size={20} />} expanded={isOpen} />
         {/* <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} /> */}
 
         <div className="pt-8">
