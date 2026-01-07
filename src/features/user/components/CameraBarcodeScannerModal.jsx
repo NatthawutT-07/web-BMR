@@ -71,7 +71,7 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
             lastRef.current = { code: key, ts: now };
 
             // ✅ ส่งกลับเป็น "ตัวเลข" ก่อน ถ้าไม่มีเลขค่อยส่ง raw
-            onDetected?.(digits || raw);
+            onDetected?.(raw);
           }
         );
       } catch (e) {
@@ -80,8 +80,8 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
           e?.name === "NotAllowedError"
             ? "ไม่ได้อนุญาตใช้กล้อง (Allow Camera ก่อน)"
             : e?.name === "NotFoundError"
-            ? "ไม่พบกล้องในอุปกรณ์"
-            : "เปิดกล้องไม่สำเร็จ"
+              ? "ไม่พบกล้องในอุปกรณ์"
+              : "เปิดกล้องไม่สำเร็จ"
         );
       }
     };
@@ -92,7 +92,7 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
       stopped = true;
       try {
         readerRef.current?.reset?.();
-      } catch {}
+      } catch { }
       readerRef.current = null;
     };
   }, [open, onDetected]);
