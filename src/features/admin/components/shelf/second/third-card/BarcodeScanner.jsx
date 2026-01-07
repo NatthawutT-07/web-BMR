@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState, useCallback } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 
 /**
@@ -8,15 +8,17 @@ import { BrowserMultiFormatReader } from "@zxing/browser";
  */
 const BarcodeScanner = ({ onDetected, onClose }) => {
     const videoRef = useRef(null);
-    const codeReaderRef = useRef(null);
+    const controlsRef = useRef(null);
+    const detectedRef = useRef(false); // ✅ ป้องกันการ detect ซ้ำ
     const [error, setError] = useState("");
     const [scanning, setScanning] = useState(true);
 
-    const stopScanner = useCallback(() => {
-        if (codeReaderRef.current) {
-            // หยุดการสแกน
-            BrowserMultiFormatReader.releaseAllStreams();
-            codeReaderRef.current = null;
+    // ✅ ฟังก์ชันหยุดกล้อง
+    const stopScanner = () => {
+        // หยุด decoding controls
+        if (controlsRef.current) {
+            controlsRef.current.stop();
+            controlsRef.current = null;
         }
         // หยุด video stream
         if (videoRef.current?.srcObject) {
@@ -25,24 +27,16 @@ const BarcodeScanner = ({ onDetected, onClose }) => {
             videoRef.current.srcObject = null;
         }
         setScanning(false);
-    }, []);
+    };
 
-    const handleClose = useCallback(() => {
+    const handleClose = () => {
         stopScanner();
         onClose?.();
-    }, [stopScanner, onClose]);
-
-    const handleDetected = useCallback(
-        (barcode) => {
-            stopScanner();
-            onDetected?.(barcode);
-        },
-        [stopScanner, onDetected]
-    );
+    };
 
     useEffect(() => {
         const codeReader = new BrowserMultiFormatReader();
-        codeReaderRef.current = codeReader;
+        detectedRef.current = false;
 
         const startScanning = async () => {
             try {
@@ -58,16 +52,25 @@ const BarcodeScanner = ({ onDetected, onClose }) => {
                     await videoRef.current.play();
                 }
 
-                // เริ่มสแกน
-                codeReader.decodeFromVideoElement(videoRef.current, (result, err) => {
-                    if (result) {
-                        const barcode = result.getText();
-                        if (barcode) {
-                            handleDetected(barcode);
+                // เริ่มสแกน - เก็บ controls ไว้เพื่อ stop ได้
+                controlsRef.current = await codeReader.decodeFromVideoElement(
+                    videoRef.current,
+                    (result, err) => {
+                        // ✅ ถ้าสแกนได้แล้ว ไม่ทำซ้ำ
+                        if (detectedRef.current) return;
+
+                        if (result) {
+                            const barcode = result.getText();
+                            // ✅ รับเฉพาะ barcode ที่มี 5-13 ตัวอักษร
+                            if (barcode && barcode.length >= 5 && barcode.length <= 13) {
+                                detectedRef.current = true; // ✅ Mark as detected
+                                stopScanner();
+                                onDetected?.(barcode);
+                            }
                         }
+                        // ไม่ต้อง handle error ทุกครั้ง เพราะจะยิงบ่อยมาก
                     }
-                    // ไม่ต้อง handle error ทุกครั้ง เพราะจะยิงบ่อยมาก
-                });
+                );
             } catch (err) {
                 console.error("Camera error:", err);
                 if (err.name === "NotAllowedError") {
@@ -87,7 +90,8 @@ const BarcodeScanner = ({ onDetected, onClose }) => {
         return () => {
             stopScanner();
         };
-    }, [handleDetected, stopScanner]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // ✅ Empty dependency - run once only
 
     return (
         <div className="fixed inset-0 bg-black/80 flex flex-col items-center justify-center z-[60]">
@@ -127,7 +131,7 @@ const BarcodeScanner = ({ onDetected, onClose }) => {
                 {scanning && !error && (
                     <div className="absolute bottom-4 left-0 right-0 text-center">
                         <span className="bg-black/60 text-white px-3 py-1 rounded text-sm animate-pulse">
-                            กำลังสแกน...
+                            กำลังสแกน... (รับ 5-13 หลัก)
                         </span>
                     </div>
                 )}
@@ -143,7 +147,7 @@ const BarcodeScanner = ({ onDetected, onClose }) => {
             {/* Instructions */}
             <div className="mt-4 text-white text-sm text-center px-4">
                 <p>วาง barcode ให้อยู่ในกรอบสีเขียว</p>
-                <p className="text-gray-400 mt-1">รองรับ barcode หลายรูปแบบ</p>
+                <p className="text-gray-400 mt-1">รองรับ barcode 5-13 หลัก</p>
             </div>
         </div>
     );
