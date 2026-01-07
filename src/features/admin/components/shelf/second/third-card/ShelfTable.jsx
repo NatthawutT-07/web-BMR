@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { calcTotalSales, calcTotalWithdraw } from "../../../../../../utils/shelfUtils";
 import { getMasterItem } from "../../../../../../api/admin/template";
+import BarcodeScanner from "./BarcodeScanner";
 
 // ✅ ปรับ path ให้ตรงไฟล์คุณ (ตามตัวอย่างของคุณ)
 
@@ -102,6 +103,7 @@ const AddProductModal = React.memo(
 
     const [checking, setChecking] = useState(false);
     const [saving, setSaving] = useState(false);
+    const [showScanner, setShowScanner] = useState(false);
 
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -120,6 +122,7 @@ const AddProductModal = React.memo(
         setSelected(null);
         setChecking(false);
         setSaving(false);
+        setShowScanner(false);
         setError("");
         setSuccess("");
         setLastCheckedQuery("");
@@ -182,6 +185,39 @@ const AddProductModal = React.memo(
       } finally {
         setChecking(false);
         focusInput();
+      }
+    };
+
+    // ✅ Handle barcode detected from scanner - auto check
+    const handleBarcodeDetected = async (barcode) => {
+      setShowScanner(false);
+      setQuery(barcode);
+      setError("");
+      setSuccess("");
+      setLastCheckedQuery("");
+      setResults([]);
+      setSelected(null);
+
+      // Auto check ทันที
+      if (barcode.length >= 2) {
+        setChecking(true);
+        try {
+          const res = await getMasterItem(barcode);
+          const items = Array.isArray(res?.items) ? res.items : [];
+          setResults(items);
+          setLastCheckedQuery(barcode);
+          if (items.length === 0) {
+            setError("ไม่พบรายการที่ตรงกัน");
+          } else if (items.length === 1) {
+            // ถ้าพบ 1 รายการ → auto select
+            setSelected(items[0]);
+          }
+        } catch (e) {
+          console.error("Auto check failed:", e);
+          setError("❌ Check ไม่สำเร็จ");
+        } finally {
+          setChecking(false);
+        }
       }
     };
 
@@ -308,6 +344,17 @@ const AddProductModal = React.memo(
                   disabled={saving || checking}
                 />
 
+                {/* 📷 Scan Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowScanner(true)}
+                  disabled={saving || checking}
+                  className="px-3 py-2 rounded text-sm font-semibold bg-purple-600 text-white hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  title="สแกน Barcode ด้วยกล้อง"
+                >
+                  📷 Scan
+                </button>
+
                 <button
                   type="button"
                   onClick={handleCheck}
@@ -322,6 +369,14 @@ const AddProductModal = React.memo(
                   {checking ? "Checking..." : "Check"}
                 </button>
               </div>
+
+              {/* Barcode Scanner Modal */}
+              {showScanner && (
+                <BarcodeScanner
+                  onDetected={handleBarcodeDetected}
+                  onClose={() => setShowScanner(false)}
+                />
+              )}
 
               <div className="mt-1 text-[12px] text-gray-500 flex items-center gap-2">
                 <span>
@@ -410,8 +465,8 @@ const AddProductModal = React.memo(
                                 onClick={() => handlePick(it)}
                                 disabled={saving || checking}
                                 className={`px-2 py-1 rounded text-[11px] ${isSelected
-                                    ? "bg-emerald-600 text-white"
-                                    : "bg-gray-100 hover:bg-gray-200"
+                                  ? "bg-emerald-600 text-white"
+                                  : "bg-gray-100 hover:bg-gray-200"
                                   }`}
                               >
                                 {isSelected ? "Selected" : "Choose"}
@@ -478,8 +533,8 @@ const AddProductModal = React.memo(
                   !selected?.codeProduct || saving || checking || !isFreshChecked
                 }
                 className={`px-3 py-1.5 text-sm rounded ${selected?.codeProduct && !saving && !checking && isFreshChecked
-                    ? "bg-emerald-500 text-white hover:bg-emerald-600"
-                    : "bg-gray-300 text-gray-600 cursor-not-allowed"
+                  ? "bg-emerald-500 text-white hover:bg-emerald-600"
+                  : "bg-gray-300 text-gray-600 cursor-not-allowed"
                   }`}
               >
                 {saving ? "Saving..." : "Add"}
@@ -712,8 +767,8 @@ const ShelfTable = ({
                     : "0"}
                 </td>
                 {/* <td colSpan={4}>  </td> */}
-               
-                
+
+
                 <td className="p-1 border text-right w-16">
                   {formatMoney2(prod.purchasePriceExcVAT)}
                 </td>
@@ -721,7 +776,7 @@ const ShelfTable = ({
                 <td className="p-1 border text-right w-20 text-yellow-600">
                   {formatMoney2(cost)}
                 </td>
-                
+
                 <td className="p-1 border text-right w-24 text-green-600">
                   {formatMoney2(prod.salesTotalPrice)}
                 </td>
