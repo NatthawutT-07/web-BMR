@@ -13,6 +13,7 @@ const STATUS_MAP = {
 
 const ACTION_MAP = {
     add: "เพิ่ม",
+    move: "ย้าย",
     swap: "สลับ",
     delete: "ลบ",
 };

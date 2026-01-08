@@ -6,7 +6,7 @@ const cx = (...a) => a.filter(Boolean).join(" ");
 
 const ACTION_OPTIONS = [
     { value: "add", label: "เพิ่มสินค้า", desc: "เพิ่มสินค้านี้ไปยังตำแหน่งใหม่" },
-    { value: "swap", label: "สลับตำแหน่ง", desc: "สลับตำแหน่งกับสินค้าอื่น" },
+    { value: "move", label: "ย้ายตำแหน่ง", desc: "ย้ายสินค้านี้ไปตำแหน่งอื่น (แทรก)" },
     { value: "delete", label: "ลบสินค้า", desc: "ลบสินค้าออกจากตำแหน่งปัจจุบัน" },
 ];
 
@@ -58,13 +58,13 @@ export default function PogRequestModal({
             return;
         }
 
-        if ((action === "add" || action === "swap") && (!toShelf || !toRow || !toIndex)) {
-            setError("กรุณาระบุตำแหน่งปลายทาง");
+        if ((action === "add" || action === "move") && (!toShelf || !toRow || !toIndex)) {
+            setError("กรุณาระบุตำแหน่งปลายทางให้ครบถ้วน");
             return;
         }
 
-        if (action === "swap" && !swapBarcode) {
-            setError("กรุณาระบุบาร์โค้ดสินค้าที่ต้องการสลับ");
+        if ((action === "add" || action === "move") && (Number(toRow) <= 0 || Number(toIndex) <= 0)) {
+            setError("ตำแหน่ง Row และ Index ต้องมากกว่า 0");
             return;
         }
 
@@ -86,7 +86,7 @@ export default function PogRequestModal({
                 toShelf: action !== "delete" ? toShelf : null,
                 toRow: action !== "delete" ? Number(toRow) : null,
                 toIndex: action !== "delete" ? Number(toIndex) : null,
-                swapBarcode: action === "swap" ? swapBarcode : null,
+                swapBarcode: null,
                 note,
             });
 
@@ -172,10 +172,10 @@ export default function PogRequestModal({
                             </div>
 
                             {/* Target Position (for add/swap) */}
-                            {(action === "add" || action === "swap") && (
+                            {(action === "add" || action === "move") && (
                                 <div className="p-3 rounded-xl border bg-blue-50 space-y-3">
                                     <div className="text-sm font-semibold text-blue-800">
-                                        {action === "add" ? "ตำแหน่งที่ต้องการเพิ่ม" : "ตำแหน่งปลายทาง"}
+                                        {action === "add" ? "ตำแหน่งที่ต้องการเพิ่ม" : "ตำแหน่งปลายทาง (ย้ายไป)"}
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
                                         <div>
@@ -192,6 +192,7 @@ export default function PogRequestModal({
                                             <label className="text-xs text-slate-600">Row</label>
                                             <input
                                                 type="number"
+                                                min="1"
                                                 value={toRow}
                                                 onChange={(e) => setToRow(e.target.value)}
                                                 placeholder="1"
@@ -202,6 +203,7 @@ export default function PogRequestModal({
                                             <label className="text-xs text-slate-600">Index</label>
                                             <input
                                                 type="number"
+                                                min="1"
                                                 value={toIndex}
                                                 onChange={(e) => setToIndex(e.target.value)}
                                                 placeholder="5"
@@ -212,19 +214,7 @@ export default function PogRequestModal({
                                 </div>
                             )}
 
-                            {/* Swap Barcode */}
-                            {action === "swap" && (
-                                <div className="p-3 rounded-xl border bg-purple-50">
-                                    <div className="text-sm font-semibold text-purple-800 mb-2">บาร์โค้ดสินค้าที่ต้องการสลับ</div>
-                                    <input
-                                        type="text"
-                                        value={swapBarcode}
-                                        onChange={(e) => setSwapBarcode(e.target.value)}
-                                        placeholder="บาร์โค้ดสินค้าที่อยู่ตำแหน่งปลายทาง"
-                                        className="w-full px-3 py-2 border rounded-lg text-sm"
-                                    />
-                                </div>
-                            )}
+
 
                             {/* Note */}
                             <div>

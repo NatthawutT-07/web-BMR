@@ -6,15 +6,15 @@ const cx = (...a) => a.filter(Boolean).join(" ");
 
 const STATUS_MAP = {
     pending: { label: "รอดำเนินการ", color: "bg-amber-100 text-amber-700", badge: "border-amber-300" },
-    approved: { label: "อนุมัติแล้ว", color: "bg-blue-100 text-blue-700", badge: "border-blue-300" },
     rejected: { label: "ปฏิเสธ", color: "bg-rose-100 text-rose-700", badge: "border-rose-300" },
     completed: { label: "เสร็จสิ้น", color: "bg-emerald-100 text-emerald-700", badge: "border-emerald-300" },
 };
 
 const ACTION_MAP = {
-    add: { label: "เพิ่มสินค้า", icon: "➕" },
-    swap: { label: "สลับตำแหน่ง", icon: "🔄" },
-    delete: { label: "ลบสินค้า", icon: "🗑️" },
+    add: { label: "เพิ่มสินค้า", icon: "" },
+    move: { label: "ย้ายสินค้า", icon: "" },
+    swap: { label: "สลับตำแหน่ง", icon: "" },
+    delete: { label: "ลบสินค้า", icon: "" },
 };
 
 const formatDate = (dateStr) => {
@@ -99,7 +99,6 @@ export default function PogRequests() {
                 >
                     <option value="">ทุกสถานะ</option>
                     <option value="pending">รอดำเนินการ</option>
-                    <option value="approved">อนุมัติแล้ว</option>
                     <option value="rejected">ปฏิเสธ</option>
                     <option value="completed">เสร็จสิ้น</option>
                 </select>
@@ -121,8 +120,8 @@ export default function PogRequests() {
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                {["pending", "approved", "rejected", "completed"].map((status) => {
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+                {["pending", "rejected", "completed"].map((status) => {
                     const count = data.filter((d) => d.status === status).length;
                     const info = STATUS_MAP[status];
                     return (
@@ -175,7 +174,7 @@ export default function PogRequests() {
                                                 </span>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <div className="font-medium truncate max-w-[200px]">
+                                                <div className="font-medium whitespace-nowrap">
                                                     {item.productName || item.barcode}
                                                 </div>
                                                 <div className="text-xs text-slate-500">{item.barcode}</div>
@@ -199,11 +198,12 @@ export default function PogRequests() {
                                                     {item.status === "pending" && (
                                                         <>
                                                             <button
-                                                                onClick={() => updateStatus(item.id, "approved")}
+                                                                onClick={() => updateStatus(item.id, "completed")}
+                                                                title="อนุมัติและดำเนินการทันที"
                                                                 disabled={isUpdating}
-                                                                className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-50"
+                                                                className="px-2 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-500 disabled:opacity-50"
                                                             >
-                                                                ✓
+                                                                ✓ อนุมัติ
                                                             </button>
                                                             <button
                                                                 onClick={() => updateStatus(item.id, "rejected")}
@@ -214,6 +214,7 @@ export default function PogRequests() {
                                                             </button>
                                                         </>
                                                     )}
+                                                    {/* Legacy support: if any stuck in approved, allow complete */}
                                                     {item.status === "approved" && (
                                                         <button
                                                             onClick={() => updateStatus(item.id, "completed")}
