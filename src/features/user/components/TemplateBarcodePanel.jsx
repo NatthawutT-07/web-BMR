@@ -60,8 +60,8 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
   const lookupByBarcode = async (bc) => {
     const code = String(bc || "").trim();
     if (!storecode || !code) return;
-    if (code.length < 4) {
-      setBarcodeError("บาร์โค้ดไม่ถูกต้อง");
+    if (code.length < 5) {
+      setBarcodeError("บาร์โค้ดควรมีอย่างน้อย 5 ตัว");
       return;
     }
 
@@ -141,18 +141,18 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
           <input
             ref={barcodeInputRef}
             type="text"
-            // inputMode="numeric"
-            inputMode="text"
+            inputMode="numeric"
             value={barcode}
             onChange={(e) => {
               const raw = e.target.value || "";
-              // const digitsOnly = raw.replace(/\D/g, "");
-              if (raw !== digitsOnly) {
-                setBarcodeError("กรอกได้เฉพาะตัวเลขเท่านั้น");
-              } else if (barcodeError) {
+              // ✅ อนุญาตให้พิมพ์ตัวอักษรได้ (ไม่ต้อง replace \D)
+              if (raw.length > 0 && raw.length < 5) {
+                // แค่เตือนตอนพิมพ์ หรือจะรอตอน Enter ก็ได้
+                // setBarcodeError("บาร์โค้ดควรมีอย่างน้อย 5 ตัว");
+              } else {
                 setBarcodeError("");
               }
-              setBarcode(raw.trim());
+              setBarcode(raw);
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") openPopupAndLookup(barcode);

@@ -2,6 +2,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { BrowserMultiFormatReader } from "@zxing/browser";
 import { BarcodeFormat, DecodeHintType } from "@zxing/library";
+import Tesseract from "tesseract.js";
 
 const cx = (...a) => a.filter(Boolean).join(" ");
 
@@ -17,6 +18,8 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
   // ✅ โชว์ตัวเลขที่อ่านได้ระหว่างสแกน
   const [liveText, setLiveText] = useState("");
   const [liveDigits, setLiveDigits] = useState("");
+  const [isOcrMode, setIsOcrMode] = useState(false);
+  const [ocrLoading, setOcrLoading] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -33,6 +36,8 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
       BarcodeFormat.UPC_A,
       BarcodeFormat.UPC_E,
       BarcodeFormat.CODE_128,
+      BarcodeFormat.CODE_39,
+      BarcodeFormat.ITF,
     ]);
 
     const reader = new BrowserMultiFormatReader(hints, 80); // 80ms interval
@@ -59,18 +64,15 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
             const raw = String(result.getText() || "").trim();
             if (!raw) return;
 
-            // ✅ เอาเฉพาะตัวเลข (EAN/UPC จะเป็นเลขล้วน)
-            const digits = raw.replace(/\D/g, "");
+            // ✅ ไม่ตัดตัวอักษรแล้ว (รับ CNS..., MM...)
             setLiveText(raw);
-            setLiveDigits(digits);
+            setLiveDigits(raw);
 
             // cooldown กันเด้งซ้ำ
             const now = Date.now();
-            const key = digits || raw;
-            if (lastRef.current.code === key && now - lastRef.current.ts < 1200) return;
-            lastRef.current = { code: key, ts: now };
+            if (lastRef.current.code === raw && now - lastRef.current.ts < 1200) return;
+            lastRef.current = { code: raw, ts: now };
 
-            // ✅ ส่งกลับเป็น "ตัวเลข" ก่อน ถ้าไม่มีเลขค่อยส่ง raw
             onDetected?.(raw);
           }
         );
@@ -96,6 +98,81 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
       readerRef.current = null;
     };
   }, [open, onDetected]);
+
+  useEffect(() => {
+    // รีเซ็ต OCR mode เมื่อเปิดใหม่
+    setIsOcrMode(false);
+    setOcrLoading(false);
+
+    // ถ้าผ่านไป 2 วินาทีแล้วยังสแกนไม่ได้ ให้ลองเปิด OCR
+    const timer = setTimeout(() => {
+      // เช็คว่ายังเปิดอยู่และยังไม่ได้ผลลัพธ์ (จริงๆ component จะ unmount ถ้าได้ผลแล้ว แต่กันไว้)
+      if (open && !lastRef.current.code) {
+        setIsOcrMode(true);
+      }
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [open]);
+
+  // Logic OCR
+  useEffect(() => {
+    if (!isOcrMode || !open) return;
+
+    let intervalId;
+    let busy = false;
+
+    const runOcr = async () => {
+      if (busy || !videoRef.current) return;
+      // ถ้าวิดีโอไม่พร้อม
+      if (videoRef.current.readyState < 2) return;
+
+      busy = true;
+      setOcrLoading(true);
+      try {
+        // สร้าง canvas ชั่วคราวตัดภาพมา OCR
+        const video = videoRef.current;
+        const canvas = document.createElement("canvas");
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // แปลงเป็นภาพ base64 หรือส่ง canvas ให้ tesseract โดยตรง
+        const res = await Tesseract.recognize(canvas, "eng", {
+          // logger: m => console.log(m)
+        });
+
+        const text = res?.data?.text || "";
+        // ลองหา pattern ที่น่าจะเป็นรหัสสินค้า เช่น ตัวเลข 5 หลักขึ้นไป หรือ CNS...
+        // ตัวอย่าง regex อย่างง่าย: เจอคำที่มีตัวเลขและยาว >= 5
+        const words = text.split(/\s+/);
+        for (let w of words) {
+          const clean = w.replace(/[^a-zA-Z0-9]/g, ""); // ตัดอักขระพิเศษ
+          if (clean.length >= 5) {
+            // เจอสิ่งที่น่าจะเป็นรหัส
+            console.log("OCR Match:", clean);
+            if (clean !== lastRef.current.code) {
+              lastRef.current = { code: clean, ts: Date.now() };
+              onDetected?.(clean);
+              setLiveText("OCR: " + clean);
+            }
+            break;
+          }
+        }
+      } catch (e) {
+        console.error("OCR error", e);
+      } finally {
+        busy = false;
+        setOcrLoading(false);
+      }
+    };
+
+    intervalId = setInterval(runOcr, 1500); // OCR ทุก 1.5 วิ เพราะมันหนัก
+
+    return () => clearInterval(intervalId);
+  }, [isOcrMode, open, onDetected]);
 
   if (!open) return null;
 
@@ -135,11 +212,20 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
 
             {/* ✅ แถบโชว์ตัวเลขที่อ่านได้ */}
             <div className="absolute bottom-0 left-0 right-0 p-3 bg-black/55">
-              <div className="text-[11px] text-white/80">ตัวเลขบาร์โค้ด</div>
+              <div className="text-[11px] text-white/80">
+                {isOcrMode ? "กำลังอ่านข้อความ (OCR)..." : "ตัวเลขบาร์โค้ด"}
+              </div>
               <div className="text-2xl font-extrabold text-white tracking-wider">
-                {liveDigits || (liveText ? liveText : "กำลังอ่าน...")}
+                {liveDigits || (liveText ? liveText : (isOcrMode ? "Scanning Text..." : "กำลังอ่าน..."))}
               </div>
             </div>
+
+            {/* Loading OCR indicator */}
+            {ocrLoading && (
+              <div className="absolute top-2 right-2 px-2 py-1 bg-black/50 rounded text-xs text-white">
+                OCR...
+              </div>
+            )}
           </div>
 
           {err && (

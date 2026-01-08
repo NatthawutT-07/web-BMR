@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { calcTotalSales, calcTotalWithdraw } from "../../../../../../utils/shelfUtils";
 import { getMasterItem } from "../../../../../../api/admin/template";
-import BarcodeScanner from "./BarcodeScanner";
 
 // ✅ ปรับ path ให้ตรงไฟล์คุณ (ตามตัวอย่างของคุณ)
 
@@ -103,7 +102,6 @@ const AddProductModal = React.memo(
 
     const [checking, setChecking] = useState(false);
     const [saving, setSaving] = useState(false);
-    const [showScanner, setShowScanner] = useState(false);
 
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
@@ -122,7 +120,6 @@ const AddProductModal = React.memo(
         setSelected(null);
         setChecking(false);
         setSaving(false);
-        setShowScanner(false);
         setError("");
         setSuccess("");
         setLastCheckedQuery("");
@@ -185,39 +182,6 @@ const AddProductModal = React.memo(
       } finally {
         setChecking(false);
         focusInput();
-      }
-    };
-
-    // ✅ Handle barcode detected from scanner - auto check
-    const handleBarcodeDetected = async (barcode) => {
-      setShowScanner(false);
-      setQuery(barcode);
-      setError("");
-      setSuccess("");
-      setLastCheckedQuery("");
-      setResults([]);
-      setSelected(null);
-
-      // Auto check ทันที
-      if (barcode.length >= 2) {
-        setChecking(true);
-        try {
-          const res = await getMasterItem(barcode);
-          const items = Array.isArray(res?.items) ? res.items : [];
-          setResults(items);
-          setLastCheckedQuery(barcode);
-          if (items.length === 0) {
-            setError("ไม่พบรายการที่ตรงกัน");
-          } else if (items.length === 1) {
-            // ถ้าพบ 1 รายการ → auto select
-            setSelected(items[0]);
-          }
-        } catch (e) {
-          console.error("Auto check failed:", e);
-          setError("❌ Check ไม่สำเร็จ");
-        } finally {
-          setChecking(false);
-        }
       }
     };
 
@@ -344,17 +308,6 @@ const AddProductModal = React.memo(
                   disabled={saving || checking}
                 />
 
-                {/* 📷 Scan Button */}
-                <button
-                  type="button"
-                  onClick={() => setShowScanner(true)}
-                  disabled={saving || checking}
-                  className="px-3 py-2 rounded text-sm font-semibold bg-purple-600 text-white hover:bg-purple-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                  title="สแกน Barcode ด้วยกล้อง"
-                >
-                  📷 Scan
-                </button>
-
                 <button
                   type="button"
                   onClick={handleCheck}
@@ -369,14 +322,6 @@ const AddProductModal = React.memo(
                   {checking ? "Checking..." : "Check"}
                 </button>
               </div>
-
-              {/* Barcode Scanner Modal */}
-              {showScanner && (
-                <BarcodeScanner
-                  onDetected={handleBarcodeDetected}
-                  onClose={() => setShowScanner(false)}
-                />
-              )}
 
               <div className="mt-1 text-[12px] text-gray-500 flex items-center gap-2">
                 <span>

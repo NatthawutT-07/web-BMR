@@ -139,6 +139,13 @@ function MainNav() {
                     <button
                       type="button"
                       onClick={clearStorageAndLogout}
+                      className="w-full text-left px-3 py-2 text-[12px] text-blue-600 hover:bg-blue-50"
+                    >
+                      History
+                    </button>
+                    <button
+                      type="button"
+                      onClick={clearStorageAndLogout}
                       className="w-full text-left px-3 py-2 text-[12px] text-red-600 hover:bg-red-50"
                     >
                       Logout
