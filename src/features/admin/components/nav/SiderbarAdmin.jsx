@@ -8,7 +8,8 @@ import {
   FileUp,
   ChartNoAxesCombined,
   Package2,
-  LayoutDashboard
+  LayoutDashboard,
+  ClipboardList
 } from "lucide-react";
 import useBmrStore from "../../../../store/bmr_store";
 
@@ -50,6 +51,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
             <SidebarItem to="dashboard-shelf" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} close={closeMobile} />
             <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} close={closeMobile} />
             <SidebarItem to="upload" label="Upload XLSX" icon={<FileUp size={20} />} close={closeMobile} />
+            <SidebarItem to="pog-requests" label="POG Requests" icon={<ClipboardList size={20} />} close={closeMobile} />
             {/* <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} close={closeMobile} /> */}
 
             <div className="pt-4">
@@ -88,6 +90,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
         <SidebarItem to="dashboard-shelf" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} expanded={isOpen} />
         <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} expanded={isOpen} />
         <SidebarItem to="upload" label="Upload XLSX" icon={<FileUp size={20} />} expanded={isOpen} />
+        <SidebarItem to="pog-requests" label="POG Requests" icon={<ClipboardList size={20} />} expanded={isOpen} />
         {/* <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} /> */}
 
         <div className="pt-8">
@@ -114,9 +117,8 @@ const SidebarItem = ({ to, label, icon, expanded, close }) => {
         {icon}
       </span>
       <span
-        className={`overflow-hidden whitespace-nowrap transition-all duration-200 ${
-          showLabel ? "max-w-[160px] opacity-100" : "max-w-0 opacity-0"
-        }`}
+        className={`overflow-hidden whitespace-nowrap transition-all duration-200 ${showLabel ? "max-w-[160px] opacity-100" : "max-w-0 opacity-0"
+          }`}
       >
         {label}
       </span>
@@ -127,21 +129,20 @@ const SidebarItem = ({ to, label, icon, expanded, close }) => {
 const SidebarButton = ({ onClick, label, icon, expanded }) => {
   const showLabel = expanded !== false;
   return (
-  <button
-    onClick={onClick}
-    className="flex items-center w-full gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition min-w-0"
-  >
-    <span className="w-5 h-5 flex items-center justify-center shrink-0">
-      {icon}
-    </span>
-    <span
-      className={`overflow-hidden whitespace-nowrap transition-all duration-200 ${
-        showLabel ? "max-w-[160px] opacity-100" : "max-w-0 opacity-0"
-      }`}
+    <button
+      onClick={onClick}
+      className="flex items-center w-full gap-3 px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-gray-700 hover:text-white transition min-w-0"
     >
-      {label}
-    </span>
-  </button>
+      <span className="w-5 h-5 flex items-center justify-center shrink-0">
+        {icon}
+      </span>
+      <span
+        className={`overflow-hidden whitespace-nowrap transition-all duration-200 ${showLabel ? "max-w-[160px] opacity-100" : "max-w-0 opacity-0"
+          }`}
+      >
+        {label}
+      </span>
+    </button>
   );
 };
 

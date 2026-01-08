@@ -1,6 +1,16 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
+import PogRequestModal from "../PogRequestModal";
+import useBmrStore from "../../../../store/bmr_store";
 
 const ShelfTableUser = ({ shelfProducts = [] }) => {
+  const storecode = useBmrStore((s) => s.user?.storecode);
+  const [pogRequestOpen, setPogRequestOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+
+  const handleRequest = (product) => {
+    setSelectedProduct(product);
+    setPogRequestOpen(true);
+  };
   if (!Array.isArray(shelfProducts)) {
     return <div className="text-xs text-red-500">Invalid data.</div>;
   }
@@ -60,25 +70,25 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
         <thead className="bg-gray-200 sticky top-0 z-20 print:static">
           <tr>
             <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              ID
+              id
             </th>
             <th className="border py-1 text-center print:px-[2px] align-middle">
-              Barcode
+              บาร์โค้ด
             </th>
             <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              Code
+              รหัส
             </th>
             <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              Name
+              ชื่อสินค้า
             </th>
             <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              Brand
+              ยี่ห้อ
             </th>
             <th className="border py-1 text-center print:px-[2px] align-middle">
-              Life
+              ชีวิต
             </th>
             <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              RSP
+              ราคา
             </th>
 
             {/* ⭐ ใหม่: Avg 3 เดือน, Target, ยอดขายเดือนนี้ */}
@@ -102,11 +112,15 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
               Max
             </th>
             <th className="border py-1 text-center print:px-[2px] align-middle">
-              Stock
+              สต็อค
             </th>
             {/* Audit */}
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              check
+            {/* <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+              ตรวจสอบ
+            </th> */}
+            {/* Notify Request */}
+            <th className="border px-1 py-1 text-center print:hidden align-middle">
+              report
             </th>
           </tr>
         </thead>
@@ -115,7 +129,7 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
           {rowCount === 0 && (
             <tr>
               <td
-                colSpan={15}
+                colSpan={16}
                 className="border p-1 text-center text-gray-500 text-xs"
               >
                 No products.
@@ -132,7 +146,7 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
                 {/* หัว row (แยกแต่ละ Row) */}
                 <tr className="bg-blue-50 print:bg-slate-200">
                   <td
-                    colSpan={15} // 14 คอลัมน์ข้อมูล + 1 Audit
+                    colSpan={16} // 14 คอลัมน์ข้อมูล + 1 Audit + 1 Request
                     className="border p-1 print:py-[2px] font-semibold italic text-left"
                   >
                     ➤ Row {rowNo}
@@ -244,12 +258,24 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
                         </td>
 
                         {/* Audit: บนจอ = checkbox, PDF = กล่องติ๊ก */}
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                        {/* <td className="border p-1 print:px-[2px] text-center align-middle">
                           <input
                             type="checkbox"
                             className="h-4 w-4 accent-emerald-600 print:hidden cursor-pointer"
                           />
                           <span className="hidden print:inline-block">☐</span>
+                        </td> */}
+
+                        {/* Request Button */}
+                        <td className="border text-center align-middle print:hidden">
+                          <button
+                            type="button"
+                            onClick={() => handleRequest(p)}
+                            className=" hover:bg-amber-200 p-1 rounded transition-colors"
+                            title="แจ้งขอเปลี่ยน"
+                          >
+                            📝
+                          </button>
                         </td>
                       </tr>
                     );
@@ -257,7 +283,7 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
                 ) : (
                   <tr>
                     <td
-                      colSpan={15}
+                      colSpan={16}
                       className="border p-1 print:py-[2px] text-center text-gray-500 text-xs"
                     >
                       No products in this row
@@ -269,6 +295,20 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
           })}
         </tbody>
       </table>
+
+      {/* Modal */}
+      {pogRequestOpen && (
+        <PogRequestModal
+          open={pogRequestOpen}
+          onClose={() => setPogRequestOpen(false)}
+          branchCode={storecode}
+          barcode={selectedProduct?.barcode}
+          productName={selectedProduct?.nameProduct}
+          currentShelf={selectedProduct?.shelfCode}
+          currentRow={selectedProduct?.rowNo}
+          currentIndex={selectedProduct?.index}
+        />
+      )}
     </div>
   );
 };

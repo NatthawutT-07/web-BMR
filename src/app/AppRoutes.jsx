@@ -20,6 +20,7 @@ import FilterSales from "../features/admin/pages/sales/FilterSales";
 import Stock from "../features/admin/pages/Stock";
 import ShelfDashboard from "../features/admin/pages/ShelfDashboard";
 import DashboardSales from "../features/admin/components/sales/dashboard/DashboardSales";
+import PogRequests from "../features/admin/pages/PogRequests";
 
 const router = createBrowserRouter([
     // หน้า Login
@@ -42,11 +43,12 @@ const router = createBrowserRouter([
             { path: "shelf", element: <Template /> },
             { path: "dashboard-shelf", element: <ShelfDashboard /> },
             { path: "upload", element: <Upload /> },
-            { path: "sales", element: <FilterSales/> },
+            { path: "sales", element: <FilterSales /> },
             { path: "dashboard-sales", element: <DashboardSales /> },
             // { path: "product-sales", element: <MainSalesProduct /> },
             // { path: "calculator-sales", element: <Calculator /> },
             { path: "stock", element: <Stock /> },
+            { path: "pog-requests", element: <PogRequests /> },
             // { path: "member", element: <Member /> },
         ],
     },

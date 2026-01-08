@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../../utils/axios";
 import CameraBarcodeScannerModal from "./CameraBarcodeScannerModal";
+import PogRequestModal from "./PogRequestModal";
 
 const cx = (...a) => a.filter(Boolean).join(" ");
 
@@ -19,6 +20,8 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
   // ✅ กล้อง + popup
   const [cameraOpen, setCameraOpen] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
+  const [pogRequestOpen, setPogRequestOpen] = useState(false);
+  const [requestAction, setRequestAction] = useState(""); // ✅ State for initial action
 
   useEffect(() => {
     requestAnimationFrame(() => barcodeInputRef.current?.focus?.());
@@ -61,7 +64,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
     const code = String(bc || "").trim();
     if (!storecode || !code) return;
     if (code.length < 5) {
-      setBarcodeError("บาร์โค้ดควรมีอย่างน้อย 6 หลัก");
+      setBarcodeError("บาร์โค้ดควรมีอย่างน้อย 5 หลัก");
       return;
     }
 
@@ -131,6 +134,19 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
         onDetected={onCameraDetected}
       />
 
+      {/* POG Request modal */}
+      <PogRequestModal
+        open={pogRequestOpen}
+        onClose={() => setPogRequestOpen(false)}
+        branchCode={storecode}
+        barcode={barcode}
+        productName={lookupRes?.product?.name}
+        currentShelf={primaryLoc?.shelfCode}
+        currentRow={primaryLoc?.rowNo}
+        currentIndex={primaryLoc?.index}
+        initialAction={requestAction} // ✅ Pass initial action
+      />
+
       <div className="bg-white border rounded-xl shadow-sm p-3">
         <div className="text-sm font-semibold text-slate-800">สแกน/พิมพ์บาร์โค้ด หรือใช้กล้อง</div>
         <div className="text-xs text-slate-500 mt-1">
@@ -145,13 +161,15 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
             value={barcode}
             onChange={(e) => {
               const raw = e.target.value || "";
-              const digitsOnly = raw.replace(/\D/g, "");
-              if (raw !== digitsOnly) {
-                setBarcodeError("กรอกได้เฉพาะตัวเลขเท่านั้น");
+              // ✅ อนุญาตภาษาอังกฤษ (A-Z, a-z) และตัวเลข (0-9)
+              const validChars = raw.replace(/[^a-zA-Z0-9]/g, "");
+
+              if (raw !== validChars) {
+                setBarcodeError("กรอกได้เฉพาะตัวเลขและภาษาอังกฤษเท่านั้น");
               } else if (barcodeError) {
                 setBarcodeError("");
               }
-              setBarcode(digitsOnly);
+              setBarcode(validChars);
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") openPopupAndLookup(barcode);
@@ -226,9 +244,48 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
                 </div>
               </div>
             ) : !lookupRes.found ? (
-              <div className="mt-4 p-3 rounded-xl bg-rose-50 border border-rose-200">
-                <div className="text-sm font-semibold text-rose-700">ไม่พบตำแหน่ง</div>
-                {/* <div className="text-xs text-rose-700 mt-1">{reasonText(lookupRes.reason)}</div> */}
+              <div className="mt-4 p-4 rounded-xl bg-rose-50 border border-rose-200">
+                <div className="flex items-start gap-3">
+                  <div className="text-2xl">❌</div>
+                  <div>
+                    <div className="text-sm font-bold text-rose-700">
+                      {lookupRes.reason === "BARCODE_NOT_FOUND"
+                        ? "ไม่พบสินค้านี้ในระบบร้านค้า"
+                        : "ไม่พบข้อมูลตำแหน่งสินค้า"}
+                    </div>
+                    <div className="text-xs text-rose-600 mt-1">
+                      {lookupRes.reason === "BARCODE_NOT_FOUND"
+                        ? "สินค้านี้ยังไม่มีข้อมูลในระบบ"
+                        : reasonText(lookupRes.reason)}
+                    </div>
+
+                    {/* ✅ แสดงสินค้าที่พบ (แต่ไม่มี Location) */}
+                    {lookupRes.reason === "NO_LOCATION_IN_POG" && lookupRes.product && (
+                      <div className="mt-2 p-2 bg-rose-50 rounded border text-slate-700">
+                        <div className="font-semibold">{lookupRes.product.name}</div>
+                        <div className="text-xs text-slate-500">
+                          {lookupRes.product.brand && <span>{lookupRes.product.brand}</span>}
+                          {lookupRes.product.price && <span> • ราคา: {lookupRes.product.price}</span>}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* ✅ ปุ่มแจ้งเพิ่มสินค้า (เฉพาะกรณีมีสินค้าในระบบแต่ไม่มี Location) */}
+                    {lookupRes.reason !== "BARCODE_NOT_FOUND" && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRequestAction("add"); // ✅ Pre-select 'add'
+                          setPogRequestOpen(true);
+                          setPopupOpen(false); // ✅ Close popup
+                        }}
+                        className="mt-3 px-4 py-2 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-sm"
+                      >
+                        แจ้งเพิ่มสินค้านี้
+                      </button>
+                    )}
+                  </div>
+                </div>
               </div>
             ) : (
               <>
@@ -255,17 +312,24 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
                     ) : null}
 
                     <div className="mt-3 flex flex-col sm:flex-row gap-2">
-                      {/* <button
+                      <button
                         type="button"
                         onClick={async () => {
-                          await loadShelfBlocks(primaryLoc.shelfCode);
+                          if (shelfBlocks) {
+                            setShelfBlocks(null); // ✅ Toggle Off
+                          } else {
+                            await loadShelfBlocks(primaryLoc.shelfCode); // ✅ Toggle On
+                          }
                         }}
-                        className="flex-1 px-4 py-3 rounded-xl font-semibold text-sm bg-emerald-600 text-white hover:bg-emerald-500"
+                        className={cx(
+                          "flex-1 px-4 py-3 rounded-xl font-semibold text-sm border hover:bg-slate-50",
+                          shelfBlocks ? "bg-slate-200 text-slate-700" : "bg-white"
+                        )}
                       >
-                        ดูเป็นบล็อก
-                      </button> */}
+                        {shelfBlocks ? "ปิดบล็อก" : "ดูเป็นบล็อก"}
+                      </button>
 
-                      <button
+                      {/* <button
                         type="button"
                         onClick={() => {
                           setPopupOpen(false);
@@ -274,6 +338,18 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
                         className="flex-1 px-4 py-3 rounded-xl font-semibold text-sm border bg-white hover:bg-slate-50"
                       >
                         ไปหน้า Shelf
+                      </button> */}
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setRequestAction(""); // ✅ Default (user selects)
+                          setPogRequestOpen(true);
+                          setPopupOpen(false); // ✅ Close popup
+                        }}
+                        className="flex-1 px-4 py-3 rounded-xl font-semibold text-sm bg-amber-500 text-white hover:bg-amber-300"
+                      >
+                        📝 แจ้งขอเปลี่ยน
                       </button>
                     </div>
                   </div>
@@ -359,8 +435,9 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
             </div>
           </div>
         </div>
-      )}
-    </section>
+      )
+      }
+    </section >
   );
 };
 
