@@ -67,60 +67,40 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
           print:text-[8px] print:leading-tight
         "
       >
-        <thead className="bg-gray-200 sticky top-0 z-20 print:static">
+        <thead className="bg-slate-100 sticky top-0 z-20 print:static">
           <tr>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              id
+            <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
+              ลำดับ
             </th>
-            <th className="border py-1 text-center print:px-[2px] align-middle">
+            <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               บาร์โค้ด
             </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+            <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               รหัส
             </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+            <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               ชื่อสินค้า
             </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+            <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               ยี่ห้อ
             </th>
-            <th className="border py-1 text-center print:px-[2px] align-middle">
+            <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               ชีวิต
             </th>
-            <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
+            <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               ราคา
             </th>
-
-            {/* ⭐ ใหม่: Avg 3 เดือน, Target, ยอดขายเดือนนี้ */}
-            {/* <th className="border px-1 py-1 text-center print:px-[2px] align-middle"> */}
-            {/* 3M
-            </th> */}
-            {/* <th className="border py-1 text-center print:px-[2px] align-middle">
-              Target
-            </th>
-            <th className="border py-1 text-center print:px-[2px] align-middle">
-              Sales
-            </th> */}
-
-            {/* <th className="border py-1 text-center print:px-[2px] align-middle">
-              With..
-            </th> */}
-            <th className="border py-1 text-center print:px-[2px] align-middle">
+            <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               Min
             </th>
-            <th className="border py-1 text-center print:px-[2px] align-middle">
+            <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               Max
             </th>
-            <th className="border py-1 text-center print:px-[2px] align-middle">
+            <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               สต็อค
             </th>
-            {/* Audit */}
-            {/* <th className="border px-1 py-1 text-center print:px-[2px] align-middle">
-              ตรวจสอบ
-            </th> */}
-            {/* Notify Request */}
-            <th className="border px-1 py-1 text-center print:hidden align-middle">
-              report
+            <th className="border px-1 py-2 text-center print:hidden align-middle font-semibold text-slate-600">
+              แจ้ง
             </th>
           </tr>
         </thead>
@@ -143,13 +123,12 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
 
             return (
               <React.Fragment key={rowNo}>
-                {/* หัว row (แยกแต่ละ Row) */}
-                <tr className="bg-blue-50 print:bg-slate-200">
+                <tr className="bg-blue-100 print:bg-slate-200">
                   <td
-                    colSpan={16} // 14 คอลัมน์ข้อมูล + 1 Audit + 1 Request
-                    className="border p-1 print:py-[2px] font-semibold italic text-left"
+                    colSpan={16}
+                    className="border px-3 py-2 print:py-[2px] font-bold text-left text-blue-800"
                   >
-                    ➤ Row {rowNo}
+                    ชั้นที่ {rowNo}
                   </td>
                 </tr>
 
@@ -266,15 +245,14 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
                           <span className="hidden print:inline-block">☐</span>
                         </td> */}
 
-                        {/* Request Button */}
                         <td className="border text-center align-middle print:hidden">
                           <button
                             type="button"
                             onClick={() => handleRequest(p)}
-                            className=" hover:bg-amber-200 p-1 rounded transition-colors"
+                            className="px-2 py-1 text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 rounded transition-colors"
                             title="แจ้งขอเปลี่ยน"
                           >
-                            📝
+                            แจ้ง
                           </button>
                         </td>
                       </tr>

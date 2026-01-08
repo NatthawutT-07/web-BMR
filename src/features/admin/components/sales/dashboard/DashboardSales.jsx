@@ -6,6 +6,7 @@ import useDashboardSalesStore from "../../../../../store/dashboard_sales_store";
 import DashboardSalesTop from "./parts/DashboardSalesTop";
 import DashboardSalesBody from "./parts/DashboardSalesBody";
 import DashboardProductList from "./parts/DashboardProductList";
+import DashboardSalesByCategory from "./parts/DashboardSalesByCategory";
 
 import {
   daysBetweenInclusive,
@@ -265,6 +266,15 @@ export default function DashboardSales() {
           compareDash={compareDash}
           showCompare={showCompare}
           loading={loading}
+        />
+
+        <DashboardSalesByCategory
+          mode={appliedMode}
+          primaryStart={appliedRanges.primary.start}
+          primaryEnd={appliedRanges.primary.end}
+          compareStart={appliedRanges.compare.start}
+          compareEnd={appliedRanges.compare.end}
+          disabled={loading}
         />
 
         <DashboardProductList

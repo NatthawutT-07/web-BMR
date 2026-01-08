@@ -51,6 +51,24 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
         }
     };
 
+    const handleCancel = async (id) => {
+        if (!confirm("คุณต้องการลบคำขอนี้ใช่หรือไม่?")) return;
+        try {
+            await api.delete(`/pog-request/${id}`);
+            loadData();
+        } catch (e) {
+            console.error("Cancel error:", e);
+            let msg = e?.response?.data?.message;
+            if (typeof msg === 'string' && msg.trim().startsWith('{')) {
+                try {
+                    const parsed = JSON.parse(msg);
+                    msg = parsed.message || msg;
+                } catch { }
+            }
+            alert(msg || "ไม่สามารถลบคำขอได้");
+        }
+    };
+
     useEffect(() => {
         if (open) loadData();
     }, [open, branchCode]);
@@ -92,6 +110,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                                     <th className="px-3 py-2">สินค้า</th>
                                     <th className="px-3 py-2">ตำแหน่ง</th>
                                     <th className="px-3 py-2 text-right w-[110px]">เวลา</th>
+                                    <th className="px-3 py-2 w-[40px]"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
@@ -148,6 +167,19 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                                             {/* Date */}
                                             <td className="px-3 py-2 text-right align-top text-xs text-slate-400 font-mono whitespace-nowrap">
                                                 {formatDateShort(item.createdAt)}
+                                            </td>
+
+                                            {/* Action Button */}
+                                            <td className="px-2 py-2 text-center align-top">
+                                                {item.status === "pending" && (
+                                                    <button
+                                                        onClick={() => handleCancel(item.id)}
+                                                        className="text-rose-400 hover:text-rose-600 p-1"
+                                                        title="ยกเลิกคำขอ"
+                                                    >
+                                                        🗑️
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     );

@@ -17,6 +17,9 @@ function LoginPage() {
   const [manualUser, setManualUser] = useState("");
   const [manualPassword, setManualPassword] = useState("");
 
+  // ✅ State สำหรับควบคุม Dropdown
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
   const quickBranches = [
     { code: "ST001", label: "ST001 - เมกาบางนา" },
     { code: "ST002", label: "ST002 - เลี่ยงเมืองนนท์" },
@@ -160,24 +163,54 @@ function LoginPage() {
         <div className=" rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
           <div className="space-y-3">
             {loginMode === "branch" && (
-              <>
-                <select
-                  value={selectedBranch}
-                  onChange={(e) => {
-                    setSelectedBranch(e.target.value);
-                    if (errorMsg) setErrorMsg("");
-                  }}
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => !isSubmitting && setIsDropdownOpen(!isDropdownOpen)}
                   disabled={isSubmitting}
-                  className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-3 text-sm text-slate-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
+                  className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-3 text-left text-sm text-slate-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200 flex items-center justify-between"
                 >
-                  <option value="">-- เลือกสาขา --</option>
-                  {quickBranches.map((b) => (
-                    <option key={b.code} value={b.code}>
-                      {b.label}
-                    </option>
-                  ))}
-                </select>
-              </>
+                  <span className={!selectedBranch ? "text-slate-500" : ""}>
+                    {selectedBranch
+                      ? quickBranches.find((b) => b.code === selectedBranch)?.label
+                      : "-- เลือกสาขา --"}
+                  </span>
+                  <span className="text-emerald-400 text-xs ml-2">▼</span>
+                </button>
+
+                {/* ✅ Custom Scrollable Dropdown */}
+                {isDropdownOpen && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10"
+                      onClick={() => setIsDropdownOpen(false)}
+                    />
+                    <ul className="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto rounded-lg border border-emerald-100 bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                      {quickBranches.map((b) => (
+                        <li
+                          key={b.code}
+                          className={`relative cursor-pointer select-none py-2 pl-3 pr-9 hover:bg-emerald-50 ${selectedBranch === b.code ? 'text-emerald-900 bg-emerald-50' : 'text-slate-700'
+                            }`}
+                          onClick={() => {
+                            setSelectedBranch(b.code);
+                            setErrorMsg("");
+                            setIsDropdownOpen(false);
+                          }}
+                        >
+                          <span className={`block truncate ${selectedBranch === b.code ? 'font-semibold' : 'font-normal'}`}>
+                            {b.label}
+                          </span>
+                          {selectedBranch === b.code && (
+                            <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-emerald-600">
+                              ✓
+                            </span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+              </div>
             )}
 
             {loginMode === "manual" && (

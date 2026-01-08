@@ -56,6 +56,19 @@ export default function PogRequests() {
         loadData();
     }, [filterStatus, filterBranch]);
 
+    const getErrorMessage = (e) => {
+        let msg = e?.response?.data?.message;
+        if (!msg) return "ไม่สามารถอัปเดตสถานะได้";
+        // Attempt to parse if it's a JSON string
+        if (typeof msg === 'string' && msg.trim().startsWith('{')) {
+            try {
+                const parsed = JSON.parse(msg);
+                if (parsed.message) return parsed.message;
+            } catch { }
+        }
+        return msg;
+    };
+
     const updateStatus = async (id, newStatus) => {
         setUpdating(id);
         try {
@@ -64,7 +77,7 @@ export default function PogRequests() {
             alert(res.data.message || "อัปเดตสถานะสำเร็จ");
         } catch (e) {
             console.error("Update status error:", e);
-            const msg = e?.response?.data?.message || "ไม่สามารถอัปเดตสถานะได้";
+            const msg = getErrorMessage(e);
             alert(msg);
         } finally {
             setUpdating(null);

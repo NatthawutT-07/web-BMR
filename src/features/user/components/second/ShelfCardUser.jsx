@@ -14,7 +14,7 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
   );
 
   const shelfCode = template.shelfCode || "-";
-  const fullName = template.fullName || "N/A";
+  const fullName = template.fullName || "";
   const rowQty = template.rowQty || 1;
 
   const [isOpen, setIsOpen] = useState(false);
@@ -73,25 +73,20 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
           rounded-t-lg
         "
       >
-        <h2 className="text-sm sm:text-lg font-semibold text-slate-800 text-left">
-          Shelf: {shelfCode} – {fullName} ({rowQty} แถว)
+        <h2 className="text-base sm:text-lg font-bold text-slate-800 text-left">
+          {shelfCode}{fullName ? ` - ${fullName}` : ""} <span className="text-slate-500 font-normal">({rowQty} ชั้น)</span>
         </h2>
 
-        {/* caret */}
         <div
           className={`
-            ml-2 print:hidden
+            ml-2 print:hidden text-slate-500
             transition-transform duration-300 ease-out
             ${isOpen ? "rotate-180" : "rotate-0"}
           `}
         >
-          <div
-            className="
-              w-0 h-0
-              border-l-8 border-r-8 border-b-8
-              border-l-transparent border-r-transparent border-b-gray-600
-            "
-          />
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
         </div>
       </button>
 

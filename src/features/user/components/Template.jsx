@@ -265,39 +265,39 @@ const Template = () => {
             </p>
           </div>
 
-          {/* ✅ ปุ่ม 2 โหมด */}
-          <div className="flex items-center gap-2 print:hidden">
-            <div className="inline-flex rounded-lg border bg-white p-1 shadow-sm">
+          {/* ปุ่มเลือกโหมด */}
+          <div className="flex items-center gap-3 print:hidden">
+            <div className="inline-flex rounded-xl border bg-white p-1 shadow-sm">
               <button
                 type="button"
                 onClick={() => setMode("barcode")}
                 className={cx(
-                  "px-3 py-2 text-xs sm:text-sm font-semibold rounded-md",
-                  mode === "barcode" ? "bg-emerald-600 text-white" : "text-slate-700 hover:bg-slate-50"
+                  "px-4 py-2.5 text-sm font-semibold rounded-lg transition-all",
+                  mode === "barcode" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
                 )}
               >
-                Barcode
+                สแกนบาร์โค้ด
               </button>
               <button
                 type="button"
                 onClick={() => setMode("shelf")}
                 className={cx(
-                  "px-3 py-2 text-xs sm:text-sm font-semibold rounded-md",
-                  mode === "shelf" ? "bg-emerald-600 text-white" : "text-slate-700 hover:bg-slate-50"
+                  "px-4 py-2.5 text-sm font-semibold rounded-lg transition-all",
+                  mode === "shelf" ? "bg-emerald-600 text-white shadow-sm" : "text-slate-600 hover:bg-slate-100"
                 )}
               >
-                Shelf
+                ดูชั้นวาง
               </button>
             </div>
 
-            {/* ปุ่มพิมพ์ เฉพาะโหมด shelf */}
+            {/* ปุ่มพิมพ์ */}
             {mode === "shelf" && (
               <button
                 type="button"
                 onClick={openPrintModal}
-                className="inline-flex items-center justify-center px-3 sm:px-4 py-2 rounded-md text-xs sm:text-sm font-medium bg-emerald-600 text-white hover:bg-emerald-500 shadow-sm"
+                className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg text-sm font-semibold bg-slate-700 text-white hover:bg-slate-600 shadow-sm transition-colors"
               >
-                🖨 พิมพ์ PDF / กระดาษ
+                พิมพ์
               </button>
             )}
           </div>
@@ -448,38 +448,71 @@ const Template = () => {
                   </div>
 
                   <div
-                    className="bg-gray-50 border rounded p-3 shadow-inner 
-                    max-h-[420px] md:max-h-[480px] w-full md:w-[260px] overflow-y-auto"
+                    className="bg-gradient-to-b from-emerald-50 to-white border-2 border-emerald-200 rounded-xl p-4 shadow-inner 
+                    max-h-[420px] md:max-h-[480px] w-full md:w-[280px] overflow-y-auto"
                   >
-                    <h3 className="font-semibold text-gray-700 mb-1 text-sm text-center">
+                    <h3 className="font-bold text-emerald-800 mb-3 text-base text-center flex items-center justify-center gap-2">
+                      <span className="text-lg">🗂️</span>
                       โครงสร้าง Shelf
                     </h3>
 
-                    {groupedShelves.map((shelf) => (
-                      <div key={shelf.shelfCode} className="mb-2 pb-2 border-b last:border-b-0">
-                        <div className="font-semibold text-blue-700 text-sm leading-tight">
-                          Shelf {shelf.shelfCode}
+                    <div className="space-y-3">
+                      {groupedShelves.map((shelf, shelfIdx) => (
+                        <div
+                          key={shelf.shelfCode}
+                          className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm"
+                        >
+                          {/* ชื่อ Shelf */}
+                          <div className="flex items-center gap-2 pb-2 border-b border-dashed border-slate-200">
+                            <span className="text-xl">📦</span>
+                            <div className="flex-1 min-w-0">
+                              <span className="font-bold text-blue-700 text-base">
+                                {shelf.shelfCode}
+                              </span>
+                              {shelf.fullName && (
+                                <span className="text-sm text-slate-600 ml-1">- {shelf.fullName}</span>
+                              )}
+                            </div>
+                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium flex-shrink-0">
+                              {shelf.rowQty} ชั้น
+                            </span>
+                          </div>
+
+                          {/* รายการแต่ละ Row */}
+                          <div className="mt-2 space-y-1">
+                            {Array.from({ length: shelf.rowQty }).map((_, idx) => {
+                              const rowNo = idx + 1;
+                              const rowProducts = shelf.shelfProducts.filter(
+                                (p) => (p.rowNo || 0) === rowNo
+                              );
+                              const rowColors = [
+                                'bg-amber-50 border-amber-200 text-amber-800',
+                                'bg-emerald-50 border-emerald-200 text-emerald-800',
+                                'bg-sky-50 border-sky-200 text-sky-800',
+                                'bg-violet-50 border-violet-200 text-violet-800',
+                                'bg-rose-50 border-rose-200 text-rose-800',
+                                'bg-cyan-50 border-cyan-200 text-cyan-800',
+                              ];
+                              const colorClass = rowColors[idx % rowColors.length];
+
+                              return (
+                                <div
+                                  key={rowNo}
+                                  className={`flex items-center justify-between px-3 py-2 rounded-lg border ${colorClass}`}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm font-bold">ชั้น {rowNo}</span>
+                                  </div>
+                                  <span className="text-sm font-semibold">
+                                    {rowProducts.length} รายการ
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
                         </div>
-
-                        <div className="ml-2 mt-1 text-xs leading-tight">
-                          <div className="font-semibold text-gray-600">จำนวน : {shelf.rowQty} เเถว</div>
-
-                          {Array.from({ length: shelf.rowQty }).map((_, idx) => {
-                            const rowNo = idx + 1;
-                            const rowProducts = shelf.shelfProducts.filter(
-                              (p) => (p.rowNo || 0) === rowNo
-                            );
-
-                            return (
-                              <div key={rowNo} className="ml-1 flex text-gray-700 leading-tight py-[1px]">
-                                <span className="pr-4">• Row {rowNo}</span>
-                                <span>{rowProducts.length} รายการ</span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 </div>
               </section>

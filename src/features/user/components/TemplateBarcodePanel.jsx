@@ -64,7 +64,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
     const code = String(bc || "").trim();
     if (!storecode || !code) return;
     if (code.length < 5) {
-      setBarcodeError("บาร์โค้ดควรมีอย่างน้อย 5 หลัก");
+      setBarcodeError("บาร์โค้ดควรมีอย่างน้อย 5 ตัว");
       return;
     }
 
@@ -147,17 +147,23 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
         initialAction={requestAction} // ✅ Pass initial action
       />
 
-      <div className="bg-white border rounded-xl shadow-sm p-3">
-        <div className="text-sm font-semibold text-slate-800">สแกน/พิมพ์บาร์โค้ด หรือใช้กล้อง</div>
-        <div className="text-xs text-slate-500 mt-1">
-          {/* สแกนติดแล้วจะขึ้น Popup และแสดงสถานะกำลังโหลดข้อมูลจากระบบ */}
+      <div className="bg-white border rounded-xl shadow-sm p-4">
+        <div className="text-base font-semibold text-slate-800">ค้นหาสินค้าจากบาร์โค้ด</div>
+        <div className="text-sm text-slate-500 mt-1">
+          พิมพ์บาร์โค้ดหรือใช้กล้องสแกน
+        </div>
+        <div className="mt-2 p-2 rounded-lg bg-amber-50 border border-amber-100 text-xs text-amber-700 flex items-start gap-2">
+          <span className="text-lg leading-none">💡</span>
+          <span>
+            <b>คำแนะนำ:</b> บาร์โค้ดใช้กับเลข 13 หลักเท่านั้น หากเป็นอักษรหรือตัวเลขที่น้อยกว่า 13 ตัวของค่ามาตรฐาน จะไม่สามารถใช้การยิงสแกนได้
+          </span>
         </div>
 
         <div className="mt-3 flex flex-col sm:flex-row gap-2">
           <input
             ref={barcodeInputRef}
             type="text"
-            inputMode="numeric"
+            inputMode="text"
             value={barcode}
             onChange={(e) => {
               const raw = e.target.value || "";
@@ -183,7 +189,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
               type="button"
               onClick={() => openPopupAndLookup(barcode)}
               disabled={!String(barcode).trim() || lookupLoading}
-              className="px-4 py-3 rounded-xl font-semibold text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
+              className="px-5 py-3 rounded-xl font-semibold text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors"
             >
               {lookupLoading ? "กำลังค้นหา..." : "ค้นหา"}
             </button>
@@ -191,15 +197,15 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
             <button
               type="button"
               onClick={() => setCameraOpen(true)}
-              className="px-4 py-3 rounded-xl font-semibold text-sm bg-slate-800 text-white hover:bg-slate-700"
+              className="px-5 py-3 rounded-xl font-semibold text-sm bg-blue-600 text-white hover:bg-blue-500 transition-colors"
             >
-              📷 กล้อง
+              ใช้กล้อง
             </button>
 
             <button
               type="button"
               onClick={clearAll}
-              className="px-4 py-3 rounded-xl font-semibold text-sm border bg-white hover:bg-slate-50"
+              className="px-4 py-3 rounded-xl font-semibold text-sm border border-slate-300 bg-white hover:bg-slate-50 text-slate-600 transition-colors"
             >
               ล้าง
             </button>

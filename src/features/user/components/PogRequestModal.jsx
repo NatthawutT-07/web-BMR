@@ -93,7 +93,15 @@ export default function PogRequestModal({
             setSuccess(true);
         } catch (e) {
             console.error("POG request error:", e);
-            setError(e?.response?.data?.message || "เกิดข้อผิดพลาด");
+            // Handle JSON string in message
+            let msg = e?.response?.data?.message;
+            if (typeof msg === 'string' && msg.trim().startsWith('{')) {
+                try {
+                    const parsed = JSON.parse(msg);
+                    msg = parsed.message || msg;
+                } catch { }
+            }
+            setError(msg || "เกิดข้อผิดพลาด");
         } finally {
             setLoading(false);
         }
@@ -108,14 +116,14 @@ export default function PogRequestModal({
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b bg-amber-50">
                     <div>
-                        <div className="text-sm font-semibold text-amber-800">📝 แจ้งขอเปลี่ยนแปลง POG</div>
-                        <div className="text-xs text-amber-700 mt-0.5">สาขา: {branchCode}</div>
+                        <div className="text-base font-semibold text-amber-800">แจ้งขอเปลี่ยนแปลง</div>
+                        <div className="text-sm text-amber-700 mt-0.5">สาขา: {branchCode}</div>
                     </div>
                     <button
-                        className="px-3 py-1.5 rounded-lg text-xs font-semibold border bg-white hover:bg-slate-50"
+                        className="px-3 py-1.5 rounded-lg text-sm font-semibold border bg-white hover:bg-slate-50"
                         onClick={handleClose}
                     >
-                        ✕
+                        ปิด
                     </button>
                 </div>
 
@@ -137,12 +145,12 @@ export default function PogRequestModal({
                         <>
                             {/* Product Info */}
                             <div className="p-3 rounded-xl bg-slate-50 border">
-                                <div className="text-xs text-slate-500">สินค้าที่เลือก</div>
-                                <div className="text-sm font-semibold text-slate-800 mt-1">{productName || "-"}</div>
-                                <div className="text-xs text-slate-600 mt-1">
+                                <div className="text-sm text-slate-500">สินค้าที่เลือก</div>
+                                <div className="text-base font-semibold text-slate-800 mt-1">{productName || "-"}</div>
+                                <div className="text-sm text-slate-600 mt-1">
                                     บาร์โค้ด: {barcode}
                                     {currentShelf && (
-                                        <> • ตำแหน่งปัจจุบัน: {currentShelf} / Row {currentRow} / Index {currentIndex}</>
+                                        <> • ตำแหน่งปัจจุบัน: {currentShelf} / ชั้น {currentRow} / ลำดับ {currentIndex}</>
                                     )}
                                 </div>
                             </div>
@@ -179,35 +187,35 @@ export default function PogRequestModal({
                                     </div>
                                     <div className="grid grid-cols-3 gap-2">
                                         <div>
-                                            <label className="text-xs text-slate-600">Shelf Code</label>
+                                            <label className="text-sm text-slate-600">ชั้นวาง</label>
                                             <input
                                                 type="text"
                                                 value={toShelf}
                                                 onChange={(e) => setToShelf(e.target.value.toUpperCase())}
                                                 placeholder="W1"
-                                                className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                                                className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs text-slate-600">Row</label>
+                                            <label className="text-sm text-slate-600">ชั้นที่</label>
                                             <input
                                                 type="number"
                                                 min="1"
                                                 value={toRow}
                                                 onChange={(e) => setToRow(e.target.value)}
                                                 placeholder="1"
-                                                className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                                                className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm"
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-xs text-slate-600">Index</label>
+                                            <label className="text-sm text-slate-600">ลำดับ</label>
                                             <input
                                                 type="number"
                                                 min="1"
                                                 value={toIndex}
                                                 onChange={(e) => setToIndex(e.target.value)}
                                                 placeholder="5"
-                                                className="w-full mt-1 px-3 py-2 border rounded-lg text-sm"
+                                                className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm"
                                             />
                                         </div>
                                     </div>
