@@ -5,10 +5,10 @@ import api from "../../../utils/axios";
 const cx = (...a) => a.filter(Boolean).join(" ");
 
 const STATUS_MAP = {
-    pending: { label: "รอ", color: "text-amber-600 bg-amber-50 border-amber-200" },
+    pending: { label: "รอดำเนินการ", color: "text-amber-600 bg-amber-50 border-amber-200" },
     approved: { label: "อนุมัติ", color: "text-blue-600 bg-blue-50 border-blue-200" },
-    rejected: { label: "ปฏิเสธ", color: "text-rose-600 bg-rose-50 border-rose-200" },
-    completed: { label: "เสร็จ", color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+    rejected: { label: "ไม่อนุมัติ", color: "text-rose-600 bg-rose-50 border-rose-200" },
+    completed: { label: "เสร็จสิ้น", color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
 };
 
 const ACTION_MAP = {
@@ -78,7 +78,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative w-[95vw] max-w-4xl bg-white rounded-xl shadow-xl border overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="relative w-[95vw] max-w-7xl bg-white rounded-xl shadow-xl border overflow-hidden max-h-[90vh] flex flex-col">
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50 shrink-0">
                     <div>
@@ -105,7 +105,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                         <table className="w-full text-sm text-left border-collapse">
                             <thead className="bg-slate-100 text-slate-600 font-medium sticky top-0 z-10 shadow-sm text-xs">
                                 <tr>
-                                    <th className="px-3 py-2 text-center w-[80px]">สถานะ</th>
+                                    <th className="px-3 py-2 text-center w-[100px] whitespace-nowrap">สถานะ</th>
                                     <th className="px-3 py-2 text-center w-[60px]">Action</th>
                                     <th className="px-3 py-2">สินค้า</th>
                                     <th className="px-3 py-2">ตำแหน่ง</th>
@@ -119,58 +119,63 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                                     return (
                                         <tr key={item.id} className="hover:bg-slate-50 transition-colors">
                                             {/* Status */}
-                                            <td className="px-2 py-2 text-center align-top">
-                                                <span className={cx("px-2 py-1 rounded text-[10px] font-bold border", statusInfo.color)}>
+                                            <td className="px-2 py-2 text-center align-middle">
+                                                <span className={cx("px-2 py-1 rounded text-[10px] font-bold border whitespace-nowrap", statusInfo.color)}>
                                                     {statusInfo.label}
                                                 </span>
                                             </td>
 
                                             {/* Action */}
-                                            <td className="px-2 py-2 text-center align-top font-medium text-slate-700">
+                                            <td className="px-2 py-2 text-center align-middle font-medium text-slate-700">
                                                 {ACTION_MAP[item.action] || item.action}
                                             </td>
 
                                             {/* Product */}
-                                            <td className="px-3 py-2 align-top">
-                                                <div className="font-medium text-slate-800 line-clamp-1" title={item.productName}>
-                                                    {item.productName || "-"}
-                                                </div>
-                                                <div className="text-[11px] text-slate-500 font-mono">
-                                                    {item.barcode}
+                                            <td className="px-3 py-2 align-middle">
+                                                <div className="flex items-center gap-2 whitespace-nowrap">
+                                                    <span className="font-medium text-slate-800" title={item.productName}>
+                                                        {item.productName || "-"}
+                                                    </span>
+                                                    <span className="text-[11px] text-slate-500 font-mono">
+                                                        ({item.barcode})
+                                                    </span>
+                                                    {item.swapBarcode && (
+                                                        <span className="text-[10px] text-slate-400 bg-slate-100 px-1 rounded border">
+                                                            ⇄ {item.swapBarcode}
+                                                        </span>
+                                                    )}
                                                 </div>
                                                 {item.note && (
-                                                    <div className="text-[11px] text-amber-600 mt-0.5">
+                                                    <div className="text-[11px] text-amber-600 border border-amber-200 bg-amber-50 px-2 py-0.5 rounded mt-1 max-w-[300px] truncate" title={item.note}>
                                                         Note: {item.note}
-                                                    </div>
-                                                )}
-                                                {item.swapBarcode && (
-                                                    <div className="text-[10px] text-slate-400 mt-0.5">
-                                                        &rarr; ต้องสลับกับ: {item.swapBarcode}
                                                     </div>
                                                 )}
                                             </td>
 
                                             {/* Location */}
-                                            <td className="px-3 py-2 align-top text-xs text-slate-600">
-                                                {item.fromShelf ? (
-                                                    <div>
-                                                        <span className="text-slate-400">จาก:</span> {item.fromShelf}/{item.fromRow}/{item.fromIndex}
-                                                    </div>
-                                                ) : null}
-                                                {item.toShelf ? (
-                                                    <div>
-                                                        <span className="text-slate-400">ไป: </span> {item.toShelf}/{item.toRow}/{item.toIndex}
-                                                    </div>
-                                                ) : null}
+                                            <td className="px-3 py-2 align-middle text-xs text-slate-600 whitespace-nowrap">
+                                                <div className="flex items-center gap-2">
+                                                    {item.fromShelf && (
+                                                        <span>
+                                                            <span className="text-slate-400">จาก:</span> {item.fromShelf}/{item.fromRow}/{item.fromIndex}
+                                                        </span>
+                                                    )}
+                                                    {item.fromShelf && item.toShelf && <span className="text-slate-300">→</span>}
+                                                    {item.toShelf && (
+                                                        <span>
+                                                            <span className="text-slate-400">ไป:</span> {item.toShelf}/{item.toRow}/{item.toIndex}
+                                                        </span>
+                                                    )}
+                                                </div>
                                             </td>
 
                                             {/* Date */}
-                                            <td className="px-3 py-2 text-right align-top text-xs text-slate-400 font-mono whitespace-nowrap">
+                                            <td className="px-3 py-2 text-right align-middle text-xs text-slate-400 font-mono whitespace-nowrap">
                                                 {formatDateShort(item.createdAt)}
                                             </td>
 
                                             {/* Action Button */}
-                                            <td className="px-2 py-2 text-center align-top">
+                                            <td className="px-2 py-2 text-center align-middle">
                                                 {item.status === "pending" && (
                                                     <button
                                                         onClick={() => handleCancel(item.id)}
