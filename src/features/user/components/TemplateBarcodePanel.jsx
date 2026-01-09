@@ -106,7 +106,8 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
   };
 
   // ✅ สแกนจากกล้องแล้ว: เปิด popup “ก่อน” แล้วค่อยยิง API (ให้ user เห็นสปิน)
-  const onCameraDetected = (code) => {
+  // ✅ สแกนจากกล้องแล้ว: เปิด popup “ก่อน” แล้วค่อยยิง API (ให้ user เห็นสปิน)
+  const onCameraDetected = React.useCallback((code) => {
     setCameraOpen(false);
     setBarcode(code);
 
@@ -115,7 +116,8 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
 
     // ยิง lookup รอ backend
     lookupByBarcode(code);
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const openPopupAndLookup = (bc) => {
     const code = String(bc || "").trim();

@@ -43,6 +43,8 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
 
     const start = async () => {
       try {
+        if (!videoRef.current) return; // ✅ Safety check
+
         await reader.decodeFromConstraints(
           {
             audio: false,
@@ -90,7 +92,6 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
                   centerY >= safeZoneY_Min && centerY <= safeZoneY_Max;
 
                 if (!isInside) {
-                  // console.log("Ignored: Outside Box", centerX, centerY);
                   return; // ❌ ไม่อยู่ในกรอบ -> ข้าม
                 }
               }

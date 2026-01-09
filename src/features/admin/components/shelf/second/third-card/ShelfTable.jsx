@@ -318,7 +318,7 @@ const AddProductModal = React.memo(
     };
 
     // ✅ Camera detected: set query and auto-check
-    const onCameraDetected = (code) => {
+    const onCameraDetected = React.useCallback((code) => {
       setCameraOpen(false);
       const trimmed = String(code || "").trim();
       if (trimmed.length >= 2) {
@@ -348,7 +348,8 @@ const AddProductModal = React.memo(
           }
         }, 100);
       }
-    };
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     const onKeyDownInput = (e) => {
       if (e.key === "Enter") {
