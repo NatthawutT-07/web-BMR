@@ -32,6 +32,9 @@ export default function PogRequestModal({
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
 
+    // ✅ Dropdown state
+    const [isShelfDropdownOpen, setIsShelfDropdownOpen] = useState(false);
+
     // ✅ State สำหรับ shelves ที่โหลดจาก API
     const [shelves, setShelves] = useState([]);
     const [shelvesLoading, setShelvesLoading] = useState(false);
@@ -261,18 +264,55 @@ export default function PogRequestModal({
                                                 ⚠️ ไม่พบข้อมูลชั้นวางในสาขานี้
                                             </div>
                                         ) : (
-                                            <select
-                                                value={toShelf}
-                                                onChange={(e) => setToShelf(e.target.value)}
-                                                className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-white"
-                                            >
-                                                <option value="">-- เลือกชั้นวาง ({availableShelves.length} ชั้นวาง) --</option>
-                                                {availableShelves.map((shelf) => (
-                                                    <option key={shelf.shelfCode} value={shelf.shelfCode}>
-                                                        {shelf.shelfCode} - {shelf.fullName || shelf.shelfCode}
-                                                    </option>
-                                                ))}
-                                            </select>
+                                            <div className="relative">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsShelfDropdownOpen(!isShelfDropdownOpen)}
+                                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm text-slate-700 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center justify-between"
+                                                >
+                                                    <span className={!toShelf ? "text-slate-500" : ""}>
+                                                        {toShelf
+                                                            ? (() => {
+                                                                const s = availableShelves.find(sh => sh.shelfCode === toShelf);
+                                                                return s ? `${s.shelfCode} - ${s.fullName || s.shelfCode}` : toShelf;
+                                                            })()
+                                                            : `-- เลือกชั้นวาง (${availableShelves.length} ชั้นวาง) --`}
+                                                    </span>
+                                                    <span className="text-slate-400 text-xs ml-2">▼</span>
+                                                </button>
+
+                                                {/* Custom Dropdown */}
+                                                {isShelfDropdownOpen && (
+                                                    <>
+                                                        <div
+                                                            className="fixed inset-0 z-10"
+                                                            onClick={() => setIsShelfDropdownOpen(false)}
+                                                        />
+                                                        <ul className="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                                            {availableShelves.map((shelf) => (
+                                                                <li
+                                                                    key={shelf.shelfCode}
+                                                                    className={`relative cursor-pointer select-none py-2 pl-3 pr-9 hover:bg-amber-50 ${toShelf === shelf.shelfCode ? 'text-amber-900 bg-amber-50 font-medium' : 'text-slate-700'
+                                                                        }`}
+                                                                    onClick={() => {
+                                                                        setToShelf(shelf.shelfCode);
+                                                                        setIsShelfDropdownOpen(false);
+                                                                    }}
+                                                                >
+                                                                    <span className={`block truncate ${toShelf === shelf.shelfCode ? 'font-semibold' : 'font-normal'}`}>
+                                                                        {shelf.shelfCode} - {shelf.fullName || shelf.shelfCode}
+                                                                    </span>
+                                                                    {toShelf === shelf.shelfCode && (
+                                                                        <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-amber-600">
+                                                                            ✓
+                                                                        </span>
+                                                                    )}
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
 
