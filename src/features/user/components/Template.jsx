@@ -433,121 +433,138 @@ const Template = () => {
 
             {/* SUMMARY + IMAGE */}
             {!loading && groupedShelves.length > 0 && (
-              <section className="w-full flex justify-center print:hidden">
-                <div
-                  className="bg-white p-4 rounded-lg shadow-sm border justify-center
-                  flex flex-col md:flex-row gap-4 mx-auto w-full max-w-4xl"
-                >
-                  <div className="flex justify-center md:w-[260px]">
+              <section className="w-full print:hidden">
+                <div className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border flex flex-col xl:flex-row gap-6 mx-auto w-full max-w-[1400px]">
+
+                  {/* LEFT: Branch Image */}
+                  <div className="flex justify-center xl:justify-start xl:w-[260px] flex-shrink-0">
                     <img
                       src={`/images/branch/${storecode?.toUpperCase()}.png`}
                       alt={`Branch ${storecode}`}
-                      className="w-full max-w-[260px] object-contain rounded"
+                      className="w-full max-w-[260px] h-auto object-contain rounded-lg shadow-sm border bg-slate-50"
                       loading="lazy"
                     />
                   </div>
 
-                  <div
-                    className="bg-gradient-to-b from-emerald-50 to-white border-2 border-emerald-200 rounded-xl p-4 shadow-inner 
-                    max-h-[420px] md:max-h-[480px] w-full md:w-[280px] overflow-y-auto"
-                  >
-                    <h3 className="font-bold text-emerald-800 mb-3 text-base text-center flex items-center justify-center gap-2">
-                      <span className="text-lg">🗂️</span>
-                      โครงสร้าง Shelf
-                    </h3>
+                  {/* CENTER: Shelf Structure List */}
+                  <div className="flex-1 flex flex-col">
+                    <div
+                      className="bg-gradient-to-b from-emerald-50 to-white border-2 border-emerald-200 rounded-xl p-4 shadow-inner 
+                      max-h-[420px] md:max-h-[480px] w-full overflow-y-auto"
+                    >
+                      <h3 className="font-bold text-emerald-800 mb-3 text-base text-center flex items-center justify-center gap-2 sticky top-0 bg-emerald-50/95 py-2 -mt-2 z-10 backdrop-blur-sm">
+                        <span className="text-lg">🗂️</span>
+                        โครงสร้าง Shelf
+                      </h3>
 
-                    <div className="space-y-3">
-                      {groupedShelves.map((shelf, shelfIdx) => (
-                        <div
-                          key={shelf.shelfCode}
-                          className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm"
-                        >
-                          {/* ชื่อ Shelf */}
-                          <div className="flex items-center gap-2 pb-2 border-b border-dashed border-slate-200">
-                            <span className="text-xl">📦</span>
-                            <div className="flex-1 min-w-0">
-                              <span className="font-bold text-blue-700 text-base">
-                                {shelf.shelfCode}
-                              </span>
-                              {shelf.fullName && (
-                                <span className="text-sm text-slate-600 ml-1">- {shelf.fullName}</span>
-                              )}
-                            </div>
-                            <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-medium flex-shrink-0">
-                              {shelf.rowQty} ชั้น
-                            </span>
-                          </div>
-
-                          {/* รายการแต่ละ Row */}
-                          <div className="mt-2 space-y-1">
-                            {Array.from({ length: shelf.rowQty }).map((_, idx) => {
-                              const rowNo = idx + 1;
-                              const rowProducts = shelf.shelfProducts.filter(
-                                (p) => (p.rowNo || 0) === rowNo
-                              );
-                              const rowColors = [
-                                'bg-amber-50 border-amber-200 text-amber-800',
-                                'bg-emerald-50 border-emerald-200 text-emerald-800',
-                                'bg-sky-50 border-sky-200 text-sky-800',
-                                'bg-violet-50 border-violet-200 text-violet-800',
-                                'bg-rose-50 border-rose-200 text-rose-800',
-                                'bg-cyan-50 border-cyan-200 text-cyan-800',
-                              ];
-                              const colorClass = rowColors[idx % rowColors.length];
-
-                              return (
-                                <div
-                                  key={rowNo}
-                                  className={`flex items-center justify-between px-3 py-2 rounded-lg border ${colorClass}`}
-                                >
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-sm font-bold">ชั้น {rowNo}</span>
-                                  </div>
-                                  <span className="text-sm font-semibold">
-                                    {rowProducts.length} รายการ
+                      <div className="space-y-3">
+                        {groupedShelves.map((shelf) => (
+                          <div
+                            key={shelf.shelfCode}
+                            className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm transition-all hover:shadow-md"
+                          >
+                            <div className="flex items-center gap-2 pb-2 border-b border-dashed border-slate-200">
+                              <span className="text-xl flex-shrink-0">📦</span>
+                              <div className="flex-1 min-w-0 flex items-center whitespace-nowrap overflow-x-auto scrollbar-hide">
+                                <span className="font-bold text-blue-700 text-base">
+                                  {shelf.shelfCode}
+                                </span>
+                                {shelf.fullName && (
+                                  <span className="text-sm text-slate-600 ml-1">
+                                    - {shelf.fullName}
                                   </span>
-                                </div>
-                              );
-                            })}
+                                )}
+                              </div>
+                              <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full font-bold flex-shrink-0 whitespace-nowrap">
+                                {shelf.rowQty} ชั้น
+                              </span>
+                            </div>
+
+                            {/* รายการแต่ละ Row */}
+                            <div className="mt-2 space-y-1.5">
+                              {Array.from({ length: shelf.rowQty }).map((_, idx) => {
+                                const rowNo = idx + 1;
+                                const rowProducts = shelf.shelfProducts.filter(
+                                  (p) => (p.rowNo || 0) === rowNo
+                                );
+                                const rowColors = [
+                                  'bg-amber-50 border-amber-200 text-amber-800',
+                                  'bg-emerald-50 border-emerald-200 text-emerald-800',
+                                  'bg-sky-50 border-sky-200 text-sky-800',
+                                  'bg-violet-50 border-violet-200 text-violet-800',
+                                  'bg-rose-50 border-rose-200 text-rose-800',
+                                  'bg-cyan-50 border-cyan-200 text-cyan-800',
+                                ];
+                                const colorClass = rowColors[idx % rowColors.length];
+
+                                return (
+                                  <div
+                                    key={rowNo}
+                                    className={`flex items-center justify-between px-3 py-2 rounded-lg border ${colorClass}`}
+                                  >
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs font-bold uppercase tracking-wider opacity-70">Row</span>
+                                      <span className="text-sm font-bold">{rowNo}</span>
+                                    </div>
+                                    <span className="text-sm font-semibold bg-white/60 px-2 rounded-md">
+                                      {rowProducts.length} รายการ
+                                    </span>
+                                  </div>
+                                );
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </div>
                   </div>
+
+                  {/* RIGHT: Filter & Search Panel */}
+                  <div className="xl:w-[320px] 2xl:w-[380px] flex-shrink-0 flex flex-col gap-4">
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 h-full">
+                      <h3 className="font-bold text-slate-700 mb-3 text-sm flex items-center gap-2">
+                        <span>🔍</span> ตัวเลือกและการค้นหา
+                      </h3>
+
+                      <div className="space-y-4">
+                        <Suspense fallback={<div className="text-sm text-gray-500">Loading filter...</div>}>
+                          <ShelfFilterUser
+                            shelves={groupedShelves.map((s) => s.shelfCode)}
+                            selectedShelves={selectedShelves}
+                            onToggle={(code) =>
+                              setSelectedShelves((prev) =>
+                                prev.includes(code) ? prev.filter((s) => s !== code) : [...prev, code]
+                              )
+                            }
+                            onClear={() => setSelectedShelves([])}
+                          />
+                        </Suspense>
+
+                        <div className="pt-4 border-t border-slate-200">
+                          <label className="text-xs font-semibold text-slate-500 mb-1.5 block">ค้นหาสินค้าในหน้านี้</label>
+                          <input
+                            type="text"
+                            placeholder="พิมพ์ชื่อแบรนด์ หรือเลขบาร์โค้ด..."
+                            className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
+                            value={searchText}
+                            onChange={(e) => setSearchText(e.target.value)}
+                          />
+                          {searchHint && (
+                            <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100 flex items-start gap-1">
+                              <span>⚠️</span>
+                              <span>{searchHint}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </section>
             )}
 
-            {/* FILTER + SEARCH */}
-            <section className="space-y-3 print:hidden">
-              {!loading && groupedShelves.length > 0 && (
-                <Suspense fallback={<div className="text-sm text-gray-500">Loading filter...</div>}>
-                  <ShelfFilterUser
-                    shelves={groupedShelves.map((s) => s.shelfCode)}
-                    selectedShelves={selectedShelves}
-                    onToggle={(code) =>
-                      setSelectedShelves((prev) =>
-                        prev.includes(code) ? prev.filter((s) => s !== code) : [...prev, code]
-                      )
-                    }
-                    onClear={() => setSelectedShelves([])}
-                  />
-                </Suspense>
-              )}
 
-              <div className="w-full max-w-xl mx-auto">
-                <input
-                  type="text"
-                  placeholder="ค้นหาแบรนด์ / บาร์โค้ด..."
-                  className="w-full px-4 py-2 border rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400"
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                />
-                {searchHint && (
-                  <div className="mt-1 text-xs text-amber-600">{searchHint}</div>
-                )}
-              </div>
-            </section>
 
             {/* SHELF LIST */}
             <section className="space-y-4">

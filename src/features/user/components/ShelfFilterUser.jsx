@@ -4,25 +4,27 @@ const ShelfFilterUser = ({ shelves, selectedShelves, onToggle, onClear }) => {
   const uniqueShelves = useMemo(() => [...new Set(shelves)], [shelves]);
 
   return (
-    <div className="mb-3 bg-white p-4 rounded-xl shadow-sm border print:hidden">
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+    <div className="print:hidden">
+      <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-3">
         <label className="text-sm font-semibold text-slate-700">
-          เลือก Shelf ที่ต้องการดู
+          เลือก Shelf
           {selectedShelves.length > 0 && (
-            <span className="ml-2 text-xs font-normal text-emerald-600">
-              (เลือกแล้ว {selectedShelves.length} รายการ)
+            <span className="ml-1.5 text-xs font-normal text-emerald-600">
+              ({selectedShelves.length})
             </span>
           )}
         </label>
-        <button
-          onClick={onClear}
-          className="self-start sm:self-auto px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-lg text-xs font-medium transition-colors"
-        >
-          ล้างทั้งหมด
-        </button>
+        {selectedShelves.length > 0 && (
+          <button
+            onClick={onClear}
+            className="text-[10px] text-slate-500 hover:text-red-600 underline"
+          >
+            ล้างทั้งหมด
+          </button>
+        )}
       </div>
 
-      <div className="grid grid-cols-3 xs:grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-2">
+      <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
         {uniqueShelves.map((shelfCode) => {
           const isSelected = selectedShelves.includes(shelfCode);
           return (
@@ -31,10 +33,10 @@ const ShelfFilterUser = ({ shelves, selectedShelves, onToggle, onClear }) => {
               type="button"
               onClick={() => onToggle(shelfCode)}
               className={`
-                px-3 py-2 rounded-lg text-sm font-medium text-center transition-all
+                px-2 py-2 rounded-lg text-sm font-bold text-center transition-all
                 ${isSelected
-                  ? 'bg-emerald-500 text-white shadow-sm'
-                  : 'bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100'}
+                  ? 'bg-emerald-500 text-white shadow-sm ring-2 ring-emerald-200'
+                  : 'bg-white text-slate-600 border border-slate-200 hover:bg-emerald-50 hover:border-emerald-200'}
               `}
             >
               {shelfCode}

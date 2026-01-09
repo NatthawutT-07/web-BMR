@@ -6,48 +6,48 @@ const ShelfFilter = React.memo(
     const uniqueShelves = useMemo(() => [...new Set(shelves)], [shelves]);
 
     return (
-      <div className="mb-4 bg-white p-4 rounded-lg shadow-sm border border-gray-200">
+      <div className="print:hidden">
         {/* Header */}
-        <div className="flex items-center justify-between mb-3">
-          <label className="text-sm font-medium text-gray-700 flex items-center gap-1">
-            🗂 Filter by Shelf
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <label className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
+            🗂 เลือก Shelf
+            {selectedShelves.length > 0 && (
+              <span className="text-xs font-normal text-emerald-600">
+                ({selectedShelves.length})
+              </span>
+            )}
           </label>
 
-          <button
-            onClick={onClear}
-            className="px-3 py-1 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded text-xs transition-colors"
-          >
-            ❌ Clear
-          </button>
+          {selectedShelves.length > 0 && (
+            <button
+              onClick={onClear}
+              className="text-[10px] text-slate-500 hover:text-red-600 underline"
+            >
+              ล้างทั้งหมด
+            </button>
+          )}
         </div>
 
         {/* Shelves grid */}
-        <div
-          className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2"
-        >
-          {uniqueShelves.map((shelfCode) => (
-            <label
-              key={shelfCode}
-              className="
-                flex items-center gap-2 
-                bg-gray-50 border border-gray-300 
-                rounded px-2 py-1.5 
-                text-xs 
-                hover:bg-gray-100 
-                cursor-pointer
-                transition
-                truncate
-              "
-            >
-              <input
-                type="checkbox"
-                checked={selectedShelves.includes(shelfCode)}
-                onChange={() => onToggle(shelfCode)}
-                className="form-checkbox h-4 w-4 text-blue-600 min-w-[16px]"
-              />
-              <span className="truncate">{shelfCode}</span>
-            </label>
-          ))}
+        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+          {uniqueShelves.map((shelfCode) => {
+            const isSelected = selectedShelves.includes(shelfCode);
+            return (
+              <button
+                key={shelfCode}
+                type="button"
+                onClick={() => onToggle(shelfCode)}
+                className={`
+                  px-2 py-2 rounded-lg text-sm font-bold text-center transition-all
+                  ${isSelected
+                    ? 'bg-blue-500 text-white shadow-sm ring-2 ring-blue-200'
+                    : 'bg-white text-slate-600 border border-slate-200 hover:bg-blue-50 hover:border-blue-200'}
+                `}
+              >
+                {shelfCode}
+              </button>
+            );
+          })}
         </div>
       </div>
     );

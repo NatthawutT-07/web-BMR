@@ -27,33 +27,31 @@ const BranchSelector = React.memo(
       onDownload(selectedBranchCode);
     };
 
+    const selectedBranch = (branches || []).find(
+      (b) => b.branch_code === selectedBranchCode
+    );
+
     return (
       <form
         onSubmit={handleSubmit}
-        className="mb-4 bg-white p-6 rounded-xl shadow-md w-full max-w-2xl mx-auto space-y-4 border border-gray-200"
+        className="mb-4 bg-white p-4 rounded-lg shadow-sm w-full max-w-3xl mx-auto border border-slate-200"
       >
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center">
-          <h2 className="text-lg font-semibold text-gray-800">
-            Select Branch
-          </h2>
-        </div>
+        {/* Selector Row - all inline with wrap */}
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="text-sm font-medium text-slate-700 whitespace-nowrap">
+            เลือกสาขา:
+          </label>
 
-        {/* Selector */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
           <select
             id="branches"
             value={selectedBranchCode}
             onChange={(e) => onChange && onChange(e.target.value)}
-            className="border border-gray-300 rounded-lg px-3 py-2 w-full sm:flex-1 text-sm shadow-sm focus:ring-2 focus:ring-blue-500"
+            className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white flex-1 min-w-[200px]"
           >
-            <option value="">-- Select Branch --</option>
+            <option value="">-- เลือกสาขา --</option>
             {(branches || []).map((branch, idx) => (
-              <option
-                key={branch.branch_code ?? idx}
-                value={branch.branch_code}
-              >
-                {idx + 1}. {branch.branch_code} - {branch.branch_name}
+              <option key={branch.branch_code ?? idx} value={branch.branch_code}>
+                {branch.branch_code} - {branch.branch_name}
               </option>
             ))}
           </select>
@@ -61,48 +59,49 @@ const BranchSelector = React.memo(
           <button
             type="submit"
             disabled={okLocked || !selectedBranchCode}
-            className={`px-4 py-2 rounded-lg font-semibold text-sm w-full sm:w-auto transition-all duration-200 ${okLocked || !selectedBranchCode
-              ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-              : "bg-blue-600 text-white hover:bg-blue-500 shadow-md"
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${okLocked || !selectedBranchCode
+              ? "bg-slate-100 text-slate-400 cursor-not-allowed"
+              : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
           >
-            {okLocked ? "✅ Loaded" : "✔️ OK"}
+            {okLocked ? "โหลดแล้ว ✓" : "ดูข้อมูล"}
           </button>
+
+          {/* Action buttons inline */}
+          {okLocked && selectedBranchCode && (
+            <>
+              <button
+                type="button"
+                onClick={handleRefresh}
+                className="px-3 py-2 text-sm rounded-lg bg-amber-500 text-white hover:bg-amber-600 whitespace-nowrap"
+              >
+                รีเฟรช
+              </button>
+
+              {/* <button
+                type="button"
+                onClick={handleDownload}
+                disabled={downloadLoading}
+                className={`px-3 py-2 text-sm rounded-lg whitespace-nowrap ${downloadLoading
+                    ? "bg-slate-200 text-slate-400"
+                    : "bg-emerald-500 text-white hover:bg-emerald-600"
+                  }`}
+              >
+                {downloadLoading ? "กำลังโหลด..." : "ดาวน์โหลด"}
+              </button> */}
+            </>
+          )}
         </div>
 
+        {/* Selected branch info (subtle) */}
+        {okLocked && selectedBranch && (
+          <div className="mt-2 text-xs text-slate-500">
+            กำลังดู: <span className="font-medium text-slate-700">{selectedBranch.branch_code} - {selectedBranch.branch_name}</span>
+          </div>
+        )}
       </form>
     );
   }
 );
 
 export default BranchSelector;
-
-{/* Action Buttons */ }
-<div className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 space-y-2 sm:space-y-0">
-  {/* <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={!selectedBranchCode}
-            className={`px-4 py-2 text-sm rounded-lg w-full sm:w-auto transition-all duration-200 ${
-              selectedBranchCode
-                ? "bg-yellow-500 text-white hover:bg-yellow-600 shadow"
-                : "bg-gray-300 text-gray-600 cursor-not-allowed"
-            }`}
-          >
-            🔄 Refresh Product
-          </button> */}
-  {/* 
-          <button
-            type="button"
-            onClick={handleDownload}
-            disabled={!selectedBranchCode || downloadLoading}
-            className={`px-4 py-2 text-sm rounded-lg w-full sm:w-auto transition-all duration-200 ${
-              selectedBranchCode && !downloadLoading
-                ? "bg-green-500 text-white hover:bg-green-600 shadow"
-                : "bg-gray-300 text-gray-600 cursor-not-allowed"
-            }`}
-          >
-            {downloadLoading ? "⬇️ Downloading..." : "⬇️ Download XLSX"}
-          </button> */}
-
-</div>

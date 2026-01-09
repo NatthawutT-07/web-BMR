@@ -327,27 +327,35 @@ const ShelfManager = () => {
 
   return (
     <div className="container mx-auto p-3 sm:p-6 space-y-6">
-      <Suspense
-        fallback={
-          <div className="w-full flex justify-center">
-            <div className="text-gray-500 text-sm">Loading branches...</div>
-          </div>
-        }
+      {/* BranchSelector with center-to-top animation */}
+      <div
+        className={`transition-all duration-700 ease-out ${!submittedBranchCode
+            ? "min-h-[60vh] flex items-center justify-center"
+            : ""
+          }`}
       >
-        <BranchSelector
-          branches={branches || []}
-          selectedBranchCode={selectedBranchCode}
-          onChange={(val) => {
-            setSelectedBranchCode(val);
-            setOkLocked(false);
-          }}
-          okLocked={okLocked}
-          onSubmit={handleSubmit}
-          onRefreshProduct={handleRefreshProduct}
-          onDownload={handleDownloadShelfXlsx}
-          downloadLoading={downloadLoading}
-        />
-      </Suspense>
+        <Suspense
+          fallback={
+            <div className="w-full flex justify-center">
+              <div className="text-gray-500 text-sm">Loading branches...</div>
+            </div>
+          }
+        >
+          <BranchSelector
+            branches={branches || []}
+            selectedBranchCode={selectedBranchCode}
+            onChange={(val) => {
+              setSelectedBranchCode(val);
+              setOkLocked(false);
+            }}
+            okLocked={okLocked}
+            onSubmit={handleSubmit}
+            onRefreshProduct={handleRefreshProduct}
+            onDownload={handleDownloadShelfXlsx}
+            downloadLoading={downloadLoading}
+          />
+        </Suspense>
+      </div>
 
       {(loading || actionLoading) && (
         <div className="flex items-center justify-center text-gray-600 mt-4">
@@ -357,126 +365,134 @@ const ShelfManager = () => {
       )}
 
       <div ref={captureRef}>
-        {/* SUMMARY + IMAGE */}
+        {/* SUMMARY + IMAGE + FILTER + SEARCH (Combined Layout) */}
         {submittedBranchCode && (
-          <div className="bg-white p-4 rounded-lg shadow-md flex flex-col sm:flex-row gap-4 mx-auto max-w-4xl justify-center mb-4">
-            <div className="flex justify-center sm:w-[260px]">
-              {imageUrl && (
-                <img
-                  src={imageUrl}
-                  alt="Branch"
-                  className="w-full max-w-[240px] rounded"
-                />
-              )}
-            </div>
+          <section className="w-full print:hidden mb-6">
+            <div className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border flex flex-col xl:flex-row gap-6 mx-auto w-full max-w-[1400px]">
 
-            <div className="bg-gray-50 border rounded p-3 shadow-sm max-h-[450px] w-full sm:w-[400px] max-w-full overflow-y-auto">
-              <h3 className="text-sm font-semibold text-center mb-1">
-                Summary
-              </h3>
-
-              {/* ช่วงเวลา start - end ของยอดขาย 90 วัน */}
-              {salesStart && salesEnd && (
-                <p className="text-[11px] text-center text-gray-500 mb-2">
-                  Sales period: {formatDDMMYYYY(salesStart)} -{" "}
-                  {formatDDMMYYYY(salesEnd)}
-                </p>
-              )}
-
-              <div className="grid grid-cols-4 text-xs font-semibold border-b pb-2 mb-2">
-                <span>Shelf</span>
-                <span className="text-right text-yellow-700">Stock</span>
-                <span className="text-right text-green-700">Sales</span>
-                <span className="text-right text-red-700">Withdraw</span>
-              </div>
-
-              <div className="divide-y text-xs bg-white border rounded max-h-[350px] overflow-y-auto">
-                {branchSummary.map((s) => (
-                  <div
-                    key={s.shelfCode}
-                    className={`grid grid-cols-4 px-2 py-2 ${
-                      s.shelfCode === "TOTAL"
-                        ? "bg-gray-100 font-semibold sticky bottom-0"
-                        : ""
-                    }`}
-                  >
-                    <span>{s.shelfCode}</span>
-                    <span className="text-right text-yellow-700">
-                      {fmtMoney2(s.totalStockCost)}
-                    </span>
-                    <span className="text-right text-green-700">
-                      {fmtMoney2(s.totalSales)}
-                    </span>
-                    <span className="text-right text-red-700">
-                      {fmtMoney2(s.totalWithdraw)}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* FILTER */}
-        {filteredTemplate.length > 0 && !loading && (
-          <Suspense
-            fallback={
-              <div className="mt-3 text-gray-500 text-sm">
-                Loading filter...
-              </div>
-            }
-          >
-            <ShelfFilter
-              shelves={filteredTemplate.map((t) => t.shelfCode)}
-              selectedShelves={selectedShelves}
-              onToggle={toggleShelfFilter}
-              onClear={handleClearFilter}
-            />
-          </Suspense>
-        )}
-
-        {/* SEARCH */}
-        {submittedBranchCode && (
-          <div className="bg-white p-3 mt-3 rounded shadow-sm mb-3">
-            <label className="text-sm font-medium text-gray-700 mb-1 block">
-              🔍 Search (Brand / Barcode)
-            </label>
-
-            <input
-              type="text"
-              value={searchText}
-              onChange={(e) => handleSearch(e.target.value)}
-              placeholder="หงษ์ทอง / 885..."
-              className="w-full border rounded px-3 py-2 text-sm"
-            />
-
-            {searchText && (
-              <div className="mt-3 border rounded p-2 bg-gray-50 max-h-60 overflow-y-auto text-sm">
-                {searchResult.length === 0 ? (
-                  <div className="text-gray-500 italic">Not found.</div>
-                ) : (
-                  searchResult.map((item, idx) => (
-                    <div
-                      key={idx}
-                      className="flex gap-3 items-center p-1 border-b last:border-b-0 hover:bg-gray-100 cursor-pointer"
-                      onClick={() =>
-                        item.shelfCode && setSelectedShelves([item.shelfCode])
-                      }
-                    >
-                      <span className="font-semibold text-blue-700 whitespace-nowrap">
-                        {item.shelfCode} / Row {item.rowNo} / Index{" "}
-                        {item.index}
-                      </span>
-
-                      <span className="text-xs break-all">
-                        {item.barcode} : {item.nameProduct} : {item.nameBrand}
-                      </span>
-                    </div>
-                  ))
+              {/* LEFT: Branch Image */}
+              <div className="flex justify-center xl:justify-start xl:w-[260px] flex-shrink-0">
+                {imageUrl && (
+                  <img
+                    src={imageUrl}
+                    alt="Branch"
+                    className="w-full max-w-[260px] h-auto object-contain rounded-lg shadow-sm border bg-slate-50"
+                    loading="lazy"
+                  />
                 )}
               </div>
-            )}
-          </div>
+
+              {/* CENTER: Summary Table */}
+              <div className="flex-1 flex flex-col">
+                <div className="bg-gradient-to-b from-slate-50 to-white border-2 border-slate-200 rounded-xl p-4 shadow-inner max-h-[450px] overflow-y-auto">
+                  <h3 className="font-bold text-slate-800 mb-2 text-base text-center flex items-center justify-center gap-2 sticky top-0 bg-slate-50/95 py-2 -mt-2 z-10 backdrop-blur-sm">
+                    📊 Summary
+                  </h3>
+
+                  {/* ช่วงเวลา start - end ของยอดขาย 90 วัน */}
+                  {salesStart && salesEnd && (
+                    <p className="text-[11px] text-center text-gray-500 mb-3">
+                      Sales period: {formatDDMMYYYY(salesStart)} - {formatDDMMYYYY(salesEnd)}
+                    </p>
+                  )}
+
+                  <div className="grid grid-cols-4 text-xs font-semibold border-b pb-2 mb-2 bg-slate-100 px-2 py-1 rounded-t-lg">
+                    <span>Shelf</span>
+                    <span className="text-right text-yellow-700">Stock</span>
+                    <span className="text-right text-green-700">Sales</span>
+                    <span className="text-right text-red-700">Withdraw</span>
+                  </div>
+
+                  <div className="divide-y text-xs bg-white border rounded-lg max-h-[300px] overflow-y-auto">
+                    {branchSummary.map((s) => (
+                      <div
+                        key={s.shelfCode}
+                        className={`grid grid-cols-4 px-2 py-2 ${s.shelfCode === "TOTAL"
+                          ? "bg-slate-100 font-semibold sticky bottom-0"
+                          : "hover:bg-slate-50"
+                          }`}
+                      >
+                        <span className="font-medium">{s.shelfCode}</span>
+                        <span className="text-right text-yellow-700">
+                          {fmtMoney2(s.totalStockCost)}
+                        </span>
+                        <span className="text-right text-green-700">
+                          {fmtMoney2(s.totalSales)}
+                        </span>
+                        <span className="text-right text-red-700">
+                          {fmtMoney2(s.totalWithdraw)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* RIGHT: Filter & Search Panel */}
+              <div className="xl:w-[320px] 2xl:w-[380px] flex-shrink-0 flex flex-col gap-4">
+                <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 h-full">
+                  <h3 className="font-bold text-slate-700 mb-3 text-sm flex items-center gap-2">
+                    <span>🔍</span> ตัวเลือกและการค้นหา
+                  </h3>
+
+                  <div className="space-y-4">
+                    {/* Filter */}
+                    {filteredTemplate.length > 0 && !loading && (
+                      <Suspense fallback={<div className="text-sm text-gray-500">Loading filter...</div>}>
+                        <ShelfFilter
+                          shelves={filteredTemplate.map((t) => t.shelfCode)}
+                          selectedShelves={selectedShelves}
+                          onToggle={toggleShelfFilter}
+                          onClear={handleClearFilter}
+                        />
+                      </Suspense>
+                    )}
+
+                    {/* Search */}
+                    <div className="pt-4 border-t border-slate-200">
+                      <label className="text-xs font-semibold text-slate-500 mb-1.5 block">
+                        ค้นหาสินค้า (แบรนด์ / บาร์โค้ด)
+                      </label>
+                      <input
+                        type="text"
+                        value={searchText}
+                        onChange={(e) => handleSearch(e.target.value)}
+                        placeholder="หงษ์ทอง / 885..."
+                        className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all"
+                      />
+
+                      {searchText && (
+                        <div className="mt-3 border rounded-lg p-2 bg-white max-h-60 overflow-y-auto text-sm shadow-inner">
+                          {searchResult.length === 0 ? (
+                            <div className="text-gray-500 italic text-center py-4">ไม่พบข้อมูล</div>
+                          ) : (
+                            searchResult.map((item, idx) => (
+                              <div
+                                key={idx}
+                                className="flex gap-3 items-center p-2 border-b last:border-b-0 hover:bg-blue-50 cursor-pointer rounded transition-colors"
+                                onClick={() =>
+                                  item.shelfCode && setSelectedShelves([item.shelfCode])
+                                }
+                              >
+                                <span className="font-semibold text-blue-700 whitespace-nowrap text-xs bg-blue-100 px-2 py-0.5 rounded">
+                                  {item.shelfCode}/R{item.rowNo}/I{item.index}
+                                </span>
+
+                                <span className="text-xs break-all text-slate-600">
+                                  {item.barcode} • {item.nameProduct} • {item.nameBrand}
+                                </span>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
         )}
 
         {/* SHELF LIST */}

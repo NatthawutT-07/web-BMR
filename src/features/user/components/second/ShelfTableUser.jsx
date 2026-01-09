@@ -85,7 +85,7 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
               ยี่ห้อ
             </th>
             <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
-              ชีวิต
+              อายุ(วัน)
             </th>
             <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               ราคา
@@ -100,7 +100,7 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
               สต็อค
             </th>
             <th className="border px-1 py-2 text-center print:hidden align-middle font-semibold text-slate-600">
-              แจ้ง
+              ทำรายการ
             </th>
           </tr>
         </thead>
@@ -252,7 +252,7 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
                             className="px-2 py-1 text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 rounded transition-colors"
                             title="แจ้งขอเปลี่ยน"
                           >
-                            แจ้ง
+                            แก้ไข
                           </button>
                         </td>
                       </tr>

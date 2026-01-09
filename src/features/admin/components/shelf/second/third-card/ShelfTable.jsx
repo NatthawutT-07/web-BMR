@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { calcTotalSales, calcTotalWithdraw } from "../../../../../../utils/shelfUtils";
 import { getMasterItem } from "../../../../../../api/admin/template";
-
-// ✅ ปรับ path ให้ตรงไฟล์คุณ (ตามตัวอย่างของคุณ)
+import CameraBarcodeScannerModal from "../../../../../user/components/CameraBarcodeScannerModal";
 
 /* ===========================
    Helper: number formatter
@@ -38,46 +37,97 @@ const getNextAvailableIndex = (rowProducts = []) => {
 =========================== */
 const DeleteConfirmModal = React.memo(
   ({ isOpen, onClose, onConfirm, productName }) => {
+    const [deleting, setDeleting] = useState(false);
+    const [deleted, setDeleted] = useState(false);
+
+    // Reset states when modal opens/closes
+    useEffect(() => {
+      if (isOpen) {
+        setDeleting(false);
+        setDeleted(false);
+      }
+    }, [isOpen]);
+
+    const handleConfirm = async () => {
+      setDeleting(true);
+      try {
+        await onConfirm?.();
+        setDeleted(true);
+        // Auto close after showing success
+        setTimeout(() => {
+          onClose?.();
+        }, 1000);
+      } catch (e) {
+        console.error("Delete failed:", e);
+        setDeleting(false);
+      }
+    };
+
     if (!isOpen) return null;
 
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
         <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
-          <h3 className="text-lg font-semibold text-gray-900 mb-2">
-            Confirm Delete
-          </h3>
+          {deleted ? (
+            // ✅ Success state
+            <div className="text-center py-4">
+              <div className="text-4xl mb-3">✅</div>
+              <h3 className="text-lg font-semibold text-emerald-700">
+                ลบสำเร็จแล้ว
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                "{productName || "-"}" ถูกลบออกแล้ว
+              </p>
+            </div>
+          ) : (
+            // ✅ Confirm state
+            <>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Confirm Delete
+              </h3>
 
-          <p className="text-gray-600 mb-6">
-            Delete{" "}
-            <span className="font-semibold">"{productName || "-"}"</span>?
-            <br />
-            <span className="text-red-600 text-sm">
-              การดำเนินการนี้ไม่สามารถย้อนกลับได้
-            </span>
-          </p>
+              <p className="text-gray-600 mb-6">
+                Delete{" "}
+                <span className="font-semibold">"{productName || "-"}"</span>?
+                <br />
+                <span className="text-red-600 text-sm">
+                  การดำเนินการนี้ไม่สามารถย้อนกลับได้
+                </span>
+              </p>
 
-          <div className="flex gap-3 justify-end">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors"
-            >
-              Cancel
-            </button>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  disabled={deleting}
+                  className="px-3 py-1.5 bg-gray-200 text-gray-700 text-sm rounded hover:bg-gray-300 transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
 
-            <button
-              type="button"
-              onClick={onConfirm}
-              className="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
-            >
-              Delete
-            </button>
-          </div>
+                <button
+                  type="button"
+                  onClick={handleConfirm}
+                  disabled={deleting}
+                  className="px-3 py-1.5 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+                >
+                  {deleting ? (
+                    <>
+                      <span className="animate-spin">⏳</span> กำลังลบ...
+                    </>
+                  ) : (
+                    "Delete"
+                  )}
+                </button>
+              </div>
+            </>
+          )}
         </div>
       </div>
     );
   }
 );
+
 
 /* ===========================
    ✅ Add Product Modal (เหมือนตัวอย่าง: Check + Choose + กันกดรัว)
@@ -106,6 +156,9 @@ const AddProductModal = React.memo(
     const [error, setError] = useState("");
     const [success, setSuccess] = useState("");
 
+    // ✅ Camera scanner state
+    const [cameraOpen, setCameraOpen] = useState(false);
+
     const [lastCheckedQuery, setLastCheckedQuery] = useState("");
     const isFreshChecked =
       query.trim().length >= 2 && query.trim() === lastCheckedQuery;
@@ -123,6 +176,7 @@ const AddProductModal = React.memo(
         setError("");
         setSuccess("");
         setLastCheckedQuery("");
+        setCameraOpen(false);
         focusInput();
       }
       // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -263,6 +317,39 @@ const AddProductModal = React.memo(
       }
     };
 
+    // ✅ Camera detected: set query and auto-check
+    const onCameraDetected = (code) => {
+      setCameraOpen(false);
+      const trimmed = String(code || "").trim();
+      if (trimmed.length >= 2) {
+        setQuery(trimmed);
+        setError("");
+        setSuccess("");
+        setLastCheckedQuery("");
+        setResults([]);
+        setSelected(null);
+        // Auto trigger check
+        setTimeout(async () => {
+          setChecking(true);
+          try {
+            const res = await getMasterItem(trimmed);
+            const items = Array.isArray(res?.items) ? res.items : [];
+            setResults(items);
+            setLastCheckedQuery(trimmed);
+            if (items.length === 0) setError("ไม่พบรายการที่ตรงกัน");
+          } catch (e) {
+            console.error("Check master item failed:", e);
+            setResults([]);
+            setLastCheckedQuery("");
+            setError("❌ Check ไม่สำเร็จ");
+          } finally {
+            setChecking(false);
+            focusInput();
+          }
+        }, 100);
+      }
+    };
+
     const onKeyDownInput = (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
@@ -270,10 +357,18 @@ const AddProductModal = React.memo(
       }
     };
 
+
     if (!isOpen) return null;
 
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        {/* Camera Scanner Modal */}
+        <CameraBarcodeScannerModal
+          open={cameraOpen}
+          onClose={() => setCameraOpen(false)}
+          onDetected={onCameraDetected}
+        />
+
         <div className="bg-white p-6 rounded-lg w-[98vw] sm:max-w-3xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl shadow-lg">
           <div className="flex items-start justify-between gap-3">
             <h2 className="text-lg font-semibold text-gray-800">➕ Add item</h2>
@@ -307,6 +402,17 @@ const AddProductModal = React.memo(
                   autoFocus
                   disabled={saving || checking}
                 />
+
+                {/* ✅ Camera Scan Button */}
+                <button
+                  type="button"
+                  onClick={() => setCameraOpen(true)}
+                  disabled={saving || checking}
+                  className="px-3 py-2 rounded text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 disabled:bg-slate-200 disabled:text-slate-500"
+                  title="สแกนบาร์โค้ดด้วยกล้อง"
+                >
+                  📷
+                </button>
 
                 <button
                   type="button"
@@ -556,10 +662,16 @@ const ShelfTable = ({
     setDeleteModal({ isOpen: true, product: p });
   }, []);
 
-  const confirmDelete = useCallback(() => {
-    if (deleteModal.product && onDelete) onDelete(deleteModal.product);
-    setDeleteModal({ isOpen: false, product: null });
+  const confirmDelete = useCallback(async () => {
+    if (deleteModal.product && onDelete) {
+      await onDelete(deleteModal.product);
+    }
+    // Modal will close itself after showing success message
   }, [deleteModal, onDelete]);
+
+  const closeDeleteModal = useCallback(() => {
+    setDeleteModal({ isOpen: false, product: null });
+  }, []);
 
   // ✅ ให้ Add modal เรียกแบบ async ได้เหมือนตัวอย่าง
   const handleAddSubmit = useCallback(async (item) => {
@@ -791,7 +903,7 @@ const ShelfTable = ({
 
       <DeleteConfirmModal
         isOpen={deleteModal.isOpen}
-        onClose={() => setDeleteModal({ isOpen: false, product: null })}
+        onClose={closeDeleteModal}
         onConfirm={confirmDelete}
         productName={deleteModal.product?.nameProduct}
       />
