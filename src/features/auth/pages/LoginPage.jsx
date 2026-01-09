@@ -289,7 +289,12 @@ function LoginPage() {
             </div>
           </div>
         </div>
+        {/* Footer */}
+        <p className="text-center text-xs text-slate-400 mt-4">
+          Planogram Management System
+        </p>
       </div>
+
     </div>
   );
 }

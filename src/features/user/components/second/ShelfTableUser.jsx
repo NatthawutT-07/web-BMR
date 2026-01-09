@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import PogRequestModal from "../PogRequestModal";
 import useBmrStore from "../../../../store/bmr_store";
 
-const ShelfTableUser = ({ shelfProducts = [] }) => {
+const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves = [] }) => {
   const storecode = useBmrStore((s) => s.user?.storecode);
   const [pogRequestOpen, setPogRequestOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -280,11 +280,13 @@ const ShelfTableUser = ({ shelfProducts = [] }) => {
           open={pogRequestOpen}
           onClose={() => setPogRequestOpen(false)}
           branchCode={storecode}
+          branchName={branchName}
           barcode={selectedProduct?.barcode}
           productName={selectedProduct?.nameProduct}
           currentShelf={selectedProduct?.shelfCode}
           currentRow={selectedProduct?.rowNo}
           currentIndex={selectedProduct?.index}
+          availableShelves={availableShelves}
         />
       )}
     </div>

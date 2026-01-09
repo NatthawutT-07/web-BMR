@@ -6,7 +6,9 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
   template,
   autoOpen,
   isPrinting,
-  openNonce, // ✅ ใหม่
+  openNonce,
+  branchName = "",
+  availableShelves = [],
 }) {
   const shelfProducts = useMemo(
     () => (Array.isArray(template.shelfProducts) ? template.shelfProducts : []),
@@ -104,7 +106,15 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
           opacity: isOpen || isPrinting ? 1 : 0,
         }}
       >
-        <div className="mt-2">{shouldRenderTable ? <ShelfTableUser shelfProducts={shelfProducts} /> : null}</div>
+        <div className="mt-2">
+          {shouldRenderTable ? (
+            <ShelfTableUser
+              shelfProducts={shelfProducts}
+              branchName={branchName}
+              availableShelves={availableShelves}
+            />
+          ) : null}
+        </div>
       </div>
     </div>
   );

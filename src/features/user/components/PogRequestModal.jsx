@@ -1,5 +1,5 @@
 // PogRequestModal.jsx - Modal สำหรับสร้าง Request เปลี่ยนแปลง POG
-import React, { useState } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import api from "../../../utils/axios";
 
 const cx = (...a) => a.filter(Boolean).join(" ");
@@ -14,36 +14,107 @@ export default function PogRequestModal({
     open,
     onClose,
     branchCode,
+    branchName: initialBranchName = "",
     barcode,
     productName,
     currentShelf,
     currentRow,
     currentIndex,
     initialAction = "",
+    availableShelves: initialShelves = [],
 }) {
     const [action, setAction] = useState(initialAction);
-    const [toShelf, setToShelf] = useState(currentShelf || "");
+    const [toShelf, setToShelf] = useState("");
     const [toRow, setToRow] = useState("");
     const [toIndex, setToIndex] = useState("");
-    const [swapBarcode, setSwapBarcode] = useState("");
     const [note, setNote] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
 
+    // ✅ State สำหรับ shelves ที่โหลดจาก API
+    const [shelves, setShelves] = useState([]);
+    const [shelvesLoading, setShelvesLoading] = useState(false);
+    const [branchNameFromApi, setBranchNameFromApi] = useState("");
+
+    // ✅ ใช้ shelves จาก props หรือจาก API
+    const availableShelves = initialShelves.length > 0 ? initialShelves : shelves;
+    const branchName = initialBranchName || branchNameFromApi;
+
+    // ✅ โหลด shelves จาก API เมื่อเปิด modal และไม่มี initialShelves
+    useEffect(() => {
+        if (!open || !branchCode) return;
+        if (initialShelves.length > 0) return; // ใช้ props อยู่แล้ว
+
+        const fetchShelves = async () => {
+            setShelvesLoading(true);
+            try {
+                const res = await api.get("/branch-shelves", { params: { branchCode } });
+                setShelves(res.data?.shelves || []);
+                setBranchNameFromApi(res.data?.branchName || "");
+            } catch (e) {
+                console.error("Failed to load shelves:", e);
+                setShelves([]);
+            } finally {
+                setShelvesLoading(false);
+            }
+        };
+
+        fetchShelves();
+    }, [open, branchCode, initialShelves.length]);
+
+    // ✅ คำนวณ available rows สำหรับ shelf ที่เลือก
+    const selectedShelfData = useMemo(() => {
+        if (!toShelf) return null;
+        return availableShelves.find(s => s.shelfCode === toShelf);
+    }, [toShelf, availableShelves]);
+
+    const availableRows = useMemo(() => {
+        if (!selectedShelfData) return [];
+        const rowQty = Number(selectedShelfData.rowQty || 0);
+        return Array.from({ length: rowQty }, (_, i) => i + 1);
+    }, [selectedShelfData]);
+
+    // ✅ คำนวณ available index สำหรับ row ที่เลือก (current items + 1 for new)
+    const availableIndices = useMemo(() => {
+        if (!selectedShelfData || !toRow) return [];
+
+        // นับจำนวน items ใน row นี้
+        const items = selectedShelfData.items || [];
+        const rowNum = Number(toRow);
+        const itemsInRow = items.filter(item => Number(item.rowNo) === rowNum);
+        const maxIndex = itemsInRow.length;
+
+        // แสดง 1 ถึง maxIndex+1 (new position)
+        return Array.from({ length: maxIndex + 1 }, (_, i) => ({
+            value: i + 1,
+            label: i + 1 === maxIndex + 1 ? `${i + 1} (ตำแหน่งใหม่)` : String(i + 1)
+        }));
+    }, [selectedShelfData, toRow]);
+
     const resetForm = () => {
         setAction(initialAction || "");
-        setToShelf(currentShelf || "");
+        setToShelf("");
         setToRow("");
         setToIndex("");
-        setSwapBarcode("");
         setNote("");
         setError("");
         setSuccess(false);
     };
 
+    // Reset when shelf changes
+    useEffect(() => {
+        setToRow("");
+        setToIndex("");
+    }, [toShelf]);
+
+    // Reset when row changes
+    useEffect(() => {
+        setToIndex("");
+    }, [toRow]);
+
     // Reset action when initialAction changes
-    React.useEffect(() => {
+    useEffect(() => {
         if (initialAction) setAction(initialAction);
     }, [initialAction]);
 
@@ -63,19 +134,11 @@ export default function PogRequestModal({
             return;
         }
 
-        if ((action === "add" || action === "move") && (Number(toRow) <= 0 || Number(toIndex) <= 0)) {
-            setError("ตำแหน่ง Row และ Index ต้องมากกว่า 0");
-            return;
-        }
-
         setLoading(true);
         setError("");
 
         try {
             await api.post("/pog-request", {
-                branchCode,
-                action,
-                barcode,
                 branchCode,
                 action,
                 barcode,
@@ -93,7 +156,6 @@ export default function PogRequestModal({
             setSuccess(true);
         } catch (e) {
             console.error("POG request error:", e);
-            // Handle JSON string in message
             let msg = e?.response?.data?.message;
             if (typeof msg === 'string' && msg.trim().startsWith('{')) {
                 try {
@@ -110,14 +172,16 @@ export default function PogRequestModal({
     if (!open) return null;
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
-            <div className="relative w-[94vw] max-w-lg bg-white rounded-2xl shadow-xl border overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl border flex flex-col max-h-[85vh]">
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b bg-amber-50">
+                <div className="flex items-center justify-between px-4 py-3 border-b bg-amber-50 flex-shrink-0 rounded-t-2xl">
                     <div>
                         <div className="text-base font-semibold text-amber-800">แจ้งขอเปลี่ยนแปลง</div>
-                        <div className="text-sm text-amber-700 mt-0.5">สาขา: {branchCode}</div>
+                        <div className="text-sm text-amber-700 mt-0.5">
+                            สาขา: {branchCode}{branchName ? ` - ${branchName}` : ""}
+                        </div>
                     </div>
                     <button
                         className="px-3 py-1.5 rounded-lg text-sm font-semibold border bg-white hover:bg-slate-50"
@@ -127,7 +191,7 @@ export default function PogRequestModal({
                     </button>
                 </div>
 
-                <div className="p-4 space-y-4">
+                <div className="p-4 space-y-4 overflow-y-auto flex-grow">
                     {/* Success state */}
                     {success ? (
                         <div className="text-center py-8">
@@ -159,7 +223,6 @@ export default function PogRequestModal({
                             <div>
                                 <div className="text-sm font-semibold text-slate-800 mb-2">เลือกประเภทการเปลี่ยนแปลง</div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-
                                     {ACTION_OPTIONS.map((opt) => (
                                         <button
                                             key={opt.value}
@@ -179,50 +242,92 @@ export default function PogRequestModal({
                                 </div>
                             </div>
 
-                            {/* Target Position (for add/swap) */}
+                            {/* Target Position (for add/move) */}
                             {(action === "add" || action === "move") && (
                                 <div className="p-3 rounded-xl border bg-blue-50 space-y-3">
                                     <div className="text-sm font-semibold text-blue-800">
                                         {action === "add" ? "ตำแหน่งที่ต้องการเพิ่ม" : "ตำแหน่งปลายทาง (ย้ายไป)"}
                                     </div>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <div>
-                                            <label className="text-sm text-slate-600">ชั้นวาง</label>
-                                            <input
-                                                type="text"
+
+                                    {/* Shelf Selector */}
+                                    <div>
+                                        <label className="text-sm text-slate-600">ชั้นวาง (Shelf)</label>
+                                        {shelvesLoading ? (
+                                            <div className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-slate-100 text-slate-500">
+                                                กำลังโหลดข้อมูลชั้นวาง...
+                                            </div>
+                                        ) : availableShelves.length === 0 ? (
+                                            <div className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-amber-50 text-amber-700">
+                                                ⚠️ ไม่พบข้อมูลชั้นวางในสาขานี้
+                                            </div>
+                                        ) : (
+                                            <select
                                                 value={toShelf}
-                                                onChange={(e) => setToShelf(e.target.value.toUpperCase())}
-                                                placeholder="W1"
-                                                className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm"
-                                            />
-                                        </div>
+                                                onChange={(e) => setToShelf(e.target.value)}
+                                                className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-white"
+                                            >
+                                                <option value="">-- เลือกชั้นวาง ({availableShelves.length} ชั้นวาง) --</option>
+                                                {availableShelves.map((shelf) => (
+                                                    <option key={shelf.shelfCode} value={shelf.shelfCode}>
+                                                        {shelf.shelfCode} - {shelf.fullName || shelf.shelfCode}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        )}
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-3">
+                                        {/* Row Selector */}
                                         <div>
-                                            <label className="text-sm text-slate-600">ชั้นที่</label>
-                                            <input
-                                                type="number"
-                                                min="1"
+                                            <label className="text-sm text-slate-600">ชั้นที่ (Row)</label>
+                                            <select
                                                 value={toRow}
                                                 onChange={(e) => setToRow(e.target.value)}
-                                                placeholder="1"
-                                                className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm"
-                                            />
+                                                disabled={!toShelf || availableRows.length === 0}
+                                                className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-white disabled:bg-slate-100"
+                                            >
+                                                <option value="">-- เลือกชั้น --</option>
+                                                {availableRows.map((row) => (
+                                                    <option key={row} value={row}>
+                                                        ชั้น {row}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            {toShelf && availableRows.length === 0 && (
+                                                <div className="text-xs text-rose-500 mt-1">ไม่พบข้อมูลชั้นใน shelf นี้</div>
+                                            )}
                                         </div>
+
+                                        {/* Index Selector */}
                                         <div>
-                                            <label className="text-sm text-slate-600">ลำดับ</label>
-                                            <input
-                                                type="number"
-                                                min="1"
+                                            <label className="text-sm text-slate-600">ลำดับ (Index)</label>
+                                            <select
                                                 value={toIndex}
                                                 onChange={(e) => setToIndex(e.target.value)}
-                                                placeholder="5"
-                                                className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm"
-                                            />
+                                                disabled={!toRow || availableIndices.length === 0}
+                                                className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-white disabled:bg-slate-100"
+                                            >
+                                                <option value="">-- เลือกลำดับ --</option>
+                                                {availableIndices.map((idx) => (
+                                                    <option key={idx.value} value={idx.value}>
+                                                        {idx.label}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
                                     </div>
+
+                                    {/* Info about selected position */}
+                                    {toShelf && toRow && toIndex && (
+                                        <div className="text-xs text-blue-700 bg-blue-100 px-3 py-2 rounded-lg">
+                                            📍 ตำแหน่งที่เลือก: <strong>{toShelf} / ชั้น {toRow} / ลำดับ {toIndex}</strong>
+                                            {Number(toIndex) === availableIndices.length && (
+                                                <span className="ml-2 text-emerald-600 font-medium">(ตำแหน่งใหม่)</span>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
-
-
 
                             {/* Note */}
                             <div>
@@ -268,3 +373,4 @@ export default function PogRequestModal({
         </div>
     );
 }
+

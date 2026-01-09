@@ -6,7 +6,7 @@ import PogRequestModal from "./PogRequestModal";
 
 const cx = (...a) => a.filter(Boolean).join(" ");
 
-const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
+const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelves = [] }) => {
   const barcodeInputRef = useRef(null);
 
   const [barcode, setBarcode] = useState("");
@@ -139,12 +139,14 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf }) => {
         open={pogRequestOpen}
         onClose={() => setPogRequestOpen(false)}
         branchCode={storecode}
+        branchName={branchName}
         barcode={barcode}
         productName={lookupRes?.product?.name}
         currentShelf={primaryLoc?.shelfCode}
         currentRow={primaryLoc?.rowNo}
         currentIndex={primaryLoc?.index}
-        initialAction={requestAction} // ✅ Pass initial action
+        initialAction={requestAction}
+        availableShelves={availableShelves}
       />
 
       <div className="bg-white border rounded-xl shadow-sm p-4">

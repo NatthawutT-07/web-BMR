@@ -415,6 +415,12 @@ const Template = () => {
           <TemplateBarcodePanel
             storecode={storecode}
             branchName={branchName}
+            availableShelves={groupedShelves.map(s => ({
+              shelfCode: s.shelfCode,
+              fullName: s.fullName,
+              rowQty: s.rowQty,
+              items: s.shelfProducts // for calculating available indices
+            }))}
             onGoShelf={(shelfCode) => {
               setMode("shelf");
               setSelectedShelves([shelfCode]);
@@ -588,8 +594,14 @@ const Template = () => {
                       template={{ ...shelf, shelfProducts: shelf.matchedProducts }}
                       autoOpen={searchText.length > 0}
                       isPrinting={isPrinting}
-                      // ✅ ส่งสัญญาณเปิดให้เฉพาะ shelf ที่ถูก jump มาจาก barcode
                       openNonce={openShelfOnce.code === shelf.shelfCode ? openShelfOnce.nonce : 0}
+                      branchName={branchName}
+                      availableShelves={groupedShelves.map(s => ({
+                        shelfCode: s.shelfCode,
+                        fullName: s.fullName,
+                        rowQty: s.rowQty,
+                        items: s.shelfProducts
+                      }))}
                     />
                   </div>
                 ))}

@@ -97,77 +97,134 @@ const ShelfDashboard = () => {
   }, [rows, query]);
 
   return (
-    <div className="p-4 sm:p-6 space-y-5">
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <div className="p-4 sm:p-6 space-y-5 max-w-[1600px] mx-auto">
+      {/* Header Section */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold text-slate-800">
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <span className="text-3xl">📊</span>
             Shelf Dashboard
           </h1>
           {range?.start && range?.end && (
-            <p className="text-xs text-slate-500 mt-1">
-              Sales period: {range.start} - {range.end}
+            <p className="text-sm text-slate-500 mt-1 flex items-center gap-1">
+              <span>📅</span>
+              ข้อมูลยอดขาย: {range.start} - {range.end}
             </p>
           )}
         </div>
         <div className="flex items-center gap-2">
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="ค้นหา branch code / name"
-            className="w-full sm:w-64 rounded-md border border-slate-200 px-3 py-2 text-sm"
-          />
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">🔍</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="ค้นหาสาขา..."
+              className="w-full sm:w-64 rounded-lg border border-slate-200 pl-9 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            />
+          </div>
           <button
             type="button"
             onClick={loadSummary}
-            className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600 hover:bg-slate-50"
+            disabled={loading}
+            className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1"
           >
-            Refresh
+            <span>🔄</span> รีเฟรช
           </button>
         </div>
       </div>
 
+      {/* Summary Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-6">
-        <SummaryCard label="Branches" value={fmtNumber(filteredRows.length)} />
-        <SummaryCard label="Shelves" value={fmtNumber(totals.shelves)} />
-        <SummaryCard label="Products" value={fmtNumber(totals.products)} />
-        <SummaryCard label="Stock Cost" value={fmtMoney2(totals.stockCost)} />
-        <SummaryCard label="Sales (90D)" value={fmtMoney2(totals.salesTotal)} />
-        <SummaryCard label="Withdraw" value={fmtMoney2(totals.withdrawValue)} />
+        <SummaryCard
+          icon="🏪"
+          label="Branches"
+          value={fmtNumber(filteredRows.length)}
+          color="bg-blue-50 border-blue-200"
+          valueColor="text-blue-700"
+        />
+        <SummaryCard
+          icon="🗂️"
+          label="Shelves"
+          value={fmtNumber(totals.shelves)}
+          color="bg-indigo-50 border-indigo-200"
+          valueColor="text-indigo-700"
+        />
+        <SummaryCard
+          icon="📦"
+          label="Products"
+          value={fmtNumber(totals.products)}
+          color="bg-purple-50 border-purple-200"
+          valueColor="text-purple-700"
+        />
+        <SummaryCard
+          icon="💰"
+          label="Stock Cost"
+          value={fmtMoney2(totals.stockCost)}
+          color="bg-amber-50 border-amber-200"
+          valueColor="text-amber-700"
+        />
+        <SummaryCard
+          icon="📈"
+          label="Sales Total"
+          value={fmtMoney2(totals.salesTotal)}
+          color="bg-emerald-50 border-emerald-200"
+          valueColor="text-emerald-700"
+        />
+        <SummaryCard
+          icon="📤"
+          label="Withdraw"
+          value={fmtMoney2(totals.withdrawValue)}
+          color="bg-rose-50 border-rose-200"
+          valueColor="text-rose-600"
+        />
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 px-4 py-3">
-          <h2 className="text-sm font-semibold text-slate-700">
-            Branch Summary
+      {/* Branch Table */}
+      <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+        <div className="border-b border-slate-100 px-5 py-4 flex items-center justify-between bg-slate-50">
+          <h2 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+            <span>🏬</span> สรุปรายสาขา
           </h2>
+          <span className="text-xs text-slate-500">
+            แสดง {filteredRows.length} สาขา
+          </span>
         </div>
 
         {loading && (
-          <div className="p-6 text-sm text-slate-500">กำลังโหลด...</div>
+          <div className="p-8 text-center">
+            <div className="animate-spin inline-block w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full mb-2"></div>
+            <div className="text-sm text-slate-500">กำลังโหลดข้อมูล...</div>
+          </div>
         )}
         {!loading && error && (
-          <div className="p-6 text-sm text-red-600">{error}</div>
+          <div className="p-6 text-center">
+            <div className="text-3xl mb-2">❌</div>
+            <div className="text-sm text-red-600">{error}</div>
+          </div>
         )}
         {!loading && !error && filteredRows.length === 0 && (
-          <div className="p-6 text-sm text-slate-500">ไม่พบข้อมูล</div>
+          <div className="p-8 text-center">
+            <div className="text-4xl mb-2">🔍</div>
+            <div className="text-sm text-slate-500">ไม่พบข้อมูลสาขา</div>
+          </div>
         )}
 
         {!loading && !error && filteredRows.length > 0 && (
           <div className="overflow-x-auto">
             <table className="min-w-[860px] w-full text-sm">
-              <thead className="bg-slate-50 text-slate-600">
+              <thead className="bg-slate-100 text-slate-600">
                 <tr>
-                  <th className="px-4 py-3 text-left">Branch</th>
-                  <th className="px-4 py-3 text-right">Shelves</th>
-                  <th className="px-4 py-3 text-right">Products</th>
-                  <th className="px-4 py-3 text-right">Stock Cost</th>
-                  <th className="px-4 py-3 text-right">Sales (90D)</th>
-                  <th className="px-4 py-3 text-right">Withdraw</th>
-                  <th className="px-4 py-3 text-right">Shelf Sales (90D)</th>
+                  <th className="px-5 py-3 text-left font-semibold">สาขา</th>
+                  <th className="px-4 py-3 text-right font-semibold">Shelves</th>
+                  <th className="px-4 py-3 text-right font-semibold">สินค้า</th>
+                  <th className="px-4 py-3 text-right font-semibold">มูลค่า Stock</th>
+                  <th className="px-4 py-3 text-right font-semibold">ยอดขาย (90D)</th>
+                  <th className="px-4 py-3 text-right font-semibold">Withdraw</th>
+                  <th className="px-4 py-3 text-center font-semibold w-32">รายละเอียด</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {filteredRows.map((row) => {
+                {filteredRows.map((row, idx) => {
                   const isOpen = expandedBranch === row.branchCode;
                   const shelfSalesRaw = shelfSalesByBranch[row.branchCode] || [];
                   const shelfSales = shelfSalesRaw.filter(
@@ -178,28 +235,36 @@ const ShelfDashboard = () => {
 
                   return (
                     <React.Fragment key={row.branchCode}>
-                      <tr className="hover:bg-slate-50">
-                        <td className="px-4 py-3">
-                          <div className="font-medium text-slate-800">
-                            {row.branchCode} : {row.branchName || "-"}
+                      <tr className={`hover:bg-blue-50/50 transition-colors ${idx % 2 === 0 ? 'bg-white' : 'bg-slate-50/30'}`}>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg">🏪</span>
+                            <div>
+                              <div className="font-semibold text-slate-800">
+                                {row.branchCode}
+                              </div>
+                              <div className="text-xs text-slate-500">
+                                {row.branchName || "-"}
+                              </div>
+                            </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-4 py-3 text-right font-medium text-slate-600">
                           {fmtNumber(row.shelfCount)}
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-4 py-3 text-right font-medium text-slate-600">
                           {fmtNumber(row.productCount)}
                         </td>
-                        <td className="px-4 py-3 text-right text-amber-700">
+                        <td className="px-4 py-3 text-right font-medium text-amber-700">
                           {fmtMoney2(row.stockCost)}
                         </td>
-                        <td className="px-4 py-3 text-right text-emerald-700">
+                        <td className="px-4 py-3 text-right font-medium text-emerald-700">
                           {fmtMoney2(row.salesTotal)}
                         </td>
-                        <td className="px-4 py-3 text-right text-rose-600">
+                        <td className="px-4 py-3 text-right font-medium text-rose-600">
                           {fmtMoney2(row.withdrawValue)}
                         </td>
-                        <td className="px-4 py-3 text-right">
+                        <td className="px-4 py-3 text-center">
                           <button
                             type="button"
                             onClick={() =>
@@ -209,56 +274,62 @@ const ShelfDashboard = () => {
                                 return next;
                               })
                             }
-                            className="text-xs text-slate-600 hover:text-slate-900"
+                            className={`px-3 py-1.5 text-xs font-medium rounded-full transition-colors ${isOpen
+                              ? "bg-blue-600 text-white"
+                              : "bg-slate-100 text-slate-600 hover:bg-blue-100 hover:text-blue-700"
+                              }`}
                           >
-                            {isOpen
-                              ? "ซ่อนรายละเอียด"
-                              : "ดูรายละเอียด"}
+                            {isOpen ? "ซ่อน ▲" : "ดู Shelf ▼"}
                           </button>
                         </td>
                       </tr>
 
                       {isOpen && (
                         <tr>
-                          <td colSpan={7} className="px-4 py-3 bg-slate-50">
+                          <td colSpan={7} className="px-5 py-4 bg-blue-50/50">
                             {isShelfLoading ? (
-                              <div className="text-xs text-slate-500">
+                              <div className="flex items-center gap-2 text-sm text-slate-500">
+                                <span className="animate-spin">⏳</span>
                                 กำลังโหลดข้อมูล...
                               </div>
                             ) : shelfError ? (
-                              <div className="text-xs text-red-600">
-                                {shelfError}
+                              <div className="text-sm text-red-600 flex items-center gap-2">
+                                <span>❌</span> {shelfError}
                               </div>
                             ) : shelfSales.length === 0 ? (
-                              <div className="text-xs text-slate-500">
-                                ไม่พบข้อมูลยอดขายราย shelf
+                              <div className="text-sm text-slate-500 flex items-center gap-2">
+                                <span>📭</span> ไม่พบข้อมูลยอดขายราย Shelf
                               </div>
                             ) : (
-                              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                 {shelfSales.map((shelf) => (
                                   <div
                                     key={shelf.shelfCode}
-                                    className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs"
+                                    className="rounded-lg border border-slate-200 bg-white px-4 py-3 shadow-sm hover:shadow-md transition-shadow"
                                   >
-                                    <div className="font-semibold text-slate-700">
-                                      Shelf {shelf.shelfCode} : {shelf.shelfName}
+                                    <div className="font-semibold text-slate-800 flex items-center gap-2">
+                                      <span className="text-blue-500">🗂️</span>
+                                      {shelf.shelfCode}
                                     </div>
-                                    <div className="mt-1 grid grid-cols-3 gap-2 text-[11px]">
-                                      <div>
-                                        <div className="text-slate-400">Sales</div>
-                                        <div className="text-emerald-700">
+                                    <div className="text-xs text-slate-500 mb-2 truncate" title={shelf.shelfName}>
+                                      {shelf.shelfName || "-"}
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 text-xs">
+                                      <div className="bg-emerald-50 px-2 py-1.5 rounded">
+                                        <div className="text-slate-500">ยอดขาย</div>
+                                        <div className="font-semibold text-emerald-700">
                                           {fmtMoney2(shelf.salesTotal)}
                                         </div>
                                       </div>
-                                      <div>
-                                        <div className="text-slate-400">Stock</div>
-                                        <div className="text-amber-700">
+                                      <div className="bg-amber-50 px-2 py-1.5 rounded">
+                                        <div className="text-slate-500">Stock</div>
+                                        <div className="font-semibold text-amber-700">
                                           {fmtMoney2(shelf.stockCost)}
                                         </div>
                                       </div>
-                                      <div>
-                                        <div className="text-slate-400">SKU</div>
-                                        <div className="text-slate-700">
+                                      <div className="bg-slate-100 px-2 py-1.5 rounded">
+                                        <div className="text-slate-500">SKU</div>
+                                        <div className="font-semibold text-slate-700">
                                           {fmtNumber(shelf.skuCount)}
                                         </div>
                                       </div>
@@ -282,13 +353,17 @@ const ShelfDashboard = () => {
   );
 };
 
-const SummaryCard = ({ label, value }) => {
+const SummaryCard = ({ icon, label, value, color = "bg-white border-slate-200", valueColor = "text-slate-800" }) => {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
-      <div className="text-xs text-slate-500">{label}</div>
-      <div className="mt-1 text-lg font-semibold text-slate-800">{value}</div>
+    <div className={`rounded-xl border px-4 py-3 shadow-sm ${color}`}>
+      <div className="flex items-center gap-2">
+        <span className="text-xl">{icon}</span>
+        <div className="text-xs text-slate-600 font-medium">{label}</div>
+      </div>
+      <div className={`mt-2 text-xl font-bold ${valueColor}`}>{value}</div>
     </div>
   );
 };
 
 export default ShelfDashboard;
+
