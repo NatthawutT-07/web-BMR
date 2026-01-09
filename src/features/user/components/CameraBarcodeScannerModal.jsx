@@ -58,6 +58,44 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
             if (stopped) return;
             if (!result) return;
 
+            // ✅ Check Bounding Box (Scan Area Only)
+            // resultPoints คืนค่าเป็น [Point {x, y}, ... ] ของตำแหน่งบาร์โค้ดใน video frame
+            const points = result.getResultPoints();
+            if (points && points.length > 0 && videoRef.current) {
+              // หาค่า x, y ของจุดที่เจอ (เฉลี่ยตรงกลางของบาร์โค้ด)
+              const xs = points.map(p => p.x);
+              const ys = points.map(p => p.y);
+              const minX = Math.min(...xs);
+              const maxX = Math.max(...xs);
+              const minY = Math.min(...ys);
+              const maxY = Math.max(...ys);
+
+              const centerX = (minX + maxX) / 2;
+              const centerY = (minY + maxY) / 2;
+
+              // ขนาด video จริง (internal resolution)
+              const vW = videoRef.current.videoWidth;
+              const vH = videoRef.current.videoHeight;
+
+              if (vW > 0 && vH > 0) {
+                // กำหนด "Zone" ตรงกลาง (ประมาณ 20% - 80% แกน X, 35% - 65% แกน Y ตาม UI กรอบ)
+                // ถ้าอยู่นอกโซนนี้ ให้ ignore
+                const safeZoneX_Min = vW * 0.15;
+                const safeZoneX_Max = vW * 0.85;
+                const safeZoneY_Min = vH * 0.30;
+                const safeZoneY_Max = vH * 0.70;
+
+                const isInside =
+                  centerX >= safeZoneX_Min && centerX <= safeZoneX_Max &&
+                  centerY >= safeZoneY_Min && centerY <= safeZoneY_Max;
+
+                if (!isInside) {
+                  // console.log("Ignored: Outside Box", centerX, centerY);
+                  return; // ❌ ไม่อยู่ในกรอบ -> ข้าม
+                }
+              }
+            }
+
             const raw = String(result.getText() || "").trim();
             if (!raw) return;
 
