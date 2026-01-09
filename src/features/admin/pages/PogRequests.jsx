@@ -90,6 +90,8 @@ export default function PogRequests() {
     const [filterAction, setFilterAction] = useState("");
     const [updating, setUpdating] = useState(null);
 
+    const [stats, setStats] = useState({ pending: 0, rejected: 0, completed: 0 }); // ✅ Stats from API
+
     // ✅ Lazy loading state
     const [visibleCount, setVisibleCount] = useState(50);
     const PAGE_SIZE = 50;
@@ -104,15 +106,21 @@ export default function PogRequests() {
     const loadData = async () => {
         setLoading(true);
         try {
-            const params = { limit: 1000 }; // ✅ Increase limit
+            const params = { limit: 1000 };
             if (filterStatus) params.status = filterStatus;
             if (filterBranch) params.branchCode = filterBranch;
             if (filterAction) params.action = filterAction;
 
             const res = await api.get("/pog-requests", { params });
             setData(res.data?.data || []);
-            setSelectedIds(new Set()); // Clear selection on reload
-            setVisibleCount(PAGE_SIZE); // Reset visible count
+
+            // ✅ Update stats from API if available
+            if (res.data?.stats) {
+                setStats(res.data.stats);
+            }
+
+            setSelectedIds(new Set());
+            setVisibleCount(PAGE_SIZE);
         } catch (e) {
             console.error("Load POG requests error:", e);
         } finally {
@@ -124,16 +132,23 @@ export default function PogRequests() {
         loadData();
     }, [filterStatus, filterBranch, filterAction]);
 
-    // ✅ Visible data for lazy loading
-    const visibleData = useMemo(() => data.slice(0, visibleCount), [data, visibleCount]);
-    const hasMore = visibleCount < data.length;
+    // ✅ Client-side filtering (Search only) - Status & Action are filtered by API now
+    const availableData = useMemo(() => {
+        return data.filter((d) => {
+            const matchBranch = !filterBranch || d.branchCode.toLowerCase().includes(filterBranch.toLowerCase());
+            return matchBranch;
+        });
+    }, [data, filterBranch]);
+
+    const visibleData = useMemo(() => availableData.slice(0, visibleCount), [availableData, visibleCount]);
+    const hasMore = visibleCount < availableData.length;
 
     const loadMore = () => {
-        setVisibleCount(prev => Math.min(prev + PAGE_SIZE, data.length));
+        setVisibleCount(prev => Math.min(prev + PAGE_SIZE, availableData.length));
     };
 
-    // ✅ Pending items only (for bulk operations)
-    const pendingItems = useMemo(() => data.filter((d) => d.status === "pending"), [data]);
+    // ✅ Pending items for Bulk Actions
+    const pendingItems = useMemo(() => availableData.filter((d) => d.status === "pending"), [availableData]);
     const selectedPendingCount = useMemo(() => {
         return [...selectedIds].filter(id => pendingItems.some(p => p.id === id)).length;
     }, [selectedIds, pendingItems]);
@@ -309,7 +324,6 @@ export default function PogRequests() {
                     <option value="">ทุก Action</option>
                     <option value="add">เพิ่มสินค้า</option>
                     <option value="move">ย้ายสินค้า</option>
-                    <option value="swap">สลับตำแหน่ง</option>
                     <option value="delete">ลบสินค้า</option>
                 </select>
 
@@ -394,7 +408,7 @@ export default function PogRequests() {
             {/* Stats - Clickable to filter */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
                 {["pending", "rejected", "completed"].map((status) => {
-                    const count = data.filter((d) => d.status === status).length;
+                    const count = stats[status] || 0; // ✅ Use API stats
                     const info = STATUS_MAP[status];
                     const isActive = filterStatus === status;
                     return (
@@ -403,11 +417,11 @@ export default function PogRequests() {
                             type="button"
                             onClick={() => setFilterStatus(isActive ? "" : status)}
                             className={cx(
-                                "p-3 rounded-xl border-2 text-left cursor-pointer",
+                                "p-3 rounded-xl border-2 text-left cursor-pointer transition-all",
                                 info.badge,
-                                info.color.split(" ")[0],
-                                isActive && "opacity-100 border-slate-500",
-                                !isActive && "opacity-70 hover:opacity-100"
+                                info.color.split(" ")[0], // Use bg color
+                                isActive && "opacity-100 border-slate-500 ring-2 ring-offset-1 ring-slate-300",
+                                !isActive && "opacity-60 hover:opacity-100 grayscale-[0.3]"
                             )}
                         >
                             <div className="text-2xl font-bold">{count}</div>

@@ -6,33 +6,42 @@ const Dashboard = () => {
   const navigate = useNavigate();
 
   const shortcuts = [
+
     // {
-    //   key: "sales",
-    //   title: "Sales dashboard",
-    //   desc: "ดูยอดขาย, เปรียบเทียบสาขา, สรุปรายได้รายวัน/เดือน",
+    //   key: "stock",
+    //   title: "Stock Management",
+    //   desc: "จัดการสต็อกสินค้า, ดูคงเหลือ, ประวัติการเข้า/ออก",
     //   color: "from-emerald-400 to-emerald-500",
-    //   badge: "Sales",
+    //   badge: "Stock",
     // },
     {
       key: "dashboard-shelf",
-      title: "Shelf dashboard",
-      desc: "ภาพรวมสต็อก, ยอดขาย และการเบิกทุกสาขา",
+      title: "Shelf Dashboard",
+      desc: "Dashboard สรุปภาพรวม Shelf และสินค้า",
       color: "from-violet-400 to-violet-500",
-      badge: "Shelf",
+      badge: "Overview",
     },
     {
       key: "shelf",
-      title: "Store & shelf",
-      desc: "จัดการชั้นวาง, สินค้าหน้าร้าน และภาพรวมสต็อก",
+      title: "Store & Shelf",
+      desc: "จัดการชั้นวาง, สินค้าหน้าร้าน และภาพรวม Physical Store",
       color: "from-sky-400 to-sky-500",
       badge: "Store",
     },
+    {
+      key: "pog-requests",
+      title: "POG Requests",
+      desc: "จัดการคำขอปรับเปลี่ยน Planogram (อนุมัติ/ปฏิเสธ)",
+      color: "from-amber-400 to-amber-500",
+      badge: "Request",
+    },
+
     // {
-    //   key: "upload",
-    //   title: "Upload CSV",
-    //   desc: "นำเข้าข้อมูลบิลขาย / สินค้า จากไฟล์ CSV",
-    //   color: "from-amber-400 to-amber-500",
-    //   badge: "Data",
+    //   key: "sales",
+    //   title: "Sales Dashboard",
+    //   desc: "ดูยอดขาย, เปรียบเทียบสาขา, สรุปรายได้",
+    //   color: "from-rose-400 to-rose-500",
+    //   badge: "Sales",
     // },
   ];
 

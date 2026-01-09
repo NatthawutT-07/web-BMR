@@ -25,7 +25,7 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
     setLiveText("");
     setLiveDigits("");
 
-    // ✅ จำกัดฟอร์แมตที่ใช้จริงในร้าน
+    // ✅ จำกัดฟอร์แมตที่ใช้จริงในร้าน + เปิดโหมด TryHarder
     const hints = new Map();
     hints.set(DecodeHintType.POSSIBLE_FORMATS, [
       BarcodeFormat.EAN_13,
@@ -34,8 +34,9 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
       BarcodeFormat.UPC_E,
       BarcodeFormat.CODE_128,
     ]);
+    hints.set(DecodeHintType.TRY_HARDER, true); // ✅ พยายามอ่านให้ละเอียดขึ้น (ช้าลงนิดนึงแต่แม่นขึ้น)
 
-    const reader = new BrowserMultiFormatReader(hints, 80); // 80ms interval
+    const reader = new BrowserMultiFormatReader(hints, 500); // ✅ สแกนทุก 500ms (ลดภาระ CPU ให้มีเวลาโฟกัส)
     readerRef.current = reader;
 
     let stopped = false;
@@ -46,9 +47,10 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
           {
             audio: false,
             video: {
-              facingMode: { ideal: "environment" },
-              width: { ideal: 1280 },
-              height: { ideal: 720 },
+              facingMode: "environment", // ✅ ใช้กล้องหลัง
+              width: { min: 1280, ideal: 1920 }, // ✅ ขอความละเอียดสูงขึ้นให้เห็นเส้นบาร์โค้ดชัด
+              height: { min: 720, ideal: 1080 },
+              focusMode: { ideal: "continuous" }, // ✅ พยายามขอโฟกัสต่อเนื่อง
             },
           },
           videoRef.current,
