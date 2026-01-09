@@ -171,7 +171,26 @@ export default function PogRequests() {
             const payload = { status: newStatus };
             if (reason) payload.rejectReason = reason;
             const res = await api.patch(`/pog-requests/${id}`, payload);
-            loadData();
+
+            if (res.data?.ok !== false) {
+                // ✅ อัปเดต local state แทนการเรียก API ใหม่
+                setData(prev => prev.map(item =>
+                    item.id === id ? { ...item, status: newStatus, note: reason || item.note } : item
+                ));
+
+                // ✅ อัปเดต stats
+                setStats(prev => {
+                    const newStats = { ...prev };
+                    // ค้นหา item เดิมเพื่อลด stats เก่า
+                    const oldItem = data.find(d => d.id === id);
+                    if (oldItem && oldItem.status !== newStatus) {
+                        if (newStats[oldItem.status] > 0) newStats[oldItem.status]--;
+                        newStats[newStatus] = (newStats[newStatus] || 0) + 1;
+                    }
+                    return newStats;
+                });
+            }
+
             return { success: true, message: res.data.message };
         } catch (e) {
             console.error("Update status error:", e);
@@ -207,7 +226,7 @@ export default function PogRequests() {
         } else {
             alert(`ดำเนินการสำเร็จ ${successCount} รายการ, ล้มเหลว ${errorCount} รายการ\n\n${errors.slice(0, 3).join('\n')}`);
         }
-        loadData();
+        // ✅ ไม่ต้อง loadData() เพราะ updateStatus อัปเดต local state แล้ว
     };
 
     // ✅ Quick approve all pending
@@ -258,8 +277,21 @@ export default function PogRequests() {
     const deleteRequest = async (id) => {
         if (!confirm("ต้องการลบรายการนี้?")) return;
         try {
-            await api.delete(`/pog-requests/${id}`);
-            loadData();
+            const res = await api.delete(`/pog-requests/${id}`);
+            if (res.data?.ok !== false) {
+                // ✅ ลบจาก local state แทนการเรียก API
+                const deletedItem = data.find(d => d.id === id);
+                setData(prev => prev.filter(item => item.id !== id));
+
+                // ✅ อัปเดต stats
+                if (deletedItem) {
+                    setStats(prev => {
+                        const newStats = { ...prev };
+                        if (newStats[deletedItem.status] > 0) newStats[deletedItem.status]--;
+                        return newStats;
+                    });
+                }
+            }
         } catch (e) {
             console.error("Delete error:", e);
             alert("ไม่สามารถลบได้");
@@ -521,7 +553,7 @@ export default function PogRequests() {
                                                     {item.status === "pending" && (
                                                         <>
                                                             <button
-                                                                onClick={() => updateStatus(item.id, "completed").then(r => r.success && loadData())}
+                                                                onClick={() => updateStatus(item.id, "completed")}
                                                                 title="อนุมัติและดำเนินการทันที"
                                                                 disabled={isUpdating}
                                                                 className="px-2 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-500 disabled:opacity-50"
@@ -539,7 +571,7 @@ export default function PogRequests() {
                                                     )}
                                                     {item.status === "approved" && (
                                                         <button
-                                                            onClick={() => updateStatus(item.id, "completed").then(r => r.success && loadData())}
+                                                            onClick={() => updateStatus(item.id, "completed")}
                                                             disabled={isUpdating}
                                                             className="px-2 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-500 disabled:opacity-50"
                                                         >

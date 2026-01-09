@@ -9,6 +9,7 @@ const STATUS_MAP = {
     approved: { label: "อนุมัติ", color: "text-blue-600 bg-blue-50 border-blue-200" },
     rejected: { label: "ไม่อนุมัติ", color: "text-rose-600 bg-rose-50 border-rose-200" },
     completed: { label: "เสร็จสิ้น", color: "text-emerald-600 bg-emerald-50 border-emerald-200" },
+    cancelled: { label: "ยกเลิก", color: "text-slate-500 bg-slate-100 border-slate-300" },
 };
 
 const ACTION_MAP = {
@@ -33,6 +34,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState([]);
     const [error, setError] = useState("");
+    const [cancellingId, setCancellingId] = useState(null); // ✅ เก็บ id ที่กำลังยกเลิก
 
     const loadData = async () => {
         if (!branchCode) return;
@@ -52,10 +54,16 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
     };
 
     const handleCancel = async (id) => {
-        if (!confirm("คุณต้องการลบคำขอนี้ใช่หรือไม่?")) return;
+        if (!confirm("คุณต้องการยกเลิกคำขอนี้ใช่หรือไม่?")) return;
+        setCancellingId(id); // ✅ เริ่ม loading
         try {
-            await api.delete(`/pog-request/${id}`);
-            loadData();
+            const res = await api.patch(`/pog-request/${id}/cancel`);
+            if (res.data?.ok) {
+                // ✅ อัปเดต local state แทนการเรียก API ใหม่
+                setData(prev => prev.map(item =>
+                    item.id === id ? { ...item, status: "cancelled" } : item
+                ));
+            }
         } catch (e) {
             console.error("Cancel error:", e);
             let msg = e?.response?.data?.message;
@@ -65,7 +73,9 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                     msg = parsed.message || msg;
                 } catch { }
             }
-            alert(msg || "ไม่สามารถลบคำขอได้");
+            alert(msg || "ไม่สามารถยกเลิกคำขอได้");
+        } finally {
+            setCancellingId(null); // ✅ หยุด loading
         }
     };
 
@@ -177,13 +187,22 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                                             {/* Action Button */}
                                             <td className="px-2 py-2 text-center align-middle">
                                                 {item.status === "pending" && (
-                                                    <button
-                                                        onClick={() => handleCancel(item.id)}
-                                                        className="text-rose-400 hover:text-rose-600 p-1"
-                                                        title="ยกเลิกคำขอ"
-                                                    >
-                                                        🗑️
-                                                    </button>
+                                                    cancellingId === item.id ? (
+                                                        <span className="inline-flex items-center gap-1 px-3 py-1.5 text-xs text-slate-500">
+                                                            <svg className="animate-spin h-3 w-3" viewBox="0 0 24 24">
+                                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                                            </svg>
+
+                                                        </span>
+                                                    ) : (
+                                                        <button
+                                                            onClick={() => handleCancel(item.id)}
+                                                            className="px-3 py-1.5 text-xs font-medium text-rose-600 bg-rose-50 border border-rose-200 rounded-lg hover:bg-rose-100 hover:border-rose-300 transition"
+                                                        >
+                                                            ยกเลิก
+                                                        </button>
+                                                    )
                                                 )}
                                             </td>
                                         </tr>
@@ -194,6 +213,6 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                     )}
                 </div>
             </div>
-        </div>
+        </div >
     );
 }
