@@ -158,7 +158,11 @@ function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-amber-50 px-4 py-5">
       <div className="w-full max-w-md rounded-2xl border border-emerald-100 bg-white/90 p-6 shadow-xl backdrop-blur">
         <div className="flex flex-col items-center text-center">
-          <img src="/Bringmindlogo.png" alt="Logo" className="h-40 sm:h-48" />
+          <div
+            className="h-40 sm:h-48 w-full bg-contain bg-center bg-no-repeat select-none pointer-events-none"
+            style={{ backgroundImage: "url('/Bringmindlogo.png')" }}
+            aria-label="Logo"
+          />
         </div>
         <div className=" rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
           <div className="space-y-3">

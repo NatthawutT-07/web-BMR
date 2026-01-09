@@ -40,31 +40,43 @@ export default function PogRequestModal({
     const [shelvesLoading, setShelvesLoading] = useState(false);
     const [branchNameFromApi, setBranchNameFromApi] = useState("");
 
-    // ✅ ใช้ shelves จาก props หรือจาก API
-    const availableShelves = initialShelves.length > 0 ? initialShelves : shelves;
+    // ✅ ใช้ shelves จาก API (ถูก merge กับ initialShelves แล้ว)
+    const availableShelves = shelves;
     const branchName = initialBranchName || branchNameFromApi;
 
-    // ✅ โหลด shelves จาก API เมื่อเปิด modal และไม่มี initialShelves
+    // ✅ โหลด shelves จาก API เสมอเพื่อให้ได้ shelf ทั้งหมด (รวม shelf ที่ว่างเปล่า)
     useEffect(() => {
         if (!open || !branchCode) return;
-        if (initialShelves.length > 0) return; // ใช้ props อยู่แล้ว
 
         const fetchShelves = async () => {
             setShelvesLoading(true);
             try {
                 const res = await api.get("/branch-shelves", { params: { branchCode } });
-                setShelves(res.data?.shelves || []);
+                const apiShelves = res.data?.shelves || [];
+
+                // ✅ Merge API data กับ initialShelves (ใช้ barcode จาก initialShelves สำหรับ duplicate check)
+                const merged = apiShelves.map(apiShelf => {
+                    const propsShelf = initialShelves.find(s => s.shelfCode === apiShelf.shelfCode);
+                    return {
+                        ...apiShelf,
+                        // ใช้ items จาก props ถ้ามี (มี barcode) มิฉะนั้นใช้จาก API
+                        items: propsShelf?.items?.length > 0 ? propsShelf.items : apiShelf.items || []
+                    };
+                });
+
+                setShelves(merged);
                 setBranchNameFromApi(res.data?.branchName || "");
             } catch (e) {
                 console.error("Failed to load shelves:", e);
-                setShelves([]);
+                // Fallback ใช้ initialShelves ถ้า API fail
+                setShelves(initialShelves);
             } finally {
                 setShelvesLoading(false);
             }
         };
 
         fetchShelves();
-    }, [open, branchCode, initialShelves.length]);
+    }, [open, branchCode, initialShelves]);
 
     // ✅ คำนวณ available rows สำหรับ shelf ที่เลือก
     const selectedShelfData = useMemo(() => {
@@ -94,6 +106,42 @@ export default function PogRequestModal({
             label: i + 1 === maxIndex + 1 ? `${i + 1} (ตำแหน่งใหม่)` : String(i + 1)
         }));
     }, [selectedShelfData, toRow]);
+
+    // ✅ ตรวจสอบว่า barcode นี้มีอยู่ในสาขาแล้วหรือไม่ (1 SKU = 1 สาขา)
+    const existingLocationForBarcode = useMemo(() => {
+        if (!barcode) return null;
+        const bc = String(barcode).trim();
+        for (const shelf of availableShelves) {
+            const items = shelf.items || [];
+            for (const item of items) {
+                if (String(item.barcode || "").trim() === bc) {
+                    return {
+                        shelfCode: shelf.shelfCode,
+                        shelfName: shelf.fullName || shelf.shelfCode,
+                        rowNo: item.rowNo,
+                        index: item.index,
+                    };
+                }
+            }
+        }
+        return null;
+    }, [barcode, availableShelves]);
+
+    // ✅ Check if trying to add duplicate
+    const isDuplicateAdd = action === "add" && existingLocationForBarcode !== null;
+
+    // ✅ Check if product has current position (for delete validation)
+    const hasCurrentPosition = Boolean(currentShelf && currentRow && currentIndex);
+
+    // ✅ Check if trying to move to same position
+    const isSamePosition = useMemo(() => {
+        if (action !== "move" || !toShelf || !toRow || !toIndex) return false;
+        return (
+            toShelf === currentShelf &&
+            Number(toRow) === Number(currentRow) &&
+            Number(toIndex) === Number(currentIndex)
+        );
+    }, [action, toShelf, toRow, toIndex, currentShelf, currentRow, currentIndex]);
 
     const resetForm = () => {
         setAction(initialAction || "");
@@ -134,6 +182,18 @@ export default function PogRequestModal({
 
         if ((action === "add" || action === "move") && (!toShelf || !toRow || !toIndex)) {
             setError("กรุณาระบุตำแหน่งปลายทางให้ครบถ้วน");
+            return;
+        }
+
+        // ✅ Block duplicate add
+        if (isDuplicateAdd) {
+            setError(`สินค้านี้มีอยู่ในสาขาแล้ว (${existingLocationForBarcode?.shelfCode} / ชั้น ${existingLocationForBarcode?.rowNo} / ลำดับ ${existingLocationForBarcode?.index}) ไม่สามารถเพิ่มซ้ำได้`);
+            return;
+        }
+
+        // ✅ Block move to same position
+        if (isSamePosition) {
+            setError("ตำแหน่งปลายทางเหมือนกับตำแหน่งปัจจุบัน กรุณาเลือกตำแหน่งอื่น");
             return;
         }
 
@@ -226,22 +286,32 @@ export default function PogRequestModal({
                             <div>
                                 <div className="text-sm font-semibold text-slate-800 mb-2">เลือกประเภทการเปลี่ยนแปลง</div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                    {ACTION_OPTIONS.map((opt) => (
-                                        <button
-                                            key={opt.value}
-                                            type="button"
-                                            onClick={() => setAction(opt.value)}
-                                            className={cx(
-                                                "w-full text-left p-3 rounded-xl border-2 transition",
-                                                action === opt.value
-                                                    ? "border-amber-500 bg-amber-50"
-                                                    : "border-slate-200 hover:border-slate-300"
-                                            )}
-                                        >
-                                            <div className="font-semibold text-sm">{opt.label}</div>
-                                            <div className="text-xs text-slate-500 mt-0.5">{opt.desc}</div>
-                                        </button>
-                                    ))}
+                                    {ACTION_OPTIONS.map((opt) => {
+                                        // ✅ Disable conditions
+                                        const isAddDisabled = opt.value === "add" && existingLocationForBarcode;
+                                        const isMoveDisabled = opt.value === "move" && !existingLocationForBarcode;
+                                        const isDeleteDisabled = opt.value === "delete" && !existingLocationForBarcode;
+                                        const isDisabled = isAddDisabled || isMoveDisabled || isDeleteDisabled;
+                                        return (
+                                            <button
+                                                key={opt.value}
+                                                type="button"
+                                                onClick={() => !isDisabled && setAction(opt.value)}
+                                                disabled={isDisabled}
+                                                className={cx(
+                                                    "w-full text-left p-3 rounded-xl border-2 transition",
+                                                    isDisabled
+                                                        ? "border-slate-200 bg-slate-100 opacity-50 cursor-not-allowed"
+                                                        : action === opt.value
+                                                            ? "border-amber-500 bg-amber-50"
+                                                            : "border-slate-200 hover:border-slate-300"
+                                                )}
+                                            >
+                                                <div className={cx("font-semibold text-sm", isDisabled && "text-slate-400")}>{opt.label}</div>
+                                                <div className={cx("text-xs mt-0.5", isDisabled ? "text-slate-400" : "text-slate-500")}>{opt.desc}</div>
+                                            </button>
+                                        );
+                                    })}
                                 </div>
                             </div>
 
@@ -359,10 +429,23 @@ export default function PogRequestModal({
 
                                     {/* Info about selected position */}
                                     {toShelf && toRow && toIndex && (
-                                        <div className="text-xs text-blue-700 bg-blue-100 px-3 py-2 rounded-lg">
-                                            📍 ตำแหน่งที่เลือก: <strong>{toShelf} / ชั้น {toRow} / ลำดับ {toIndex}</strong>
-                                            {Number(toIndex) === availableIndices.length && (
-                                                <span className="ml-2 text-emerald-600 font-medium">(ตำแหน่งใหม่)</span>
+                                        <div className={cx(
+                                            "text-xs px-3 py-2 rounded-lg",
+                                            isSamePosition
+                                                ? "text-rose-700 bg-rose-100 border border-rose-200"
+                                                : "text-blue-700 bg-blue-100"
+                                        )}>
+                                            {isSamePosition ? (
+                                                <>
+                                                    ⚠️ <strong>ตำแหน่งเดิม!</strong> กรุณาเลือกตำแหน่งอื่น
+                                                </>
+                                            ) : (
+                                                <>
+                                                    📍 ตำแหน่งที่เลือก: <strong>{toShelf} / ชั้น {toRow} / ลำดับ {toIndex}</strong>
+                                                    {Number(toIndex) === availableIndices.length && (
+                                                        <span className="ml-2 text-emerald-600 font-medium">(ตำแหน่งใหม่)</span>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     )}
@@ -400,7 +483,7 @@ export default function PogRequestModal({
                                 <button
                                     type="button"
                                     onClick={handleSubmit}
-                                    disabled={loading || !action}
+                                    disabled={loading || !action || isDuplicateAdd || isSamePosition}
                                     className="flex-1 px-4 py-3 rounded-xl font-semibold text-sm bg-amber-600 text-white hover:bg-amber-500 disabled:opacity-50"
                                 >
                                     {loading ? "กำลังส่ง..." : "ส่งคำขอ"}

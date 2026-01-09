@@ -84,10 +84,10 @@ function MainNav() {
             {/* ซ้าย: โลโก้ + ชื่อระบบ + เวลา stock */}
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="flex items-center justify-center">
-                <img
-                  src="/icon.png"
-                  alt="Shelf Check Logo"
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white shadow-sm object-contain border border-white/40"
+                <div
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white shadow-sm border border-white/40 bg-contain bg-center bg-no-repeat select-none pointer-events-none"
+                  style={{ backgroundImage: "url('/icon.png')" }}
+                  aria-label="Shelf Check Logo"
                 />
               </div>
 

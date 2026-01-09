@@ -444,11 +444,10 @@ const Template = () => {
 
                   {/* LEFT: Branch Image */}
                   <div className="flex justify-center xl:justify-start xl:w-[260px] flex-shrink-0">
-                    <img
-                      src={`/images/branch/${storecode?.toUpperCase()}.png`}
-                      alt={`Branch ${storecode}`}
-                      className="w-full max-w-[260px] h-auto object-contain rounded-lg shadow-sm border bg-slate-50"
-                      loading="lazy"
+                    <div
+                      className="w-full max-w-[260px] aspect-[4/3] bg-contain bg-center bg-no-repeat rounded-lg shadow-sm border bg-slate-50 select-none pointer-events-none"
+                      style={{ backgroundImage: `url('/images/branch/${storecode?.toUpperCase()}.png')` }}
+                      aria-label={`Branch ${storecode}`}
                     />
                   </div>
 
