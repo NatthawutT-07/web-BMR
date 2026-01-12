@@ -132,12 +132,14 @@ export default function PogRequests() {
         loadData();
     }, [filterStatus, filterBranch, filterAction]);
 
-    // ✅ Client-side filtering (Search only) - Status & Action are filtered by API now
+    // ✅ Client-side filtering + Sort by createdAt (เก่าก่อน = ลำดับ 1)
     const availableData = useMemo(() => {
-        return data.filter((d) => {
-            const matchBranch = !filterBranch || d.branchCode.toLowerCase().includes(filterBranch.toLowerCase());
-            return matchBranch;
-        });
+        return data
+            .filter((d) => {
+                const matchBranch = !filterBranch || d.branchCode.toLowerCase().includes(filterBranch.toLowerCase());
+                return matchBranch;
+            })
+            .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // เก่า → ใหม่
     }, [data, filterBranch]);
 
     const visibleData = useMemo(() => availableData.slice(0, visibleCount), [availableData, visibleCount]);
@@ -229,26 +231,90 @@ export default function PogRequests() {
         // ✅ ไม่ต้อง loadData() เพราะ updateStatus อัปเดต local state แล้ว
     };
 
-    // ✅ Quick approve all pending
+    // ✅ Quick approve all pending (ใช้ Bulk API ที่ optimize แล้ว)
     const handleApproveAllPending = async () => {
         const pendingIds = pendingItems.map(p => p.id);
+
         if (pendingIds.length === 0) {
             alert("ไม่มีรายการที่รอดำเนินการ");
             return;
         }
-        if (!confirm(`ต้องการอนุมัติทั้งหมด ${pendingIds.length} รายการ?`)) return;
-        await bulkUpdateStatus(pendingIds, "completed");
+        if (!confirm(`ต้องการอนุมัติทั้งหมด ${pendingIds.length} รายการ?\n\n`)) return;
+
+        setBulkUpdating(true);
+        try {
+            const res = await api.post("/pog-requests/bulk-approve", { ids: pendingIds });
+
+            if (res.data?.ok) {
+                // อัปเดต local state - เปลี่ยน status เป็น completed
+                setData(prev => prev.map(d =>
+                    pendingIds.includes(d.id) ? { ...d, status: "completed" } : d
+                ));
+
+                // อัปเดต stats
+                const approvedCount = res.data.successCount || pendingIds.length;
+                setStats(prev => ({
+                    ...prev,
+                    pending: Math.max(0, prev.pending - approvedCount),
+                    completed: prev.completed + approvedCount
+                }));
+
+                alert(`✅ ${res.data.message}`);
+            } else {
+                alert(`❌ ${res.data?.message || "เกิดข้อผิดพลาด"}`);
+            }
+        } catch (e) {
+            console.error("Bulk approve error:", e);
+            alert(`❌ ${e.response?.data?.message || "เกิดข้อผิดพลาดในการอนุมัติ"}`);
+        } finally {
+            setBulkUpdating(false);
+            setSelectedIds(new Set());
+        }
     };
 
-    // ✅ Bulk approve selected
+    // ✅ Bulk approve selected (ใช้ Bulk API ที่ optimize แล้ว)
     const handleBulkApprove = async () => {
-        const ids = [...selectedIds].filter(id => pendingItems.some(p => p.id === id));
-        if (ids.length === 0) {
+        // กรองเฉพาะ pending items ที่ถูกเลือก
+        const selectedPending = pendingItems.filter(p => selectedIds.has(p.id));
+
+        if (selectedPending.length === 0) {
             alert("กรุณาเลือกรายการที่รอดำเนินการ");
             return;
         }
-        if (!confirm(`ต้องการอนุมัติ ${ids.length} รายการที่เลือก?`)) return;
-        await bulkUpdateStatus(ids, "completed");
+
+        const ids = selectedPending.map(p => p.id);
+
+        if (!confirm(`ต้องการอนุมัติ ${ids.length} รายการที่เลือก?\n\n(เรียงลำดับ: ที่สร้างก่อน → อนุมัติก่อน)`)) return;
+
+        setBulkUpdating(true);
+        try {
+            const res = await api.post("/pog-requests/bulk-approve", { ids });
+
+            if (res.data?.ok) {
+                // อัปเดต local state - เปลี่ยน status เป็น completed
+                setData(prev => prev.map(d =>
+                    ids.includes(d.id) ? { ...d, status: "completed" } : d
+                ));
+
+                // อัปเดต stats
+                const approvedCount = res.data.successCount || ids.length;
+                setStats(prev => ({
+                    ...prev,
+                    pending: Math.max(0, prev.pending - approvedCount),
+                    completed: prev.completed + approvedCount
+                }));
+
+                alert(`✅ ${res.data.message}`);
+            } else {
+                alert(`❌ ${res.data?.message || "เกิดข้อผิดพลาด"}`);
+            }
+        } catch (e) {
+            console.error("Bulk approve error:", e);
+            alert(`❌ ${e.response?.data?.message || "เกิดข้อผิดพลาดในการอนุมัติ"}`);
+        } finally {
+            setBulkUpdating(false);
+            setSelectedIds(new Set());
+        }
     };
 
     // ✅ Bulk reject selected (with reason)
@@ -486,6 +552,7 @@ export default function PogRequests() {
                                             className="rounded"
                                         />
                                     </th>
+                                    <th className="w-12 text-center px-2 py-3 font-semibold text-slate-700">#</th>
                                     <th className="text-left px-4 py-3 font-semibold text-slate-700">สาขา</th>
                                     <th className="text-left px-4 py-3 font-semibold text-slate-700">Action</th>
                                     <th className="text-left px-4 py-3 font-semibold text-slate-700">สินค้า</th>
@@ -496,7 +563,7 @@ export default function PogRequests() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
-                                {visibleData.map((item) => {
+                                {visibleData.map((item, rowIndex) => {
                                     const statusInfo = STATUS_MAP[item.status] || STATUS_MAP.pending;
                                     const actionInfo = ACTION_MAP[item.action] || { label: item.action, icon: "📦" };
                                     const isUpdating = updating === item.id;
@@ -515,6 +582,10 @@ export default function PogRequests() {
                                                         className="rounded"
                                                     />
                                                 )}
+                                            </td>
+                                            {/* ✅ Index */}
+                                            <td className="px-2 py-3 text-center text-slate-500 font-mono text-xs">
+                                                {rowIndex + 1}
                                             </td>
                                             <td className="px-4 py-3 font-medium">{item.branchCode}</td>
                                             <td className="px-4 py-3">
