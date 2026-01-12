@@ -29,6 +29,7 @@ export default function PogRequestModal({
     const [toIndex, setToIndex] = useState("");
     const [note, setNote] = useState("");
     const [loading, setLoading] = useState(false);
+    const [submitted, setSubmitted] = useState(false); // ✅ ป้องกัน double-click
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
 
@@ -151,6 +152,7 @@ export default function PogRequestModal({
         setNote("");
         setError("");
         setSuccess(false);
+        setSubmitted(false); // ✅ Reset submitted state
     };
 
     // Reset when shelf changes
@@ -175,6 +177,9 @@ export default function PogRequestModal({
     };
 
     const handleSubmit = async () => {
+        // ✅ ป้องกัน double-click: ถ้ากำลังโหลดหรือส่งไปแล้ว ไม่ทำอะไร
+        if (loading || submitted) return;
+
         if (!action) {
             setError("กรุณาเลือกประเภทการเปลี่ยนแปลง");
             return;
@@ -197,6 +202,7 @@ export default function PogRequestModal({
             return;
         }
 
+        setSubmitted(true); // ✅ ป้องกัน double-click
         setLoading(true);
         setError("");
 
