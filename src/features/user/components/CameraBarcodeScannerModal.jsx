@@ -18,6 +18,14 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
   const [liveText, setLiveText] = useState("");
   const [liveDigits, setLiveDigits] = useState("");
 
+  // ✅ Memoize callback refs เพื่อไม่ให้ re-create useEffect
+  const onDetectedRef = useRef(onDetected);
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onDetectedRef.current = onDetected;
+    onCloseRef.current = onClose;
+  }, [onDetected, onClose]);
+
   useEffect(() => {
     if (!open) return;
 
@@ -34,25 +42,26 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
       BarcodeFormat.UPC_E,
       BarcodeFormat.CODE_128,
     ]);
-    hints.set(DecodeHintType.TRY_HARDER, true); // ✅ พยายามอ่านให้ละเอียดขึ้น (ช้าลงนิดนึงแต่แม่นขึ้น)
+    hints.set(DecodeHintType.TRY_HARDER, true);
 
-    const reader = new BrowserMultiFormatReader(hints, 500); // ✅ สแกนทุก 500ms (ลดภาระ CPU ให้มีเวลาโฟกัส)
+    const reader = new BrowserMultiFormatReader(hints, 500);
     readerRef.current = reader;
 
     let stopped = false;
+    let mediaStream = null; // ✅ เก็บ reference ไว้สำหรับ cleanup
 
     const start = async () => {
       try {
-        if (!videoRef.current) return; // ✅ Safety check
+        if (!videoRef.current) return;
 
         await reader.decodeFromConstraints(
           {
             audio: false,
             video: {
-              facingMode: "environment", // ✅ ใช้กล้องหลัง
-              width: { min: 1280, ideal: 1920 }, // ✅ ขอความละเอียดสูงขึ้นให้เห็นเส้นบาร์โค้ดชัด
+              facingMode: "environment",
+              width: { min: 1280, ideal: 1920 },
               height: { min: 720, ideal: 1080 },
-              focusMode: { ideal: "continuous" }, // ✅ พยายามขอโฟกัสต่อเนื่อง
+              focusMode: { ideal: "continuous" },
             },
           },
           videoRef.current,
@@ -60,11 +69,9 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
             if (stopped) return;
             if (!result) return;
 
-            // ✅ Check Bounding Box (Scan Area Only)
-            // resultPoints คืนค่าเป็น [Point {x, y}, ... ] ของตำแหน่งบาร์โค้ดใน video frame
+            // Check Bounding Box (Scan Area Only)
             const points = result.getResultPoints();
             if (points && points.length > 0 && videoRef.current) {
-              // หาค่า x, y ของจุดที่เจอ (เฉลี่ยตรงกลางของบาร์โค้ด)
               const xs = points.map(p => p.x);
               const ys = points.map(p => p.y);
               const minX = Math.min(...xs);
@@ -75,13 +82,10 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
               const centerX = (minX + maxX) / 2;
               const centerY = (minY + maxY) / 2;
 
-              // ขนาด video จริง (internal resolution)
               const vW = videoRef.current.videoWidth;
               const vH = videoRef.current.videoHeight;
 
               if (vW > 0 && vH > 0) {
-                // กำหนด "Zone" ตรงกลาง (ประมาณ 20% - 80% แกน X, 35% - 65% แกน Y ตาม UI กรอบ)
-                // ถ้าอยู่นอกโซนนี้ ให้ ignore
                 const safeZoneX_Min = vW * 0.15;
                 const safeZoneX_Max = vW * 0.85;
                 const safeZoneY_Min = vH * 0.30;
@@ -92,7 +96,7 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
                   centerY >= safeZoneY_Min && centerY <= safeZoneY_Max;
 
                 if (!isInside) {
-                  return; // ❌ ไม่อยู่ในกรอบ -> ข้าม
+                  return;
                 }
               }
             }
@@ -100,21 +104,29 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
             const raw = String(result.getText() || "").trim();
             if (!raw) return;
 
-            // ✅ เอาเฉพาะตัวเลข (EAN/UPC จะเป็นเลขล้วน)
             const digits = raw.replace(/\D/g, "");
             setLiveText(raw);
             setLiveDigits(digits);
 
-            // cooldown กันเด้งซ้ำ
             const now = Date.now();
             const key = digits || raw;
             if (lastRef.current.code === key && now - lastRef.current.ts < 1200) return;
             lastRef.current = { code: key, ts: now };
 
-            // ✅ ส่งกลับเป็น "ตัวเลข" ก่อน ถ้าไม่มีเลขค่อยส่ง raw
-            onDetected?.(digits || raw);
+            // ✅ ใช้ ref แทน dependency
+            onDetectedRef.current?.(digits || raw);
+
+            // ✅ ปิดกล้องอัตโนมัติหลังสแกนสำเร็จ
+            setTimeout(() => {
+              onCloseRef.current?.();
+            }, 100);
           }
         );
+
+        // ✅ เก็บ mediaStream ไว้สำหรับ cleanup
+        if (videoRef.current && videoRef.current.srcObject) {
+          mediaStream = videoRef.current.srcObject;
+        }
       } catch (e) {
         console.error("camera start error:", e);
         setErr(
@@ -129,14 +141,37 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
 
     start();
 
+    // ✅ Cleanup function - ปิดกล้องอย่างสมบูรณ์
     return () => {
       stopped = true;
+
+      // 1. Reset ZXing reader
       try {
         readerRef.current?.reset?.();
       } catch { }
       readerRef.current = null;
+
+      // 2. ✅ หยุด video tracks ทั้งหมด (สำคัญมาก! ป้องกันกล้องค้าง)
+      try {
+        if (mediaStream) {
+          mediaStream.getTracks().forEach(track => {
+            track.stop();
+          });
+        }
+        if (videoRef.current && videoRef.current.srcObject) {
+          const stream = videoRef.current.srcObject;
+          stream.getTracks().forEach(track => track.stop());
+          videoRef.current.srcObject = null;
+        }
+      } catch (e) {
+        console.error("cleanup video tracks error:", e);
+      }
+
+      // 3. ✅ Clear live state
+      setLiveText("");
+      setLiveDigits("");
     };
-  }, [open, onDetected]);
+  }, [open]); // ✅ ลบ onDetected ออกจาก dependency เพื่อไม่ให้ re-init ทุกครั้ง
 
   if (!open) return null;
 
