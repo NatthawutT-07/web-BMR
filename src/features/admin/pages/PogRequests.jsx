@@ -82,6 +82,176 @@ const RejectReasonModal = ({ isOpen, onClose, onConfirm, count = 1 }) => {
     );
 };
 
+// ✅ Edit Position Modal
+const EditPositionModal = ({ isOpen, onClose, item, onSave }) => {
+    const [formData, setFormData] = useState({
+        toShelf: "",
+        toRow: "",
+        toIndex: "",
+        fromShelf: "",
+        fromRow: "",
+        fromIndex: "",
+    });
+    const [saving, setSaving] = useState(false);
+
+    // Initialize form data when modal opens
+    React.useEffect(() => {
+        if (item && isOpen) {
+            setFormData({
+                toShelf: item.toShelf || "",
+                toRow: item.toRow || "",
+                toIndex: item.toIndex || "",
+                fromShelf: item.fromShelf || "",
+                fromRow: item.fromRow || "",
+                fromIndex: item.fromIndex || "",
+            });
+        }
+    }, [item, isOpen]);
+
+    const handleChange = (field, value) => {
+        setFormData(prev => ({ ...prev, [field]: value }));
+    };
+
+    const handleSave = async () => {
+        setSaving(true);
+        try {
+            await onSave(item.id, formData);
+            onClose();
+        } catch (e) {
+            alert(`เกิดข้อผิดพลาด: ${e.message}`);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    if (!isOpen || !item) return null;
+
+    const showFrom = ["move", "delete", "swap"].includes(item.action);
+    const showTo = ["add", "move", "swap"].includes(item.action);
+
+    return (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-lg w-full shadow-lg">
+                <h3 className="text-lg font-semibold text-slate-800 mb-4">
+                    ✏️ แก้ไขตำแหน่ง
+                </h3>
+
+                <div className="mb-4 p-3 bg-slate-50 rounded-lg text-sm">
+                    <div><span className="font-medium">Barcode:</span> {item.barcode}</div>
+                    <div><span className="font-medium">Action:</span> {ACTION_MAP[item.action]?.label || item.action}</div>
+                </div>
+
+                {/* From Location (for move, delete, swap) */}
+                {showFrom && (
+                    <div className="mb-4">
+                        <div className="text-sm font-semibold text-slate-700 mb-2">📍 ตำแหน่งเดิม (From)</div>
+                        <div className="grid grid-cols-3 gap-2">
+                            <div>
+                                <label className="text-xs text-slate-500">Shelf</label>
+                                <input
+                                    type="text"
+                                    value={formData.fromShelf}
+                                    onChange={(e) => handleChange("fromShelf", e.target.value)}
+                                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                                    placeholder="W1"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-500">Row</label>
+                                <select
+                                    value={formData.fromRow}
+                                    onChange={(e) => handleChange("fromRow", e.target.value)}
+                                    className="w-full px-3 py-2 border rounded-lg text-sm bg-white"
+                                >
+                                    <option value="">เลือก</option>
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                                        <option key={n} value={n}>{n}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-500">Index</label>
+                                <select
+                                    value={formData.fromIndex}
+                                    onChange={(e) => handleChange("fromIndex", e.target.value)}
+                                    className="w-full px-3 py-2 border rounded-lg text-sm bg-white"
+                                >
+                                    <option value="">เลือก</option>
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(n => (
+                                        <option key={n} value={n}>{n}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* To Location (for add, move, swap) */}
+                {showTo && (
+                    <div className="mb-4">
+                        <div className="text-sm font-semibold text-slate-700 mb-2">🎯 ตำแหน่งใหม่ (To)</div>
+                        <div className="grid grid-cols-3 gap-2">
+                            <div>
+                                <label className="text-xs text-slate-500">Shelf</label>
+                                <input
+                                    type="text"
+                                    value={formData.toShelf}
+                                    onChange={(e) => handleChange("toShelf", e.target.value)}
+                                    className="w-full px-3 py-2 border rounded-lg text-sm"
+                                    placeholder="W1"
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-500">Row</label>
+                                <select
+                                    value={formData.toRow}
+                                    onChange={(e) => handleChange("toRow", e.target.value)}
+                                    className="w-full px-3 py-2 border rounded-lg text-sm bg-white"
+                                >
+                                    <option value="">เลือก</option>
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
+                                        <option key={n} value={n}>{n}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-500">Index</label>
+                                <select
+                                    value={formData.toIndex}
+                                    onChange={(e) => handleChange("toIndex", e.target.value)}
+                                    className="w-full px-3 py-2 border rounded-lg text-sm bg-white"
+                                >
+                                    <option value="">เลือก</option>
+                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(n => (
+                                        <option key={n} value={n}>{n}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex gap-3 justify-end mt-6">
+                    <button
+                        onClick={onClose}
+                        disabled={saving}
+                        className="px-4 py-2 text-sm text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200"
+                    >
+                        ยกเลิก
+                    </button>
+                    <button
+                        onClick={handleSave}
+                        disabled={saving}
+                        className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    >
+                        {saving ? "กำลังบันทึก..." : "💾 บันทึก"}
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+};
+
 export default function PogRequests() {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState([]);
@@ -102,6 +272,9 @@ export default function PogRequests() {
 
     // ✅ Reject modal state
     const [rejectModal, setRejectModal] = useState({ open: false, ids: [], count: 0 });
+
+    // ✅ Edit position modal state
+    const [editModal, setEditModal] = useState({ open: false, item: null });
 
     const loadData = async () => {
         setLoading(true);
@@ -340,6 +513,24 @@ export default function PogRequests() {
         await bulkUpdateStatus(rejectModal.ids, "rejected", reason || null);
     };
 
+    // ✅ Edit position
+    const handleEditPosition = (item) => {
+        setEditModal({ open: true, item });
+    };
+
+    const savePosition = async (id, formData) => {
+        const res = await api.put(`/pog-requests/${id}/position`, formData);
+        if (res.data?.ok) {
+            // อัปเดต local state
+            setData(prev => prev.map(d =>
+                d.id === id ? { ...d, ...formData } : d
+            ));
+            alert("✅ แก้ไขตำแหน่งสำเร็จ");
+        } else {
+            throw new Error(res.data?.message || "เกิดข้อผิดพลาด");
+        }
+    };
+
     const deleteRequest = async (id) => {
         if (!confirm("ต้องการลบรายการนี้?")) return;
         try {
@@ -392,6 +583,14 @@ export default function PogRequests() {
                 onClose={() => setRejectModal({ open: false, ids: [], count: 0 })}
                 onConfirm={rejectModal.count > 1 ? confirmBulkReject : confirmSingleReject}
                 count={rejectModal.count}
+            />
+
+            {/* Edit Position Modal */}
+            <EditPositionModal
+                isOpen={editModal.open}
+                onClose={() => setEditModal({ open: false, item: null })}
+                item={editModal.item}
+                onSave={savePosition}
             />
 
             {/* Header */}
@@ -630,6 +829,14 @@ export default function PogRequests() {
                                                                 className="px-2 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-500 disabled:opacity-50"
                                                             >
                                                                 ✓ อนุมัติ
+                                                            </button>
+                                                            <button
+                                                                onClick={() => handleEditPosition(item)}
+                                                                title="แก้ไขตำแหน่ง"
+                                                                disabled={isUpdating}
+                                                                className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-50"
+                                                            >
+                                                                ✏️
                                                             </button>
                                                             <button
                                                                 onClick={() => handleSingleReject(item.id)}

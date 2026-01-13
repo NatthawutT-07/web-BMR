@@ -126,3 +126,15 @@ export const fetchSalesMember = async ({ start, end, customerId }) => {
         throw error;
     }
 };
+
+// ------------------------------------------------
+// GET: Bill Items (รายการสินค้าในบิล)
+// ------------------------------------------------
+export const fetchBillItems = async (billId) => {
+    try {
+        const res = await api.get(`/sales-bill-items/${billId}`);
+        return res.data;
+    } catch (error) {
+        throw error;
+    }
+};

@@ -33,6 +33,9 @@ export default function PogRequestModal({
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
 
+    // ✅ LocalStorage key สำหรับจำค่า ADD position ล่าสุด
+    const LAST_ADD_POSITION_KEY = `pog_last_add_position_${branchCode}`;
+
     // ✅ Dropdown state
     const [isShelfDropdownOpen, setIsShelfDropdownOpen] = useState(false);
 
@@ -155,14 +158,19 @@ export default function PogRequestModal({
         setSubmitted(false); // ✅ Reset submitted state
     };
 
-    // Reset when shelf changes
+    // ✅ Flag เพื่อป้องกัน reset เมื่อโหลดจาก localStorage
+    const isLoadingFromStorageRef = React.useRef(false);
+
+    // Reset when shelf changes (ยกเว้นตอนโหลดจาก localStorage)
     useEffect(() => {
+        if (isLoadingFromStorageRef.current) return;
         setToRow("");
         setToIndex("");
     }, [toShelf]);
 
-    // Reset when row changes
+    // Reset when row changes (ยกเว้นตอนโหลดจาก localStorage)
     useEffect(() => {
+        if (isLoadingFromStorageRef.current) return;
         setToIndex("");
     }, [toRow]);
 
@@ -170,6 +178,41 @@ export default function PogRequestModal({
     useEffect(() => {
         if (initialAction) setAction(initialAction);
     }, [initialAction]);
+
+    // ✅ โหลดค่า position ล่าสุดจาก localStorage เมื่อ action = add
+    // เซ็ตว่างเมื่อ action = move
+    useEffect(() => {
+        if (!open) return;
+
+        if (action === "add") {
+            // โหลดค่าที่เคยใช้ล่าสุดสำหรับ ADD
+            try {
+                const saved = localStorage.getItem(LAST_ADD_POSITION_KEY);
+                if (saved) {
+                    const { shelf, row, index } = JSON.parse(saved);
+
+                    // ✅ ตั้ง flag ก่อนโหลดเพื่อป้องกัน reset
+                    isLoadingFromStorageRef.current = true;
+
+                    if (shelf) setToShelf(shelf);
+                    if (row) setToRow(String(row));
+                    if (index) setToIndex(String(index));
+
+                    // ✅ Reset flag หลังจาก state update เสร็จ
+                    setTimeout(() => {
+                        isLoadingFromStorageRef.current = false;
+                    }, 100);
+                }
+            } catch (e) {
+                console.error("Failed to load last position:", e);
+            }
+        } else if (action === "move") {
+            // MOVE เซ็ตว่างเสมอ
+            setToShelf("");
+            setToRow("");
+            setToIndex("");
+        }
+    }, [action, open, LAST_ADD_POSITION_KEY]);
 
     const handleClose = () => {
         resetForm();
@@ -223,6 +266,19 @@ export default function PogRequestModal({
             });
 
             setSuccess(true);
+
+            // ✅ บันทึก position ล่าสุดสำหรับ ADD เพื่อใช้เป็นค่าเริ่มต้นครั้งถัดไป
+            if (action === "add" && toShelf && toRow && toIndex) {
+                try {
+                    localStorage.setItem(LAST_ADD_POSITION_KEY, JSON.stringify({
+                        shelf: toShelf,
+                        row: Number(toRow),
+                        index: Number(toIndex)
+                    }));
+                } catch (e) {
+                    console.error("Failed to save last position:", e);
+                }
+            }
         } catch (e) {
             console.error("POG request error:", e);
             let msg = e?.response?.data?.message;

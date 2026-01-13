@@ -1,6 +1,6 @@
 // src/components/admin/member/Member.jsx
 import React, { useEffect, useMemo, useState } from "react";
-import { fetchSalesMember } from "../../../../../api/admin/sales";
+import { fetchSalesMember, fetchBillItems } from "../../../../../api/admin/sales";
 
 /* =========================
    small utils
@@ -66,9 +66,8 @@ const Pill = ({ children, tone = "slate" }) => {
   };
   return (
     <span
-      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs ${
-        toneMap[tone] || toneMap.slate
-      }`}
+      className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs ${toneMap[tone] || toneMap.slate
+        }`}
     >
       {children}
     </span>
@@ -116,9 +115,8 @@ const Card = ({
     <div className={`${baseCls} ${soft ? softCls : normalCls} ${className}`}>
       <div className={`text-xs ${soft ? s.title : "text-slate-500"}`}>{title}</div>
       <div
-        className={`mt-1 font-semibold ${emphasize ? "text-xl" : "text-lg"} ${
-          soft ? s.value : "text-slate-800"
-        }`}
+        className={`mt-1 font-semibold ${emphasize ? "text-xl" : "text-lg"} ${soft ? s.value : "text-slate-800"
+          }`}
       >
         {value}
       </div>
@@ -162,7 +160,7 @@ const dayFilterLabel = (v) => (v === "ALL" ? "ทั้งหมด" : `≤ ${v}
 /* =========================
    Detail Modal (ESC close)
 ========================= */
-const DetailModal = ({ open, onClose, data, loading }) => {
+const DetailModal = ({ open, onClose, data, loading, onBillClick }) => {
   useEffect(() => {
     if (!open) return;
     const onKeyDown = (e) => {
@@ -247,7 +245,12 @@ const DetailModal = ({ open, onClose, data, loading }) => {
                       {visits.map((v) => {
                         const amt = Number(v.amountNet || 0);
                         return (
-                          <tr key={v.billId} className="border-b border-slate-100 hover:bg-slate-50/70">
+                          <tr
+                            key={v.billId}
+                            className="border-b border-slate-100 hover:bg-sky-50 cursor-pointer transition-colors"
+                            onClick={() => onBillClick?.(v.billId)}
+                            title="กดเพื่อดูรายการสินค้า"
+                          >
                             <td className="px-3 py-2">{fmtDateTime(v.date)}</td>
                             <td className="px-3 py-2">
                               <div className="text-xs text-slate-500">
@@ -257,7 +260,7 @@ const DetailModal = ({ open, onClose, data, loading }) => {
                             <td className="px-3 py-2">
                               {v.isReturn ? <Pill tone="red">คืน</Pill> : <Pill tone="green">ขาย</Pill>}
                             </td>
-                            <td className="px-3 py-2 font-mono text-xs">{v.billNumber || "-"}</td>
+                            <td className="px-3 py-2 font-mono text-xs text-sky-700 underline">{v.billNumber || "-"}</td>
                             <td className="px-3 py-2 text-right font-semibold">
                               <span className={amt < 0 ? "text-rose-700" : "text-emerald-700"}>{fmtMoney(amt)}</span>
                             </td>
@@ -292,6 +295,115 @@ const DetailModal = ({ open, onClose, data, loading }) => {
 };
 
 /* =========================
+   Bill Items Modal (รายการสินค้าในบิล)
+========================= */
+const BillItemsModal = ({ open, onClose, billId, loading, data }) => {
+  useEffect(() => {
+    if (!open) return;
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [open, onClose]);
+
+  if (!open) return null;
+
+  const bill = data?.bill;
+  const items = data?.items || [];
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center">
+      <div className="absolute inset-0 bg-black/50" onClick={onClose} />
+
+      <div className="relative w-full sm:max-w-4xl max-h-[90vh] overflow-hidden rounded-t-2xl sm:rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center justify-between gap-3 border-b border-slate-200 p-4 bg-sky-50">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-sky-800 truncate">
+              🛒 รายการสินค้าในบิล: {bill?.billNumber || "-"}
+            </div>
+            <div className="text-xs text-sky-700 mt-0.5">
+              {bill?.customer?.customer_name || "-"} • {fmtDateTime(bill?.date)}
+              <span className="ml-2 text-slate-400">(กด Esc เพื่อปิด)</span>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+          >
+            ปิด
+          </button>
+        </div>
+
+        <div className="p-4 overflow-auto max-h-[calc(90vh-80px)]">
+          {loading ? (
+            <div className="py-8 text-center text-slate-500">
+              <span className="inline-flex items-center gap-2">
+                <Spinner />
+                กำลังโหลดรายการสินค้า...
+              </span>
+            </div>
+          ) : (
+            <>
+              <div className="mb-3 text-sm text-slate-600">
+                ยอดรวม: <span className="font-semibold text-emerald-700">{fmtMoney(bill?.totalPayment)}</span>
+                <span className="mx-2">•</span>
+                ส่วนลดท้ายบิล: <span className="font-semibold text-rose-600">{fmtMoney(bill?.endBillDiscount)}</span>
+                <span className="mx-2">•</span>
+                รายการ: <span className="font-semibold">{items.length}</span>
+              </div>
+
+              <div className="rounded-xl border border-slate-200 overflow-hidden">
+                <div className="overflow-auto">
+                  <table className="min-w-[700px] w-full text-sm">
+                    <thead className="bg-slate-50 sticky top-0">
+                      <tr className="border-b border-slate-200 text-xs text-slate-500">
+                        <th className="px-3 py-2 text-left w-10">#</th>
+                        <th className="px-3 py-2 text-left">รหัสสินค้า</th>
+                        <th className="px-3 py-2 text-left">ชื่อสินค้า</th>
+                        <th className="px-3 py-2 text-left">แบรนด์</th>
+                        <th className="px-3 py-2 text-right">จำนวน</th>
+                        <th className="px-3 py-2 text-right">ราคา/หน่วย</th>
+                        <th className="px-3 py-2 text-right">ส่วนลด</th>
+                        <th className="px-3 py-2 text-right">ยอดสุทธิ</th>
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {items.map((item, idx) => (
+                        <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50/70">
+                          <td className="px-3 py-2 text-slate-400">{idx + 1}</td>
+                          <td className="px-3 py-2 font-mono text-xs">{item.productCode}</td>
+                          <td className="px-3 py-2">{item.productName}</td>
+                          <td className="px-3 py-2 text-xs text-slate-500">{item.productBrand}</td>
+                          <td className="px-3 py-2 text-right font-semibold">{fmtInt(item.quantity)}</td>
+                          <td className="px-3 py-2 text-right">{fmtMoney(item.unitPrice)}</td>
+                          <td className="px-3 py-2 text-right text-rose-600">{item.discount !== 0 ? fmtMoney(Math.abs(item.discount)) : "-"}</td>
+                          <td className="px-3 py-2 text-right font-semibold text-emerald-700">{fmtMoney(item.netSales)}</td>
+                        </tr>
+                      ))}
+
+                      {!items.length && (
+                        <tr>
+                          <td colSpan={8} className="px-3 py-6 text-center text-slate-500">
+                            ไม่พบรายการสินค้า
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* =========================
    compute totals for KPI
 ========================= */
 const computeScopeTotals = (rows) => {
@@ -316,6 +428,11 @@ const Member = () => {
   const [detail, setDetail] = useState(null);
   const [openDetail, setOpenDetail] = useState(false);
 
+  // ✅ Bill Items Modal state
+  const [billItemsData, setBillItemsData] = useState(null);
+  const [billItemsLoading, setBillItemsLoading] = useState(false);
+  const [openBillItems, setOpenBillItems] = useState(false);
+
   // sortKey: "visits" | "return" | "net"
   const [sortKey, setSortKey] = useState("visits");
 
@@ -328,6 +445,9 @@ const Member = () => {
   // ✅ search (ชื่อ/รหัสลูกค้า)
   const [search, setSearch] = useState("");
 
+  // ✅ View Mode: "member" | "non-member"
+  const [viewMode, setViewMode] = useState("member");
+
   const pageSize = 10;
   const [page, setPage] = useState(1);
 
@@ -335,6 +455,8 @@ const Member = () => {
   const [jumpPage, setJumpPage] = useState("");
 
   const rows = summary?.rows || [];
+  const nonMemberData = summary?.nonMember || { visits: 0, netAmount: 0 }; // ✅ Data สมาชิกทั่วไป
+
   const canLoad = useMemo(() => Boolean(start && end && start <= end), [start, end]);
 
   // ✅ จำนวนวันของช่วงวันที่ที่เลือก
@@ -379,8 +501,23 @@ const Member = () => {
     });
   }, [tierFilteredRows, search]);
 
-  // ✅ KPI totals: ใช้ชุดที่ตัดติดลบแล้วเสมอ
-  const scopeTotals = useMemo(() => computeScopeTotals(tierFilteredRows), [tierFilteredRows]);
+  // ✅ KPI totals: 
+  // - ถ้าโหมด member: ใช้จากตารางที่ filter แล้ว
+  // - ถ้าโหมด non-member: ใช้จาก nonMemberData โดยตรง
+  const scopeTotals = useMemo(() => {
+    if (viewMode === "non-member") {
+      // สำหรับ Non-member เรามีแค่ visits กับ netAmount
+      return {
+        customers: 0, // ไม่มีนับจำนวนลูกค้า
+        visits: nonMemberData.visits,
+        salesAmount: 0, // API ไม่ได้ส่งแยก (ส่งมาแต่ net)
+        returnAmount: 0,
+        netAmount: nonMemberData.netAmount,
+        avgNetPerVisitAll: nonMemberData.visits ? nonMemberData.netAmount / nonMemberData.visits : 0
+      };
+    }
+    return computeScopeTotals(tierFilteredRows);
+  }, [tierFilteredRows, viewMode, nonMemberData]);
 
   // ✅ Tier stats (เทียบ % ของลูกค้ารวม + สุทธิรวม) อิง dayBaseRows
   const tierStats = useMemo(() => {
@@ -499,6 +636,24 @@ const Member = () => {
     }
   };
 
+  // ✅ เปิด Bill Items Modal
+  const openBillItemsModal = async (billId) => {
+    setError("");
+    setBillItemsLoading(true);
+    setOpenBillItems(true);
+    setBillItemsData(null);
+    try {
+      const data = await fetchBillItems(billId);
+      setBillItemsData(data);
+    } catch (e) {
+      setError(e?.response?.data?.message || e?.message || "โหลดรายการสินค้าไม่สำเร็จ");
+      setOpenBillItems(false);
+      setBillItemsData(null);
+    } finally {
+      setBillItemsLoading(false);
+    }
+  };
+
   const TierButton = ({ value }) => {
     const active = tierFilter === value;
     return (
@@ -508,9 +663,8 @@ const Member = () => {
           setPage(1);
           setJumpPage("");
         }}
-        className={`px-3 py-1.5 text-xs border-l border-slate-200 ${
-          active ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
-        }`}
+        className={`px-3 py-1.5 text-xs border-l border-slate-200 ${active ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
+          }`}
         title={tierLabel(value)}
       >
         {value}
@@ -528,9 +682,8 @@ const Member = () => {
           setPage(1);
           setJumpPage("");
         }}
-        className={`px-3 py-1.5 text-xs border-l border-slate-200 ${
-          active ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
-        }`}
+        className={`px-3 py-1.5 text-xs border-l border-slate-200 ${active ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
+          }`}
         title={dayFilterLabel(value)}
       >
         {value === "ALL" ? "ทั้งหมด" : `≤${value}d`}
@@ -566,7 +719,26 @@ const Member = () => {
         <div className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6 py-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
             <div>
-              <div className="text-base font-semibold text-slate-800">Member</div>
+              <div className="inline-flex rounded-lg border border-slate-200 p-0.5 bg-slate-100/50">
+                <button
+                  onClick={() => setViewMode("member")}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${viewMode === "member"
+                    ? "bg-white text-slate-800 shadow-sm border border-slate-200"
+                    : "text-slate-500 hover:text-slate-700"
+                    }`}
+                >
+                  สมาชิก
+                </button>
+                <button
+                  onClick={() => setViewMode("non-member")}
+                  className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${viewMode === "non-member"
+                    ? "bg-white text-slate-800 shadow-sm border border-slate-200"
+                    : "text-slate-500 hover:text-slate-700"
+                    }`}
+                >
+                  ลูกค้าทั่วไป
+                </button>
+              </div>
             </div>
 
             <div className="flex flex-wrap items-end gap-2">
@@ -613,9 +785,12 @@ const Member = () => {
       </header>
 
       <main className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6 py-4 space-y-4">
+
+
+
         {/* ✅ KPI: ขยายให้เต็มแถว + ย้าย “ระยะเวลาที่ฟิลเตอร์” ไปท้ายสุด */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-2">
-          <Card title="จำนวนลูกค้า" value={fmtInt(scopeTotals.customers)} sub={filterSummaryText} />
+          {viewMode === "member" && <Card title="จำนวนลูกค้า" value={fmtInt(scopeTotals.customers)} sub={filterSummaryText} />}
           <Card title="จำนวนบิลรวม" value={fmtInt(scopeTotals.visits)} sub={filterSummaryText} />
 
           {/* ✅ ให้ “ยอดสุทธิรวม” กิน 2 ช่อง เพื่อให้เต็มแถวพอดี */}
@@ -635,336 +810,350 @@ const Member = () => {
           <Card title="ระยะเวลาที่ฟิลเตอร์" value={`${fmtInt(rangeDays)} วัน`} sub={kpiRangeSub} />
         </div>
 
-        <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
-          <div className="flex flex-col gap-2 p-3 border-b border-slate-200">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <div className="text-sm font-semibold text-slate-800">ตารางลูกค้า</div>
-                <span className="text-xs text-slate-500">{pageInfoText}</span>
-              </div>
+        {/* ส่วนตารางแสดงเฉพาะโหมด Member */}
+        {
+          viewMode === "member" && (
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+              <div className="flex flex-col gap-2 p-3 border-b border-slate-200">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <div className="text-sm font-semibold text-slate-800">ตารางลูกค้า</div>
+                    <span className="text-xs text-slate-500">{pageInfoText}</span>
+                  </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="text-xs text-slate-500">เรียงตาม:</div>
-                <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
-                  <button
-                    onClick={() => {
-                      setSortKey("visits");
-                      setPage(1);
-                      setJumpPage("");
-                    }}
-                    className={`px-3 py-1.5 text-xs ${
-                      sortKey === "visits" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    จำนวนบิล
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSortKey("return");
-                      setPage(1);
-                      setJumpPage("");
-                    }}
-                    className={`px-3 py-1.5 text-xs border-l border-slate-200 ${
-                      sortKey === "return" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    ยอดคืนมากที่สุด
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSortKey("net");
-                      setPage(1);
-                      setJumpPage("");
-                    }}
-                    className={`px-3 py-1.5 text-xs border-l border-slate-200 ${
-                      sortKey === "net" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    ยอดสุทธิ
-                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-xs text-slate-500">เรียงตาม:</div>
+                    <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
+                      <button
+                        onClick={() => {
+                          setSortKey("visits");
+                          setPage(1);
+                          setJumpPage("");
+                        }}
+                        className={`px-3 py-1.5 text-xs ${sortKey === "visits" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
+                      >
+                        จำนวนบิล
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSortKey("return");
+                          setPage(1);
+                          setJumpPage("");
+                        }}
+                        className={`px-3 py-1.5 text-xs border-l border-slate-200 ${sortKey === "return" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
+                      >
+                        ยอดคืนมากที่สุด
+                      </button>
+                      <button
+                        onClick={() => {
+                          setSortKey("net");
+                          setPage(1);
+                          setJumpPage("");
+                        }}
+                        className={`px-3 py-1.5 text-xs border-l border-slate-200 ${sortKey === "net" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
+                      >
+                        ยอดสุทธิ
+                      </button>
+                    </div>
+
+                    <Pill tone="slate">{pageSize} รายการ/หน้า</Pill>
+                  </div>
                 </div>
 
-                <Pill tone="slate">{pageSize} รายการ/หน้า</Pill>
-              </div>
-            </div>
+                {/* Day Filter */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-xs text-slate-500">ขาดการใช้บริการไม่เกิน:</div>
+                  <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
+                    <DayButton value="ALL" />
+                    {DAY_FILTERS.map((d) => (
+                      <DayButton key={d} value={d} />
+                    ))}
+                  </div>
 
-            {/* Day Filter */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="text-xs text-slate-500">ขาดการใช้บริการไม่เกิน:</div>
-              <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
-                <DayButton value="ALL" />
-                {DAY_FILTERS.map((d) => (
-                  <DayButton key={d} value={d} />
-                ))}
+                  <div className="text-xs text-slate-500">
+                    กำลังดู: <span className="font-semibold text-slate-700">{dayFilterLabel(dayFilter)}</span>
+                  </div>
+                </div>
+
+                {/* Tier Filter */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-xs text-slate-500">Tier:</div>
+                  <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
+                    <button
+                      onClick={() => {
+                        setTierFilter("ALL");
+                        setPage(1);
+                        setJumpPage("");
+                      }}
+                      className={`px-3 py-1.5 text-xs ${tierFilter === "ALL" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
+                        }`}
+                    >
+                      ทั้งหมด{" "}
+                      <span className={`ml-2 ${tierFilter === "ALL" ? "text-white/80" : "text-slate-400"}`}>
+                        {fmtInt(tierCounts.ALL || 0)}
+                      </span>
+                    </button>
+                    <TierButton value="T1" />
+                    <TierButton value="T2" />
+                    <TierButton value="T3" />
+                  </div>
+
+                  <div className="text-xs text-slate-500">
+                    กำลังดู: <span className="font-semibold text-slate-700">{tierLabel(tierFilter)}</span>
+                  </div>
+                </div>
+
+                {/* Tier % Summary */}
+                <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/60 overflow-hidden">
+                  <div className="px-3 py-2 text-xs text-slate-600 flex flex-wrap items-center gap-2">
+                    <span className="font-semibold text-slate-700">สรุปสัดส่วน Tier</span>
+                    <span className="text-slate-500">
+                      ฐานเทียบ: ลูกค้า {fmtInt(tierStats.totalCustomers)} • สุทธิ {fmtMoney(tierStats.totalNet)}
+                    </span>
+                  </div>
+
+                  <div className="overflow-x-auto">
+                    <table className="min-w-[680px] w-full text-[12px]">
+                      <thead className="bg-white">
+                        <tr className="border-t border-slate-200 text-[11px] text-slate-600">
+                          <th className="px-3 py-2 text-left w-[160px]">Tier</th>
+                          <th className="px-3 py-2 text-right w-[120px]">ลูกค้า</th>
+                          <th className="px-3 py-2 text-right w-[120px]">%ลูกค้า</th>
+                          <th className="px-3 py-2 text-right w-[160px]">สุทธิ</th>
+                          <th className="px-3 py-2 text-right w-[120px]">%สุทธิ</th>
+                        </tr>
+                      </thead>
+
+                      <tbody className="bg-white">
+                        {tierStats.rows.map((r) => {
+                          const net = Number(r.netAmount || 0);
+                          return (
+                            <tr key={r.tier} className="border-t border-slate-100">
+                              <td className="px-3 py-2">
+                                <div className="flex items-center gap-2">
+                                  <Pill tone={tierTone(r.tier)}>{r.tier}</Pill>
+                                  <span className="text-slate-700">{tierLabel(r.tier)}</span>
+                                </div>
+                              </td>
+
+                              <td className="px-3 py-2 text-right font-semibold text-slate-800 tabular-nums">
+                                {fmtInt(r.customers)}
+                              </td>
+
+                              <td className="px-3 py-2 text-right text-slate-700 tabular-nums">{fmtPct(r.customerPct)}</td>
+
+                              <td className="px-3 py-2 text-right font-semibold tabular-nums">
+                                <span className="text-emerald-700">{fmtMoney(net)}</span>
+                              </td>
+
+                              <td className="px-3 py-2 text-right text-slate-700 tabular-nums">{fmtPct(r.netPct)}</td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Search */}
+                <div className="flex flex-col md:flex-row md:items-center gap-2">
+                  <div className="text-xs text-slate-500 shrink-0">ค้นหา (ชื่อ/รหัสลูกค้า):</div>
+                  <div className="flex items-center gap-2 w-full">
+                    <input
+                      value={search}
+                      onChange={(e) => {
+                        setSearch(e.target.value);
+                        setPage(1);
+                        setJumpPage("");
+                      }}
+                      placeholder="พิมพ์ชื่อ หรือ รหัสลูกค้า..."
+                      className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
+                    />
+                    {search ? (
+                      <button
+                        onClick={() => {
+                          setSearch("");
+                          setPage(1);
+                          setJumpPage("");
+                        }}
+                        className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 hover:bg-slate-50"
+                        title="ล้างค้นหา"
+                      >
+                        ล้าง
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
+
+                {search ? (
+                  <div className="text-[11px] text-slate-500">
+                    * ค้นหา: <span className="font-semibold text-slate-700">{search}</span> (มีผลเฉพาะ “ตาราง”)
+                  </div>
+                ) : null}
               </div>
 
-              <div className="text-xs text-slate-500">
-                กำลังดู: <span className="font-semibold text-slate-700">{dayFilterLabel(dayFilter)}</span>
-              </div>
-            </div>
-
-            {/* Tier Filter */}
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="text-xs text-slate-500">Tier:</div>
-              <div className="inline-flex rounded-lg border border-slate-200 overflow-hidden">
-                <button
-                  onClick={() => {
-                    setTierFilter("ALL");
-                    setPage(1);
-                    setJumpPage("");
-                  }}
-                  className={`px-3 py-1.5 text-xs ${
-                    tierFilter === "ALL" ? "bg-slate-900 text-white" : "bg-white text-slate-700 hover:bg-slate-50"
-                  }`}
-                >
-                  ทั้งหมด{" "}
-                  <span className={`ml-2 ${tierFilter === "ALL" ? "text-white/80" : "text-slate-400"}`}>
-                    {fmtInt(tierCounts.ALL || 0)}
-                  </span>
-                </button>
-                <TierButton value="T1" />
-                <TierButton value="T2" />
-                <TierButton value="T3" />
-              </div>
-
-              <div className="text-xs text-slate-500">
-                กำลังดู: <span className="font-semibold text-slate-700">{tierLabel(tierFilter)}</span>
-              </div>
-            </div>
-
-            {/* Tier % Summary */}
-            <div className="mt-2 rounded-xl border border-slate-200 bg-slate-50/60 overflow-hidden">
-              <div className="px-3 py-2 text-xs text-slate-600 flex flex-wrap items-center gap-2">
-                <span className="font-semibold text-slate-700">สรุปสัดส่วน Tier</span>
-                <span className="text-slate-500">
-                  ฐานเทียบ: ลูกค้า {fmtInt(tierStats.totalCustomers)} • สุทธิ {fmtMoney(tierStats.totalNet)}
-                </span>
-              </div>
-
+              {/* compact table */}
               <div className="overflow-x-auto">
-                <table className="min-w-[680px] w-full text-[12px]">
-                  <thead className="bg-white">
-                    <tr className="border-t border-slate-200 text-[11px] text-slate-600">
-                      <th className="px-3 py-2 text-left w-[160px]">Tier</th>
-                      <th className="px-3 py-2 text-right w-[120px]">ลูกค้า</th>
-                      <th className="px-3 py-2 text-right w-[120px]">%ลูกค้า</th>
-                      <th className="px-3 py-2 text-right w-[160px]">สุทธิ</th>
-                      <th className="px-3 py-2 text-right w-[120px]">%สุทธิ</th>
+                <table className="w-full text-[13px] table-fixed">
+                  <thead className="bg-slate-50 sticky top-0">
+                    <tr className="text-[11px] text-slate-600 border-b border-slate-200">
+                      <th className="px-2 py-2 text-left w-[72px]">Tier</th>
+                      <th className="px-2 py-2 text-left w-[120px]">รหัสลูกค้า</th>
+                      <th className="px-2 py-2 text-left">ชื่อลูกค้า</th>
+                      <th className="px-2 py-2 text-right w-[84px]">ครั้ง</th>
+                      <th className="px-2 py-2 text-left w-[140px]">ล่าสุด</th>
+                      <th className="px-2 py-2 text-right w-[72px]">ขาด(วัน)</th>
+                      <th className="px-2 py-2 text-right w-[110px]">ยอดคืน</th>
+                      <th className="px-2 py-2 text-right w-[120px]">สุทธิ</th>
+                      <th className="px-2 py-2 text-right w-[120px]">เฉลี่ย/ครั้ง</th>
+                      <th className="px-2 py-2 text-left w-[96px]">Action</th>
                     </tr>
                   </thead>
 
-                  <tbody className="bg-white">
-                    {tierStats.rows.map((r) => {
-                      const net = Number(r.netAmount || 0);
-                      return (
-                        <tr key={r.tier} className="border-t border-slate-100">
-                          <td className="px-3 py-2">
-                            <div className="flex items-center gap-2">
-                              <Pill tone={tierTone(r.tier)}>{r.tier}</Pill>
-                              <span className="text-slate-700">{tierLabel(r.tier)}</span>
-                            </div>
-                          </td>
+                  <tbody>
+                    {loading ? (
+                      <tr>
+                        <td colSpan={10} className="px-3 py-10 text-center text-slate-500">
+                          <span className="inline-flex items-center gap-2">
+                            <Spinner />
+                            กำลังโหลดข้อมูล...
+                          </span>
+                        </td>
+                      </tr>
+                    ) : pagedRows.length ? (
+                      pagedRows.map((r) => {
+                        const net = Number(r.netAmount || 0);
+                        const t = getTier(net);
 
-                          <td className="px-3 py-2 text-right font-semibold text-slate-800 tabular-nums">
-                            {fmtInt(r.customers)}
-                          </td>
+                        return (
+                          <tr
+                            key={r.customerId}
+                            className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                            onClick={() => openCustomerDetail(r.customerId)}
+                          >
+                            <td className="px-2 py-2">
+                              <Pill tone={tierTone(t)}>{t}</Pill>
+                            </td>
 
-                          <td className="px-3 py-2 text-right text-slate-700 tabular-nums">{fmtPct(r.customerPct)}</td>
+                            <td className="px-2 py-2 font-mono text-[12px] truncate">{r.customer_code || "-"}</td>
 
-                          <td className="px-3 py-2 text-right font-semibold tabular-nums">
-                            <span className="text-emerald-700">{fmtMoney(net)}</span>
-                          </td>
+                            <td className="px-2 py-2">
+                              <div className="text-slate-800 truncate">{r.customer_name || "-"}</div>
+                            </td>
 
-                          <td className="px-3 py-2 text-right text-slate-700 tabular-nums">{fmtPct(r.netPct)}</td>
-                        </tr>
-                      );
-                    })}
+                            <td className="px-2 py-2 text-right font-semibold text-slate-800 tabular-nums">
+                              {fmtInt(r.visits)}
+                            </td>
+
+                            <td className="px-2 py-2 text-slate-700 truncate">{fmtDateTime(r.lastVisitInRange)}</td>
+
+                            <td className="px-2 py-2 text-right tabular-nums">
+                              <span className="font-semibold text-slate-800">{fmtInt(r.absentDays)}</span>
+                            </td>
+
+                            <td className="px-2 py-2 text-right text-slate-700 tabular-nums">{fmtMoney(r.returnAmount)}</td>
+
+                            <td className="px-2 py-2 text-right font-semibold tabular-nums">
+                              <span className="text-emerald-700">{fmtMoney(net)}</span>
+                            </td>
+
+                            <td className="px-2 py-2 text-right text-slate-700 tabular-nums">{fmtMoney(r.avgNetPerVisit)}</td>
+
+                            <td className="px-2 py-2">
+                              <button
+                                className="rounded-md border border-slate-200 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openCustomerDetail(r.customerId);
+                                }}
+                              >
+                                รายละเอียด
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    ) : (
+                      <tr>
+                        <td colSpan={10} className="px-3 py-10 text-center text-slate-500">
+                          ไม่มีข้อมูลตามฟิลเตอร์ที่เลือก
+                        </td>
+                      </tr>
+                    )}
                   </tbody>
                 </table>
               </div>
-            </div>
 
-            {/* Search */}
-            <div className="flex flex-col md:flex-row md:items-center gap-2">
-              <div className="text-xs text-slate-500 shrink-0">ค้นหา (ชื่อ/รหัสลูกค้า):</div>
-              <div className="flex items-center gap-2 w-full">
-                <input
-                  value={search}
-                  onChange={(e) => {
-                    setSearch(e.target.value);
-                    setPage(1);
-                    setJumpPage("");
-                  }}
-                  placeholder="พิมพ์ชื่อ หรือ รหัสลูกค้า..."
-                  className="h-9 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm"
-                />
-                {search ? (
+              {/* Pagination + Jump to page */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border-t border-slate-200 bg-white">
+                <div className="text-xs text-slate-500">{pageInfoText}</div>
+
+                <div className="flex flex-wrap items-center gap-2">
                   <button
-                    onClick={() => {
-                      setSearch("");
-                      setPage(1);
-                      setJumpPage("");
-                    }}
-                    className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 hover:bg-slate-50"
-                    title="ล้างค้นหา"
+                    disabled={page <= 1}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                    className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
                   >
-                    ล้าง
+                    {"<"}
                   </button>
-                ) : null}
+
+                  <div className="text-sm text-slate-700">
+                    หน้า <span className="font-semibold">{fmtInt(page)}</span> / {fmtInt(totalPages)}
+                  </div>
+
+                  <button
+                    disabled={page >= totalPages}
+                    onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                    className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                  >
+                    {">"}
+                  </button>
+
+                  <div className="ml-1 inline-flex items-center gap-2">
+                    <input
+                      type="number"
+                      min={1}
+                      max={totalPages}
+                      value={jumpPage}
+                      onChange={(e) => setJumpPage(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") applyJumpPage();
+                      }}
+                      className="h-9 w-20 rounded-lg border border-slate-200 bg-white px-2 text-sm"
+                      placeholder={`${page}`}
+                    />
+                    <button
+                      onClick={applyJumpPage}
+                      className="h-9 rounded-lg bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-800"
+                    >
+                      {">"}
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
+          )
+        }
+      </main >
 
-            {search ? (
-              <div className="text-[11px] text-slate-500">
-                * ค้นหา: <span className="font-semibold text-slate-700">{search}</span> (มีผลเฉพาะ “ตาราง”)
-              </div>
-            ) : null}
-          </div>
+      <DetailModal
+        open={openDetail}
+        onClose={() => setOpenDetail(false)}
+        data={detail}
+        loading={detailLoading}
+        onBillClick={openBillItemsModal}
+      />
 
-          {/* compact table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-[13px] table-fixed">
-              <thead className="bg-slate-50 sticky top-0">
-                <tr className="text-[11px] text-slate-600 border-b border-slate-200">
-                  <th className="px-2 py-2 text-left w-[72px]">Tier</th>
-                  <th className="px-2 py-2 text-left w-[120px]">รหัสลูกค้า</th>
-                  <th className="px-2 py-2 text-left">ชื่อลูกค้า</th>
-                  <th className="px-2 py-2 text-right w-[84px]">ครั้ง</th>
-                  <th className="px-2 py-2 text-left w-[140px]">ล่าสุด</th>
-                  <th className="px-2 py-2 text-right w-[72px]">ขาด(วัน)</th>
-                  <th className="px-2 py-2 text-right w-[110px]">ยอดคืน</th>
-                  <th className="px-2 py-2 text-right w-[120px]">สุทธิ</th>
-                  <th className="px-2 py-2 text-right w-[120px]">เฉลี่ย/ครั้ง</th>
-                  <th className="px-2 py-2 text-left w-[96px]">Action</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan={10} className="px-3 py-10 text-center text-slate-500">
-                      <span className="inline-flex items-center gap-2">
-                        <Spinner />
-                        กำลังโหลดข้อมูล...
-                      </span>
-                    </td>
-                  </tr>
-                ) : pagedRows.length ? (
-                  pagedRows.map((r) => {
-                    const net = Number(r.netAmount || 0);
-                    const t = getTier(net);
-
-                    return (
-                      <tr
-                        key={r.customerId}
-                        className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
-                        onClick={() => openCustomerDetail(r.customerId)}
-                      >
-                        <td className="px-2 py-2">
-                          <Pill tone={tierTone(t)}>{t}</Pill>
-                        </td>
-
-                        <td className="px-2 py-2 font-mono text-[12px] truncate">{r.customer_code || "-"}</td>
-
-                        <td className="px-2 py-2">
-                          <div className="text-slate-800 truncate">{r.customer_name || "-"}</div>
-                        </td>
-
-                        <td className="px-2 py-2 text-right font-semibold text-slate-800 tabular-nums">
-                          {fmtInt(r.visits)}
-                        </td>
-
-                        <td className="px-2 py-2 text-slate-700 truncate">{fmtDateTime(r.lastVisitInRange)}</td>
-
-                        <td className="px-2 py-2 text-right tabular-nums">
-                          <span className="font-semibold text-slate-800">{fmtInt(r.absentDays)}</span>
-                        </td>
-
-                        <td className="px-2 py-2 text-right text-slate-700 tabular-nums">{fmtMoney(r.returnAmount)}</td>
-
-                        <td className="px-2 py-2 text-right font-semibold tabular-nums">
-                          <span className="text-emerald-700">{fmtMoney(net)}</span>
-                        </td>
-
-                        <td className="px-2 py-2 text-right text-slate-700 tabular-nums">{fmtMoney(r.avgNetPerVisit)}</td>
-
-                        <td className="px-2 py-2">
-                          <button
-                            className="rounded-md border border-slate-200 px-2 py-1 text-[11px] text-slate-700 hover:bg-slate-50"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              openCustomerDetail(r.customerId);
-                            }}
-                          >
-                            รายละเอียด
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
-                ) : (
-                  <tr>
-                    <td colSpan={10} className="px-3 py-10 text-center text-slate-500">
-                      ไม่มีข้อมูลตามฟิลเตอร์ที่เลือก
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Pagination + Jump to page */}
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-3 border-t border-slate-200 bg-white">
-            <div className="text-xs text-slate-500">{pageInfoText}</div>
-
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                {"<"}
-              </button>
-
-              <div className="text-sm text-slate-700">
-                หน้า <span className="font-semibold">{fmtInt(page)}</span> / {fmtInt(totalPages)}
-              </div>
-
-              <button
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="h-9 rounded-lg border border-slate-200 px-3 text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-              >
-                {">"}
-              </button>
-
-              <div className="ml-1 inline-flex items-center gap-2">
-                <input
-                  type="number"
-                  min={1}
-                  max={totalPages}
-                  value={jumpPage}
-                  onChange={(e) => setJumpPage(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") applyJumpPage();
-                  }}
-                  className="h-9 w-20 rounded-lg border border-slate-200 bg-white px-2 text-sm"
-                  placeholder={`${page}`}
-                />
-                <button
-                  onClick={applyJumpPage}
-                  className="h-9 rounded-lg bg-slate-900 px-3 text-sm font-medium text-white hover:bg-slate-800"
-                >
-                  {">"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <DetailModal open={openDetail} onClose={() => setOpenDetail(false)} data={detail} loading={detailLoading} />
-    </div>
+      <BillItemsModal
+        open={openBillItems}
+        onClose={() => setOpenBillItems(false)}
+        data={billItemsData}
+        loading={billItemsLoading}
+      />
+    </div >
   );
 };
 
