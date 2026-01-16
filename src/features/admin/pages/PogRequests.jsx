@@ -258,6 +258,8 @@ export default function PogRequests() {
     const [filterStatus, setFilterStatus] = useState("pending"); // ✅ Default: show only pending
     const [filterBranch, setFilterBranch] = useState("");
     const [filterAction, setFilterAction] = useState("");
+    const [filterShelf, setFilterShelf] = useState(""); // ✅ Filter by shelf
+    const [filterRow, setFilterRow] = useState(""); // ✅ Filter by row
     const [updating, setUpdating] = useState(null);
 
     const [stats, setStats] = useState({ pending: 0, rejected: 0, completed: 0 }); // ✅ Stats from API
@@ -305,15 +307,41 @@ export default function PogRequests() {
         loadData();
     }, [filterStatus, filterBranch, filterAction]);
 
+    // ✅ Get unique branches, shelves, rows from data (only those with requests)
+    const availableBranches = useMemo(() => {
+        const branches = [...new Set(data.map(d => d.branchCode).filter(Boolean))];
+        return branches.sort();
+    }, [data]);
+
+    const availableShelves = useMemo(() => {
+        const shelves = new Set();
+        data.forEach(d => {
+            if (d.fromShelf) shelves.add(d.fromShelf);
+            if (d.toShelf) shelves.add(d.toShelf);
+        });
+        return [...shelves].sort();
+    }, [data]);
+
+    const availableRows = useMemo(() => {
+        const rows = new Set();
+        data.forEach(d => {
+            if (d.fromRow) rows.add(String(d.fromRow));
+            if (d.toRow) rows.add(String(d.toRow));
+        });
+        return [...rows].sort((a, b) => parseInt(a) - parseInt(b));
+    }, [data]);
+
     // ✅ Client-side filtering + Sort by createdAt (เก่าก่อน = ลำดับ 1)
     const availableData = useMemo(() => {
         return data
             .filter((d) => {
-                const matchBranch = !filterBranch || d.branchCode.toLowerCase().includes(filterBranch.toLowerCase());
-                return matchBranch;
+                const matchBranch = !filterBranch || d.branchCode === filterBranch;
+                const matchShelf = !filterShelf || d.fromShelf === filterShelf || d.toShelf === filterShelf;
+                const matchRow = !filterRow || String(d.fromRow) === filterRow || String(d.toRow) === filterRow;
+                return matchBranch && matchShelf && matchRow;
             })
             .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // เก่า → ใหม่
-    }, [data, filterBranch]);
+    }, [data, filterBranch, filterShelf, filterRow]);
 
     const visibleData = useMemo(() => availableData.slice(0, visibleCount), [availableData, visibleCount]);
     const hasMore = visibleCount < availableData.length;
@@ -624,13 +652,41 @@ export default function PogRequests() {
                     <option value="delete">ลบสินค้า</option>
                 </select>
 
-                <input
-                    type="text"
-                    placeholder="ค้นหาสาขา..."
+                {/* ✅ Branch Filter - Dropdown */}
+                <select
                     value={filterBranch}
                     onChange={(e) => setFilterBranch(e.target.value)}
-                    className="px-3 py-2 border rounded-lg text-sm w-40"
-                />
+                    className="px-3 py-2 border rounded-lg text-sm bg-white min-w-[140px]"
+                >
+                    <option value="">ทุกสาขา</option>
+                    {availableBranches.map(branch => (
+                        <option key={branch} value={branch}>{branch}</option>
+                    ))}
+                </select>
+
+                {/* ✅ Shelf Filter - Dropdown */}
+                <select
+                    value={filterShelf}
+                    onChange={(e) => setFilterShelf(e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-sm bg-white min-w-[100px]"
+                >
+                    <option value="">ทุก Shelf</option>
+                    {availableShelves.map(shelf => (
+                        <option key={shelf} value={shelf}>{shelf}</option>
+                    ))}
+                </select>
+
+                {/* ✅ Row Filter - Dropdown */}
+                <select
+                    value={filterRow}
+                    onChange={(e) => setFilterRow(e.target.value)}
+                    className="px-3 py-2 border rounded-lg text-sm bg-white min-w-[90px]"
+                >
+                    <option value="">ทุก Row</option>
+                    {availableRows.map(row => (
+                        <option key={row} value={row}>Row {row}</option>
+                    ))}
+                </select>
 
                 <button
                     onClick={loadData}
