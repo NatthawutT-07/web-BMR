@@ -9,7 +9,8 @@ import {
   ChartNoAxesCombined,
   Package2,
   LayoutDashboard,
-  ClipboardList
+  ClipboardList,
+  Eye
 } from "lucide-react";
 import useBmrStore from "../../../../store/bmr_store";
 
@@ -52,6 +53,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
             <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} close={closeMobile} />
             <SidebarItem to="upload" label="Upload XLSX" icon={<FileUp size={20} />} close={closeMobile} />
             <SidebarItem to="pog-requests" label="POG Requests" icon={<ClipboardList size={20} />} close={closeMobile} />
+            <SidebarItem to="branch-ack" label="Branch Status" icon={<Eye size={20} />} close={closeMobile} />
             {/* <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} close={closeMobile} /> */}
 
             <div className="pt-4">
@@ -91,6 +93,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
         <SidebarItem to="shelf" label="Shelf" icon={<Store size={20} />} expanded={isOpen} />
         <SidebarItem to="upload" label="Upload XLSX" icon={<FileUp size={20} />} expanded={isOpen} />
         <SidebarItem to="pog-requests" label="POG Requests" icon={<ClipboardList size={20} />} expanded={isOpen} />
+        <SidebarItem to="branch-ack" label="Branch Status" icon={<Eye size={20} />} expanded={isOpen} />
         {/* <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} /> */}
 
         <div className="pt-8">

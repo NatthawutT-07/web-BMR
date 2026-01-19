@@ -268,7 +268,7 @@ const Template = () => {
           {/* ปุ่มเลือกโหมด */}
           <div className="flex items-center gap-3 print:hidden">
             <div className="inline-flex rounded-xl border bg-white p-1 shadow-sm">
-              <button
+              {/* <button
                 type="button"
                 onClick={() => setMode("barcode")}
                 className={cx(
@@ -277,7 +277,7 @@ const Template = () => {
                 )}
               >
                 สแกนบาร์โค้ด
-              </button>
+              </button> */}
               <button
                 type="button"
                 onClick={() => setMode("shelf")}

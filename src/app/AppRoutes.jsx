@@ -21,6 +21,7 @@ import Stock from "../features/admin/pages/Stock";
 import ShelfDashboard from "../features/admin/pages/ShelfDashboard";
 import DashboardSales from "../features/admin/components/sales/dashboard/DashboardSales";
 import PogRequests from "../features/admin/pages/PogRequests";
+import BranchAckStatus from "../features/admin/pages/BranchAckStatus";
 
 const router = createBrowserRouter([
     // หน้า Login
@@ -49,6 +50,7 @@ const router = createBrowserRouter([
             // { path: "calculator-sales", element: <Calculator /> },
             { path: "stock", element: <Stock /> },
             { path: "pog-requests", element: <PogRequests /> },
+            { path: "branch-ack", element: <BranchAckStatus /> },
             // { path: "member", element: <Member /> },
         ],
     },
