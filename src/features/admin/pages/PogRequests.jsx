@@ -1,26 +1,65 @@
-// PogRequests.jsx - Admin Page สำหรับจัดการ POG Change Requests
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
 import api from "../../../utils/axios";
+import {
+    Filter, RefreshCw, CheckCircle2, XCircle, Clock,
+    Trash2, Edit2, Check, X,
+    AlertCircle, Package, MapPin,
+    Store, LayoutGrid, Layers
+} from "lucide-react";
 
-const cx = (...a) => a.filter(Boolean).join(" ");
+// --- Constants & Styles ---
 
-const STATUS_MAP = {
-    pending: { label: "รอดำเนินการ", color: "bg-amber-100 text-amber-700", badge: "border-amber-300" },
-    rejected: { label: "ปฏิเสธ", color: "bg-rose-100 text-rose-700", badge: "border-rose-300" },
-    completed: { label: "เสร็จสิ้น", color: "bg-emerald-100 text-emerald-700", badge: "border-emerald-300" },
+const STATUS_STYLES = {
+    pending: {
+        label: "รอดำเนินการ",
+        icon: <Clock size={16} />,
+        bg: "bg-amber-50",
+        text: "text-amber-700",
+        border: "border-amber-200",
+        indicator: "bg-amber-500"
+    },
+    rejected: {
+        label: "ปฏิเสธ",
+        icon: <XCircle size={16} />,
+        bg: "bg-rose-50",
+        text: "text-rose-700",
+        border: "border-rose-200",
+        indicator: "bg-rose-500"
+    },
+    completed: {
+        label: "เสร็จสิ้น",
+        icon: <CheckCircle2 size={16} />,
+        bg: "bg-emerald-50",
+        text: "text-emerald-700",
+        border: "border-emerald-200",
+        indicator: "bg-emerald-500"
+    },
 };
 
-const ACTION_MAP = {
-    add: { label: "เพิ่มสินค้า", icon: "" },
-    move: { label: "ย้ายสินค้า", icon: "" },
-    swap: { label: "สลับตำแหน่ง", icon: "" },
-    delete: { label: "ลบสินค้า", icon: "" },
+const ACTION_STYLES = {
+    add: { label: "เพิ่มสินค้า", badge: "bg-emerald-100 text-emerald-800" },
+    move: { label: "ย้ายสินค้า", badge: "bg-blue-100 text-blue-800" },
+    swap: { label: "สลับตำแหน่ง", badge: "bg-purple-100 text-purple-800" },
+    delete: { label: "ลบสินค้า", badge: "bg-rose-100 text-rose-800" },
+};
+
+const BRANCH_NAMES = {
+    "ST002": "เลี่ยงเมืองนนท์",
+    "1001": "สาขาพระราม 9",
+    "1002": "สาขาสุขุมวิท",
+    "1003": "สาขาสยาม",
+    "1004": "สาขาลาดพร้าว",
+    "1005": "สาขาบางนา",
+    "1006": "สาขารังสิต",
+    "1007": "สาขาอ่อนนุช",
+    "1008": "สาขาเมกะบางนา",
+    "1009": "สาขาเซ็นทรัลเวิลด์",
+    "1010": "สาขาสีลม",
 };
 
 const formatDate = (dateStr) => {
     if (!dateStr) return "-";
-    const d = new Date(dateStr);
-    return d.toLocaleDateString("th-TH", {
+    return new Date(dateStr).toLocaleDateString("th-TH", {
         day: "2-digit",
         month: "short",
         year: "numeric",
@@ -29,10 +68,44 @@ const formatDate = (dateStr) => {
     });
 };
 
-// ✅ Reject Reason Modal
+// --- Sub-Components ---
+
+const StatCard = ({ count, type, active, onClick }) => {
+    const style = STATUS_STYLES[type];
+    return (
+        <button
+            onClick={onClick}
+            className={`
+                relative overflow-hidden rounded-xl border p-4 transition-all duration-200 text-left w-full
+                ${active
+                    ? `bg-white shadow-md ring-2 ring-offset-1 ${style.text.replace('text', 'ring')}`
+                    : "bg-white hover:bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700"
+                }
+            `}
+        >
+            <div className={`absolute left-0 top-0 bottom-0 w-1 ${style.indicator}`} />
+            <div className="flex items-center justify-between mb-2">
+                <span className={`text-sm font-medium ${active ? style.text : "text-slate-600"}`}>
+                    {style.label}
+                </span>
+                <div className={`p-1.5 rounded-full ${style.bg} ${style.text}`}>
+                    {style.icon}
+                </div>
+            </div>
+            <div className="text-2xl font-bold text-slate-800">
+                {count.toLocaleString()}
+            </div>
+        </button>
+    );
+};
+
+// --- Modals ---
+
 const RejectReasonModal = ({ isOpen, onClose, onConfirm, count = 1 }) => {
     const [reason, setReason] = useState("");
     const [submitting, setSubmitting] = useState(false);
+
+    if (!isOpen) return null;
 
     const handleConfirm = async () => {
         setSubmitting(true);
@@ -42,39 +115,47 @@ const RejectReasonModal = ({ isOpen, onClose, onConfirm, count = 1 }) => {
         onClose();
     };
 
-    if (!isOpen) return null;
-
     return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
-                <h3 className="text-lg font-semibold text-slate-800 mb-2">
-                    ❌ ปฏิเสธ {count > 1 ? `${count} รายการ` : "รายการนี้"}
-                </h3>
-                <p className="text-sm text-slate-500 mb-4">
-                    กรุณาระบุเหตุผล (ไม่บังคับ)
-                </p>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
+                    <div className="p-2 bg-rose-100 text-rose-600 rounded-full">
+                        <AlertCircle size={20} />
+                    </div>
+                    <div>
+                        <h3 className="font-semibold text-slate-900">ยืนยันการปฏิเสธ</h3>
+                        <p className="text-sm text-slate-500">
+                            {count > 1 ? `กำลังปฏิเสธ ${count} รายการ` : "กำลังปฏิเสธรายการนี้"}
+                        </p>
+                    </div>
+                </div>
 
-                <textarea
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    placeholder="เช่น: ตำแหน่งไม่ถูกต้อง, Shelf ไม่มีอยู่จริง..."
-                    className="w-full px-3 py-2 border rounded-lg text-sm resize-none h-24 focus:ring-2 focus:ring-rose-500"
-                />
+                <div className="p-6">
+                    <label className="block text-sm font-medium text-slate-700 mb-2">
+                        เหตุผล (ไม่บังคับ)
+                    </label>
+                    <textarea
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                        placeholder="ระบุสาเหตุที่ปฏิเสธ..."
+                        className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all resize-none h-32"
+                    />
+                </div>
 
-                <div className="flex gap-3 justify-end mt-4">
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
                     <button
                         onClick={onClose}
                         disabled={submitting}
-                        className="px-4 py-2 text-sm text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200"
+                        className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
                     >
                         ยกเลิก
                     </button>
                     <button
                         onClick={handleConfirm}
                         disabled={submitting}
-                        className="px-4 py-2 text-sm text-white bg-rose-600 rounded-lg hover:bg-rose-700 disabled:opacity-50"
+                        className="px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm shadow-rose-200 transition-all flex items-center gap-2"
                     >
-                        {submitting ? "กำลังดำเนินการ..." : "ยืนยันปฏิเสธ"}
+                        {submitting ? "กำลังบันทึก..." : "ยืนยันปฏิเสธ"}
                     </button>
                 </div>
             </div>
@@ -82,20 +163,14 @@ const RejectReasonModal = ({ isOpen, onClose, onConfirm, count = 1 }) => {
     );
 };
 
-// ✅ Edit Position Modal
 const EditPositionModal = ({ isOpen, onClose, item, onSave }) => {
     const [formData, setFormData] = useState({
-        toShelf: "",
-        toRow: "",
-        toIndex: "",
-        fromShelf: "",
-        fromRow: "",
-        fromIndex: "",
+        toShelf: "", toRow: "", toIndex: "",
+        fromShelf: "", fromRow: "", fromIndex: "",
     });
     const [saving, setSaving] = useState(false);
 
-    // Initialize form data when modal opens
-    React.useEffect(() => {
+    useEffect(() => {
         if (item && isOpen) {
             setFormData({
                 toShelf: item.toShelf || "",
@@ -108,9 +183,7 @@ const EditPositionModal = ({ isOpen, onClose, item, onSave }) => {
         }
     }, [item, isOpen]);
 
-    const handleChange = (field, value) => {
-        setFormData(prev => ({ ...prev, [field]: value }));
-    };
+    const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
     const handleSave = async () => {
         setSaving(true);
@@ -118,7 +191,7 @@ const EditPositionModal = ({ isOpen, onClose, item, onSave }) => {
             await onSave(item.id, formData);
             onClose();
         } catch (e) {
-            alert(`เกิดข้อผิดพลาด: ${e.message}`);
+            alert(`Error: ${e.message}`);
         } finally {
             setSaving(false);
         }
@@ -129,122 +202,86 @@ const EditPositionModal = ({ isOpen, onClose, item, onSave }) => {
     const showFrom = ["move", "delete", "swap"].includes(item.action);
     const showTo = ["add", "move", "swap"].includes(item.action);
 
-    return (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-lg w-full shadow-lg">
-                <h3 className="text-lg font-semibold text-slate-800 mb-4">
-                    ✏️ แก้ไขตำแหน่ง
-                </h3>
+    const PositionFields = ({ title, prefix }) => (
+        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+            <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
+                <MapPin size={16} className="text-slate-400" /> {title}
+            </h4>
+            <div className="grid grid-cols-3 gap-3">
+                <div>
+                    <label className="text-xs text-slate-500 mb-1 block">Shelf</label>
+                    <input
+                        type="text"
+                        value={formData[`${prefix}Shelf`]}
+                        onChange={(e) => handleChange(`${prefix}Shelf`, e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none"
+                        placeholder="A1"
+                    />
+                </div>
+                <div>
+                    <label className="text-xs text-slate-500 mb-1 block">Row</label>
+                    <select
+                        value={formData[`${prefix}Row`]}
+                        onChange={(e) => handleChange(`${prefix}Row`, e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none"
+                    >
+                        <option value="">-</option>
+                        {[...Array(10)].map((_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
+                    </select>
+                </div>
+                <div>
+                    <label className="text-xs text-slate-500 mb-1 block">Index</label>
+                    <select
+                        value={formData[`${prefix}Index`]}
+                        onChange={(e) => handleChange(`${prefix}Index`, e.target.value)}
+                        className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none"
+                    >
+                        <option value="">-</option>
+                        {[...Array(20)].map((_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
+                    </select>
+                </div>
+            </div>
+        </div>
+    );
 
-                <div className="mb-4 p-3 bg-slate-50 rounded-lg text-sm">
-                    <div><span className="font-medium">Barcode:</span> {item.barcode}</div>
-                    <div><span className="font-medium">Action:</span> {ACTION_MAP[item.action]?.label || item.action}</div>
+    return (
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden">
+                <div className="px-6 py-4 border-b border-slate-100 bg-white">
+                    <h3 className="font-semibold text-slate-900 flex items-center gap-2">
+                        <Edit2 size={18} className="text-blue-500" />
+                        แก้ไขตำแหน่ง
+                    </h3>
                 </div>
 
-                {/* From Location (for move, delete, swap) */}
-                {showFrom && (
-                    <div className="mb-4">
-                        <div className="text-sm font-semibold text-slate-700 mb-2">📍 ตำแหน่งเดิม (From)</div>
-                        <div className="grid grid-cols-3 gap-2">
-                            <div>
-                                <label className="text-xs text-slate-500">Shelf</label>
-                                <input
-                                    type="text"
-                                    value={formData.fromShelf}
-                                    onChange={(e) => handleChange("fromShelf", e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-lg text-sm"
-                                    placeholder="W1"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-500">Row</label>
-                                <select
-                                    value={formData.fromRow}
-                                    onChange={(e) => handleChange("fromRow", e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-lg text-sm bg-white"
-                                >
-                                    <option value="">เลือก</option>
-                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                                        <option key={n} value={n}>{n}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-500">Index</label>
-                                <select
-                                    value={formData.fromIndex}
-                                    onChange={(e) => handleChange("fromIndex", e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-lg text-sm bg-white"
-                                >
-                                    <option value="">เลือก</option>
-                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(n => (
-                                        <option key={n} value={n}>{n}</option>
-                                    ))}
-                                </select>
-                            </div>
+                <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
+                        <div className="flex items-center gap-2 text-sm text-slate-600 mb-1">
+                            <Package size={16} />
+                            <span className="font-medium text-slate-900">{item.productName || item.barcode}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-slate-500 pl-6">
+                            <span>{item.barcode}</span> •
+                            <span className={`px-1.5 py-0.5 rounded ${ACTION_STYLES[item.action]?.badge || 'bg-slate-200'}`}>
+                                {ACTION_STYLES[item.action]?.label || item.action}
+                            </span>
                         </div>
                     </div>
-                )}
 
-                {/* To Location (for add, move, swap) */}
-                {showTo && (
-                    <div className="mb-4">
-                        <div className="text-sm font-semibold text-slate-700 mb-2">🎯 ตำแหน่งใหม่ (To)</div>
-                        <div className="grid grid-cols-3 gap-2">
-                            <div>
-                                <label className="text-xs text-slate-500">Shelf</label>
-                                <input
-                                    type="text"
-                                    value={formData.toShelf}
-                                    onChange={(e) => handleChange("toShelf", e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-lg text-sm"
-                                    placeholder="W1"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-500">Row</label>
-                                <select
-                                    value={formData.toRow}
-                                    onChange={(e) => handleChange("toRow", e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-lg text-sm bg-white"
-                                >
-                                    <option value="">เลือก</option>
-                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => (
-                                        <option key={n} value={n}>{n}</option>
-                                    ))}
-                                </select>
-                            </div>
-                            <div>
-                                <label className="text-xs text-slate-500">Index</label>
-                                <select
-                                    value={formData.toIndex}
-                                    onChange={(e) => handleChange("toIndex", e.target.value)}
-                                    className="w-full px-3 py-2 border rounded-lg text-sm bg-white"
-                                >
-                                    <option value="">เลือก</option>
-                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(n => (
-                                        <option key={n} value={n}>{n}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                    {showFrom && <PositionFields title="ตำแหน่งเดิม (From)" prefix="from" />}
+                    {showTo && <PositionFields title="ตำแหน่งใหม่ (To)" prefix="to" />}
+                </div>
 
-                <div className="flex gap-3 justify-end mt-6">
-                    <button
-                        onClick={onClose}
-                        disabled={saving}
-                        className="px-4 py-2 text-sm text-slate-600 bg-slate-100 rounded-lg hover:bg-slate-200"
-                    >
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
+                    <button onClick={onClose} disabled={saving} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg">
                         ยกเลิก
                     </button>
                     <button
                         onClick={handleSave}
                         disabled={saving}
-                        className="px-4 py-2 text-sm text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm"
                     >
-                        {saving ? "กำลังบันทึก..." : "💾 บันทึก"}
+                        {saving ? "บันทึก..." : "บันทึกการเปลี่ยนแปลง"}
                     </button>
                 </div>
             </div>
@@ -252,33 +289,28 @@ const EditPositionModal = ({ isOpen, onClose, item, onSave }) => {
     );
 };
 
+// --- Main Page ---
+
 export default function PogRequests() {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState([]);
-    const [filterStatus, setFilterStatus] = useState("pending"); // ✅ Default: show only pending
+    const [filterStatus, setFilterStatus] = useState("pending");
     const [filterBranch, setFilterBranch] = useState("");
     const [filterAction, setFilterAction] = useState("");
-    const [filterShelf, setFilterShelf] = useState(""); // ✅ Filter by shelf
-    const [filterRow, setFilterRow] = useState(""); // ✅ Filter by row
+    const [filterShelf, setFilterShelf] = useState("");
+    const [filterRow, setFilterRow] = useState("");
     const [updating, setUpdating] = useState(null);
+    const [stats, setStats] = useState({ pending: 0, rejected: 0, completed: 0 }); // API stats
 
-    const [stats, setStats] = useState({ pending: 0, rejected: 0, completed: 0 }); // ✅ Stats from API
-
-    // ✅ Lazy loading state
     const [visibleCount, setVisibleCount] = useState(50);
-    const PAGE_SIZE = 50;
-
-    // ✅ Bulk selection state
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [bulkUpdating, setBulkUpdating] = useState(false);
 
-    // ✅ Reject modal state
+    // Modals
     const [rejectModal, setRejectModal] = useState({ open: false, ids: [], count: 0 });
-
-    // ✅ Edit position modal state
     const [editModal, setEditModal] = useState({ open: false, item: null });
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         setLoading(true);
         try {
             const params = { limit: 1000 };
@@ -289,661 +321,478 @@ export default function PogRequests() {
             const res = await api.get("/pog-requests", { params });
             setData(res.data?.data || []);
 
-            // ✅ Update stats from API if available
             if (res.data?.stats) {
                 setStats(res.data.stats);
             }
 
             setSelectedIds(new Set());
-            setVisibleCount(PAGE_SIZE);
+            setVisibleCount(50);
         } catch (e) {
             console.error("Load POG requests error:", e);
         } finally {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        loadData();
     }, [filterStatus, filterBranch, filterAction]);
 
-    // ✅ Get unique branches, shelves, rows from data (only those with requests)
-    const availableBranches = useMemo(() => {
-        const branches = [...new Set(data.map(d => d.branchCode).filter(Boolean))];
-        return branches.sort();
-    }, [data]);
+    useEffect(() => { loadData(); }, [loadData]);
 
+    // Unique values for filters
+    const availableBranches = useMemo(() => [...new Set(data.map(d => d.branchCode).filter(Boolean))].sort(), [data]);
     const availableShelves = useMemo(() => {
-        const shelves = new Set();
-        data.forEach(d => {
-            if (d.fromShelf) shelves.add(d.fromShelf);
-            if (d.toShelf) shelves.add(d.toShelf);
-        });
-        return [...shelves].sort();
+        const s = new Set();
+        data.forEach(d => { if (d.fromShelf) s.add(d.fromShelf); if (d.toShelf) s.add(d.toShelf); });
+        return [...s].sort();
     }, [data]);
-
     const availableRows = useMemo(() => {
-        const rows = new Set();
-        data.forEach(d => {
-            if (d.fromRow) rows.add(String(d.fromRow));
-            if (d.toRow) rows.add(String(d.toRow));
-        });
-        return [...rows].sort((a, b) => parseInt(a) - parseInt(b));
+        const r = new Set();
+        data.forEach(d => { if (d.fromRow) r.add(d.fromRow); if (d.toRow) r.add(d.toRow); });
+        return [...r].sort((a, b) => parseInt(a) - parseInt(b));
     }, [data]);
 
-    // ✅ Client-side filtering + Sort by createdAt (เก่าก่อน = ลำดับ 1)
-    const availableData = useMemo(() => {
-        return data
-            .filter((d) => {
-                const matchBranch = !filterBranch || d.branchCode === filterBranch;
-                const matchShelf = !filterShelf || d.fromShelf === filterShelf || d.toShelf === filterShelf;
-                const matchRow = !filterRow || String(d.fromRow) === filterRow || String(d.toRow) === filterRow;
-                return matchBranch && matchShelf && matchRow;
-            })
-            .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)); // เก่า → ใหม่
+    // Filtering & Sorting
+    const filteredData = useMemo(() => {
+        return data.filter(d => {
+            if (filterBranch && d.branchCode !== filterBranch) return false;
+            // For shelf/row, check both from/to fields
+            if (filterShelf && d.fromShelf !== filterShelf && d.toShelf !== filterShelf) return false;
+            if (filterRow && String(d.fromRow) !== String(filterRow) && String(d.toRow) !== String(filterRow)) return false;
+            return true;
+        }).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     }, [data, filterBranch, filterShelf, filterRow]);
 
-    const visibleData = useMemo(() => availableData.slice(0, visibleCount), [availableData, visibleCount]);
-    const hasMore = visibleCount < availableData.length;
+    const visibleData = filteredData.slice(0, visibleCount);
 
-    const loadMore = () => {
-        setVisibleCount(prev => Math.min(prev + PAGE_SIZE, availableData.length));
-    };
-
-    // ✅ Pending items for Bulk Actions
-    const pendingItems = useMemo(() => availableData.filter((d) => d.status === "pending"), [availableData]);
-    const selectedPendingCount = useMemo(() => {
-        return [...selectedIds].filter(id => pendingItems.some(p => p.id === id)).length;
-    }, [selectedIds, pendingItems]);
-
-    const getErrorMessage = (e) => {
-        let msg = e?.response?.data?.message;
-        if (!msg) return "ไม่สามารถอัปเดตสถานะได้";
-        if (typeof msg === 'string' && msg.trim().startsWith('{')) {
-            try {
-                const parsed = JSON.parse(msg);
-                if (parsed.message) return parsed.message;
-            } catch { }
-        }
-        return msg;
-    };
-
+    // Status Updates
     const updateStatus = async (id, newStatus, reason = null) => {
         setUpdating(id);
         try {
-            const payload = { status: newStatus };
-            if (reason) payload.rejectReason = reason;
+            const payload = { status: newStatus, ...(reason && { rejectReason: reason }) };
             const res = await api.patch(`/pog-requests/${id}`, payload);
 
             if (res.data?.ok !== false) {
-                // ✅ อัปเดต local state แทนการเรียก API ใหม่
-                setData(prev => prev.map(item =>
-                    item.id === id ? { ...item, status: newStatus, note: reason || item.note } : item
-                ));
-
-                // ✅ อัปเดต stats
+                setData(prev => prev.map(item => item.id === id ? { ...item, status: newStatus, note: reason || item.note } : item));
                 setStats(prev => {
-                    const newStats = { ...prev };
-                    // ค้นหา item เดิมเพื่อลด stats เก่า
-                    const oldItem = data.find(d => d.id === id);
-                    if (oldItem && oldItem.status !== newStatus) {
-                        if (newStats[oldItem.status] > 0) newStats[oldItem.status]--;
-                        newStats[newStatus] = (newStats[newStatus] || 0) + 1;
+                    const next = { ...prev };
+                    const item = data.find(d => d.id === id);
+                    if (item && item.status !== newStatus) {
+                        if (next[item.status] > 0) next[item.status]--;
+                        next[newStatus] = (next[newStatus] || 0) + 1;
                     }
-                    return newStats;
+                    return next;
                 });
             }
-
-            return { success: true, message: res.data.message };
+            return { success: true };
         } catch (e) {
-            console.error("Update status error:", e);
-            const msg = getErrorMessage(e);
-            return { success: false, message: msg };
+            return { success: false, message: e.response?.data?.message || "Failed" };
         } finally {
             setUpdating(null);
         }
     };
 
-    // ✅ Bulk update function
-    const bulkUpdateStatus = async (ids, newStatus, reason = null) => {
-        setBulkUpdating(true);
-        let successCount = 0;
-        let errorCount = 0;
-        const errors = [];
-
-        for (const id of ids) {
-            const result = await updateStatus(id, newStatus, reason);
-            if (result.success) {
-                successCount++;
-            } else {
-                errorCount++;
-                errors.push(result.message);
-            }
-        }
-
-        setBulkUpdating(false);
-        setSelectedIds(new Set());
-
-        if (errorCount === 0) {
-            alert(`✅ ดำเนินการสำเร็จ ${successCount} รายการ`);
-        } else {
-            alert(`ดำเนินการสำเร็จ ${successCount} รายการ, ล้มเหลว ${errorCount} รายการ\n\n${errors.slice(0, 3).join('\n')}`);
-        }
-        // ✅ ไม่ต้อง loadData() เพราะ updateStatus อัปเดต local state แล้ว
-    };
-
-    // ✅ Quick approve all pending (ใช้ Bulk API ที่ optimize แล้ว)
-    const handleApproveAllPending = async () => {
-        const pendingIds = pendingItems.map(p => p.id);
-
-        if (pendingIds.length === 0) {
-            alert("ไม่มีรายการที่รอดำเนินการ");
-            return;
-        }
-        if (!confirm(`ต้องการอนุมัติทั้งหมด ${pendingIds.length} รายการ?\n\n`)) return;
-
-        setBulkUpdating(true);
-        try {
-            const res = await api.post("/pog-requests/bulk-approve", { ids: pendingIds });
-
-            if (res.data?.ok) {
-                // อัปเดต local state - เปลี่ยน status เป็น completed
-                setData(prev => prev.map(d =>
-                    pendingIds.includes(d.id) ? { ...d, status: "completed" } : d
-                ));
-
-                // อัปเดต stats
-                const approvedCount = res.data.successCount || pendingIds.length;
-                setStats(prev => ({
-                    ...prev,
-                    pending: Math.max(0, prev.pending - approvedCount),
-                    completed: prev.completed + approvedCount
-                }));
-
-                alert(`✅ ${res.data.message}`);
-            } else {
-                alert(`❌ ${res.data?.message || "เกิดข้อผิดพลาด"}`);
-            }
-        } catch (e) {
-            console.error("Bulk approve error:", e);
-            alert(`❌ ${e.response?.data?.message || "เกิดข้อผิดพลาดในการอนุมัติ"}`);
-        } finally {
-            setBulkUpdating(false);
-            setSelectedIds(new Set());
-        }
-    };
-
-    // ✅ Bulk approve selected (ใช้ Bulk API ที่ optimize แล้ว)
+    // Bulk Actions
     const handleBulkApprove = async () => {
-        // กรองเฉพาะ pending items ที่ถูกเลือก
-        const selectedPending = pendingItems.filter(p => selectedIds.has(p.id));
-
-        if (selectedPending.length === 0) {
-            alert("กรุณาเลือกรายการที่รอดำเนินการ");
-            return;
-        }
-
-        const ids = selectedPending.map(p => p.id);
-
-        if (!confirm(`ต้องการอนุมัติ ${ids.length} รายการที่เลือก?\n\n(เรียงลำดับ: ที่สร้างก่อน → อนุมัติก่อน)`)) return;
+        const ids = [...selectedIds];
+        if (ids.length === 0) return;
+        if (!confirm(`ยืนยันอนุมัติ ${ids.length} รายการ?`)) return;
 
         setBulkUpdating(true);
         try {
             const res = await api.post("/pog-requests/bulk-approve", { ids });
-
             if (res.data?.ok) {
-                // อัปเดต local state - เปลี่ยน status เป็น completed
-                setData(prev => prev.map(d =>
-                    ids.includes(d.id) ? { ...d, status: "completed" } : d
-                ));
-
-                // อัปเดต stats
-                const approvedCount = res.data.successCount || ids.length;
+                setData(prev => prev.map(d => ids.includes(d.id) ? { ...d, status: "completed" } : d));
+                // Refetch stats simplier for bulk
+                const successCount = res.data.successCount || ids.length;
                 setStats(prev => ({
                     ...prev,
-                    pending: Math.max(0, prev.pending - approvedCount),
-                    completed: prev.completed + approvedCount
+                    pending: Math.max(0, prev.pending - successCount),
+                    completed: prev.completed + successCount
                 }));
-
-                alert(`✅ ${res.data.message}`);
-            } else {
-                alert(`❌ ${res.data?.message || "เกิดข้อผิดพลาด"}`);
+                setSelectedIds(new Set());
+                alert(`✅ สำเร็จ ${successCount} รายการ`);
             }
         } catch (e) {
-            console.error("Bulk approve error:", e);
-            alert(`❌ ${e.response?.data?.message || "เกิดข้อผิดพลาดในการอนุมัติ"}`);
+            const msg = e.response?.data?.message || e.message;
+            alert(`Error: ${msg}`);
         } finally {
             setBulkUpdating(false);
-            setSelectedIds(new Set());
         }
     };
 
-    // ✅ Bulk reject selected (with reason)
-    const handleBulkReject = () => {
-        const ids = [...selectedIds].filter(id => pendingItems.some(p => p.id === id));
-        if (ids.length === 0) {
-            alert("กรุณาเลือกรายการที่รอดำเนินการ");
-            return;
+    const handleApproveAllPending = async () => {
+        const pending = filteredData.filter(d => d.status === 'pending');
+        if (pending.length === 0) return alert("ไม่มีรายการรอดำเนินการ");
+        if (!confirm(`อนุมัติทั้งหมด ${pending.length} รายการ?`)) return;
+
+        setBulkUpdating(true);
+        try {
+            const res = await api.post("/pog-requests/bulk-approve", { ids: pending.map(p => p.id) });
+            if (res.data?.ok) {
+                setData(prev => prev.map(d => d.status === 'pending' ? { ...d, status: "completed" } : d));
+                setStats(prev => ({
+                    ...prev,
+                    pending: 0,
+                    completed: prev.completed + pending.length
+                }));
+                alert("✅ อนุมัติทั้งหมดเรียบร้อย");
+            }
+        } catch (e) {
+            const msg = e.response?.data?.message || e.message;
+            alert(`Error: ${msg}`);
+        } finally {
+            setBulkUpdating(false);
         }
+    };
+
+    const handleBulkReject = () => {
+        const ids = [...selectedIds];
+        if (ids.length === 0) return;
         setRejectModal({ open: true, ids, count: ids.length });
     };
 
     const confirmBulkReject = async (reason) => {
-        await bulkUpdateStatus(rejectModal.ids, "rejected", reason || null);
-    };
-
-    // ✅ Single reject with reason
-    const handleSingleReject = (id) => {
-        setRejectModal({ open: true, ids: [id], count: 1 });
-    };
-
-    const confirmSingleReject = async (reason) => {
-        await bulkUpdateStatus(rejectModal.ids, "rejected", reason || null);
-    };
-
-    // ✅ Edit position
-    const handleEditPosition = (item) => {
-        setEditModal({ open: true, item });
-    };
-
-    const savePosition = async (id, formData) => {
-        const res = await api.put(`/pog-requests/${id}/position`, formData);
-        if (res.data?.ok) {
-            // อัปเดต local state
-            setData(prev => prev.map(d =>
-                d.id === id ? { ...d, ...formData } : d
-            ));
-            alert("✅ แก้ไขตำแหน่งสำเร็จ");
-        } else {
-            throw new Error(res.data?.message || "เกิดข้อผิดพลาด");
+        setBulkUpdating(true);
+        for (const id of rejectModal.ids) {
+            await updateStatus(id, "rejected", reason);
         }
+        setBulkUpdating(false);
+        setSelectedIds(new Set());
     };
 
     const deleteRequest = async (id) => {
         if (!confirm("ต้องการลบรายการนี้?")) return;
         try {
-            const res = await api.delete(`/pog-requests/${id}`);
-            if (res.data?.ok !== false) {
-                // ✅ ลบจาก local state แทนการเรียก API
-                const deletedItem = data.find(d => d.id === id);
-                setData(prev => prev.filter(item => item.id !== id));
-
-                // ✅ อัปเดต stats
-                if (deletedItem) {
-                    setStats(prev => {
-                        const newStats = { ...prev };
-                        if (newStats[deletedItem.status] > 0) newStats[deletedItem.status]--;
-                        return newStats;
-                    });
-                }
-            }
+            await api.delete(`/pog-requests/${id}`);
+            setData(prev => prev.filter(d => d.id !== id));
+            loadData();
         } catch (e) {
-            console.error("Delete error:", e);
-            alert("ไม่สามารถลบได้");
+            console.error(e);
+            alert("ลบไม่สำเร็จ");
         }
     };
 
-    // ✅ Toggle selection
-    const toggleSelect = (id) => {
-        setSelectedIds(prev => {
-            const next = new Set(prev);
-            if (next.has(id)) next.delete(id);
-            else next.add(id);
-            return next;
-        });
-    };
-
-    // ✅ Select all pending
-    const selectAllPending = () => {
-        setSelectedIds(new Set(pendingItems.map(p => p.id)));
-    };
-
-    // ✅ Clear selection
-    const clearSelection = () => {
-        setSelectedIds(new Set());
+    // Helper to render Position
+    const PositionCell = ({ item }) => {
+        const renderPos = (s, r, i) => s ? `${s}-${r}-${i}` : '-';
+        return (
+            <div className="flex flex-col gap-1 text-xs">
+                {item.fromShelf && (
+                    <div className="flex items-center gap-1 text-slate-500">
+                        <span className="w-8">จาก:</span>
+                        <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">{renderPos(item.fromShelf, item.fromRow, item.fromIndex)}</span>
+                    </div>
+                )}
+                {item.toShelf && (
+                    <div className="flex items-center gap-1 text-slate-700 font-medium">
+                        <span className="w-8">ไป:</span>
+                        <span className="font-mono bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">{renderPos(item.toShelf, item.toRow, item.toIndex)}</span>
+                    </div>
+                )}
+            </div>
+        );
     };
 
     return (
-        <div className="p-4 md:p-6 max-w-7xl mx-auto">
-            {/* Reject Reason Modal */}
+        <div className="min-h-screen bg-slate-50/50 p-6 md:p-8">
+            <div className="max-w-7xl mx-auto space-y-6">
+
+                {/* Header */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">คำขอเปลี่ยนแปลง POG</h1>
+                        <p className="text-slate-500 text-sm mt-1">จัดการ/อนุมัติ การเปลี่ยนแปลงสินค้าและแผนผังจากสาขา</p>
+                    </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {["pending", "rejected", "completed"].map(type => (
+                        <StatCard
+                            key={type}
+                            type={type}
+                            count={stats[type] || 0}
+                            active={filterStatus === type}
+                            onClick={() => setFilterStatus(prev => prev === type ? "" : type)}
+                        />
+                    ))}
+                </div>
+
+                {/* Toolbar */}
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                    <div className="flex flex-wrap items-center gap-3">
+
+                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg flex-1 min-w-[200px]">
+                            <Store size={16} className="text-slate-400" />
+                            <select
+                                value={filterBranch}
+                                onChange={e => setFilterBranch(e.target.value)}
+                                className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
+                            >
+                                <option value="">ทุกสาขา</option>
+                                {availableBranches.map(b => <option key={b} value={b}>{b}</option>)}
+                            </select>
+                        </div>
+
+                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[140px]">
+                            <Filter size={16} className="text-slate-400" />
+                            <select
+                                value={filterAction}
+                                onChange={e => setFilterAction(e.target.value)}
+                                className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
+                            >
+                                <option value="">Action ทั้งหมด</option>
+                                <option value="add">เพิ่มสินค้า</option>
+                                <option value="move">ย้ายสินค้า</option>
+                                <option value="delete">ลบสินค้า</option>
+                                <option value="swap">สลับตำแหน่ง</option>
+                            </select>
+                        </div>
+
+                        <div className="w-px h-8 bg-slate-200 mx-1 hidden md:block" />
+
+                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[100px]">
+                            <Layers size={16} className="text-slate-400" />
+                            <select
+                                value={filterShelf}
+                                onChange={e => setFilterShelf(e.target.value)}
+                                className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
+                            >
+                                <option value="">Shelf</option>
+                                {availableShelves.map(s => <option key={s} value={s}>{s}</option>)}
+                            </select>
+                        </div>
+
+                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[100px]">
+                            <LayoutGrid size={16} className="text-slate-400" />
+                            <select
+                                value={filterRow}
+                                onChange={e => setFilterRow(e.target.value)}
+                                className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
+                            >
+                                <option value="">Row</option>
+                                {availableRows.map(r => <option key={r} value={r}>Row {r}</option>)}
+                            </select>
+                        </div>
+
+                        <button
+                            onClick={loadData}
+                            className="ml-auto p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            title="รีเฟรชข้อมูล"
+                        >
+                            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                        </button>
+                    </div>
+
+                    {/* Bulk Actions Bar */}
+                    {filterStatus === 'pending' && filteredData.length > 0 && (
+                        <div className="flex items-center gap-3 pt-3 border-t border-slate-100 animate-in slide-in-from-top-2">
+                            <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    className="w-5 h-5 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                    checked={selectedIds.size > 0 && selectedIds.size === filteredData.filter(d => d.status === 'pending').length}
+                                    onChange={(e) => {
+                                        if (e.target.checked) setSelectedIds(new Set(filteredData.filter(d => d.status === 'pending').map(d => d.id)));
+                                        else setSelectedIds(new Set());
+                                    }}
+                                />
+                                <span className="text-sm text-slate-600 font-medium">เลือกทั้งหมด</span>
+                            </div>
+
+                            <div className="h-4 w-px bg-slate-300" />
+
+                            {selectedIds.size > 0 ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-sm font-medium text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
+                                        {selectedIds.size} รายการ
+                                    </span>
+                                    <button
+                                        onClick={handleBulkApprove}
+                                        disabled={bulkUpdating}
+                                        className="btn-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 shadow-sm transition-all"
+                                    >
+                                        <Check size={14} /> อนุมัติที่เลือก
+                                    </button>
+                                    <button
+                                        onClick={handleBulkReject}
+                                        disabled={bulkUpdating}
+                                        className="btn-xs bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 shadow-sm transition-all"
+                                    >
+                                        <X size={14} /> ปฏิเสธ
+                                    </button>
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={handleApproveAllPending}
+                                    disabled={bulkUpdating}
+                                    className="ml-auto text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-emerald-50 transition-colors"
+                                >
+                                    <CheckCircle2 size={16} /> อนุมัติทั้งหมดในหน้านี้
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                {/* Table */}
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left border-collapse">
+                            <thead>
+                                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase tracking-wider font-semibold">
+                                    <th className="px-6 py-4 w-12 text-center">#</th>
+                                    <th className="px-6 py-4">สาขา</th>
+                                    <th className="px-6 py-4">Action</th>
+                                    <th className="px-6 py-4">สินค้า</th>
+                                    <th className="px-6 py-4">ตำแหน่ง</th>
+                                    <th className="px-6 py-4">สถานะ</th>
+                                    <th className="px-6 py-4 w-20 text-center">จัดการ</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {loading ? (
+                                    <tr><td colSpan="7" className="p-8 text-center text-slate-500">Loading...</td></tr>
+                                ) : visibleData.length === 0 ? (
+                                    <tr><td colSpan="7" className="p-12 text-center text-slate-400">ไม่พบข้อมูล</td></tr>
+                                ) : (
+                                    visibleData.map((item, idx) => {
+                                        const isSelected = selectedIds.has(item.id);
+                                        return (
+                                            <tr
+                                                key={item.id}
+                                                className={`group transition-colors hover:bg-slate-50/80 ${isSelected ? 'bg-blue-50/50' : ''}`}
+                                            >
+                                                <td className="px-6 py-4 text-center">
+                                                    {item.status === 'pending' ? (
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={isSelected}
+                                                            onChange={() => {
+                                                                const newSet = new Set(selectedIds);
+                                                                if (newSet.has(item.id)) newSet.delete(item.id);
+                                                                else newSet.add(item.id);
+                                                                setSelectedIds(newSet);
+                                                            }}
+                                                            className="w-5 h-5 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                                        />
+                                                    ) : (
+                                                        <span className="text-slate-400 text-xs">{idx + 1}</span>
+                                                    )}
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="font-medium text-slate-700">{BRANCH_NAMES[item.branchCode] || item.branchCode}</div>
+                                                    <div className="text-xs text-slate-400">{item.branchCode} • {formatDate(item.createdAt)}</div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${ACTION_STYLES[item.action]?.badge || 'bg-gray-100 text-gray-800'}`}>
+                                                        {ACTION_STYLES[item.action]?.label || item.action}
+                                                    </span>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col">
+                                                        <span className="text-sm font-medium text-slate-900 line-clamp-1" title={item.productName}>
+                                                            {item.productName || item.barcode}
+                                                        </span>
+                                                        <span className="text-xs text-slate-500 flex items-center gap-1">
+                                                            <Package size={12} /> {item.barcode}
+                                                        </span>
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <PositionCell item={item} />
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex flex-col items-start gap-1">
+                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[item.status]?.bg} ${STATUS_STYLES[item.status]?.text}`}>
+                                                            {STATUS_STYLES[item.status]?.icon}
+                                                            {STATUS_STYLES[item.status]?.label}
+                                                        </span>
+                                                        {item.status === 'rejected' && item.note && (
+                                                            <div className="text-xs text-rose-500 flex items-start gap-1 max-w-[150px]">
+                                                                <AlertCircle size={10} className="mt-0.5 shrink-0" />
+                                                                <span className="truncate" title={item.note}>{item.note}</span>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                                <td className="px-6 py-4">
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {item.status === 'pending' ? (
+                                                            <>
+                                                                <button
+                                                                    onClick={() => updateStatus(item.id, "completed")}
+                                                                    disabled={updating === item.id}
+                                                                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors tooltip"
+                                                                    title="อนุมัติ"
+                                                                >
+                                                                    <Check size={18} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setEditModal({ open: true, item })}
+                                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                                    title="แก้ไข"
+                                                                >
+                                                                    <Edit2 size={18} />
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => setRejectModal({ open: true, ids: [item.id], count: 1 })}
+                                                                    className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                                                    title="ปฏิเสธ"
+                                                                >
+                                                                    <X size={18} />
+                                                                </button>
+                                                            </>
+                                                        ) : (
+                                                            <button
+                                                                onClick={() => deleteRequest(item.id)}
+                                                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                                                                title="ลบรายการ"
+                                                            >
+                                                                <Trash2 size={18} />
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    })
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                    {/* Pagination / Footer */}
+                    {filteredData.length > visibleCount && (
+                        <div className="p-4 border-t border-slate-200 bg-slate-50 text-center">
+                            <button
+                                onClick={() => setVisibleCount(prev => prev + 50)}
+                                className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
+                            >
+                                โหลดเพิ่มเติม ({visibleCount} / {filteredData.length})
+                            </button>
+                        </div>
+                    )}
+                </div>
+
+            </div>
+
             <RejectReasonModal
                 isOpen={rejectModal.open}
                 onClose={() => setRejectModal({ open: false, ids: [], count: 0 })}
-                onConfirm={rejectModal.count > 1 ? confirmBulkReject : confirmSingleReject}
+                onConfirm={rejectModal.count > 1 ? confirmBulkReject : (reason) => updateStatus(rejectModal.ids[0], "rejected", reason)}
                 count={rejectModal.count}
             />
 
-            {/* Edit Position Modal */}
             <EditPositionModal
                 isOpen={editModal.open}
                 onClose={() => setEditModal({ open: false, item: null })}
                 item={editModal.item}
-                onSave={savePosition}
+                onSave={async (id, data) => {
+                    const res = await api.put(`/pog-requests/${id}/position`, data);
+                    if (res.data.ok) {
+                        setData(prev => prev.map(d => d.id === id ? { ...d, ...data } : d));
+                        alert("แก้ไขสำเร็จ");
+                    }
+                }}
             />
-
-            {/* Header */}
-            <div className="mb-6">
-                <h1 className="text-xl md:text-2xl font-bold text-slate-800">📋 คำขอเปลี่ยนแปลง POG</h1>
-                <p className="text-sm text-slate-500 mt-1">จัดการคำขอจากสาขาต่างๆ</p>
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3 mb-4">
-                <select
-                    value={filterStatus}
-                    onChange={(e) => setFilterStatus(e.target.value)}
-                    className="px-3 py-2 border rounded-lg text-sm bg-white"
-                >
-                    <option value="">ทุกสถานะ</option>
-                    <option value="pending">รอดำเนินการ</option>
-                    <option value="rejected">ปฏิเสธ</option>
-                    <option value="completed">เสร็จสิ้น</option>
-                </select>
-
-                {/* ✅ Action Filter */}
-                <select
-                    value={filterAction}
-                    onChange={(e) => setFilterAction(e.target.value)}
-                    className="px-3 py-2 border rounded-lg text-sm bg-white"
-                >
-                    <option value="">ทุก Action</option>
-                    <option value="add">เพิ่มสินค้า</option>
-                    <option value="move">ย้ายสินค้า</option>
-                    <option value="delete">ลบสินค้า</option>
-                </select>
-
-                {/* ✅ Branch Filter - Dropdown */}
-                <select
-                    value={filterBranch}
-                    onChange={(e) => setFilterBranch(e.target.value)}
-                    className="px-3 py-2 border rounded-lg text-sm bg-white min-w-[140px]"
-                >
-                    <option value="">ทุกสาขา</option>
-                    {availableBranches.map(branch => (
-                        <option key={branch} value={branch}>{branch}</option>
-                    ))}
-                </select>
-
-                {/* ✅ Shelf Filter - Dropdown */}
-                <select
-                    value={filterShelf}
-                    onChange={(e) => setFilterShelf(e.target.value)}
-                    className="px-3 py-2 border rounded-lg text-sm bg-white min-w-[100px]"
-                >
-                    <option value="">ทุก Shelf</option>
-                    {availableShelves.map(shelf => (
-                        <option key={shelf} value={shelf}>{shelf}</option>
-                    ))}
-                </select>
-
-                {/* ✅ Row Filter - Dropdown */}
-                <select
-                    value={filterRow}
-                    onChange={(e) => setFilterRow(e.target.value)}
-                    className="px-3 py-2 border rounded-lg text-sm bg-white min-w-[90px]"
-                >
-                    <option value="">ทุก Row</option>
-                    {availableRows.map(row => (
-                        <option key={row} value={row}>Row {row}</option>
-                    ))}
-                </select>
-
-                <button
-                    onClick={loadData}
-                    className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-semibold hover:bg-slate-700"
-                >
-                    🔄 รีเฟรช
-                </button>
-            </div>
-
-            {/* ✅ Bulk Action Buttons */}
-            <div className="flex flex-wrap gap-2 mb-4 p-3 bg-slate-50 rounded-lg border">
-                <span className="text-sm text-slate-600 flex items-center gap-2">
-                    <span className="font-semibold">⚡ Quick Actions:</span>
-                </span>
-
-                <button
-                    onClick={handleApproveAllPending}
-                    disabled={bulkUpdating || pendingItems.length === 0}
-                    className="px-3 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                    ✓ อนุมัติทั้งหมด ({pendingItems.length})
-                </button>
-
-                <div className="border-l border-slate-300 mx-2" />
-
-                <button
-                    onClick={selectAllPending}
-                    disabled={pendingItems.length === 0}
-                    className="px-3 py-1.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 disabled:opacity-50"
-                >
-                    เลือกทั้งหมด ({pendingItems.length})
-                </button>
-
-                {selectedIds.size > 0 && (
-                    <>
-                        <button
-                            onClick={clearSelection}
-                            className="px-3 py-1.5 text-xs font-medium bg-slate-200 text-slate-600 rounded-lg hover:bg-slate-300"
-                        >
-                            ยกเลิกเลือก
-                        </button>
-
-                        <span className="text-xs text-slate-500 flex items-center">
-                            เลือก {selectedPendingCount} รายการ
-                        </span>
-
-                        <button
-                            onClick={handleBulkApprove}
-                            disabled={bulkUpdating || selectedPendingCount === 0}
-                            className="px-3 py-1.5 text-xs font-medium bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 disabled:opacity-50"
-                        >
-                            ✓ อนุมัติที่เลือก
-                        </button>
-
-                        <button
-                            onClick={handleBulkReject}
-                            disabled={bulkUpdating || selectedPendingCount === 0}
-                            className="px-3 py-1.5 text-xs font-medium bg-rose-500 text-white rounded-lg hover:bg-rose-600 disabled:opacity-50"
-                        >
-                            ✗ ปฏิเสธที่เลือก
-                        </button>
-                    </>
-                )}
-
-                {bulkUpdating && (
-                    <span className="text-xs text-amber-600 flex items-center gap-1">
-                        <span className="animate-spin">⏳</span> กำลังดำเนินการ...
-                    </span>
-                )}
-            </div>
-
-            {/* Stats - Clickable to filter */}
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
-                {["pending", "rejected", "completed"].map((status) => {
-                    const count = stats[status] || 0; // ✅ Use API stats
-                    const info = STATUS_MAP[status];
-                    const isActive = filterStatus === status;
-                    return (
-                        <button
-                            key={status}
-                            type="button"
-                            onClick={() => setFilterStatus(isActive ? "" : status)}
-                            className={cx(
-                                "p-3 rounded-xl border-2 text-left cursor-pointer transition-all",
-                                info.badge,
-                                info.color.split(" ")[0], // Use bg color
-                                isActive && "opacity-100 border-slate-500 ring-2 ring-offset-1 ring-slate-300",
-                                !isActive && "opacity-60 hover:opacity-100 grayscale-[0.3]"
-                            )}
-                        >
-                            <div className="text-2xl font-bold">{count}</div>
-                            <div className="text-xs font-medium">{info.label}</div>
-                        </button>
-                    );
-                })}
-            </div>
-
-            {/* Table */}
-            <div className="bg-white rounded-xl border shadow-sm overflow-hidden">
-                {loading ? (
-                    <div className="flex items-center justify-center py-12">
-                        <div className="h-6 w-6 rounded-full border-2 border-slate-300 border-t-slate-700 animate-spin" />
-                        <span className="ml-3 text-slate-600">กำลังโหลด...</span>
-                    </div>
-                ) : data.length === 0 ? (
-                    <div className="text-center py-12 text-slate-500">ไม่มีรายการ</div>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead className="bg-slate-50 border-b">
-                                <tr>
-                                    {/* ✅ Checkbox column */}
-                                    <th className="w-10 px-3 py-3">
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedIds.size > 0 && selectedIds.size === pendingItems.length && pendingItems.length > 0}
-                                            onChange={(e) => e.target.checked ? selectAllPending() : clearSelection()}
-                                            className="rounded"
-                                        />
-                                    </th>
-                                    <th className="w-12 text-center px-2 py-3 font-semibold text-slate-700">#</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-slate-700">สาขา</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-slate-700">Action</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-slate-700">สินค้า</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-slate-700">ตำแหน่ง</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-slate-700">สถานะ</th>
-                                    <th className="text-left px-4 py-3 font-semibold text-slate-700">วันที่</th>
-                                    <th className="text-center px-4 py-3 font-semibold text-slate-700">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y">
-                                {visibleData.map((item, rowIndex) => {
-                                    const statusInfo = STATUS_MAP[item.status] || STATUS_MAP.pending;
-                                    const actionInfo = ACTION_MAP[item.action] || { label: item.action, icon: "📦" };
-                                    const isUpdating = updating === item.id;
-                                    const isPending = item.status === "pending";
-                                    const isSelected = selectedIds.has(item.id);
-
-                                    return (
-                                        <tr key={item.id} className={cx("hover:bg-slate-50", isSelected && "bg-blue-50")}>
-                                            {/* ✅ Checkbox */}
-                                            <td className="px-3 py-3">
-                                                {isPending && (
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={isSelected}
-                                                        onChange={() => toggleSelect(item.id)}
-                                                        className="rounded"
-                                                    />
-                                                )}
-                                            </td>
-                                            {/* ✅ Index */}
-                                            <td className="px-2 py-3 text-center text-slate-500 font-mono text-xs">
-                                                {rowIndex + 1}
-                                            </td>
-                                            <td className="px-4 py-3 font-medium">{item.branchCode}</td>
-                                            <td className="px-4 py-3">
-                                                <span className="inline-flex items-center gap-1">
-                                                    {actionInfo.icon} {actionInfo.label}
-                                                </span>
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <div className="font-medium whitespace-nowrap">
-                                                    {item.productName || item.barcode}
-                                                </div>
-                                                <div className="text-xs text-slate-500">{item.barcode}</div>
-                                            </td>
-                                            <td className="px-4 py-3 text-xs">
-                                                {item.fromShelf && (
-                                                    <div>จาก: {item.fromShelf}/{item.fromRow}/{item.fromIndex}</div>
-                                                )}
-                                                {item.toShelf && (
-                                                    <div>ไป: {item.toShelf}/{item.toRow}/{item.toIndex}</div>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3">
-                                                <span className={cx("px-2 py-1 rounded-full text-xs font-medium", statusInfo.color)}>
-                                                    {statusInfo.label}
-                                                </span>
-                                                {/* ✅ Show reject reason if exists (stored in note field) */}
-                                                {item.status === "rejected" && item.note && (
-                                                    <div className="text-xs text-rose-500 mt-1 max-w-[150px] truncate" title={item.note}>
-                                                        💬 {item.note}
-                                                    </div>
-                                                )}
-                                            </td>
-                                            <td className="px-4 py-3 text-xs text-slate-500">{formatDate(item.createdAt)}</td>
-                                            <td className="px-4 py-3">
-                                                <div className="flex items-center justify-center gap-1">
-                                                    {item.status === "pending" && (
-                                                        <>
-                                                            <button
-                                                                onClick={() => updateStatus(item.id, "completed")}
-                                                                title="อนุมัติและดำเนินการทันที"
-                                                                disabled={isUpdating}
-                                                                className="px-2 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-500 disabled:opacity-50"
-                                                            >
-                                                                ✓ อนุมัติ
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleEditPosition(item)}
-                                                                title="แก้ไขตำแหน่ง"
-                                                                disabled={isUpdating}
-                                                                className="px-2 py-1 text-xs bg-blue-600 text-white rounded hover:bg-blue-500 disabled:opacity-50"
-                                                            >
-                                                                ✏️
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleSingleReject(item.id)}
-                                                                disabled={isUpdating}
-                                                                className="px-2 py-1 text-xs bg-rose-600 text-white rounded hover:bg-rose-500 disabled:opacity-50"
-                                                            >
-                                                                ✗
-                                                            </button>
-                                                        </>
-                                                    )}
-                                                    {item.status === "approved" && (
-                                                        <button
-                                                            onClick={() => updateStatus(item.id, "completed")}
-                                                            disabled={isUpdating}
-                                                            className="px-2 py-1 text-xs bg-emerald-600 text-white rounded hover:bg-emerald-500 disabled:opacity-50"
-                                                        >
-                                                            เสร็จ
-                                                        </button>
-                                                    )}
-                                                    <button
-                                                        onClick={() => deleteRequest(item.id)}
-                                                        className="px-2 py-1 text-xs border rounded hover:bg-slate-50"
-                                                    >
-                                                        🗑️
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-
-                        {/* ✅ Load More Button */}
-                        {hasMore && (
-                            <div className="p-4 text-center border-t">
-                                <button
-                                    onClick={loadMore}
-                                    className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700"
-                                >
-                                    โหลดเพิ่ม ({visibleCount}/{data.length})
-                                </button>
-                                <span className="ml-3 text-xs text-slate-500">
-                                    แสดง {visibleCount} จาก {data.length} รายการ
-                                </span>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
         </div>
     );
 }
-
