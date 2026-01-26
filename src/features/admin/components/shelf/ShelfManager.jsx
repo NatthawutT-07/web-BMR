@@ -9,7 +9,7 @@ import React, {
 
 import useBmrStore from "../../../../store/bmr_store";
 import useShelfStore from "../../../../store/shelf_store";
-import * as XLSX from "xlsx";
+
 
 // lazy load components
 const ShelfFilter = lazy(() => import("./second/ShelfFilter"));
@@ -82,7 +82,7 @@ const ShelfManager = () => {
   const [okLocked, setOkLocked] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [searchResult, setSearchResult] = useState([]);
-  const [downloadLoading, setDownloadLoading] = useState(false);
+
 
   const captureRef = useRef(null);
 
@@ -245,81 +245,7 @@ const ShelfManager = () => {
     refreshDataProduct(code);
   };
 
-  // ==== DOWNLOAD XLSX: ใช้ branchProduct เท่านั้น ====
-  const handleDownloadShelfXlsx = () => {
-    const code = submittedBranchCode;
-    if (!code || !branchProduct || branchProduct.length === 0) return;
 
-    setDownloadLoading(true);
-    try {
-      // ดึง key ทั้งหมดจาก object ใน branchProduct เพื่อเป็น column
-      const headerSet = new Set();
-      branchProduct.forEach((row) => {
-        if (!row) return;
-        Object.keys(row).forEach((k) => headerSet.add(k));
-      });
-      const headers = Array.from(headerSet);
-
-      // สร้าง array ของ object ตาม headers (ให้ทุก row มี column เท่ากัน)
-      const rows = branchProduct.map((row) => {
-        const obj = {};
-        headers.forEach((h) => {
-          const v = row ? row[h] : "";
-          obj[h] = v === undefined || v === null ? "" : v;
-        });
-        return obj;
-      });
-
-      // แปลงเป็น worksheet
-      const ws = XLSX.utils.json_to_sheet(rows, { header: headers });
-
-      // หา column ที่เป็นพวก code / barcode แล้วบังคับให้เป็น text
-      if (ws["!ref"]) {
-        const range = XLSX.utils.decode_range(ws["!ref"]);
-        const headerRowIndex = range.s.r; // แถว header (ปกติคือ 0)
-
-        const textCols = [];
-
-        // หา column index ที่ชื่อ header มีคำว่า code / barcode
-        for (let C = range.s.c; C <= range.e.c; ++C) {
-          const addr = XLSX.utils.encode_cell({
-            r: headerRowIndex,
-            c: C,
-          });
-          const cell = ws[addr];
-          if (!cell) continue;
-          const header = String(cell.v || "");
-          const lower = header.toLowerCase();
-          if (lower.includes("code") || lower.includes("barcode")) {
-            textCols.push(C);
-          }
-        }
-
-        // บังคับให้ทั้ง column เหล่านั้นเป็น text (ตัด 0 ข้างหน้าออกไม่ได้)
-        textCols.forEach((col) => {
-          for (let R = headerRowIndex + 1; R <= range.e.r; ++R) {
-            const addr = XLSX.utils.encode_cell({ r: R, c: col });
-            const cell = ws[addr];
-            if (!cell || cell.v === undefined || cell.v === null) continue;
-            cell.t = "s"; // text
-            cell.z = "@"; // format text
-            cell.v = String(cell.v); // แปลงเป็น string ชัด ๆ
-          }
-        });
-      }
-
-      // สร้าง workbook แล้วเขียนไฟล์
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Shelf");
-
-      XLSX.writeFile(
-        wb,
-        `shelf_${code}_${new Date().toISOString().slice(0, 10)}.xlsx`
-      );
-    } finally {
-      setDownloadLoading(false);
-    }
-  };
 
   const imageUrl = submittedBranchCode
     ? `/images/branch/${submittedBranchCode}.png`
@@ -330,8 +256,8 @@ const ShelfManager = () => {
       {/* BranchSelector with center-to-top animation */}
       <div
         className={`transition-all duration-700 ease-out ${!submittedBranchCode
-            ? "min-h-[60vh] flex items-center justify-center"
-            : ""
+          ? "min-h-[60vh] flex items-center justify-center"
+          : ""
           }`}
       >
         <Suspense
@@ -351,8 +277,7 @@ const ShelfManager = () => {
             okLocked={okLocked}
             onSubmit={handleSubmit}
             onRefreshProduct={handleRefreshProduct}
-            onDownload={handleDownloadShelfXlsx}
-            downloadLoading={downloadLoading}
+
           />
         </Suspense>
       </div>

@@ -8,8 +8,7 @@ const BranchSelector = React.memo(
     onSubmit,
     okLocked,
     onRefreshProduct,
-    onDownload,
-    downloadLoading,
+
   }) => {
     const handleSubmit = (e) => {
       if (onSubmit) {
@@ -22,12 +21,16 @@ const BranchSelector = React.memo(
       onRefreshProduct(selectedBranchCode);
     };
 
-    const handleDownload = () => {
-      if (!selectedBranchCode || !onDownload) return;
-      onDownload(selectedBranchCode);
-    };
 
-    const selectedBranch = (branches || []).find(
+
+    // เรียงสาขาตามตัวเลข (ST001, ST002, ST003...)
+    const sortedBranches = [...(branches || [])].sort((a, b) => {
+      const numA = parseInt(a.branch_code?.replace(/\D/g, '') || '0', 10);
+      const numB = parseInt(b.branch_code?.replace(/\D/g, '') || '0', 10);
+      return numA - numB;
+    });
+
+    const selectedBranch = sortedBranches.find(
       (b) => b.branch_code === selectedBranchCode
     );
 
@@ -49,7 +52,7 @@ const BranchSelector = React.memo(
             className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white flex-1 min-w-[200px]"
           >
             <option value="">-- เลือกสาขา --</option>
-            {(branches || []).map((branch, idx) => (
+            {sortedBranches.map((branch, idx) => (
               <option key={branch.branch_code ?? idx} value={branch.branch_code}>
                 {branch.branch_code} - {branch.branch_name}
               </option>
@@ -78,17 +81,7 @@ const BranchSelector = React.memo(
                 รีเฟรช
               </button>
 
-              {/* <button
-                type="button"
-                onClick={handleDownload}
-                disabled={downloadLoading}
-                className={`px-3 py-2 text-sm rounded-lg whitespace-nowrap ${downloadLoading
-                    ? "bg-slate-200 text-slate-400"
-                    : "bg-emerald-500 text-white hover:bg-emerald-600"
-                  }`}
-              >
-                {downloadLoading ? "กำลังโหลด..." : "ดาวน์โหลด"}
-              </button> */}
+
             </>
           )}
         </div>
