@@ -140,18 +140,18 @@ const DateFilter = ({
     <div className="bg-white/90 backdrop-blur shadow-sm rounded-xl border border-slate-200 px-4 py-3 md:px-6 md:py-4">
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2 text-xs mb-1">
-          <span className="text-[11px] text-slate-500 mr-1">Compare mode :</span>
+          <span className="text-[11px] text-slate-500 mr-1">Compare Month :</span>
 
-          <button
+          {/* <button
             type="button"
             onClick={() => !disabled && setMode("diff_month")}
             disabled={disabled}
             className={`${pillBase} ${disabled ? pillDisabled : mode === "diff_month" ? pillActive : pillIdle}`}
           >
             Diff Month
-          </button>
+          </button> */}
 
-          <button
+          {/* <button
             type="button"
             onClick={() => !disabled && setMode("diff_quarter")}
             disabled={disabled}
@@ -167,7 +167,7 @@ const DateFilter = ({
             className={`${pillBase} ${disabled ? pillDisabled : mode === "diff_year" ? pillActive : pillIdle}`}
           >
             Diff Year (YoY)
-          </button>
+          </button> */}
         </div>
 
         <div className="flex flex-wrap gap-3 items-end">
@@ -205,8 +205,8 @@ const DateFilter = ({
               onClick={onShowData}
               disabled={disabled}
               className={`inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold shadow-sm transition-all ${disabled
-                  ? "bg-slate-300 text-slate-600 cursor-not-allowed"
-                  : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-[0.98]"
+                ? "bg-slate-300 text-slate-600 cursor-not-allowed"
+                : "bg-blue-600 text-white hover:bg-blue-700 hover:shadow-md active:scale-[0.98]"
                 }`}
               title="กดเพื่อ apply ช่วงวันที่/โหมด แล้วโหลดข้อมูล"
             >
