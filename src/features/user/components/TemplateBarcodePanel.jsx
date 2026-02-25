@@ -106,7 +106,6 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
   };
 
   // ✅ สแกนจากกล้องแล้ว: เปิด popup “ก่อน” แล้วค่อยยิง API (ให้ user เห็นสปิน)
-  // ✅ สแกนจากกล้องแล้ว: เปิด popup “ก่อน” แล้วค่อยยิง API (ให้ user เห็นสปิน)
   const onCameraDetected = React.useCallback((code) => {
     setCameraOpen(false);
     setBarcode(code);
@@ -129,6 +128,23 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
 
   return (
     <section className="space-y-3">
+      {/* ✅ Pulse animation สำหรับช่องสแกน */}
+      <style>{`
+        @keyframes scannerPulse {
+          0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
+          50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
+        }
+        .scanner-input {
+          border: 2px solid #dc2626 !important;
+          animation: scannerPulse 2s ease-in-out infinite;
+        }
+        .scanner-input:focus {
+          border-color: #dc2626 !important;
+          box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3) !important;
+          animation: none;
+        }
+      `}</style>
+
       {/* กล้อง modal */}
       <CameraBarcodeScannerModal
         open={cameraOpen}
@@ -156,11 +172,14 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
         <div className="text-sm text-slate-500 mt-1">
           พิมพ์บาร์โค้ดหรือใช้กล้องสแกน
         </div>
-        <div className="mt-2 p-2 rounded-lg bg-amber-50 border border-amber-100 text-xs text-amber-700 flex items-start gap-2">
-          <span className="text-lg leading-none">💡</span>
-          <span>
-            <b>คำแนะนำ:</b> บาร์โค้ดใช้กับเลข 13 หลักเท่านั้น หากเป็นอักษรหรือตัวเลขที่น้อยกว่า 13 ตัวของค่ามาตรฐาน จะไม่สามารถใช้การยิงสแกนได้
+
+        {/* ✅ แถบแดงบอกสถานะ Scanner Ready */}
+        <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200">
+          <span className="relative flex h-3 w-3">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
           </span>
+          <span className="text-xs font-semibold text-red-700">พร้อมรับสแกนจากเครื่องยิงบาร์โค้ด</span>
         </div>
 
         <div className="mt-3 flex flex-col sm:flex-row gap-2">
@@ -171,21 +190,16 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
             value={barcode}
             onChange={(e) => {
               const raw = e.target.value || "";
-              // ✅ อนุญาตภาษาอังกฤษ (A-Z, a-z) และตัวเลข (0-9)
-              const validChars = raw.replace(/[^a-zA-Z0-9]/g, "");
-
-              if (raw !== validChars) {
-                setBarcodeError("กรอกได้เฉพาะตัวเลขและภาษาอังกฤษเท่านั้น");
-              } else if (barcodeError) {
+              setBarcode(raw);
+              if (barcodeError) {
                 setBarcodeError("");
               }
-              setBarcode(validChars);
             }}
             onKeyDown={(e) => {
               if (e.key === "Enter") openPopupAndLookup(barcode);
             }}
-            placeholder="พิมพ์/หัวสแกนบาร์โค้ด..."
-            className="flex-1 px-4 py-3 border rounded-xl text-base focus:outline-none focus:ring-2 focus:ring-emerald-400"
+            placeholder="📡 ยิงบาร์โค้ดที่นี่..."
+            className="scanner-input flex-1 px-4 py-3 rounded-xl text-base font-semibold focus:outline-none bg-red-50 placeholder:text-red-400"
           />
 
           <div className="flex gap-2">

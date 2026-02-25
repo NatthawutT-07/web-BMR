@@ -142,16 +142,16 @@ const DateFilter = ({
         <div className="flex flex-wrap items-center gap-2 text-xs mb-1">
           <span className="text-[11px] text-slate-500 mr-1">Compare Month :</span>
 
-          {/* <button
+          <button
             type="button"
             onClick={() => !disabled && setMode("diff_month")}
             disabled={disabled}
             className={`${pillBase} ${disabled ? pillDisabled : mode === "diff_month" ? pillActive : pillIdle}`}
           >
             Diff Month
-          </button> */}
+          </button>
 
-          {/* <button
+          <button
             type="button"
             onClick={() => !disabled && setMode("diff_quarter")}
             disabled={disabled}
@@ -167,7 +167,7 @@ const DateFilter = ({
             className={`${pillBase} ${disabled ? pillDisabled : mode === "diff_year" ? pillActive : pillIdle}`}
           >
             Diff Year (YoY)
-          </button> */}
+          </button>
         </div>
 
         <div className="flex flex-wrap gap-3 items-end">
@@ -333,7 +333,7 @@ const SalesChannelSummary = ({ primaryDash, compareDash, showCompare }) => {
           </div>
         )}
 
-        <div className="space-y-2 text-xs max-h-[260px] overflow-auto pr-1">
+        <div className="space-y-2 text-xs max-h-[1000px] overflow-auto pr-1">
           {channels.map((c) => {
             let diffColor = "text-slate-400";
             let diffLabel = "-";
@@ -447,7 +447,7 @@ const SalesChannelSummary = ({ primaryDash, compareDash, showCompare }) => {
       return <div className="text-[11px] text-slate-500 py-2">ไม่มีข้อมูลวิธีชำระเงิน (ยอดเป็น 0)</div>;
 
     return (
-      <div className="space-y-2 text-xs max-h-[280px] overflow-auto pr-1">
+      <div className="space-y-2 text-xs max-h-[1000px] overflow-auto pr-1">
         <div className="rounded-lg border border-slate-100 bg-slate-50 px-3 py-2">
           <div className="text-[11px] text-slate-500 flex items-center justify-between">
             <span className="font-semibold text-slate-600">รวมทั้งหมด (ช่วงวันที่ที่เลือก)</span>

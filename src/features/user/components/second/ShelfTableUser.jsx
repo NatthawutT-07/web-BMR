@@ -246,14 +246,14 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                         </td> */}
 
                         <td className="border text-center align-middle print:hidden">
-                          {/* <button
+                          <button
                             type="button"
                             onClick={() => handleRequest(p)}
                             className="px-2 py-1 text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 rounded transition-colors"
                             title="แจ้งขอเปลี่ยน"
                           >
                             แก้ไข
-                          </button> */}
+                          </button>
                         </td>
                       </tr>
                     );
