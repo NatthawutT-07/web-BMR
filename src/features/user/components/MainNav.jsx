@@ -82,8 +82,8 @@ function MainNav() {
         <div className="max-w-8xl mx-auto px-3 sm:px-6">
           <div className="flex items-center justify-between h-12 sm:h-14">
             {/* ซ้าย: โลโก้ + ชื่อระบบ + เวลา stock */}
-            <div className="flex items-center gap-2 sm:gap-3">
-              <div className="flex items-center justify-center">
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <div className="flex shrink-0">
                 <div
                   className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white shadow-sm border border-white/40 bg-contain bg-center bg-no-repeat select-none pointer-events-none"
                   style={{ backgroundImage: "url('/icon.png')" }}
@@ -91,19 +91,20 @@ function MainNav() {
                 />
               </div>
 
-              <div className="flex flex-col leading-tight">
-                <span className="text-sm sm:text-base font-semibold tracking-tight">
+              <div className="flex flex-col leading-tight min-w-0">
+                <span className="text-sm sm:text-base font-semibold tracking-tight truncate">
                   Shelf Check System
                 </span>
 
-                <div className="flex items-center gap-2">
-                  <span className="text-[10px] sm:text-xs text-emerald-100">
+                <div className="flex items-center gap-1.5 sm:gap-2 truncate">
+                  <span className="hidden sm:inline text-xs text-emerald-100 truncate">
                     ตรวจสินค้า & สต็อกหน้าร้าน
                   </span>
+                  <span className="hidden sm:inline text-emerald-100/90">•</span>
 
                   {/* ✅ เวลาอัปเดต Stock ล่าสุด */}
-                  <span className="text-[10px] sm:text-xs text-emerald-100/90">
-                    • Stock ล่าสุด {stockTimeText}
+                  <span className="text-[10px] sm:text-xs text-emerald-100/90 truncate">
+                    Stock {stockTimeText}
                   </span>
                 </div>
               </div>
@@ -116,18 +117,18 @@ function MainNav() {
                   <button
                     type="button"
                     onClick={toggleUserMenu}
-                    className="flex items-center gap-2 px-2.5 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs sm:text-sm transition"
+                    className="flex items-center gap-2 sm:px-2.5 sm:py-1.5 p-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs sm:text-sm transition ml-auto"
                   >
-                    <div className="w-7 h-7 rounded-full bg-white text-emerald-700 flex items-center justify-center text-xs font-semibold">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-emerald-700 flex items-center justify-center text-xs sm:text-sm font-semibold shrink-0">
                       {initial}
                     </div>
-                    <div className="flex flex-col items-start leading-tight max-w-[120px] sm:max-w-[160px]">
-                      <span className="font-medium truncate">{displayName}</span>
+                    <div className="hidden sm:flex flex-col items-start leading-tight max-w-[160px]">
+                      <span className="font-medium truncate w-full text-left">{displayName}</span>
                       <span className="text-[10px] uppercase tracking-wide text-emerald-100">
                         {user.role || "user"}
                       </span>
                     </div>
-                    <span className="text-emerald-100 text-xs sm:text-sm">
+                    <span className="hidden sm:inline text-emerald-100 text-sm">
                       {userMenuOpen ? "▴" : "▾"}
                     </span>
                   </button>

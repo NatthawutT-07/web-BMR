@@ -55,6 +55,9 @@ const Template = () => {
   // ✅ โหมด 2 ปุ่ม
   const [mode, setMode] = useState("shelf"); // "barcode" | "shelf"
 
+  // ✅ แสดงรูปภาพเต็มจอ
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
   // ===== Stock Meta (ยิงครั้งเดียว) =====
   const stockUpdatedAt = useStockMetaStore((s) => s.updatedAt);
   const stockStatus = useStockMetaStore((s) => s.status);
@@ -268,7 +271,7 @@ const Template = () => {
           {/* ปุ่มเลือกโหมด */}
           <div className="flex items-center gap-3 print:hidden">
             <div className="inline-flex rounded-xl border bg-white p-1 shadow-sm">
-              <button
+              {/* <button
                 type="button"
                 onClick={() => setMode("barcode")}
                 className={cx(
@@ -277,7 +280,7 @@ const Template = () => {
                 )}
               >
                 สแกนบาร์โค้ด
-              </button>
+              </button> */}
               <button
                 type="button"
                 onClick={() => setMode("shelf")}
@@ -443,13 +446,32 @@ const Template = () => {
                 <div className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border flex flex-col xl:flex-row gap-6 mx-auto w-full max-w-[1400px]">
 
                   {/* LEFT: Branch Image */}
-                  <div className="flex justify-center xl:justify-start xl:w-[260px] flex-shrink-0">
+                  <div
+                    className="flex justify-center xl:justify-start xl:w-[260px] flex-shrink-0 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                    onClick={() => setIsFullscreen(true)}
+                  >
                     <div
-                      className="w-full max-w-[260px] aspect-[4/3] bg-contain bg-center bg-no-repeat rounded-lg shadow-sm border bg-slate-50 select-none pointer-events-none"
+                      className="w-full max-w-[260px] aspect-[4/3] bg-contain bg-center bg-no-repeat rounded-lg shadow-sm border bg-slate-50 select-none"
                       style={{ backgroundImage: `url('/images/branch/${storecode?.toUpperCase()}.png')` }}
                       aria-label={`Branch ${storecode}`}
                     />
                   </div>
+
+                  {/* Fullscreen Image Overlay */}
+                  {isFullscreen && (
+                    <div
+                      className="fixed inset-0 z-[99999] bg-black/90 flex items-center justify-center p-4 cursor-zoom-out print:hidden backdrop-blur-sm"
+                      onClick={() => setIsFullscreen(false)}
+                      title="แตะเพื่อย่อรูปภาพ"
+                    >
+                      <img
+                        src={`/images/branch/${storecode?.toUpperCase()}.png`}
+                        alt={`Branch ${storecode}`}
+                        className="max-w-full max-h-full object-contain select-none shadow-2xl rounded-xl"
+                        draggable={false}
+                      />
+                    </div>
+                  )}
 
                   {/* CENTER: Shelf Structure List */}
                   <div className="flex-1 flex flex-col">

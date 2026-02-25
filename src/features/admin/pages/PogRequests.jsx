@@ -39,7 +39,6 @@ const STATUS_STYLES = {
 const ACTION_STYLES = {
     add: { label: "เพิ่มสินค้า", badge: "bg-emerald-100 text-emerald-800" },
     move: { label: "ย้ายสินค้า", badge: "bg-blue-100 text-blue-800" },
-    swap: { label: "สลับตำแหน่ง", badge: "bg-purple-100 text-purple-800" },
     delete: { label: "ลบสินค้า", badge: "bg-rose-100 text-rose-800" },
 };
 
@@ -199,8 +198,8 @@ const EditPositionModal = ({ isOpen, onClose, item, onSave }) => {
 
     if (!isOpen || !item) return null;
 
-    const showFrom = ["move", "delete", "swap"].includes(item.action);
-    const showTo = ["add", "move", "swap"].includes(item.action);
+    const showFrom = ["move", "delete"].includes(item.action);
+    const showTo = ["add", "move"].includes(item.action);
 
     const PositionFields = ({ title, prefix }) => (
         <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
@@ -302,7 +301,10 @@ export default function PogRequests() {
     const [updating, setUpdating] = useState(null);
     const [stats, setStats] = useState({ pending: 0, rejected: 0, completed: 0 }); // API stats
 
-    const [visibleCount, setVisibleCount] = useState(50);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [bulkUpdating, setBulkUpdating] = useState(false);
 
@@ -313,54 +315,40 @@ export default function PogRequests() {
     const loadData = useCallback(async () => {
         setLoading(true);
         try {
-            const params = { limit: 1000 };
+            const params = { limit: 50, page };
             if (filterStatus) params.status = filterStatus;
             if (filterBranch) params.branchCode = filterBranch;
             if (filterAction) params.action = filterAction;
+            if (filterShelf) params.shelf = filterShelf;
+            if (filterRow) params.row = filterRow;
 
             const res = await api.get("/pog-requests", { params });
             setData(res.data?.data || []);
+            setTotalPages(res.data?.totalPages || 1);
+            setTotalItems(res.data?.total || 0);
 
             if (res.data?.stats) {
                 setStats(res.data.stats);
             }
 
             setSelectedIds(new Set());
-            setVisibleCount(50);
         } catch (e) {
             console.error("Load POG requests error:", e);
         } finally {
             setLoading(false);
         }
-    }, [filterStatus, filterBranch, filterAction]);
+    }, [filterStatus, filterBranch, filterAction, filterShelf, filterRow, page]);
 
     useEffect(() => { loadData(); }, [loadData]);
 
-    // Unique values for filters
-    const availableBranches = useMemo(() => [...new Set(data.map(d => d.branchCode).filter(Boolean))].sort(), [data]);
-    const availableShelves = useMemo(() => {
-        const s = new Set();
-        data.forEach(d => { if (d.fromShelf) s.add(d.fromShelf); if (d.toShelf) s.add(d.toShelf); });
-        return [...s].sort();
-    }, [data]);
-    const availableRows = useMemo(() => {
-        const r = new Set();
-        data.forEach(d => { if (d.fromRow) r.add(d.fromRow); if (d.toRow) r.add(d.toRow); });
-        return [...r].sort((a, b) => parseInt(a) - parseInt(b));
-    }, [data]);
+    useEffect(() => {
+        setPage(1);
+    }, [filterStatus, filterBranch, filterAction, filterShelf, filterRow]);
 
-    // Filtering & Sorting
-    const filteredData = useMemo(() => {
-        return data.filter(d => {
-            if (filterBranch && d.branchCode !== filterBranch) return false;
-            // For shelf/row, check both from/to fields
-            if (filterShelf && d.fromShelf !== filterShelf && d.toShelf !== filterShelf) return false;
-            if (filterRow && String(d.fromRow) !== String(filterRow) && String(d.toRow) !== String(filterRow)) return false;
-            return true;
-        }).sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    }, [data, filterBranch, filterShelf, filterRow]);
+    const availableBranches = useMemo(() => Object.keys(BRANCH_NAMES).sort(), []);
+    const availableRows = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-    const visibleData = filteredData.slice(0, visibleCount);
+    const visibleData = data;
 
     // Status Updates
     const updateStatus = async (id, newStatus, reason = null) => {
@@ -419,21 +407,22 @@ export default function PogRequests() {
     };
 
     const handleApproveAllPending = async () => {
-        const pending = filteredData.filter(d => d.status === 'pending');
-        if (pending.length === 0) return alert("ไม่มีรายการรอดำเนินการ");
-        if (!confirm(`อนุมัติทั้งหมด ${pending.length} รายการ?`)) return;
+        const pending = visibleData.filter(d => d.status === 'pending');
+        if (pending.length === 0) return alert("ไม่มีรายการรอดำเนินการบนหน้านี้");
+        if (!confirm(`อนุมัติทั้งหมด ${pending.length} รายการในหน้านี้?`)) return;
 
         setBulkUpdating(true);
         try {
             const res = await api.post("/pog-requests/bulk-approve", { ids: pending.map(p => p.id) });
             if (res.data?.ok) {
                 setData(prev => prev.map(d => d.status === 'pending' ? { ...d, status: "completed" } : d));
+                const successCount = res.data.successCount || pending.length;
                 setStats(prev => ({
                     ...prev,
-                    pending: 0,
-                    completed: prev.completed + pending.length
+                    pending: Math.max(0, prev.pending - successCount),
+                    completed: prev.completed + successCount
                 }));
-                alert("✅ อนุมัติทั้งหมดเรียบร้อย");
+                alert(`✅ อนุมัติ ${successCount} รายการเรียบร้อย`);
             }
         } catch (e) {
             const msg = e.response?.data?.message || e.message;
@@ -543,22 +532,23 @@ export default function PogRequests() {
                                 <option value="add">เพิ่มสินค้า</option>
                                 <option value="move">ย้ายสินค้า</option>
                                 <option value="delete">ลบสินค้า</option>
-                                <option value="swap">สลับตำแหน่ง</option>
                             </select>
                         </div>
 
                         <div className="w-px h-8 bg-slate-200 mx-1 hidden md:block" />
 
-                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[100px]">
+                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg w-full max-w-[150px]">
                             <Layers size={16} className="text-slate-400" />
-                            <select
-                                value={filterShelf}
-                                onChange={e => setFilterShelf(e.target.value)}
-                                className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
-                            >
-                                <option value="">Shelf</option>
-                                {availableShelves.map(s => <option key={s} value={s}>{s}</option>)}
-                            </select>
+                            <input
+                                type="text"
+                                placeholder="ค้นหา Shelf"
+                                defaultValue={filterShelf}
+                                onBlur={e => setFilterShelf(e.target.value.trim().toUpperCase())}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') setFilterShelf(e.currentTarget.value.trim().toUpperCase());
+                                }}
+                                className="bg-transparent text-sm w-full outline-none text-slate-700 placeholder:text-slate-400"
+                            />
                         </div>
 
                         <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[100px]">
@@ -583,15 +573,15 @@ export default function PogRequests() {
                     </div>
 
                     {/* Bulk Actions Bar */}
-                    {filterStatus === 'pending' && filteredData.length > 0 && (
+                    {filterStatus === 'pending' && visibleData.length > 0 && (
                         <div className="flex items-center gap-3 pt-3 border-t border-slate-100 animate-in slide-in-from-top-2">
                             <div className="flex items-center gap-2">
                                 <input
                                     type="checkbox"
                                     className="w-5 h-5 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                    checked={selectedIds.size > 0 && selectedIds.size === filteredData.filter(d => d.status === 'pending').length}
+                                    checked={selectedIds.size > 0 && selectedIds.size === visibleData.filter(d => d.status === 'pending').length}
                                     onChange={(e) => {
-                                        if (e.target.checked) setSelectedIds(new Set(filteredData.filter(d => d.status === 'pending').map(d => d.id)));
+                                        if (e.target.checked) setSelectedIds(new Set(visibleData.filter(d => d.status === 'pending').map(d => d.id)));
                                         else setSelectedIds(new Set());
                                     }}
                                 />
@@ -760,14 +750,28 @@ export default function PogRequests() {
                         </table>
                     </div>
                     {/* Pagination / Footer */}
-                    {filteredData.length > visibleCount && (
-                        <div className="p-4 border-t border-slate-200 bg-slate-50 text-center">
-                            <button
-                                onClick={() => setVisibleCount(prev => prev + 50)}
-                                className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
-                            >
-                                โหลดเพิ่มเติม ({visibleCount} / {filteredData.length})
-                            </button>
+                    {totalPages > 0 && (
+                        <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-sm text-slate-600">
+                            <div>
+                                แสดง {visibleData.length} รายการ (จากทั้งหมด {totalItems} รายการ)
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    onClick={() => setPage(p => Math.max(1, p - 1))}
+                                    disabled={page === 1}
+                                    className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    ก่อนหน้า
+                                </button>
+                                <span className="font-medium px-2">หน้า {page} / {totalPages}</span>
+                                <button
+                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                                    disabled={page === totalPages}
+                                    className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    ถัดไป
+                                </button>
+                            </div>
                         </div>
                     )}
                 </div>

@@ -10,12 +10,10 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
   const barcodeInputRef = useRef(null);
 
   const [barcode, setBarcode] = useState("");
+  const [scannedBarcode, setScannedBarcode] = useState("");
   const [barcodeError, setBarcodeError] = useState("");
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupRes, setLookupRes] = useState(null);
-
-  const [blocksLoading, setBlocksLoading] = useState(false);
-  const [shelfBlocks, setShelfBlocks] = useState(null);
 
   // ✅ กล้อง + popup
   const [cameraOpen, setCameraOpen] = useState(false);
@@ -53,9 +51,9 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
 
   const clearAll = () => {
     setBarcode("");
+    setScannedBarcode("");
     setBarcodeError("");
     setLookupRes(null);
-    setShelfBlocks(null);
     setPopupOpen(false);
     requestAnimationFrame(() => barcodeInputRef.current?.focus?.());
   };
@@ -70,7 +68,6 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
 
     setLookupLoading(true);
     setLookupRes(null);
-    setShelfBlocks(null);
     setBarcodeError("");
 
     try {
@@ -88,27 +85,16 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
     }
   };
 
-  const loadShelfBlocks = async (shelfCode) => {
-    if (!storecode || !shelfCode) return;
-    setBlocksLoading(true);
-    try {
-      const res = await api.get("/shelf-blocks", {
-        params: { branchCode: storecode, shelfCode },
-        timeout: 15000,
-      });
-      setShelfBlocks(res.data);
-    } catch (e) {
-      console.error("shelf-blocks error:", e);
-      setShelfBlocks(null);
-    } finally {
-      setBlocksLoading(false);
-    }
-  };
-
-  // ✅ สแกนจากกล้องแล้ว: เปิด popup “ก่อน” แล้วค่อยยิง API (ให้ user เห็นสปิน)
   const onCameraDetected = React.useCallback((code) => {
     setCameraOpen(false);
-    setBarcode(code);
+    if (code.length < 5) {
+      setBarcodeError("บาร์โค้ดควรมีอย่างน้อย 5 ตัว");
+      setBarcode(code);
+      return;
+    }
+    setBarcodeError("");
+    setScannedBarcode(code);
+    setBarcode(""); // ✅ เคลียร์ทันทีที่สแกน
 
     // เปิด popup ทันทีเพื่อโชว์สปิน
     setPopupOpen(true);
@@ -121,30 +107,19 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
   const openPopupAndLookup = (bc) => {
     const code = String(bc || "").trim();
     if (!code) return;
-    setBarcode(code);
+    if (code.length < 5) {
+      setBarcodeError("บาร์โค้ดควรมีอย่างน้อย 5 ตัว");
+      return;
+    }
+    setBarcodeError("");
+    setScannedBarcode(code);
+    setBarcode(""); // ✅ เคลียร์ทันทีที่กดค้นหาเพื่อรับบาร์โค้ดถัดไป
     setPopupOpen(true);
     lookupByBarcode(code);
   };
 
   return (
     <section className="space-y-3">
-      {/* ✅ Pulse animation สำหรับช่องสแกน */}
-      <style>{`
-        @keyframes scannerPulse {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); }
-          50% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); }
-        }
-        .scanner-input {
-          border: 2px solid #dc2626 !important;
-          animation: scannerPulse 2s ease-in-out infinite;
-        }
-        .scanner-input:focus {
-          border-color: #dc2626 !important;
-          box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.3) !important;
-          animation: none;
-        }
-      `}</style>
-
       {/* กล้อง modal */}
       <CameraBarcodeScannerModal
         open={cameraOpen}
@@ -158,7 +133,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
         onClose={() => setPogRequestOpen(false)}
         branchCode={storecode}
         branchName={branchName}
-        barcode={barcode}
+        barcode={scannedBarcode}
         productName={lookupRes?.product?.name}
         currentShelf={primaryLoc?.shelfCode}
         currentRow={primaryLoc?.rowNo}
@@ -168,13 +143,27 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
       />
 
       <div className="bg-white border rounded-xl shadow-sm p-4">
-        <div className="text-base font-semibold text-slate-800">ค้นหาสินค้าจากบาร์โค้ด</div>
-        <div className="text-sm text-slate-500 mt-1">
-          พิมพ์บาร์โค้ดหรือใช้กล้องสแกน
+        {/* ✅ Header: หัวข้อซ้าย + ปุ่มกล้องขวา */}
+        <div className="flex items-start justify-between">
+          <div>
+            <div className="text-base font-semibold text-slate-800">ค้นหาสินค้าจากบาร์โค้ด</div>
+            <div className="text-sm text-slate-500 mt-1">
+              สแกนบาร์โค้ดเพื่อค้นหาสินค้า
+            </div>
+          </div>
+          {/* ✅ ปุ่มกล้อง มุมบนขวา เฉพาะมือถือ */}
+          <button
+            type="button"
+            onClick={() => setCameraOpen(true)}
+            className="sm:hidden w-10 h-10 rounded-lg text-lg  text-white transition-colors flex items-center justify-center shadow-sm shrink-0 ml-3"
+            title="ใช้กล้องสแกน"
+          >
+            📷
+          </button>
         </div>
 
-        {/* ✅ แถบแดงบอกสถานะ Scanner Ready */}
-        <div className="mt-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200">
+        {/* ✅ แถบแดงบอกสถานะ Scanner Ready (เฉพาะบน PC) */}
+        <div className="hidden sm:flex mt-3 items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200">
           <span className="relative flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-3 w-3 bg-red-500"></span>
@@ -182,53 +171,49 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
           <span className="text-xs font-semibold text-red-700">พร้อมรับสแกนจากเครื่องยิงบาร์โค้ด</span>
         </div>
 
-        <div className="mt-3 flex flex-col sm:flex-row gap-2">
-          <input
-            ref={barcodeInputRef}
-            type="text"
-            inputMode="text"
-            value={barcode}
-            onChange={(e) => {
-              const raw = e.target.value || "";
-              setBarcode(raw);
-              if (barcodeError) {
-                setBarcodeError("");
-              }
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") openPopupAndLookup(barcode);
-            }}
-            placeholder="📡 ยิงบาร์โค้ดที่นี่..."
-            className="scanner-input flex-1 px-4 py-3 rounded-xl text-base font-semibold focus:outline-none bg-red-50 placeholder:text-red-400"
-          />
-
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={() => openPopupAndLookup(barcode)}
-              disabled={!String(barcode).trim() || lookupLoading}
-              className="px-5 py-3 rounded-xl font-semibold text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors"
-            >
-              {lookupLoading ? "กำลังค้นหา..." : "ค้นหา"}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setCameraOpen(true)}
-              className="px-5 py-3 rounded-xl font-semibold text-sm bg-blue-600 text-white hover:bg-blue-500 transition-colors"
-            >
-              ใช้กล้อง
-            </button>
-
-            <button
-              type="button"
-              onClick={clearAll}
-              className="px-4 py-3 rounded-xl font-semibold text-sm border border-slate-300 bg-white hover:bg-slate-50 text-slate-600 transition-colors"
-            >
-              ล้าง
-            </button>
+        {/* ✅ ช่องกรอก + ปุ่มค้นหา */}
+        <div className="mt-3 flex gap-2">
+          <div className="flex flex-1 relative min-w-0">
+            <input
+              ref={barcodeInputRef}
+              type="text"
+              inputMode="text"
+              value={barcode}
+              onChange={(e) => {
+                const raw = e.target.value || "";
+                setBarcode(raw);
+                if (barcodeError) {
+                  setBarcodeError("");
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") openPopupAndLookup(barcode);
+              }}
+              placeholder=""
+              className="w-full px-4 py-3 pr-10 rounded-xl text-base font-semibold border border-slate-300 bg-white placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400"
+            />
+            {barcode && (
+              <button
+                type="button"
+                onClick={clearAll}
+                className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-slate-400 hover:text-slate-600 rounded-full hover:bg-slate-100 transition-colors"
+                aria-label="ล้าง"
+              >
+                ✕
+              </button>
+            )}
           </div>
+
+          <button
+            type="button"
+            onClick={() => openPopupAndLookup(barcode)}
+            disabled={!String(barcode).trim() || lookupLoading}
+            className="shrink-0 px-5 py-3 rounded-xl font-semibold text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors flex items-center justify-center"
+          >
+            {lookupLoading ? "..." : "ค้นหา"}
+          </button>
         </div>
+
         {barcodeError && (
           <div className="mt-2 text-xs text-rose-600">{barcodeError}</div>
         )}
@@ -262,7 +247,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
                   <div>
                     <div className="text-sm font-semibold text-slate-800">กำลังดึงข้อมูลจากระบบ…</div>
                     <div className="text-xs text-slate-500 mt-1">
-                      บาร์โค้ด: <span className="font-semibold text-slate-700">{barcode || "-"}</span>
+                      บาร์โค้ด: <span className="font-semibold text-slate-700">{scannedBarcode || "-"}</span>
                     </div>
                   </div>
                 </div>
@@ -338,34 +323,6 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
                     <div className="mt-3 flex flex-col sm:flex-row gap-2">
                       <button
                         type="button"
-                        onClick={async () => {
-                          if (shelfBlocks) {
-                            setShelfBlocks(null); // ✅ Toggle Off
-                          } else {
-                            await loadShelfBlocks(primaryLoc.shelfCode); // ✅ Toggle On
-                          }
-                        }}
-                        className={cx(
-                          "flex-1 px-4 py-3 rounded-xl font-semibold text-sm border hover:bg-slate-50",
-                          shelfBlocks ? "bg-slate-200 text-slate-700" : "bg-white"
-                        )}
-                      >
-                        {shelfBlocks ? "ปิดบล็อก" : "ดูเป็นบล็อก"}
-                      </button>
-
-                      {/* <button
-                        type="button"
-                        onClick={() => {
-                          setPopupOpen(false);
-                          onGoShelf?.(primaryLoc.shelfCode);
-                        }}
-                        className="flex-1 px-4 py-3 rounded-xl font-semibold text-sm border bg-white hover:bg-slate-50"
-                      >
-                        ไปหน้า Shelf
-                      </button> */}
-
-                      <button
-                        type="button"
                         onClick={() => {
                           setRequestAction(""); // ✅ Default (user selects)
                           setPogRequestOpen(true);
@@ -378,71 +335,12 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
                     </div>
                   </div>
                 )}
-
-                {(blocksLoading || shelfBlocks) && (
-                  <div className="mt-3 border rounded-xl p-3">
-                    <div className="text-sm font-semibold text-slate-800">
-                      {blocksLoading ? "กำลังโหลด Shelf..." : `Shelf ${shelfBlocks?.shelf?.shelfCode || "-"}`}
-                    </div>
-
-                    {!blocksLoading && Array.isArray(shelfBlocks?.rows) && (
-                      <div className="mt-3 space-y-3 max-h-[45vh] overflow-y-auto pr-1">
-                        {shelfBlocks.rows.map((row) => {
-                          const isTargetRow = primaryLoc && row.rowNo === primaryLoc.rowNo;
-                          return (
-                            <div
-                              key={row.rowNo}
-                              className={cx(
-                                "rounded-xl border p-3",
-                                isTargetRow ? "border-emerald-300 bg-emerald-50" : "bg-white"
-                              )}
-                            >
-                              <div className="flex items-center justify-between">
-                                <div className={cx("text-sm font-bold", isTargetRow ? "text-emerald-800" : "text-slate-800")}>
-                                  Row {row.rowNo}
-                                </div>
-                                <div className="text-xs text-slate-500">{(row.items || []).length} รายการ</div>
-                              </div>
-
-                              <div className="mt-2 flex flex-wrap gap-2">
-                                {(row.items || []).map((it) => {
-                                  const isTarget =
-                                    primaryLoc &&
-                                    row.rowNo === primaryLoc.rowNo &&
-                                    Number(it.index) === primaryLoc.index;
-
-                                  return (
-                                    <div
-                                      key={`${it.codeProduct}-${it.index}`}
-                                      className={cx(
-                                        "px-2 py-2 rounded-lg border text-xs min-w-[92px]",
-                                        isTarget ? "border-emerald-500 bg-white shadow-sm" : "bg-slate-50"
-                                      )}
-                                    >
-                                      <div className={cx("font-extrabold", isTarget ? "text-emerald-800" : "text-slate-800")}>
-                                        {it.index}
-                                      </div>
-                                      <div className="text-slate-700 line-clamp-2">
-                                        {it.name || `#${it.codeProduct}`}
-                                      </div>
-                                      {it.brand ? <div className="text-slate-500">{it.brand}</div> : null}
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </div>
-                )}
               </>
             )}
 
             <div className="mt-4 flex justify-end gap-2">
               <button
-                className="px-3 py-2 rounded-lg text-xs font-semibold border bg-white hover:bg-slate-50"
+                className="sm:hidden px-3 py-2 rounded-lg text-xs font-semibold border bg-white hover:bg-slate-50"
                 onClick={() => {
                   setPopupOpen(false);
                   setCameraOpen(true);
@@ -459,9 +357,8 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
             </div>
           </div>
         </div>
-      )
-      }
-    </section >
+      )}
+    </section>
   );
 };
 

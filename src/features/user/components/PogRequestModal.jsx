@@ -48,39 +48,79 @@ export default function PogRequestModal({
     const availableShelves = shelves;
     const branchName = initialBranchName || branchNameFromApi;
 
-    // ✅ โหลด shelves จาก API เสมอเพื่อให้ได้ shelf ทั้งหมด (รวม shelf ที่ว่างเปล่า)
+    // ✅ โหลด shelves จาก API
+    const fetchShelves = async () => {
+        setShelvesLoading(true);
+        try {
+            const res = await api.get("/branch-shelves", { params: { branchCode } });
+            const apiShelves = res.data?.shelves || [];
+
+            // ✅ Merge API data กับ initialShelves
+            const merged = apiShelves.map(apiShelf => {
+                const propsShelf = initialShelves.find(s => s.shelfCode === apiShelf.shelfCode);
+                return {
+                    ...apiShelf,
+                    items: propsShelf?.items?.length > 0 ? propsShelf.items : apiShelf.items || []
+                };
+            });
+
+            setShelves(merged);
+            setBranchNameFromApi(res.data?.branchName || "");
+        } catch (e) {
+            console.error("Failed to load shelves:", e);
+            setShelves(initialShelves);
+        } finally {
+            setShelvesLoading(false);
+        }
+    };
+
+    // ✅ โหลดข้อมูลครั้งแรกเมื่อเปิด Modal
     useEffect(() => {
         if (!open || !branchCode) return;
-
-        const fetchShelves = async () => {
-            setShelvesLoading(true);
-            try {
-                const res = await api.get("/branch-shelves", { params: { branchCode } });
-                const apiShelves = res.data?.shelves || [];
-
-                // ✅ Merge API data กับ initialShelves (ใช้ barcode จาก initialShelves สำหรับ duplicate check)
-                const merged = apiShelves.map(apiShelf => {
-                    const propsShelf = initialShelves.find(s => s.shelfCode === apiShelf.shelfCode);
-                    return {
-                        ...apiShelf,
-                        // ใช้ items จาก props ถ้ามี (มี barcode) มิฉะนั้นใช้จาก API
-                        items: propsShelf?.items?.length > 0 ? propsShelf.items : apiShelf.items || []
-                    };
-                });
-
-                setShelves(merged);
-                setBranchNameFromApi(res.data?.branchName || "");
-            } catch (e) {
-                console.error("Failed to load shelves:", e);
-                // Fallback ใช้ initialShelves ถ้า API fail
-                setShelves(initialShelves);
-            } finally {
-                setShelvesLoading(false);
-            }
-        };
-
         fetchShelves();
     }, [open, branchCode, initialShelves]);
+
+    // ✅ ระบบ Auto-Refresh เมื่อไม่ได้ใช้งาน (Idle Timeout = 5 นาที)
+    const lastActivityRef = React.useRef(Date.now());
+    const [isIdle, setIsIdle] = useState(false);
+
+    useEffect(() => {
+        if (!open) return;
+
+        // อัปเดตเวลาใช้งานล่าสุด
+        const handleActivity = () => {
+            lastActivityRef.current = Date.now();
+            if (isIdle) setIsIdle(false);
+        };
+
+        // จับ Event การขยับเมาส์ พิมพ์ หรือคลิก
+        window.addEventListener('mousemove', handleActivity);
+        window.addEventListener('keydown', handleActivity);
+        window.addEventListener('click', handleActivity);
+        window.addEventListener('scroll', handleActivity);
+
+        // เช็ค Idle ทุกๆ 1 นาที
+        const checkIdleInterval = setInterval(() => {
+            const now = Date.now();
+            const inactiveDuration = now - lastActivityRef.current;
+
+            // ถ้าปล่อยทิ้งไว้เกิน 5 นาที (300,000 ms) ให้ดึงข้อมูลใหม่
+            if (inactiveDuration >= 5 * 60 * 1000) {
+                console.log("Idle detected, refreshing shelf data...");
+                fetchShelves();
+                lastActivityRef.current = now; // รีเซ็ตเวลาเพื่อไม่ให้โหลดถี่เกินไป
+                setIsIdle(true);
+            }
+        }, 60 * 1000);
+
+        return () => {
+            window.removeEventListener('mousemove', handleActivity);
+            window.removeEventListener('keydown', handleActivity);
+            window.removeEventListener('click', handleActivity);
+            window.removeEventListener('scroll', handleActivity);
+            clearInterval(checkIdleInterval);
+        };
+    }, [open, branchCode]);
 
     // ✅ คำนวณ available rows สำหรับ shelf ที่เลือก
     const selectedShelfData = useMemo(() => {
@@ -158,22 +198,6 @@ export default function PogRequestModal({
         setSubmitted(false); // ✅ Reset submitted state
     };
 
-    // ✅ Flag เพื่อป้องกัน reset เมื่อโหลดจาก localStorage
-    const isLoadingFromStorageRef = React.useRef(false);
-
-    // Reset when shelf changes (ยกเว้นตอนโหลดจาก localStorage)
-    useEffect(() => {
-        if (isLoadingFromStorageRef.current) return;
-        setToRow("");
-        setToIndex("");
-    }, [toShelf]);
-
-    // Reset when row changes (ยกเว้นตอนโหลดจาก localStorage)
-    useEffect(() => {
-        if (isLoadingFromStorageRef.current) return;
-        setToIndex("");
-    }, [toRow]);
-
     // Reset action when initialAction changes
     useEffect(() => {
         if (initialAction) setAction(initialAction);
@@ -191,17 +215,9 @@ export default function PogRequestModal({
                 if (saved) {
                     const { shelf, row, index } = JSON.parse(saved);
 
-                    // ✅ ตั้ง flag ก่อนโหลดเพื่อป้องกัน reset
-                    isLoadingFromStorageRef.current = true;
-
                     if (shelf) setToShelf(shelf);
                     if (row) setToRow(String(row));
                     if (index) setToIndex(String(index));
-
-                    // ✅ Reset flag หลังจาก state update เสร็จ
-                    setTimeout(() => {
-                        isLoadingFromStorageRef.current = false;
-                    }, 100);
                 }
             } catch (e) {
                 console.error("Failed to load last position:", e);
@@ -428,6 +444,8 @@ export default function PogRequestModal({
                                                                         }`}
                                                                     onClick={() => {
                                                                         setToShelf(shelf.shelfCode);
+                                                                        setToRow("");
+                                                                        setToIndex("");
                                                                         setIsShelfDropdownOpen(false);
                                                                     }}
                                                                 >
@@ -454,7 +472,10 @@ export default function PogRequestModal({
                                             <label className="text-sm text-slate-600">ชั้นที่ (Row)</label>
                                             <select
                                                 value={toRow}
-                                                onChange={(e) => setToRow(e.target.value)}
+                                                onChange={(e) => {
+                                                    setToRow(e.target.value);
+                                                    setToIndex("");
+                                                }}
                                                 disabled={!toShelf || availableRows.length === 0}
                                                 className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-white disabled:bg-slate-100"
                                             >
