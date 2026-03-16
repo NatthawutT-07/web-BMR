@@ -58,10 +58,10 @@ const Dashboard = () => {
   ];
 
   return (
-    <div className="mt-4 sm:mt-8 lg:mt-10 bg-gradient-to-br flex items-center justify-center px-4 py-6">
+    <div className="mt-2 sm:mt-4 lg:mt-6 bg-gradient-to-br flex items-center justify-center px-4 py-6">
       <div className="max-w-4xl w-full">
         {/* Header */}
-        <header className="mb-6 md:mb-8 text-center">
+        <header className="mb-2 md:mb-2 text-center">
           <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-slate-200 text-[11px] uppercase tracking-[0.16em] text-slate-500 shadow-sm mb-2">
             BMR POG Admin Console
           </p>

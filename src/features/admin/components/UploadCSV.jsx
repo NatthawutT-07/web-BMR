@@ -255,7 +255,7 @@ const UploadCSV = () => {
       minMax: "ItemMinMax XLSX",
       masterItem: "MasterItem XLSX",
       bill: "Bill XLSX",
-      si: "Order SI XLSX",
+      // si: "Order SI XLSX",
       gourmet: "Gourmet Sales XLSX",
     };
 

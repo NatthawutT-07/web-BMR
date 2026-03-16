@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import api from "../../../../../utils/axios";
 
 const BranchSelector = React.memo(
   ({
@@ -10,6 +11,23 @@ const BranchSelector = React.memo(
     onRefreshProduct,
 
   }) => {
+    const [activeBranchCodes, setActiveBranchCodes] = useState([]);
+
+    useEffect(() => {
+      const fetchActiveBranches = async () => {
+        try {
+          const res = await api.get("/active-branches");
+          if (Array.isArray(res.data)) {
+            // res.data is expected to be array of objects with { code, label }
+            setActiveBranchCodes(res.data.map(b => b.code));
+          }
+        } catch (err) {
+          console.error("Failed to fetch active branches:", err);
+        }
+      };
+      fetchActiveBranches();
+    }, []);
+
     const handleSubmit = (e) => {
       if (onSubmit) {
         onSubmit(e);
@@ -27,6 +45,7 @@ const BranchSelector = React.memo(
     const excludedBranches = ['EC000', 'ST000', 'ST041', 'ST010', 'ST028', 'ST029', 'ST030', 'ST023', 'ST035', 'ST039', 'ST040',];
     const sortedBranches = [...(branches || [])]
       .filter((b) => !excludedBranches.includes(b.branch_code))
+      .filter((b) => activeBranchCodes.length === 0 || activeBranchCodes.includes(b.branch_code)) // Filter active branches
       .sort((a, b) => {
         const numA = parseInt(a.branch_code?.replace(/\D/g, '') || '0', 10);
         const numB = parseInt(b.branch_code?.replace(/\D/g, '') || '0', 10);

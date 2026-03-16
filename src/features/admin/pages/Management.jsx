@@ -203,7 +203,7 @@ const Management = () => {
                     value={userForm.name}
                     onChange={(e) => setUserForm({ ...userForm, name: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="เช่น admin1"
+                    placeholder=""
                   />
                 </div>
                 <div className="flex-1 min-w-[200px]">
@@ -213,7 +213,7 @@ const Management = () => {
                     value={userForm.password}
                     onChange={(e) => setUserForm({ ...userForm, password: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="รหัสผ่าน"
+                    placeholder=""
                   />
                 </div>
                 <div className="w-[150px]">
@@ -344,7 +344,7 @@ const Management = () => {
                     value={branchForm.branch_code}
                     onChange={(e) => setBranchForm({ ...branchForm, branch_code: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="เช่น 1001"
+                    placeholder=""
                   />
                 </div>
                 <div className="flex-[2] min-w-[200px]">
@@ -354,7 +354,7 @@ const Management = () => {
                     value={branchForm.branch_name}
                     onChange={(e) => setBranchForm({ ...branchForm, branch_name: e.target.value })}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                    placeholder="เช่น สาขาเอกมัย"
+                    placeholder=""
                   />
                 </div>
                 <div className="flex gap-2">
