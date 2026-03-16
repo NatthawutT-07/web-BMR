@@ -10,6 +10,8 @@ import {
   uploadItemMinMaxXLSX,
   uploadMasterItemXLSX,
   uploadBillXLSX,
+  uploadSI_XLSX,
+  uploadGourmetXLSX,
   getUploadStatus,
 } from "../../../api/admin/upload";
 
@@ -58,6 +60,8 @@ const UploadCSV = () => {
     minMax: uploadItemMinMaxXLSX,
     masterItem: uploadMasterItemXLSX,
     bill: uploadBillXLSX,
+    si: uploadSI_XLSX,
+    gourmet: uploadGourmetXLSX,
   };
 
   const makeJobId = () => {
@@ -251,7 +255,8 @@ const UploadCSV = () => {
       minMax: "ItemMinMax XLSX",
       masterItem: "MasterItem XLSX",
       bill: "Bill XLSX",
-      gourmet: "Gourmet XLSX",
+      si: "Order SI XLSX",
+      gourmet: "Gourmet Sales XLSX",
     };
 
     return (
@@ -401,6 +406,8 @@ const UploadCSV = () => {
         <option value="minMax">ItemMinMax XLSX</option>
         <option value="masterItem">MasterItem XLSX</option>
         <option value="bill">Bill XLSX</option>
+        <option value="si">Order SI XLSX</option>
+        <option value="gourmet">Gourmet XLSX</option>
       </select>
 
       {selectedFileType && renderFileUploadForm(selectedFileType)}

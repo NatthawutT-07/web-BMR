@@ -54,5 +54,13 @@ export const uploadMasterItemXLSX = (file, onProgress, jobId) =>
 export const uploadBillXLSX = (file, onProgress, jobId) =>
   uploadXLSX(api, file, "/upload-bill", onProgress, jobId);
 
+// SI (Order SI)
+export const uploadSI_XLSX = (file, onProgress, jobId) =>
+  uploadXLSX(api, file, "/upload-si", onProgress, jobId);
+
+// Gourmet
+export const uploadGourmetXLSX = (file, onProgress, jobId) =>
+  uploadXLSX(api, file, "/upload-gourmets", onProgress, jobId);
+
 export const getUploadStatus = (jobId) =>
   api.get("/upload-status", { params: { jobId } });

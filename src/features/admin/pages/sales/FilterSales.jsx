@@ -2,18 +2,16 @@ import React, { useState } from "react";
 import MainFilterSales from "../../components/sales/sales-branch/MainFilterSales";
 import DashboardSales from "../../components/sales/dashboard/DashboardSales";
 import MainSalesProduct from "../../components/sales/product/MainSalesProduct";
-import CalculatorSales from "../../components/sales/calculator/CalculatorSales";
 import Member from "../../components/sales/member/Member";
 
 const FilterSales = () => {
-    const [activePage, setActivePage] = useState("dashboard-sales");
+    const [activePage, setActivePage] = useState("member");
 
     const tabs = [
-        { id: "dashboard-sales", label: "Dashboard" },
-        { id: "sales", label: "Sales by branch" },
-        { id: "product-sales", label: "Product Quantity" },
+        // { id: "dashboard-sales", label: "Dashboard" },
+        // { id: "sales", label: "Sales by branch" },
+        // { id: "product-sales", label: "Product Quantity" },
         { id: "member", label: "Member" },
-        { id: "calculator-sales", label: "Calculator" },
 
     ];
 
@@ -25,7 +23,7 @@ const FilterSales = () => {
                     <div className="mx-auto max-w-7xl flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                         <div>
                             <h1 className="text-base md:text-lg font-semibold text-slate-800">
-                                Sales tools
+                                Member
                             </h1>
 
                         </div>
@@ -60,11 +58,10 @@ const FilterSales = () => {
             {/* Content */}
             <main className="flex-1">
                 <div className="mx-auto max-w-8xl w-full">
-                    {activePage === "dashboard-sales" && <DashboardSales />}
-                    {activePage === "sales" && <MainFilterSales />}
-                    {activePage === "product-sales" && <MainSalesProduct />}
+                    {/* {activePage === "dashboard-sales" && <DashboardSales />} */}
+                    {/* {activePage === "sales" && <MainFilterSales />} */}
+                    {/* {activePage === "product-sales" && <MainSalesProduct />} */}
                     {activePage === "member" && <Member />}
-                    {activePage === "calculator-sales" && <CalculatorSales />}
                 </div>
             </main>
         </div>

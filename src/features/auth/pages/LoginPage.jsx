@@ -145,6 +145,15 @@ function LoginPage() {
     }
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && loginMode === "manual") {
+      e.preventDefault();
+      if (!isSubmitting && manualUser && manualPassword) {
+        handleManualLogin(manualUser, manualPassword);
+      }
+    }
+  };
+
   // ✅ ถ้าล็อกอินค้างอยู่แล้ว → เด้งตาม role
   useEffect(() => {
     if (accessToken && user) {
@@ -227,6 +236,7 @@ function LoginPage() {
                     setManualUser(e.target.value);
                     if (errorMsg) setErrorMsg("");
                   }}
+                  onKeyDown={handleKeyDown}
                   autoComplete="off"
                   data-lpignore="true"
                   className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-3 text-sm text-slate-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"
@@ -239,6 +249,7 @@ function LoginPage() {
                     setManualPassword(e.target.value);
                     if (errorMsg) setErrorMsg("");
                   }}
+                  onKeyDown={handleKeyDown}
                   autoComplete="off"
                   data-lpignore="true"
                   className="w-full rounded-lg border border-emerald-200 bg-white px-3 py-3 text-sm text-slate-700 shadow-sm focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200"

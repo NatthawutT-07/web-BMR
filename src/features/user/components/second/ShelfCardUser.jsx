@@ -40,14 +40,32 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
     const el = contentRef.current;
     if (!el) return;
 
+    // Use ResizeObserver to update max height dynamically if content changes size while open
+    let observer;
     if (isOpen || isPrinting) {
+      observer = new ResizeObserver(() => {
+        requestAnimationFrame(() => {
+          if (contentRef.current) {
+            setMaxH(contentRef.current.scrollHeight || 0);
+          }
+        });
+      });
+      observer.observe(el);
+      
+      // Initial set
       requestAnimationFrame(() => {
-        const h = el.scrollHeight || 0;
-        setMaxH(h);
+        setMaxH(el.scrollHeight || 0);
       });
     } else {
       setMaxH(0);
     }
+
+    // Cleanup function
+    return () => {
+      if (observer) {
+        observer.disconnect();
+      }
+    };
   }, [isOpen, isPrinting, shelfProducts.length]);
 
   const toggleOpen = () => setIsOpen((o) => !o);

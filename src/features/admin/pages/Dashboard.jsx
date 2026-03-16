@@ -1,32 +1,27 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { Store, LayoutDashboard, ClipboardList, Eye, FileUp } from "lucide-react";
 // import ShowDashboard from "../../components/admin/ShowDashboard";
 
 const Dashboard = () => {
   const navigate = useNavigate();
 
   const shortcuts = [
-
-    // {
-    //   key: "stock",
-    //   title: "Stock Management",
-    //   desc: "จัดการสต็อกสินค้า, ดูคงเหลือ, ประวัติการเข้า/ออก",
-    //   color: "from-emerald-400 to-emerald-500",
-    //   badge: "Stock",
-    // },
+    {
+      key: "shelf",
+      title: "Shelf Store",
+      desc: "จัดการชั้นวาง, สินค้าหน้าร้าน และภาพรวม Physical Store",
+      color: "from-sky-400 to-sky-500",
+      badge: "Store",
+      icon: <Store size={20} />,
+    },
     {
       key: "dashboard-shelf",
       title: "Shelf Dashboard",
       desc: "Dashboard สรุปภาพรวม Shelf และสินค้า",
       color: "from-violet-400 to-violet-500",
-      badge: "Overview",
-    },
-    {
-      key: "shelf",
-      title: "Store & Shelf",
-      desc: "จัดการชั้นวาง, สินค้าหน้าร้าน และภาพรวม Physical Store",
-      color: "from-sky-400 to-sky-500",
-      badge: "Store",
+      badge: "Dashboard",
+      icon: <LayoutDashboard size={20} />,
     },
     {
       key: "pog-requests",
@@ -34,15 +29,24 @@ const Dashboard = () => {
       desc: "จัดการคำขอปรับเปลี่ยน Planogram (อนุมัติ/ปฏิเสธ)",
       color: "from-amber-400 to-amber-500",
       badge: "Request",
+      icon: <ClipboardList size={20} />,
     },
-
-    // {
-    //   key: "sales",
-    //   title: "Sales Dashboard",
-    //   desc: "ดูยอดขาย, เปรียบเทียบสาขา, สรุปรายได้",
-    //   color: "from-rose-400 to-rose-500",
-    //   badge: "Sales",
-    // },
+    {
+      key: "branch-ack",
+      title: "Branch Status",
+      desc: "ตรวจสอบสถานะการรับทราบ POG ของแต่ละสาขา",
+      color: "from-emerald-400 to-emerald-500",
+      badge: "Status",
+      icon: <Eye size={20} />,
+    },
+    {
+      key: "upload",
+      title: "Upload XLSX",
+      desc: "อัปโหลดไฟล์ข้อมูล (SKU, Template)",
+      color: "from-rose-400 to-rose-500",
+      badge: "Upload",
+      icon: <FileUp size={20} />,
+    },
   ];
 
   return (
@@ -51,14 +55,9 @@ const Dashboard = () => {
         {/* Header */}
         <header className="mb-6 md:mb-8 text-center">
           <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-slate-200 text-[11px] uppercase tracking-[0.16em] text-slate-500 shadow-sm mb-2">
-            BMR Admin Console
+            BMR POG Admin Console
           </p>
-          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-slate-800">
-            Welcome 👋
-          </h1>
-          <p className="mt-2 text-sm md:text-base text-slate-600">
-            เลือกหน้ารายงานที่ต้องการใช้งาน ระบบเตรียมลิงก์ลัดไว้ให้แล้ว
-          </p>
+        
         </header>
 
         {/* Main card */}
@@ -104,11 +103,10 @@ const Dashboard = () => {
                       h-9 w-9 md:h-10 md:w-10 rounded-xl
                       bg-gradient-to-br ${item.color}
                       flex items-center justify-center
-                      text-sm md:text-base font-semibold
                       text-white shadow-sm
                     `}
                   >
-                    {item.badge.charAt(0)}
+                    {item.icon}
                   </div>
 
                   {/* Text */}
@@ -146,7 +144,7 @@ const Dashboard = () => {
               Tip: เมนูทั้งหมดอยู่ในแถบด้านซ้ายด้วย สามารถเปลี่ยนหน้าได้ทุกเมื่อ
             </p>
             <span className="text-[11px] text-slate-400">
-              BMR Admin • v1.0
+              BMR POG Admin
             </span>
           </div>
         </div>

@@ -24,11 +24,14 @@ const BranchSelector = React.memo(
 
 
     // เรียงสาขาตามตัวเลข (ST001, ST002, ST003...)
-    const sortedBranches = [...(branches || [])].sort((a, b) => {
-      const numA = parseInt(a.branch_code?.replace(/\D/g, '') || '0', 10);
-      const numB = parseInt(b.branch_code?.replace(/\D/g, '') || '0', 10);
-      return numA - numB;
-    });
+    const excludedBranches = ['EC000', 'ST000', 'ST041', 'ST010', 'ST028', 'ST029', 'ST030', 'ST023', 'ST035', 'ST039', 'ST040',];
+    const sortedBranches = [...(branches || [])]
+      .filter((b) => !excludedBranches.includes(b.branch_code))
+      .sort((a, b) => {
+        const numA = parseInt(a.branch_code?.replace(/\D/g, '') || '0', 10);
+        const numB = parseInt(b.branch_code?.replace(/\D/g, '') || '0', 10);
+        return numA - numB;
+      });
 
     const selectedBranch = sortedBranches.find(
       (b) => b.branch_code === selectedBranchCode

@@ -1,10 +1,8 @@
-import React from "react";
+import React, { lazy, Suspense } from "react";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 
-// Pages & Layouts
-import Home from "../features/user/pages/Home";
+// Components
 import LayoutAdmin from "../features/admin/layouts/LayoutAdmin";
-import Dashboard from "../features/admin/pages/Dashboard";
 import LayoutUser from "../features/user/layouts/LayoutUser";
 import LoginPage from "../features/auth/pages/LoginPage";
 
@@ -13,15 +11,28 @@ import ProtectRouteAdmin from "../routes/ProtectRouteAdmin";
 import ProtectRouteUser from "../routes/ProtectRouteUser";
 import ProtectGuest from "../routes/ProtectGuest";
 
-// Admin Components
-import Upload from "../features/admin/pages/Upload";
-import Template from "../features/admin/pages/Template";
-import FilterSales from "../features/admin/pages/sales/FilterSales";
-import Stock from "../features/admin/pages/Stock";
-import ShelfDashboard from "../features/admin/pages/ShelfDashboard";
-import DashboardSales from "../features/admin/components/sales/dashboard/DashboardSales";
-import PogRequests from "../features/admin/pages/PogRequests";
-import BranchAckStatus from "../features/admin/pages/BranchAckStatus";
+// Lazy Loaded Pages
+const Home = lazy(() => import("../features/user/pages/Home"));
+const Dashboard = lazy(() => import("../features/admin/pages/Dashboard"));
+const Upload = lazy(() => import("../features/admin/pages/Upload"));
+const Template = lazy(() => import("../features/admin/pages/Template"));
+const FilterSales = lazy(() => import("../features/admin/pages/sales/FilterSales"));
+const Stock = lazy(() => import("../features/admin/pages/Stock"));
+const ShelfDashboard = lazy(() => import("../features/admin/pages/ShelfDashboard"));
+const DashboardSales = lazy(() => import("../features/admin/components/sales/dashboard/DashboardSales"));
+const PogRequests = lazy(() => import("../features/admin/pages/PogRequests"));
+const BranchAckStatus = lazy(() => import("../features/admin/pages/BranchAckStatus"));
+const Analysis = lazy(() => import("../features/admin/pages/Analysis"));
+
+// Loading Component
+const PageLoader = () => (
+    <div className="flex h-screen w-full items-center justify-center bg-slate-50">
+        <div className="flex flex-col items-center">
+            <div className="h-10 w-10 animate-spin rounded-full border-4 border-slate-200 border-t-blue-600"></div>
+            <p className="mt-4 text-sm font-medium text-slate-500">กำลังโหลดข้อมูล...</p>
+        </div>
+    </div>
+);
 
 const router = createBrowserRouter([
     // หน้า Login
@@ -40,18 +51,16 @@ const router = createBrowserRouter([
         path: "/admin",
         element: <ProtectRouteAdmin element={<LayoutAdmin />} />,
         children: [
-            { index: true, element: <Dashboard /> },
-            { path: "shelf", element: <Template /> },
-            { path: "dashboard-shelf", element: <ShelfDashboard /> },
-            { path: "upload", element: <Upload /> },
-            { path: "sales", element: <FilterSales /> },
-            { path: "dashboard-sales", element: <DashboardSales /> },
-            // { path: "product-sales", element: <MainSalesProduct /> },
-            // { path: "calculator-sales", element: <Calculator /> },
-            { path: "stock", element: <Stock /> },
-            { path: "pog-requests", element: <PogRequests /> },
-            { path: "branch-ack", element: <BranchAckStatus /> },
-            // { path: "member", element: <Member /> },
+            { index: true, element: <Suspense fallback={<PageLoader />}><Dashboard /></Suspense> },
+            { path: "shelf", element: <Suspense fallback={<PageLoader />}><Template /></Suspense> },
+            { path: "dashboard-shelf", element: <Suspense fallback={<PageLoader />}><ShelfDashboard /></Suspense> },
+            { path: "upload", element: <Suspense fallback={<PageLoader />}><Upload /></Suspense> },
+            { path: "sales", element: <Suspense fallback={<PageLoader />}><FilterSales /></Suspense> },
+            { path: "dashboard-sales", element: <Suspense fallback={<PageLoader />}><DashboardSales /></Suspense> },
+            { path: "stock", element: <Suspense fallback={<PageLoader />}><Stock /></Suspense> },
+            { path: "pog-requests", element: <Suspense fallback={<PageLoader />}><PogRequests /></Suspense> },
+            { path: "branch-ack", element: <Suspense fallback={<PageLoader />}><BranchAckStatus /></Suspense> },
+            { path: "analysis", element: <Suspense fallback={<PageLoader />}><Analysis /></Suspense> },
         ],
     },
 
@@ -59,7 +68,7 @@ const router = createBrowserRouter([
     {
         path: "/store/:storecode",
         element: <ProtectRouteUser element={<LayoutUser />} />,
-        children: [{ index: true, element: <Home /> }],
+        children: [{ index: true, element: <Suspense fallback={<PageLoader />}><Home /></Suspense> }],
     },
 ]);
 
