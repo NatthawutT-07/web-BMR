@@ -7,20 +7,6 @@ import {
 
 // --- Constants ---
 
-const BRANCH_NAMES = {
-    "ST002": "เลี่ยงเมืองนนท์",
-    "1001": "สาขาพระราม 9",
-    "1002": "สาขาสุขุมวิท",
-    "1003": "สาขาสยาม",
-    "1004": "สาขาลาดพร้าว",
-    "1005": "สาขาบางนา",
-    "1006": "สาขารังสิต",
-    "1007": "สาขาอ่อนนุช",
-    "1008": "สาขาเมกะบางนา",
-    "1009": "สาขาเซ็นทรัลเวิลด์",
-    "1010": "สาขาสีลม",
-};
-
 const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     return new Date(dateStr).toLocaleString("th-TH", {
@@ -63,6 +49,7 @@ const StatCard = ({ title, count, icon, color, active, onClick }) => (
 export default function BranchAckStatus() {
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState({ branches: [], summary: {} });
+    const [branchMap, setBranchMap] = useState({});
     const [error, setError] = useState("");
 
     // Filters
@@ -73,11 +60,23 @@ export default function BranchAckStatus() {
         setLoading(true);
         setError("");
         try {
-            const res = await api.get("/branch-ack-status");
-            if (res.data.ok) {
-                setData(res.data);
+            const [ackRes, branchesRes] = await Promise.all([
+                api.get("/branch-ack-status"),
+                api.get("/branches")
+            ]);
+
+            if (branchesRes.data) {
+                const map = {};
+                branchesRes.data.forEach(b => {
+                    map[b.branch_code] = b.branch_name;
+                });
+                setBranchMap(map);
+            }
+
+            if (ackRes.data.ok) {
+                setData(ackRes.data);
             } else {
-                setError(res.data.message || "Failed to load data");
+                setError(ackRes.data.message || "Failed to load data");
             }
         } catch (err) {
             console.error("Fetch error:", err);
@@ -95,10 +94,10 @@ export default function BranchAckStatus() {
     const filteredBranches = useMemo(() => {
         return branches.filter(b => {
             // Search
-            const branchName = BRANCH_NAMES[b.branchCode] || "";
+            const branchName = branchMap[b.branchCode] || "";
             const searchLower = search.toLowerCase();
             const matchSearch =
-                b.branchCode.includes(searchLower) ||
+                b.branchCode.toLowerCase().includes(searchLower) ||
                 branchName.toLowerCase().includes(searchLower);
 
             // Status
@@ -238,7 +237,7 @@ export default function BranchAckStatus() {
                                                 </div>
                                                 <div>
                                                     <div className="font-medium text-slate-800">
-                                                        {BRANCH_NAMES[branch.branchCode] || branch.branchCode}
+                                                        {branchMap[branch.branchCode] || branch.branchCode}
                                                     </div>
                                                     <div className="text-xs text-slate-400 font-mono">
                                                         {branch.branchCode}
