@@ -11,7 +11,9 @@ import {
   LayoutDashboard,
   ClipboardList,
   Eye,
-  BarChart3
+  BarChart3,
+  Settings,
+  Users,
 } from "lucide-react";
 import useBmrStore from "../../../../store/bmr_store";
 
@@ -57,6 +59,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
             {/* <SidebarItem to="analysis" label="Analysis" icon={<BarChart3 size={20} />} close={closeMobile} /> */}
             {/* <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} close={closeMobile} /> */}
             <SidebarItem to="upload" label="Upload XLSX" icon={<FileUp size={20} />} close={closeMobile} />
+            <SidebarItem to="management" label="Management" icon={<Users size={20} />} close={closeMobile} />
 
 
             <div className="pt-4">
@@ -91,14 +94,15 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
 
       {/* items */}
       <nav className="flex-1 px-1 py-1 space-y-2">
-        {/* <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} expanded={isOpen} /> */}
+        <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} expanded={isOpen} />
         <SidebarItem to="shelf" label="Shelf Store" icon={<Store size={20} />} expanded={isOpen} />
         <SidebarItem to="dashboard-shelf" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} expanded={isOpen} />
         <SidebarItem to="pog-requests" label="POG Requests" icon={<ClipboardList size={20} />} expanded={isOpen} />
         <SidebarItem to="branch-ack" label="Branch Status" icon={<Eye size={20} />} expanded={isOpen} />
-        {/* <SidebarItem to="analysis" label="Analysis" icon={<BarChart3 size={20} />} expanded={isOpen} /> */}
+        <SidebarItem to="analysis" label="Analysis" icon={<BarChart3 size={20} />} expanded={isOpen} />
         {/* <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} /> */}
         <SidebarItem to="upload" label="Upload XLSX" icon={<FileUp size={20} />} expanded={isOpen} />
+        <SidebarItem to="management" label="Management" icon={<Users size={20} />} expanded={isOpen} />
 
 
         <div className="pt-8">

@@ -23,6 +23,7 @@ const DashboardSales = lazy(() => import("../features/admin/components/sales/das
 const PogRequests = lazy(() => import("../features/admin/pages/PogRequests"));
 const BranchAckStatus = lazy(() => import("../features/admin/pages/BranchAckStatus"));
 const Analysis = lazy(() => import("../features/admin/pages/Analysis"));
+const Management = lazy(() => import("../features/admin/pages/Management"));
 
 // Loading Component
 const PageLoader = () => (
@@ -61,6 +62,7 @@ const router = createBrowserRouter([
             { path: "pog-requests", element: <Suspense fallback={<PageLoader />}><PogRequests /></Suspense> },
             { path: "branch-ack", element: <Suspense fallback={<PageLoader />}><BranchAckStatus /></Suspense> },
             { path: "analysis", element: <Suspense fallback={<PageLoader />}><Analysis /></Suspense> },
+            { path: "management", element: <Suspense fallback={<PageLoader />}><Management /></Suspense> },
         ],
     },
 

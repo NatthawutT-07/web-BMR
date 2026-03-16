@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Store, LayoutDashboard, ClipboardList, Eye, FileUp } from "lucide-react";
+import { Store, LayoutDashboard, ClipboardList, Eye, FileUp, Users } from "lucide-react";
 // import ShowDashboard from "../../components/admin/ShowDashboard";
 
 const Dashboard = () => {
@@ -46,6 +46,14 @@ const Dashboard = () => {
       color: "from-rose-400 to-rose-500",
       badge: "Upload",
       icon: <FileUp size={20} />,
+    },
+    {
+      key: "management",
+      title: "Management",
+      desc: "จัดการผู้ใช้งาน (Users) และข้อมูลสาขา (Branches)",
+      color: "from-slate-600 to-slate-700",
+      badge: "Manage",
+      icon: <Users size={20} />,
     },
   ];
 
