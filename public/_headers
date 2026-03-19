@@ -3,3 +3,11 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: geolocation=(), microphone=(), camera=*
+
+# Prevent caching index.html - always fetch fresh version
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# Cache hashed assets for 1 year (they have unique hashes)
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable

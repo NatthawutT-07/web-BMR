@@ -321,6 +321,8 @@ export default function PogRequests() {
         try {
             // Add timestamp to prevent HTTP 304 caching
             const res = await api.get("/pog-requests", { params: { limit: 1, _t: Date.now() } });
+            console.log("POG API Response:", res.data); // DEBUG
+            console.log("branchStats:", res.data?.branchStats); // DEBUG
             if (res.data?.stats) setStats(res.data.stats);
             if (res.data?.branchStats) setBranchStats(res.data.branchStats);
         } catch (e) {
