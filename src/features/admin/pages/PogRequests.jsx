@@ -321,8 +321,6 @@ export default function PogRequests() {
         try {
             // Add timestamp to prevent HTTP 304 caching
             const res = await api.get("/pog-requests", { params: { limit: 1, _t: Date.now() } });
-            console.log("POG API Response:", res.data); // DEBUG
-            console.log("branchStats:", res.data?.branchStats); // DEBUG
             if (res.data?.stats) setStats(res.data.stats);
             if (res.data?.branchStats) setBranchStats(res.data.branchStats);
         } catch (e) {
@@ -593,10 +591,10 @@ export default function PogRequests() {
                                         >
                                             <div className="flex items-start justify-between">
                                                 <div>
-                                                    <h4 className="font-semibold text-slate-800 group-hover:text-blue-700">
-                                                        {getBranchName(branchCode)}
-                                                    </h4>
-                                                    <span className="text-xs text-slate-500">{branchCode}</span>
+                                                    {/* <h4 className="font-semibold text-slate-800 group-hover:text-blue-700">
+                                                        {branchCode} - {getBranchName(branchCode)}
+                                                    </h4> */}
+                                                    <span className="text-sm text-slate-800">{branchCode} - {getBranchName(branchCode)}</span>
                                                 </div>
                                                 <div className="flex items-center gap-1">
                                                     <span className="text-2xl font-bold text-amber-600">{bStats.total}</span>
@@ -627,7 +625,7 @@ export default function PogRequests() {
                         </div>
 
                         {/* Info Card */}
-                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+                        {/* <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
                             <div className="flex items-start gap-3">
                                 <AlertCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                                 <div>
@@ -638,7 +636,7 @@ export default function PogRequests() {
                                     </p>
                                 </div>
                             </div>
-                        </div>
+                        </div> */}
                     </>
                 )}
 
