@@ -1,5 +1,7 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { toast } from "react-toastify";
+import useSalesStore from "../../../store/sales_store";
+import api from "../../../utils/axios";
 
 // upload APIs
 import {
@@ -13,6 +15,7 @@ import {
   uploadSI_XLSX,
   uploadGourmetXLSX,
   getUploadStatus,
+  getSyncDates,
 } from "../../../api/admin/upload";
 
 // download APIs
@@ -37,6 +40,42 @@ const UploadCSV = () => {
     status: "",
     message: "",
   });
+  const [selectedBranch, setSelectedBranch] = useState("");
+  const [activeBranchCodes, setActiveBranchCodes] = useState([]);
+  const [syncDates, setSyncDates] = useState({});
+
+  const { branches, fetchListBranches } = useSalesStore();
+
+  const fetchSyncDates = async () => {
+    try {
+      const dates = await getSyncDates();
+      setSyncDates(dates || {});
+    } catch (err) {
+      console.error("Failed to fetch sync dates", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchListBranches();
+    fetchSyncDates();
+    
+    const fetchActiveUsers = async () => {
+      try {
+        const res = await api.get("/users");
+        const activeUsers = res.data.filter(u => u.enabled).map(u => u.name);
+        setActiveBranchCodes(activeUsers);
+      } catch (error) {
+        console.error("Failed to fetch users", error);
+      }
+    };
+    
+    const interval = setInterval(fetchSyncDates, 60000); // refresh every minute
+
+    fetchActiveUsers();
+    return () => clearInterval(interval);
+  }, [fetchListBranches]);
+
+  const filteredBranches = branches.filter(b => activeBranchCodes.includes(b.branch_code));
 
   const fileInputRef = useRef(null);
   const pollRef = useRef(null);
@@ -214,12 +253,12 @@ const UploadCSV = () => {
   };
 
   // DOWNLOAD XLSX (Lazy XLSX)
-  const downloadXLSXFile = async (name, fetchApiFn) => {
+  const downloadXLSXFile = async (name, fetchApiFn, params = {}) => {
     try {
       setLoading(true);
 
       const XLSX = await loadXLSX(); // โหลดเฉพาะตอนใช้
-      const data = await fetchApiFn();
+      const data = await fetchApiFn(params);
 
       const sheet = XLSX.utils.json_to_sheet(data);
       const book = XLSX.write(
@@ -259,9 +298,155 @@ const UploadCSV = () => {
       gourmet: "Gourmet Sales XLSX",
     };
 
+    const syncKeys = {
+      withdraw: "withdraw",
+      stock: "stock",
+      Template: "template",
+      SKU: "sku",
+      minMax: "minMax",
+      masterItem: "masterItem",
+      bill: "dashboard", // Bill data updates the dashboard sync key
+      si: "si",
+      gourmet: "gourmet",
+    };
+
+    const syncKey = syncKeys[fileType];
+    const lastSyncInfo = syncKey && syncDates[syncKey];
+    
+    // Format date string
+    let lastUpdateStr = "ยังไม่มีข้อมูล";
+    if (lastSyncInfo && lastSyncInfo.updatedAt) {
+      try {
+        const dateObj = new Date(lastSyncInfo.updatedAt);
+        // Format: DD/MM/YYYY HH:mm:ss
+        lastUpdateStr = dateObj.toLocaleString("th-TH", {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+      } catch (e) {
+        lastUpdateStr = "วันที่ไม่ถูกต้อง";
+      }
+    }
+
     return (
       <div className="border rounded-md p-4 bg-gray-50 mt-6">
-        <h3 className="text-lg font-semibold mb-2">{labels[fileType]}</h3>
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="text-lg font-semibold">{labels[fileType]}</h3>
+          {lastSyncInfo && (
+            <div className="text-xs text-slate-500 bg-white px-2 py-1 rounded border shadow-sm">
+              อัปโหลดล่าสุด: <span className="font-medium text-slate-700">{lastUpdateStr}</span>
+              {lastSyncInfo.rowCount > 0 && (
+                <span className="ml-1 text-emerald-600">({lastSyncInfo.rowCount.toLocaleString()} แถว)</span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Notes for POG Shelf */}
+        {fileType === "Template" && (
+          <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
+            <strong className="font-semibold">หมายเหตุการอัปโหลด (POG Shelf):</strong>
+            <ul className="list-disc ml-5 mt-1 space-y-1 text-xs text-blue-700">
+              <li>ระบบจะทำการ <strong className="font-semibold">อัปเดตและเพิ่มข้อมูลใหม่</strong> ตามสาขาที่มีในไฟล์</li>
+              <li>ข้อมูลชั้นวางใดในสาขานั้นๆ ที่มีในระบบแต่ <strong className="font-semibold text-rose-600">ไม่มีในไฟล์ จะถูกลบทิ้งทันที</strong> (Full Sync)</li>
+              <li>ข้อมูลสาขาที่ไม่ได้อยู่ในไฟล์อัปโหลด จะไม่ได้รับผลกระทบใดๆ</li>
+            </ul>
+          </div>
+        )}
+
+        {/* Notes for POG SKU */}
+        {fileType === "SKU" && (
+          <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
+            <strong className="font-semibold">หมายเหตุการอัปโหลด (POG SKU):</strong>
+            <ul className="list-disc ml-5 mt-1 space-y-1 text-xs text-blue-700">
+              <li>ระบบจะทำงานแบบ <strong className="font-semibold">เพิ่มใหม่และอัปเดตทับเท่านั้น (ไม่มีการลบข้อมูลสินค้าเดิมทิ้ง)</strong></li>
+              <li>หาก <strong className="font-semibold">รหัสสาขาและรหัสสินค้า</strong> ตรงกับในระบบ จะทำการอัปเดตตำแหน่งใหม่ (รหัสชั้นวาง, แถว, ลำดับ)</li>
+              <li>หากในไฟล์มีข้อมูลที่ <strong className="font-semibold text-rose-600">รหัสสาขาและรหัสสินค้าซ้ำกันเอง</strong> ระบบจะแจ้ง Error ให้แก้ไขก่อนอัปโหลด</li>
+            </ul>
+          </div>
+        )}
+
+        {/* Notes for Withdraw */}
+        {fileType === "withdraw" && (
+          <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
+            <strong className="font-semibold">หมายเหตุการอัปโหลด (Withdraw):</strong>
+            <ul className="list-disc ml-5 mt-1 space-y-1 text-xs text-blue-700">
+              <li>ดึงเฉพาะข้อมูลที่มี <strong className="font-semibold">สถานะเอกสาร "อนุมัติแล้ว"</strong> และ <strong className="font-semibold">เหตุผล ไม่ใช่ "เบิกเพื่อขาย"</strong></li>
+              <li>ทำงานแบบ <strong className="font-semibold">เพิ่มข้อมูลใหม่และอัปเดต</strong> (อิงจากเลขเอกสาร, รหัสสาขา, สินค้า, จำนวน, มูลค่า)</li>
+              <li>ข้อมูลซ้ำซ้อนในไฟล์ จะถูกกรองออกอัตโนมัติ</li>
+            </ul>
+          </div>
+        )}
+
+        {/* Notes for Stock */}
+        {fileType === "stock" && (
+          <div className="mb-4 text-sm text-amber-800 bg-amber-50 p-3 rounded-md border border-amber-200">
+            <strong className="font-semibold text-amber-700">หมายเหตุการอัปโหลด (Stock):</strong>
+            <ul className="list-disc ml-5 mt-1 space-y-1 text-xs text-amber-800">
+              <li><strong className="font-semibold text-rose-600">คำเตือน:</strong> ข้อมูล Stock เดิมในระบบจะถูก <strong className="font-semibold">ลบทิ้งทั้งหมด (Truncate)</strong> ก่อนนำเข้าข้อมูลชุดใหม่</li>
+              <li>ข้อมูลในไฟล์ใหม่ จะกลายเป็นข้อมูล Stock ปัจจุบันของทั้งระบบ</li>
+            </ul>
+          </div>
+        )}
+
+        {/* Notes for ItemMinMax */}
+        {fileType === "minMax" && (
+          <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
+            <strong className="font-semibold">หมายเหตุการอัปโหลด (ItemMinMax):</strong>
+            <ul className="list-disc ml-5 mt-1 space-y-1 text-xs text-blue-700">
+              <li>ระบบทำงานแบบ <strong className="font-semibold">เพิ่มข้อมูลใหม่และอัปเดตทับข้อมูลเดิม</strong> (ไม่มีการลบข้อมูลทิ้ง)</li>
+              <li>ใช้รหัสสาขาและรหัสสินค้า เป็นตัวตรวจสอบ หากตรงกันจะอัปเดตค่า Min/Max ใหม่</li>
+            </ul>
+          </div>
+        )}
+
+        {/* Notes for MasterItem */}
+        {fileType === "masterItem" && (
+          <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
+            <strong className="font-semibold">หมายเหตุการอัปโหลด (MasterItem):</strong>
+            <ul className="list-disc ml-5 mt-1 space-y-1 text-xs text-blue-700">
+              <li>ระบบทำงานแบบ <strong className="font-semibold">เพิ่มสินค้าใหม่และอัปเดตข้อมูลสินค้าเดิม</strong> (ไม่มีการลบทิ้ง)</li>
+              <li>หากข้อมูลไม่มีการเปลี่ยนแปลงจากในระบบ จะทำการข้าม(Skip) ไปอัตโนมัติเพื่อความรวดเร็ว</li>
+            </ul>
+          </div>
+        )}
+
+        {/* Notes for Bill */}
+        {fileType === "bill" && (
+          <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
+            <strong className="font-semibold">หมายเหตุการอัปโหลด (Bill):</strong>
+            <ul className="list-disc ml-5 mt-1 space-y-1 text-xs text-blue-700">
+              <li>ระบบจะข้ามเลขที่บิลที่มีอยู่แล้วในระบบ (กันบิลซ้ำ)</li>
+              <li><strong className="font-semibold">เพิ่มข้อมูลใหม่โดยอัตโนมัติ:</strong> หากพบรหัสสาขา, ช่องทางการขาย, สินค้า, หรือลูกค้าใหม่ในไฟล์ จะถูกสร้างขึ้นใหม่อัตโนมัติ</li>
+            </ul>
+          </div>
+        )}
+
+        {/* Notes for Order SI */}
+        {fileType === "si" && (
+          <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
+            <strong className="font-semibold">หมายเหตุการอัปโหลด (Order SI):</strong>
+            <ul className="list-disc ml-5 mt-1 space-y-1 text-xs text-blue-700">
+              <li>ทำงานแบบ <strong className="font-semibold">เพิ่มข้อมูลใหม่เท่านั้น</strong></li>
+              <li>ระบบจะข้ามข้อมูลที่ซ้ำกัน (สาขา + เลขที่ SI + รหัสสินค้า + บาร์โค้ด ตรงกัน) โดยไม่เกิด Error</li>
+            </ul>
+          </div>
+        )}
+
+        {/* Notes for Gourmet */}
+        {fileType === "gourmet" && (
+          <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
+            <strong className="font-semibold">หมายเหตุการอัปโหลด (Gourmet):</strong>
+            <ul className="list-disc ml-5 mt-1 space-y-1 text-xs text-blue-700">
+              <li>ทำงานแบบ <strong className="font-semibold">เพิ่มยอดขายใหม่</strong> (วันที่, สาขา, สินค้า, จำนวน)</li>
+              <li>หากเจอรายการยอดขายที่ซ้ำกันในระบบ จะทำการข้าม(Skip) ข้อมูลนั้นไปอัตโนมัติ</li>
+            </ul>
+          </div>
+        )}
 
         <input
           ref={fileInputRef}
@@ -283,6 +468,29 @@ const UploadCSV = () => {
           {loading ? "Uploading..." : `Upload ${labels[fileType]}`}
         </button>
 
+        {/* Filter สาขาสำหรับ SKU */}
+        {fileType === "SKU" && (
+          <div className="mt-6 mb-2">
+            <label className="block text-sm font-semibold mb-2 text-gray-700">Filter by Branch (Download)</label>
+            <select
+              value={selectedBranch}
+              onChange={(e) => setSelectedBranch(e.target.value)}
+              className="w-full p-2 border rounded bg-white truncate"
+              disabled={loading}
+            >
+              <option value="">All Branches</option>
+              {filteredBranches?.map((b) => {
+                const displayName = b.branch_name.length > 45 ? b.branch_name.substring(0, 42) + '...' : b.branch_name;
+                return (
+                  <option key={b.branch_code} value={b.branch_code}>
+                    {b.branch_code} - {displayName}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        )}
+
         {/* DOWNLOAD TEMPLATE (Lazy XLSX) */}
         {fileType === "Template" && (
           <button
@@ -301,7 +509,7 @@ const UploadCSV = () => {
           <button
             disabled={loading}
             onClick={() =>
-              downloadXLSXFile("POG_SKU_Template.xlsx", downloadSKU)
+              downloadXLSXFile("POG_SKU_Template.xlsx", downloadSKU, { branchCode: selectedBranch })
             }
             className="mt-4 w-full py-2 bg-blue-600 text-white rounded"
           >

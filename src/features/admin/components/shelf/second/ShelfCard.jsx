@@ -168,6 +168,7 @@ const ShelfCard = ({
           onSave={handleSaveEdit}
           shelfProducts={localShelfProducts}
           shelfCode={template.shelfCode}
+          rowQty={template.rowQty}
         />
       </Suspense>
     </div>

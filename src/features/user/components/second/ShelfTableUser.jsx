@@ -99,9 +99,9 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
             <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               สต็อค
             </th>
-            <th className="border px-1 py-2 text-center print:hidden align-middle font-semibold text-slate-600">
+            {/* <th className="border px-1 py-2 text-center print:hidden align-middle font-semibold text-slate-600">
               ทำรายการ
-            </th>
+            </th> */}
           </tr>
         </thead>
 
@@ -245,16 +245,16 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                           <span className="hidden print:inline-block">☐</span>
                         </td> */}
 
-                        <td className="border text-center align-middle print:hidden">
-                          {/* <button
+                        {/* <td className="border text-center align-middle print:hidden">
+                          <button
                             type="button"
                             onClick={() => handleRequest(p)}
                             className="px-2 py-1 text-xs bg-amber-100 hover:bg-amber-200 text-amber-700 rounded transition-colors"
                             title="แจ้งขอเปลี่ยน"
                           >
                             แก้ไข
-                          </button> */}
-                        </td>
+                          </button>
+                        </td> */}
                       </tr>
                     );
                   })

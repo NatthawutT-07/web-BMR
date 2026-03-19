@@ -64,3 +64,8 @@ export const uploadGourmetXLSX = (file, onProgress, jobId) =>
 
 export const getUploadStatus = (jobId) =>
   api.get("/upload-status", { params: { jobId } });
+
+export const getSyncDates = async () => {
+  const res = await api.get("/sync-dates");
+  return res.data;
+};

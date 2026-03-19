@@ -10,7 +10,7 @@ const ShelfFilter = React.memo(
         {/* Header */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
           <label className="text-sm font-semibold text-slate-700 flex items-center gap-1.5">
-            🗂 เลือก Shelf
+            Filter Shelf
             {selectedShelves.length > 0 && (
               <span className="text-xs font-normal text-emerald-600">
                 ({selectedShelves.length})
@@ -38,7 +38,7 @@ const ShelfFilter = React.memo(
                 type="button"
                 onClick={() => onToggle(shelfCode)}
                 className={`
-                  px-2 py-2 rounded-lg text-sm font-bold text-center transition-all
+                  w-full aspect-square rounded-lg text-xs font-bold text-center transition-all flex items-center justify-center
                   ${isSelected
                     ? 'bg-blue-500 text-white shadow-sm ring-2 ring-blue-200'
                     : 'bg-white text-slate-600 border border-slate-200 hover:bg-blue-50 hover:border-blue-200'}

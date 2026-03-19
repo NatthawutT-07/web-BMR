@@ -314,7 +314,6 @@ const Template = () => {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="text-sm font-semibold text-slate-800">เลือก Shelf ที่ต้องการพิมพ์</div>
-                  <div className="text-xs text-slate-500 mt-1">เลือกได้หลาย Shelf หรือเลือก “พิมพ์ทุก Shelf”</div>
                 </div>
                 <button
                   className="text-slate-500 hover:text-slate-700 text-lg leading-none"
@@ -480,8 +479,7 @@ const Template = () => {
                       max-h-[420px] md:max-h-[480px] w-full overflow-y-auto"
                     >
                       <h3 className="font-bold text-emerald-800 mb-3 text-base text-center flex items-center justify-center gap-2 sticky top-0 bg-emerald-50/95 py-2 -mt-2 z-10 backdrop-blur-sm">
-                        <span className="text-lg">🗂️</span>
-                        โครงสร้าง Shelf
+                        โครงสร้างชั้นสินค้าในสาขา
                       </h3>
 
                       <div className="space-y-3">
@@ -549,10 +547,6 @@ const Template = () => {
                   {/* RIGHT: Filter & Search Panel */}
                   <div className="xl:w-[320px] 2xl:w-[380px] flex-shrink-0 flex flex-col gap-4">
                     <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 h-full">
-                      <h3 className="font-bold text-slate-700 mb-3 text-sm flex items-center gap-2">
-                        <span>🔍</span> ตัวเลือกและการค้นหา
-                      </h3>
-
                       <div className="space-y-4">
                         <Suspense fallback={<div className="text-sm text-gray-500">Loading filter...</div>}>
                           <ShelfFilterUser

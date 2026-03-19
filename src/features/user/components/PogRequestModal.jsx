@@ -324,19 +324,13 @@ export default function PogRequestModal({
                             สาขา: {branchCode}{branchName ? ` - ${branchName}` : ""}
                         </div>
                     </div>
-                    <button
-                        className="px-3 py-1.5 rounded-lg text-sm font-semibold border bg-white hover:bg-slate-50"
-                        onClick={handleClose}
-                    >
-                        ปิด
-                    </button>
+                    
                 </div>
 
                 <div className="p-4 space-y-4 overflow-y-auto flex-grow">
                     {/* Success state */}
                     {success ? (
                         <div className="text-center py-8">
-                            <div className="text-4xl mb-3">✅</div>
                             <div className="text-lg font-semibold text-emerald-700">ส่งคำขอสำเร็จ!</div>
                             <div className="text-sm text-slate-600 mt-1">รอดำเนินการ</div>
                             <button

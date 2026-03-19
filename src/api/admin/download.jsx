@@ -1,8 +1,8 @@
 import api from "../../utils/axios";   // axios instance พร้อม token + refresh-auto
 
-export const downloadTemplate = async () => {
+export const downloadTemplate = async (params) => {
   try {
-    const res = await api.get("/download-template");
+    const res = await api.get("/download-template", { params });
     return res.data;
   } catch (error) {
     console.error("❌ Error fetching template:", error);
@@ -10,9 +10,9 @@ export const downloadTemplate = async () => {
   }
 };
 
-export const downloadSKU = async () => {
+export const downloadSKU = async (params) => {
   try {
-    const res = await api.get("/download-sku");
+    const res = await api.get("/download-sku", { params });
     return res.data;
   } catch (error) {
     console.error("❌ Error fetching SKU:", error);

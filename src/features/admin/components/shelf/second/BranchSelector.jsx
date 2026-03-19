@@ -42,7 +42,7 @@ const BranchSelector = React.memo(
 
 
     // เรียงสาขาตามตัวเลข (ST001, ST002, ST003...)
-    const excludedBranches = ['EC000', 'ST000', 'ST041', 'ST010', 'ST028', 'ST029', 'ST030', 'ST023', 'ST035', 'ST039', 'ST040',];
+    const excludedBranches = [];
     const sortedBranches = [...(branches || [])]
       .filter((b) => !excludedBranches.includes(b.branch_code))
       .filter((b) => activeBranchCodes.length === 0 || activeBranchCodes.includes(b.branch_code)) // Filter active branches
@@ -89,7 +89,7 @@ const BranchSelector = React.memo(
               : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
           >
-            {okLocked ? "โหลดแล้ว ✓" : "ดูข้อมูล"}
+            {okLocked ? "โหลดแล้ว" : "ดูข้อมูล"}
           </button>
 
           {/* Action buttons inline */}
@@ -109,11 +109,11 @@ const BranchSelector = React.memo(
         </div>
 
         {/* Selected branch info (subtle) */}
-        {okLocked && selectedBranch && (
+        {/* {okLocked && selectedBranch && (
           <div className="mt-2 text-xs text-slate-500">
             กำลังดู: <span className="font-medium text-slate-700">{selectedBranch.branch_code} - {selectedBranch.branch_name}</span>
           </div>
-        )}
+        )} */}
       </form>
     );
   }

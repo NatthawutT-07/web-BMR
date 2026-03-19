@@ -82,7 +82,7 @@ const ShelfManager = () => {
   const [okLocked, setOkLocked] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [searchResult, setSearchResult] = useState([]);
-
+  const [isFullscreenImage, setIsFullscreenImage] = useState(false);
 
   const captureRef = useRef(null);
 
@@ -255,7 +255,7 @@ const ShelfManager = () => {
     <div className="container mx-auto p-3 sm:p-6 space-y-6">
       {/* BranchSelector with center-to-top animation */}
       <div
-      
+
       >
         <Suspense
           fallback={
@@ -297,12 +297,13 @@ const ShelfManager = () => {
                 <img
                   src={imageUrl}
                   alt="Branch"
-                  className="w-full max-w-[260px] h-auto object-contain rounded-lg shadow-sm border bg-slate-50"
+                  className="w-full max-w-[260px] h-auto object-contain rounded-lg shadow-sm border bg-slate-50 cursor-pointer hover:scale-105 transition-transform"
                   loading="lazy"
+                  onClick={() => setIsFullscreenImage(true)}
                 />
               ) : (
                 <div className="w-full max-w-[260px] aspect-[3/4] rounded-lg shadow-sm border bg-slate-100 flex items-center justify-center text-slate-400">
-                  <span>ยังไม่เลือกสาขา</span>
+                  <span></span>
                 </div>
               )}
             </div>
@@ -311,7 +312,7 @@ const ShelfManager = () => {
             <div className="flex-1 flex flex-col">
               <div className="bg-gradient-to-b from-slate-50 to-white border-2 border-slate-200 rounded-xl p-4 shadow-inner max-h-[450px] overflow-y-auto">
                 <h3 className="font-bold text-slate-800 mb-2 text-base text-center flex items-center justify-center gap-2 sticky top-0 bg-slate-50/95 py-2 -mt-2 z-10 backdrop-blur-sm">
-                  📊 Summary
+                  Dashboard
                 </h3>
 
                 {/* ช่วงเวลา start - end ของยอดขาย 90 วัน */}
@@ -362,9 +363,7 @@ const ShelfManager = () => {
             {/* RIGHT: Filter & Search Panel */}
             <div className="xl:w-[320px] 2xl:w-[380px] flex-shrink-0 flex flex-col gap-4">
               <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 h-full">
-                <h3 className="font-bold text-slate-700 mb-3 text-sm flex items-center gap-2">
-                  <span>🔍</span> ตัวเลือกและการค้นหา
-                </h3>
+
 
                 <div className="space-y-4">
                   {/* Filter */}
@@ -379,7 +378,6 @@ const ShelfManager = () => {
                     </Suspense>
                   ) : (
                     <div className="h-[100px] bg-white border border-slate-200 rounded-lg flex items-center justify-center text-slate-400 text-sm">
-                      รอการเลือกสาขา...
                     </div>
                   )}
 
@@ -454,6 +452,21 @@ const ShelfManager = () => {
           </Suspense>
         )}
       </div>
+
+      {/* Fullscreen Image Modal */}
+      {isFullscreenImage && imageUrl && (
+        <div 
+          className="fixed inset-0  bg-opacity-90 z-50 flex items-center justify-center cursor-pointer"
+          onClick={() => setIsFullscreenImage(false)}
+        >
+          <img
+            src={imageUrl}
+            alt="Branch Fullscreen"
+            className="max-w-full max-h-full object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 };

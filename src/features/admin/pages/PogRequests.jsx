@@ -4,7 +4,7 @@ import {
     Filter, RefreshCw, CheckCircle2, XCircle, Clock,
     Trash2, Edit2, Check, X,
     AlertCircle, Package, MapPin,
-    Store, LayoutGrid, Layers
+    Store, LayoutGrid, Layers, ArrowLeft, ChevronRight
 } from "lucide-react";
 
 // --- Constants & Styles ---
@@ -40,20 +40,6 @@ const ACTION_STYLES = {
     add: { label: "เพิ่มสินค้า", badge: "bg-emerald-100 text-emerald-800" },
     move: { label: "ย้ายสินค้า", badge: "bg-blue-100 text-blue-800" },
     delete: { label: "ลบสินค้า", badge: "bg-rose-100 text-rose-800" },
-};
-
-const BRANCH_NAMES = {
-    "ST002": "เลี่ยงเมืองนนท์",
-    "1001": "สาขาพระราม 9",
-    "1002": "สาขาสุขุมวิท",
-    "1003": "สาขาสยาม",
-    "1004": "สาขาลาดพร้าว",
-    "1005": "สาขาบางนา",
-    "1006": "สาขารังสิต",
-    "1007": "สาขาอ่อนนุช",
-    "1008": "สาขาเมกะบางนา",
-    "1009": "สาขาเซ็นทรัลเวิลด์",
-    "1010": "สาขาสีลม",
 };
 
 const formatDate = (dateStr) => {
@@ -294,12 +280,17 @@ export default function PogRequests() {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState([]);
     const [filterStatus, setFilterStatus] = useState("pending");
-    const [filterBranch, setFilterBranch] = useState("");
     const [filterAction, setFilterAction] = useState("");
     const [filterShelf, setFilterShelf] = useState("");
     const [filterRow, setFilterRow] = useState("");
     const [updating, setUpdating] = useState(null);
     const [stats, setStats] = useState({ pending: 0, rejected: 0, completed: 0 }); // API stats
+    const [branchStats, setBranchStats] = useState({}); // Branch-level pending stats
+    const [branches, setBranches] = useState([]); // Dynamic branches from API
+
+    // View mode: 'summary' = branch cards, 'detail' = single branch requests
+    const [viewMode, setViewMode] = useState('summary');
+    const [selectedBranch, setSelectedBranch] = useState(null);
 
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
@@ -308,16 +299,44 @@ export default function PogRequests() {
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [bulkUpdating, setBulkUpdating] = useState(false);
 
+    // Concurrency protection: track data version
+    const [dataVersion, setDataVersion] = useState(0);
+
     // Modals
     const [rejectModal, setRejectModal] = useState({ open: false, ids: [], count: 0 });
     const [editModal, setEditModal] = useState({ open: false, item: null });
 
-    const loadData = useCallback(async () => {
+    const loadBranches = useCallback(async () => {
+        try {
+            const res = await api.get("/branches");
+            setBranches(res.data || []);
+        } catch (err) {
+            console.error("Load branches error:", err);
+        }
+    }, []);
+
+    // Load summary stats (for landing page)
+    const loadSummary = useCallback(async () => {
         setLoading(true);
         try {
-            const params = { limit: 50, page };
+            const res = await api.get("/pog-requests", { params: { limit: 1 } });
+            if (res.data?.stats) setStats(res.data.stats);
+            if (res.data?.branchStats) setBranchStats(res.data.branchStats);
+        } catch (e) {
+            console.error("Load summary error:", e);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    // Load detail data for selected branch
+    const loadData = useCallback(async () => {
+        if (viewMode === 'summary' || !selectedBranch) return;
+        
+        setLoading(true);
+        try {
+            const params = { limit: 50, page, branchCode: selectedBranch };
             if (filterStatus) params.status = filterStatus;
-            if (filterBranch) params.branchCode = filterBranch;
             if (filterAction) params.action = filterAction;
             if (filterShelf) params.shelf = filterShelf;
             if (filterRow) params.row = filterRow;
@@ -326,10 +345,10 @@ export default function PogRequests() {
             setData(res.data?.data || []);
             setTotalPages(res.data?.totalPages || 1);
             setTotalItems(res.data?.total || 0);
+            setDataVersion(Date.now()); // Track version for concurrency
 
-            if (res.data?.stats) {
-                setStats(res.data.stats);
-            }
+            if (res.data?.stats) setStats(res.data.stats);
+            if (res.data?.branchStats) setBranchStats(res.data.branchStats);
 
             setSelectedIds(new Set());
         } catch (e) {
@@ -337,16 +356,45 @@ export default function PogRequests() {
         } finally {
             setLoading(false);
         }
-    }, [filterStatus, filterBranch, filterAction, filterShelf, filterRow, page]);
+    }, [viewMode, selectedBranch, filterStatus, filterAction, filterShelf, filterRow, page]);
 
-    useEffect(() => { loadData(); }, [loadData]);
+    useEffect(() => { loadBranches(); }, [loadBranches]);
+    
+    useEffect(() => {
+        if (viewMode === 'summary') {
+            loadSummary();
+        } else {
+            loadData();
+        }
+    }, [viewMode, loadSummary, loadData]);
 
     useEffect(() => {
         setPage(1);
-    }, [filterStatus, filterBranch, filterAction, filterShelf, filterRow]);
+    }, [filterStatus, filterAction, filterShelf, filterRow]);
 
-    const availableBranches = useMemo(() => Object.keys(BRANCH_NAMES).sort(), []);
+    // Enter branch detail view
+    const enterBranchDetail = (branchCode) => {
+        setSelectedBranch(branchCode);
+        setViewMode('detail');
+        setPage(1);
+        setSelectedIds(new Set());
+    };
+
+    // Back to summary view
+    const backToSummary = () => {
+        setViewMode('summary');
+        setSelectedBranch(null);
+        setData([]);
+        setSelectedIds(new Set());
+    };
+
     const availableRows = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    
+    // Helper to get branch name
+    const getBranchName = (code) => {
+        const b = branches.find(b => b.branch_code === code);
+        return b ? b.branch_name : code;
+    };
 
     const visibleData = data;
 
@@ -396,7 +444,7 @@ export default function PogRequests() {
                     completed: prev.completed + successCount
                 }));
                 setSelectedIds(new Set());
-                alert(`✅ สำเร็จ ${successCount} รายการ`);
+                alert(`สำเร็จ ${successCount} รายการ`);
             }
         } catch (e) {
             const msg = e.response?.data?.message || e.message;
@@ -484,297 +532,370 @@ export default function PogRequests() {
         <div className="min-h-screen bg-slate-50/50 p-6 md:p-8">
             <div className="max-w-7xl mx-auto space-y-6">
 
-                {/* Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <h1 className="text-2xl font-bold text-slate-800 tracking-tight">คำขอเปลี่ยนแปลง POG</h1>
-                        <p className="text-slate-500 text-sm mt-1">จัดการ/อนุมัติ การเปลี่ยนแปลงสินค้าและแผนผังจากสาขา</p>
-                    </div>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {["pending", "rejected", "completed"].map(type => (
-                        <StatCard
-                            key={type}
-                            type={type}
-                            count={stats[type] || 0}
-                            active={filterStatus === type}
-                            onClick={() => setFilterStatus(prev => prev === type ? "" : type)}
-                        />
-                    ))}
-                </div>
-
-                {/* Toolbar */}
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                    <div className="flex flex-wrap items-center gap-3">
-
-                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg flex-1 min-w-[200px]">
-                            <Store size={16} className="text-slate-400" />
-                            <select
-                                value={filterBranch}
-                                onChange={e => setFilterBranch(e.target.value)}
-                                className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
+                {/* ==================== SUMMARY VIEW ==================== */}
+                {viewMode === 'summary' && (
+                    <>
+                        {/* Header */}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div>
+                                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">คำขอเปลี่ยนแปลง POG</h1>
+                                <p className="text-slate-500 text-sm mt-1">เลือกสาขาเพื่อตรวจสอบและอนุมัติคำขอ</p>
+                            </div>
+                            <button
+                                onClick={loadSummary}
+                                className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="รีเฟรชข้อมูล"
                             >
-                                <option value="">ทุกสาขา</option>
-                                {availableBranches.map(b => <option key={b} value={b}>{b}</option>)}
-                            </select>
+                                <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+                            </button>
                         </div>
 
-                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[140px]">
-                            <Filter size={16} className="text-slate-400" />
-                            <select
-                                value={filterAction}
-                                onChange={e => setFilterAction(e.target.value)}
-                                className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
-                            >
-                                <option value="">Action ทั้งหมด</option>
-                                <option value="add">เพิ่มสินค้า</option>
-                                <option value="move">ย้ายสินค้า</option>
-                                <option value="delete">ลบสินค้า</option>
-                            </select>
-                        </div>
-
-                        <div className="w-px h-8 bg-slate-200 mx-1 hidden md:block" />
-
-                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg w-full max-w-[150px]">
-                            <Layers size={16} className="text-slate-400" />
-                            <input
-                                type="text"
-                                placeholder="ค้นหา Shelf"
-                                defaultValue={filterShelf}
-                                onBlur={e => setFilterShelf(e.target.value.trim().toUpperCase())}
-                                onKeyDown={e => {
-                                    if (e.key === 'Enter') setFilterShelf(e.currentTarget.value.trim().toUpperCase());
-                                }}
-                                className="bg-transparent text-sm w-full outline-none text-slate-700 placeholder:text-slate-400"
-                            />
-                        </div>
-
-                        <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[100px]">
-                            <LayoutGrid size={16} className="text-slate-400" />
-                            <select
-                                value={filterRow}
-                                onChange={e => setFilterRow(e.target.value)}
-                                className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
-                            >
-                                <option value="">Row</option>
-                                {availableRows.map(r => <option key={r} value={r}>Row {r}</option>)}
-                            </select>
-                        </div>
-
-                        <button
-                            onClick={loadData}
-                            className="ml-auto p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="รีเฟรชข้อมูล"
-                        >
-                            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-                        </button>
-                    </div>
-
-                    {/* Bulk Actions Bar */}
-                    {filterStatus === 'pending' && visibleData.length > 0 && (
-                        <div className="flex items-center gap-3 pt-3 border-t border-slate-100 animate-in slide-in-from-top-2">
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    className="w-5 h-5 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                    checked={selectedIds.size > 0 && selectedIds.size === visibleData.filter(d => d.status === 'pending').length}
-                                    onChange={(e) => {
-                                        if (e.target.checked) setSelectedIds(new Set(visibleData.filter(d => d.status === 'pending').map(d => d.id)));
-                                        else setSelectedIds(new Set());
-                                    }}
+                        {/* Overall Stats */}
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            {["pending", "rejected", "completed"].map(type => (
+                                <StatCard
+                                    key={type}
+                                    type={type}
+                                    count={stats[type] || 0}
+                                    active={false}
+                                    onClick={() => {}}
                                 />
-                                <span className="text-sm text-slate-600 font-medium">เลือกทั้งหมด</span>
+                            ))}
+                        </div>
+
+                        {/* Branch Cards - Click to Enter */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-2">
+                                    <Store className="w-5 h-5 text-blue-600" />
+                                    <h3 className="font-semibold text-slate-800">สาขาที่มีคำขอรอดำเนินการ</h3>
+                                </div>
+                                <span className="text-xs text-slate-500">คลิกเพื่อเข้าดูรายละเอียดและอนุมัติ</span>
                             </div>
 
-                            <div className="h-4 w-px bg-slate-300" />
-
-                            {selectedIds.size > 0 ? (
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium text-slate-800 bg-slate-100 px-2 py-0.5 rounded">
-                                        {selectedIds.size} รายการ
-                                    </span>
-                                    <button
-                                        onClick={handleBulkApprove}
-                                        disabled={bulkUpdating}
-                                        className="btn-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 shadow-sm transition-all"
-                                    >
-                                        <Check size={14} /> อนุมัติที่เลือก
-                                    </button>
-                                    <button
-                                        onClick={handleBulkReject}
-                                        disabled={bulkUpdating}
-                                        className="btn-xs bg-white border border-rose-200 text-rose-600 hover:bg-rose-50 px-3 py-1.5 rounded-lg text-sm flex items-center gap-1.5 shadow-sm transition-all"
-                                    >
-                                        <X size={14} /> ปฏิเสธ
-                                    </button>
+                            {Object.keys(branchStats).length === 0 ? (
+                                <div className="text-center py-12 text-slate-400">
+                                    <CheckCircle2 size={48} className="mx-auto mb-3 text-emerald-300" />
+                                    <p className="font-medium">ไม่มีคำขอรอดำเนินการ</p>
                                 </div>
                             ) : (
-                                <button
-                                    onClick={handleApproveAllPending}
-                                    disabled={bulkUpdating}
-                                    className="ml-auto text-sm text-emerald-600 hover:text-emerald-700 font-medium flex items-center gap-1.5 px-3 py-1.5 rounded-lg hover:bg-emerald-50 transition-colors"
-                                >
-                                    <CheckCircle2 size={16} /> อนุมัติทั้งหมดในหน้านี้
-                                </button>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {Object.entries(branchStats)
+                                        .sort(([,a], [,b]) => b.total - a.total)
+                                        .map(([branchCode, bStats]) => (
+                                        <button
+                                            key={branchCode}
+                                            onClick={() => enterBranchDetail(branchCode)}
+                                            className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-xl p-4 text-left hover:shadow-md hover:border-blue-300 hover:from-blue-50 hover:to-white transition-all group"
+                                        >
+                                            <div className="flex items-start justify-between">
+                                                <div>
+                                                    <h4 className="font-semibold text-slate-800 group-hover:text-blue-700">
+                                                        {getBranchName(branchCode)}
+                                                    </h4>
+                                                    <span className="text-xs text-slate-500">{branchCode}</span>
+                                                </div>
+                                                <div className="flex items-center gap-1">
+                                                    <span className="text-2xl font-bold text-amber-600">{bStats.total}</span>
+                                                    <ChevronRight size={20} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100">
+                                                {bStats.add > 0 && (
+                                                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
+                                                        +{bStats.add} เพิ่ม
+                                                    </span>
+                                                )}
+                                                {bStats.move > 0 && (
+                                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                                                        ⇄{bStats.move} ย้าย
+                                                    </span>
+                                                )}
+                                                {bStats.delete > 0 && (
+                                                    <span className="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded-full font-medium">
+                                                        -{bStats.delete} ลบ
+                                                    </span>
+                                                )}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
                             )}
                         </div>
-                    )}
-                </div>
 
-                {/* Table */}
-                <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
-                            <thead>
-                                <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase tracking-wider font-semibold">
-                                    <th className="px-6 py-4 w-12 text-center">#</th>
-                                    <th className="px-6 py-4">สาขา</th>
-                                    <th className="px-6 py-4">Action</th>
-                                    <th className="px-6 py-4">สินค้า</th>
-                                    <th className="px-6 py-4">ตำแหน่ง</th>
-                                    <th className="px-6 py-4">สถานะ</th>
-                                    <th className="px-6 py-4 w-20 text-center">จัดการ</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100">
-                                {loading ? (
-                                    <tr><td colSpan="7" className="p-8 text-center text-slate-500">Loading...</td></tr>
-                                ) : visibleData.length === 0 ? (
-                                    <tr><td colSpan="7" className="p-12 text-center text-slate-400">ไม่พบข้อมูล</td></tr>
-                                ) : (
-                                    visibleData.map((item, idx) => {
-                                        const isSelected = selectedIds.has(item.id);
-                                        return (
-                                            <tr
-                                                key={item.id}
-                                                className={`group transition-colors hover:bg-slate-50/80 ${isSelected ? 'bg-blue-50/50' : ''}`}
-                                            >
-                                                <td className="px-6 py-4 text-center">
-                                                    {item.status === 'pending' ? (
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={isSelected}
-                                                            onChange={() => {
-                                                                const newSet = new Set(selectedIds);
-                                                                if (newSet.has(item.id)) newSet.delete(item.id);
-                                                                else newSet.add(item.id);
-                                                                setSelectedIds(newSet);
-                                                            }}
-                                                            className="w-5 h-5 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                                        />
-                                                    ) : (
-                                                        <span className="text-slate-400 text-xs">{idx + 1}</span>
-                                                    )}
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="font-medium text-slate-700">{BRANCH_NAMES[item.branchCode] || item.branchCode}</div>
-                                                    <div className="text-xs text-slate-400">{item.branchCode} • {formatDate(item.createdAt)}</div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${ACTION_STYLES[item.action]?.badge || 'bg-gray-100 text-gray-800'}`}>
-                                                        {ACTION_STYLES[item.action]?.label || item.action}
-                                                    </span>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex flex-col">
-                                                        <span className="text-sm font-medium text-slate-900 line-clamp-1" title={item.productName}>
-                                                            {item.productName || item.barcode}
-                                                        </span>
-                                                        <span className="text-xs text-slate-500 flex items-center gap-1">
-                                                            <Package size={12} /> {item.barcode}
-                                                        </span>
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <PositionCell item={item} />
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex flex-col items-start gap-1">
-                                                        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[item.status]?.bg} ${STATUS_STYLES[item.status]?.text}`}>
-                                                            {STATUS_STYLES[item.status]?.icon}
-                                                            {STATUS_STYLES[item.status]?.label}
-                                                        </span>
-                                                        {item.status === 'rejected' && item.note && (
-                                                            <div className="text-xs text-rose-500 flex items-start gap-1 max-w-[150px]">
-                                                                <AlertCircle size={10} className="mt-0.5 shrink-0" />
-                                                                <span className="truncate" title={item.note}>{item.note}</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                                <td className="px-6 py-4">
-                                                    <div className="flex items-center justify-end gap-2">
-                                                        {item.status === 'pending' ? (
-                                                            <>
-                                                                <button
-                                                                    onClick={() => updateStatus(item.id, "completed")}
-                                                                    disabled={updating === item.id}
-                                                                    className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors tooltip"
-                                                                    title="อนุมัติ"
-                                                                >
-                                                                    <Check size={18} />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => setEditModal({ open: true, item })}
-                                                                    className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                                    title="แก้ไข"
-                                                                >
-                                                                    <Edit2 size={18} />
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => setRejectModal({ open: true, ids: [item.id], count: 1 })}
-                                                                    className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                                                    title="ปฏิเสธ"
-                                                                >
-                                                                    <X size={18} />
-                                                                </button>
-                                                            </>
-                                                        ) : (
-                                                            <button
-                                                                onClick={() => deleteRequest(item.id)}
-                                                                className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                                                                title="ลบรายการ"
-                                                            >
-                                                                <Trash2 size={18} />
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
-                                )}
-                            </tbody>
-                        </table>
-                    </div>
-                    {/* Pagination / Footer */}
-                    {totalPages > 0 && (
-                        <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-sm text-slate-600">
-                            <div>
-                                แสดง {visibleData.length} รายการ (จากทั้งหมด {totalItems} รายการ)
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    onClick={() => setPage(p => Math.max(1, p - 1))}
-                                    disabled={page === 1}
-                                    className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    ก่อนหน้า
-                                </button>
-                                <span className="font-medium px-2">หน้า {page} / {totalPages}</span>
-                                <button
-                                    onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                                    disabled={page === totalPages}
-                                    className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    ถัดไป
-                                </button>
+                        {/* Info Card */}
+                        <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
+                            <div className="flex items-start gap-3">
+                                <AlertCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                                <div>
+                                    <strong className="font-semibold">วิธีการอนุมัติที่ปลอดภัย</strong>
+                                    <p className="mt-1 text-blue-700">
+                                        ระบบจะประมวลผลคำขอตามลำดับเวลาที่ส่งมา (เก่าสุดก่อน) พร้อมชดเชย Index อัตโนมัติ 
+                                        เพื่อป้องกันปัญหาตำแหน่งคลาดเคลื่อน กรุณาอนุมัติทีละสาขาเพื่อความถูกต้อง
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    )}
-                </div>
+                    </>
+                )}
+
+                {/* ==================== DETAIL VIEW (Per Branch) ==================== */}
+                {viewMode === 'detail' && selectedBranch && (
+                    <>
+                        {/* Header with Back Button */}
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={backToSummary}
+                                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="กลับไปหน้าสรุป"
+                                >
+                                    <ArrowLeft size={24} />
+                                </button>
+                                <div>
+                                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
+                                        {getBranchName(selectedBranch)}
+                                    </h1>
+                                    <p className="text-slate-500 text-sm mt-1">
+                                        รหัสสาขา: {selectedBranch} • คำขอรอดำเนินการ: {branchStats[selectedBranch]?.total || 0} รายการ
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={loadData}
+                                className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                title="รีเฟรชข้อมูล"
+                            >
+                                <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+                            </button>
+                        </div>
+
+                        {/* Status Filter Tabs */}
+                        <div className="flex items-center gap-2 bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                            {["pending", "rejected", "completed"].map(type => {
+                                const style = STATUS_STYLES[type];
+                                return (
+                                    <button
+                                        key={type}
+                                        onClick={() => setFilterStatus(type)}
+                                        className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${
+                                            filterStatus === type
+                                                ? `${style.bg} ${style.text} shadow-sm`
+                                                : 'text-slate-500 hover:bg-slate-50'
+                                        }`}
+                                    >
+                                        {style.icon}
+                                        {style.label}
+                                    </button>
+                                );
+                            })}
+                        </div>
+
+                        {/* Toolbar */}
+                        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
+                            <div className="flex flex-wrap items-center gap-3">
+                                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[140px]">
+                                    <Filter size={16} className="text-slate-400" />
+                                    <select
+                                        value={filterAction}
+                                        onChange={e => setFilterAction(e.target.value)}
+                                        className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
+                                    >
+                                        <option value="">Action ทั้งหมด</option>
+                                        <option value="add">เพิ่มสินค้า</option>
+                                        <option value="move">ย้ายสินค้า</option>
+                                        <option value="delete">ลบสินค้า</option>
+                                    </select>
+                                </div>
+
+                                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg w-full max-w-[150px]">
+                                    <Layers size={16} className="text-slate-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="ค้นหา Shelf"
+                                        defaultValue={filterShelf}
+                                        onBlur={e => setFilterShelf(e.target.value.trim().toUpperCase())}
+                                        onKeyDown={e => {
+                                            if (e.key === 'Enter') setFilterShelf(e.currentTarget.value.trim().toUpperCase());
+                                        }}
+                                        className="bg-transparent text-sm w-full outline-none text-slate-700 placeholder:text-slate-400"
+                                    />
+                                </div>
+
+                                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[100px]">
+                                    <LayoutGrid size={16} className="text-slate-400" />
+                                    <select
+                                        value={filterRow}
+                                        onChange={e => setFilterRow(e.target.value)}
+                                        className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
+                                    >
+                                        <option value="">Row</option>
+                                        {availableRows.map(r => <option key={r} value={r}>Row {r}</option>)}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Bulk Actions Bar */}
+                            {filterStatus === 'pending' && visibleData.length > 0 && (
+                                <div className="flex items-center justify-between pt-3 border-t border-slate-100 animate-in slide-in-from-top-2">
+                                    <div className="flex items-center gap-4">
+                                        <label className="flex items-center gap-2 cursor-pointer group">
+                                            <input
+                                                type="checkbox"
+                                                className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 transition-colors"
+                                                checked={selectedIds.size > 0 && selectedIds.size === visibleData.filter(d => d.status === 'pending').length}
+                                                onChange={(e) => {
+                                                    if (e.target.checked) setSelectedIds(new Set(visibleData.filter(d => d.status === 'pending').map(d => d.id)));
+                                                    else setSelectedIds(new Set());
+                                                }}
+                                            />
+                                            <span className="text-sm text-slate-600 font-medium group-hover:text-slate-900 transition-colors">
+                                                เลือกทั้งหมดในหน้านี้
+                                            </span>
+                                        </label>
+
+                                        {selectedIds.size > 0 && (
+                                            <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
+                                                เลือกไว้ {selectedIds.size} รายการ
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        {selectedIds.size > 0 ? (
+                                            <>
+                                                <button
+                                                    onClick={handleBulkReject}
+                                                    disabled={bulkUpdating}
+                                                    className="px-4 py-2 text-sm font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
+                                                >
+                                                    <X size={16} /> ปฏิเสธที่เลือก
+                                                </button>
+                                                <button
+                                                    onClick={handleBulkApprove}
+                                                    disabled={bulkUpdating}
+                                                    className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm hover:shadow rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
+                                                >
+                                                    <Check size={16} /> อนุมัติที่เลือก
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <button
+                                                onClick={handleApproveAllPending}
+                                                disabled={bulkUpdating}
+                                                className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
+                                            >
+                                                <CheckCircle2 size={16} /> อนุมัติทั้งหมด (สาขานี้)
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Table */}
+                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase tracking-wider font-semibold">
+                                            <th className="px-6 py-4 w-12 text-center">#</th>
+                                            <th className="px-6 py-4">Action</th>
+                                            <th className="px-6 py-4">สินค้า</th>
+                                            <th className="px-6 py-4">ตำแหน่ง</th>
+                                            <th className="px-6 py-4">สถานะ</th>
+                                            <th className="px-6 py-4 w-20 text-center">จัดการ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-100">
+                                        {loading ? (
+                                            <tr><td colSpan="6" className="p-8 text-center text-slate-500">Loading...</td></tr>
+                                        ) : visibleData.length === 0 ? (
+                                            <tr><td colSpan="6" className="p-12 text-center text-slate-400">ไม่พบข้อมูล</td></tr>
+                                        ) : (
+                                            visibleData.map((item, idx) => {
+                                                const isSelected = selectedIds.has(item.id);
+                                                return (
+                                                    <tr key={item.id} className={`group transition-colors hover:bg-slate-50/80 ${isSelected ? 'bg-blue-50/50' : ''}`}>
+                                                        <td className="px-6 py-4 text-center">
+                                                            {item.status === 'pending' ? (
+                                                                <input
+                                                                    type="checkbox"
+                                                                    checked={isSelected}
+                                                                    onChange={() => {
+                                                                        const newSet = new Set(selectedIds);
+                                                                        if (newSet.has(item.id)) newSet.delete(item.id);
+                                                                        else newSet.add(item.id);
+                                                                        setSelectedIds(newSet);
+                                                                    }}
+                                                                    className="w-5 h-5 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                                                                />
+                                                            ) : (
+                                                                <span className="text-slate-400 text-xs">{idx + 1}</span>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${ACTION_STYLES[item.action]?.badge || 'bg-gray-100 text-gray-800'}`}>
+                                                                {ACTION_STYLES[item.action]?.label || item.action}
+                                                            </span>
+                                                            <div className="text-xs text-slate-400 mt-1">{formatDate(item.createdAt)}</div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-sm font-medium text-slate-900 line-clamp-1" title={item.productName}>
+                                                                    {item.productName || item.barcode}
+                                                                </span>
+                                                                <span className="text-xs text-slate-500 flex items-center gap-1">
+                                                                    <Package size={12} /> {item.barcode}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <PositionCell item={item} />
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[item.status]?.bg} ${STATUS_STYLES[item.status]?.text}`}>
+                                                                {STATUS_STYLES[item.status]?.icon}
+                                                                {STATUS_STYLES[item.status]?.label}
+                                                            </span>
+                                                            {item.status === 'rejected' && item.note && (
+                                                                <div className="text-xs text-rose-500 mt-1 truncate max-w-[120px]" title={item.note}>{item.note}</div>
+                                                            )}
+                                                        </td>
+                                                        <td className="px-6 py-4">
+                                                            <div className="flex items-center justify-end gap-1">
+                                                                {item.status === 'pending' ? (
+                                                                    <>
+                                                                        <button onClick={() => updateStatus(item.id, "completed")} disabled={updating === item.id} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg" title="อนุมัติ"><Check size={18} /></button>
+                                                                        <button onClick={() => setEditModal({ open: true, item })} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title="แก้ไข"><Edit2 size={18} /></button>
+                                                                        <button onClick={() => setRejectModal({ open: true, ids: [item.id], count: 1 })} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg" title="ปฏิเสธ"><X size={18} /></button>
+                                                                    </>
+                                                                ) : (
+                                                                    <button onClick={() => deleteRequest(item.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg" title="ลบ"><Trash2 size={18} /></button>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                );
+                                            })
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {/* Pagination */}
+                            {totalPages > 0 && (
+                                <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-sm text-slate-600">
+                                    <div>แสดง {visibleData.length} รายการ (จากทั้งหมด {totalItems})</div>
+                                    <div className="flex items-center gap-2">
+                                        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50">ก่อนหน้า</button>
+                                        <span className="font-medium px-2">หน้า {page} / {totalPages}</span>
+                                        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50">ถัดไป</button>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </>
+                )}
 
             </div>
 

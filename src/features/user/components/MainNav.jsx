@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import useBmrStore from "../../../store/bmr_store";
 import useStockMetaStore from "../../../store/stock_meta_store";
 import PogRequestHistoryModal from "./PogRequestHistoryModal";
+import ShelfChangeNotification from "./ShelfChangeNotification";
 
 const formatBangkokTime = (value) => {
   if (!value) return "-";
@@ -113,7 +114,9 @@ function MainNav() {
             {/* ขวา: เมนูผู้ใช้ + Logout ใน dropdown */}
             <div className="flex items-center gap-2 sm:gap-3">
               {user && (
-                <div className="relative" ref={menuRef}>
+                <>
+                  <ShelfChangeNotification branchCode={user.storecode} />
+                  <div className="relative" ref={menuRef}>
                   <button
                     type="button"
                     onClick={toggleUserMenu}
@@ -160,6 +163,7 @@ function MainNav() {
                     </div>
                   )}
                 </div>
+                </>
               )}
             </div>
           </div>

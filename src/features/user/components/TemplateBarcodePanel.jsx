@@ -227,7 +227,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-slate-800">ผลการสแกน</div>
-                {/* ✅ แสดงชื่อสาขา */}
+                {/* แสดงชื่อสาขา */}
                 <div className="text-xs text-slate-500 mt-1">สาขา: {branchText}</div>
               </div>
               <button
@@ -239,7 +239,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
               </button>
             </div>
 
-            {/* ✅ สปินตอนรอ backend */}
+            {/* สปินตอนรอ backend */}
             {lookupLoading || !lookupRes ? (
               <div className="mt-4 p-4 rounded-xl border bg-slate-50">
                 <div className="flex items-center gap-3">
@@ -320,25 +320,25 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
                       <div className="mt-1 text-xs text-emerald-700">{primaryLoc.shelfName}</div>
                     ) : null}
 
-                    <div className="mt-3 flex flex-col sm:flex-row gap-2">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setRequestAction(""); // ✅ Default (user selects)
-                          setPogRequestOpen(true);
-                          setPopupOpen(false); // ✅ Close popup
-                        }}
-                        className="flex-1 px-4 py-3 rounded-xl font-semibold text-sm bg-amber-500 text-white hover:bg-amber-300"
-                      >
-                        📝 แจ้งขอเปลี่ยน
-                      </button>
-                    </div>
-                  </div>
+                                      </div>
                 )}
               </>
             )}
 
             <div className="mt-4 flex justify-end gap-2">
+              {primaryLoc && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setRequestAction(""); // ✅ Default (user selects)
+                    setPogRequestOpen(true);
+                    setPopupOpen(false); // ✅ Close popup
+                  }}
+                  className="px-4 py-2 rounded-lg text-xs font-semibold bg-amber-500 text-white hover:bg-amber-300"
+                >
+                  แจ้งขอเปลี่ยน
+                </button>
+              )}
               <button
                 className="sm:hidden px-3 py-2 rounded-lg text-xs font-semibold border bg-white hover:bg-slate-50"
                 onClick={() => {
