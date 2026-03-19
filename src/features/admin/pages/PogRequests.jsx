@@ -319,7 +319,8 @@ export default function PogRequests() {
     const loadSummary = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await api.get("/pog-requests", { params: { limit: 1 } });
+            // Add timestamp to prevent HTTP 304 caching
+            const res = await api.get("/pog-requests", { params: { limit: 1, _t: Date.now() } });
             if (res.data?.stats) setStats(res.data.stats);
             if (res.data?.branchStats) setBranchStats(res.data.branchStats);
         } catch (e) {
@@ -335,7 +336,7 @@ export default function PogRequests() {
         
         setLoading(true);
         try {
-            const params = { limit: 50, page, branchCode: selectedBranch };
+            const params = { limit: 50, page, branchCode: selectedBranch, _t: Date.now() };
             if (filterStatus) params.status = filterStatus;
             if (filterAction) params.action = filterAction;
             if (filterShelf) params.shelf = filterShelf;
