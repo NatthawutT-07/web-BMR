@@ -1,0 +1,5 @@
+# Static assets - let them 404 properly if not found
+/assets/*  /assets/:splat  404
+
+# SPA fallback for all other routes
+/*   /index.html   200
