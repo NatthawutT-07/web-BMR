@@ -14,6 +14,7 @@ import {
   arrayMove,
 } from "@dnd-kit/sortable";
 import SortableItem from "./SortableItem";
+import EmptyRowDropZone from "./EmptyRowDropZone";
 
 const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelfCode, rowQty }) => {
   
@@ -261,7 +262,7 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelfCode, row
                         items={items.map((p) => p.codeProduct).concat([`empty-row-${row}`])} // Allow dropping on empty row
                         strategy={verticalListSortingStrategy}
                         >
-                        {items.length > 0 ? (
+                        {items.length > 0 && (
                             <div className="space-y-1">
                                 {items.map((prod, index) => (
                                 <SortableItem
@@ -271,14 +272,8 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelfCode, row
                                 />
                                 ))}
                             </div>
-                        ) : (
-                            // Render a drop zone for empty rows
-                            <div className="h-full w-full flex items-center justify-center border-2 border-dashed border-gray-300 rounded-md py-3 text-gray-400 text-xs">
-                                No products in this Row. Drop here.
-                            </div>
                         )}
-                        {/* Hidden item to act as a target for empty row drops if it's not totally empty, but helps DndKit */}
-                        <div id={`empty-row-${row}`} style={{ display: 'none' }} />
+                        <EmptyRowDropZone rowId={`empty-row-${row}`} isEmpty={items.length === 0} />
                         </SortableContext>
                     </div>
                   </div>

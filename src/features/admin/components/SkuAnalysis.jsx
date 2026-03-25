@@ -230,6 +230,19 @@ const SkuAnalysis = () => {
             );
         }
         list = [...list].sort((a, b) => {
+            if (mode === "brand") {
+                const cA = String(a.consing_item || "");
+                const cB = String(b.consing_item || "");
+                if (cA !== cB) return cB.localeCompare(cA, "th");
+
+                let sA = 0, sB = 0;
+                for (const m of summaryMonths) {
+                    sA += a.months?.[m]?.sales || 0;
+                    sB += b.months?.[m]?.sales || 0;
+                }
+                return sB - sA;
+            }
+
             const va = a[sortKey] ?? "";
             const vb = b[sortKey] ?? "";
             if (typeof va === "number" && typeof vb === "number")
@@ -239,7 +252,7 @@ const SkuAnalysis = () => {
                 : String(vb).localeCompare(String(va));
         });
         return list;
-    }, [rows, search, sortKey, sortDir]);
+    }, [rows, search, sortKey, sortDir, mode, summaryMonths]);
 
     const totals = useMemo(() => {
         if (mode === "brand" || mode === "storeSummary" || mode === "store") {

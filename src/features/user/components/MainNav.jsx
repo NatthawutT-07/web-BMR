@@ -74,7 +74,12 @@ function MainNav() {
   const stockTimeText = useMemo(() => {
     if (stockStatus === "loading") return "กำลังเช็ค...";
     if (stockStatus === "error") return "-";
-    return formatBangkokTime(stockUpdatedAt);
+    
+    // Add 7 hours to the stock time
+    if (!stockUpdatedAt) return "-";
+    const adjustedDate = new Date(stockUpdatedAt);
+    adjustedDate.setHours(adjustedDate.getHours() + 7);
+    return formatBangkokTime(adjustedDate);
   }, [stockStatus, stockUpdatedAt]);
 
   return (
