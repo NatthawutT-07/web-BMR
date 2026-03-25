@@ -166,8 +166,21 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelfCode, row
             reordered = sameRow.map((p, i) => ({...p, index: i+1}));
         }
 
+        // Re-index source row (and any other row) so indices stay sequential
+        const otherProducts = edited.filter(p => p.rowNo !== targetRow);
+        const otherByRow = {};
+        for (const p of otherProducts) {
+          if (!otherByRow[p.rowNo]) otherByRow[p.rowNo] = [];
+          otherByRow[p.rowNo].push(p);
+        }
+        const reindexedOthers = Object.values(otherByRow).flatMap(rowItems =>
+          rowItems
+            .sort((a, b) => a.index - b.index)
+            .map((p, i) => ({ ...p, index: i + 1 }))
+        );
+
         const merged = [
-          ...edited.filter(p => p.rowNo !== targetRow),
+          ...reindexedOthers,
           ...reordered,
         ].sort((a, b) => a.rowNo - b.rowNo || a.index - b.index);
 
