@@ -143,7 +143,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
 
                     const code = p.codeProduct ? String(p.codeProduct) : p.barcode ? String(p.barcode) : null;
                     const isDuplicate = code && duplicateCodes?.has(code);
-                    
+
                     let bgClass = "";
                     if (isDuplicate) {
                       bgClass = "bg-yellow-200 hover:bg-yellow-300 print:bg-yellow-100";
@@ -238,7 +238,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                           {zeroToDash(p.maxStore)}
                         </td>
 
-                        <td className="border p-1 print:px-[2px] text-center text-yellow-700 align-middle">
+                        <td className="border p-1 print:px-[2px] text-center text-yellow-700 align-middle font-semibold">
                           {zeroToDash(p.stockQuantity)}
                         </td>
 

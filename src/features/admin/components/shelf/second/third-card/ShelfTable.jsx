@@ -291,7 +291,7 @@ const ShelfTable = ({
 
         {/* Row total */}
         <tr className="bg-gray-100 font-semibold">
-          <td colSpan={12}></td>
+          <td colSpan={11}></td>
 
           <td colSpan={3} className="p-2 border text-right">
             Total Row {rowNo}
@@ -309,7 +309,7 @@ const ShelfTable = ({
             {formatMoney2(totalRowWithdraw)}
           </td>
 
-          <td></td>
+          <td colSpan={2}></td>
         </tr>
       </React.Fragment>
     );
@@ -386,7 +386,7 @@ const ShelfTable = ({
             {Array.from({ length: Number(rows) || 0 }, (_, i) => renderRow(i + 1))}
 
             <tr className="bg-gray-200 font-semibold">
-              <td colSpan={15} className="p-2 border text-right">
+              <td colSpan={14} className="p-2 border text-right">
                 Total for All Rows
               </td>
 
@@ -402,7 +402,7 @@ const ShelfTable = ({
                 {formatMoney2(totalAll.withdraw)}
               </td>
 
-              <td className="border"></td>
+              <td className="border" colSpan={2}></td>
             </tr>
           </tbody>
         </table>

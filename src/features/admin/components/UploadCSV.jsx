@@ -614,7 +614,7 @@ const UploadCSV = () => {
         <option value="minMax">ItemMinMax XLSX</option>
         <option value="masterItem">MasterItem XLSX</option>
         <option value="bill">Bill XLSX</option>
-        <option value="si">Order SI XLSX</option>
+        {/* <option value="si">Order SI XLSX</option> */}
         <option value="gourmet">Gourmet XLSX</option>
       </select>
 
