@@ -49,7 +49,7 @@ const ShelfCard = ({
   };
 
   return (
-    <div className="border rounded shadow-sm p-4 mb-6 bg-white relative">
+    <div className="border rounded shadow-sm p-2 mb-2 bg-white relative">
 
       {/* LOADING MASK */}
       {actionLoading && (
@@ -73,25 +73,8 @@ const ShelfCard = ({
         {/* LEFT: Image + Title */}
         <div className="flex items-center space-x-3">
 
-          {/* Expand image */}
-          <div
-            onClick={(e) => {
-              e.stopPropagation();
-              setIsImageOpen((prev) => !prev);
-            }}
-            className={`rounded border bg-gray-200 flex items-center justify-center 
-              text-xs text-gray-500 cursor-pointer transition-all duration-300
-              ${isImageOpen ? "w-full h-64 min-h-[250px]" : "w-10 h-10"}`}
-          >
-            {isImageOpen ? (
-              <div className="text-gray-600">[ IMAGE ]</div>
-            ) : (
-              <span>img</span>
-            )}
-          </div>
-
           {!isImageOpen && (
-            <h2 className="text-lg font-semibold">
+            <h2 className="text-xl font-semibold">
               Shelf: {template.shelfCode} - {template.fullName} ({template.rowQty} Rows)
             </h2>
           )}

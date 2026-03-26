@@ -72,6 +72,8 @@ const ShelfManager = () => {
     handleDelete,
     handleUpdateProducts,
     refreshDataProduct,
+    syncDates,
+    fetchSyncDates,
   } = useShelfStore();
 
   const [selectedBranchCode, setSelectedBranchCode] = useState("");
@@ -100,12 +102,13 @@ const ShelfManager = () => {
     );
   }, [product, submittedBranchCode]);
 
-  // initial load branches + templates
+  // initial load branches + templates + syncDates
   useEffect(() => {
     if (!accessToken) return;
     fetchBranches();
     fetchTemplate();
-  }, [accessToken, fetchBranches, fetchTemplate]);
+    fetchSyncDates();
+  }, [accessToken, fetchBranches, fetchTemplate, fetchSyncDates]);
 
   // 🟢 summary ใช้เฉพาะ branchProduct
   useEffect(() => {
@@ -310,16 +313,19 @@ const ShelfManager = () => {
 
             {/* CENTER: Summary Table */}
             <div className="flex-1 flex flex-col">
-              <div className="bg-gradient-to-b from-slate-50 to-white border-2 border-slate-200 rounded-xl p-4 shadow-inner max-h-[450px] overflow-y-auto">
+              <div className="bg-gradient-to-b from-slate-50 to-white border-2 border-slate-200 rounded-xl p-4 shadow-inner max-h-[500px] overflow-y-auto">
                 <h3 className="font-bold text-slate-800 mb-2 text-base text-center flex items-center justify-center gap-2 sticky top-0 bg-slate-50/95 py-2 -mt-2 z-10 backdrop-blur-sm">
                   Dashboard
                 </h3>
 
-                {/* ช่วงเวลา start - end ของยอดขาย 90 วัน */}
                 {salesStart && salesEnd && (
-                  <p className="text-[11px] text-center text-gray-500 mb-3">
-                    Sales period: {formatDDMMYYYY(salesStart)} - {formatDDMMYYYY(salesEnd)}
-                  </p>
+                  <div className="text-[11px] text-center text-gray-500 mb-3 leading-relaxed">
+                    <p>Sales & Withdraw period: {formatDDMMYYYY(salesStart)} - {formatDDMMYYYY(salesEnd)}</p>
+                    <p>Stock : {syncDates?.stock?.updatedAt ? new Date(syncDates.stock.updatedAt).toLocaleString("th-TH") : "-"} | MinMax : {syncDates?.minMax?.updatedAt ? new Date(syncDates.minMax.updatedAt).toLocaleString("th-TH") : "-"}</p>
+
+                    <p>Bill : {syncDates?.dashboard?.updatedAt ? new Date(syncDates.dashboard.updatedAt).toLocaleString("th-TH") : "-"} | Withdraw : {syncDates?.withdraw?.updatedAt ? new Date(syncDates.withdraw.updatedAt).toLocaleString("th-TH") : "-"}</p>
+
+                  </div>
                 )}
 
                 <div className="grid grid-cols-4 text-xs font-semibold border-b pb-2 mb-2 bg-slate-100 px-2 py-1 rounded-t-lg">
@@ -455,7 +461,7 @@ const ShelfManager = () => {
 
       {/* Fullscreen Image Modal */}
       {isFullscreenImage && imageUrl && (
-        <div 
+        <div
           className="fixed inset-0  bg-opacity-90 z-50 flex items-center justify-center cursor-pointer"
           onClick={() => setIsFullscreenImage(false)}
         >

@@ -58,7 +58,7 @@ const UploadCSV = () => {
   useEffect(() => {
     fetchListBranches();
     fetchSyncDates();
-    
+
     const fetchActiveUsers = async () => {
       try {
         const res = await api.get("/users");
@@ -68,7 +68,7 @@ const UploadCSV = () => {
         console.error("Failed to fetch users", error);
       }
     };
-    
+
     const interval = setInterval(fetchSyncDates, 60000); // refresh every minute
 
     fetchActiveUsers();
@@ -312,7 +312,7 @@ const UploadCSV = () => {
 
     const syncKey = syncKeys[fileType];
     const lastSyncInfo = syncKey && syncDates[syncKey];
-    
+
     // Format date string
     let lastUpdateStr = "ยังไม่มีข้อมูล";
     if (lastSyncInfo && lastSyncInfo.updatedAt) {
@@ -615,7 +615,7 @@ const UploadCSV = () => {
         <option value="masterItem">MasterItem XLSX</option>
         <option value="bill">Bill XLSX</option>
         {/* <option value="si">Order SI XLSX</option> */}
-        {/* <option value="gourmet">Gourmet XLSX</option> */}
+        <option value="gourmet">Gourmet XLSX</option>
       </select>
 
       {selectedFileType && renderFileUploadForm(selectedFileType)}

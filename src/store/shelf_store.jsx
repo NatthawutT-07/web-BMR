@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { getSKU, getTemplate, addTemplate, deleteTemplate, updateProducts } from "../api/admin/template";
+import { getSyncDates } from "../api/admin/upload";
 
 import logger from "../utils/logger";
 import { fetchBranchListSales } from "../api/admin/sales";
@@ -22,12 +23,13 @@ const useShelfStore = create(
       branches: [],
       template: [],
       product: [],
+      syncDates: null,
 
       loading: false,
       actionLoading: false,
 
       // =====================================================
-      // 📌 Branch List
+      //  Branch List
       // =====================================================
       fetchBranches: async () => {
         const { branches } = get();
@@ -48,7 +50,19 @@ const useShelfStore = create(
       },
 
       // =====================================================
-      // 📌 Template
+      //  Data Sync Dates
+      // =====================================================
+      fetchSyncDates: async () => {
+        try {
+          const res = await getSyncDates();
+          set({ syncDates: res });
+        } catch (error) {
+          logger.error("Fetch sync dates failed", error);
+        }
+      },
+
+      // =====================================================
+      //  Template
       // =====================================================
       fetchTemplate: async () => {
         const { template } = get();
@@ -69,7 +83,7 @@ const useShelfStore = create(
       },
 
       // =====================================================
-      // 📌 Product by Branch
+      //  Product by Branch
       // เปลี่ยนเป็น "replace ข้อมูลของสาขานั้น" กันของเก่าค้าง/ซ้อน
       // =====================================================
       fetchProduct: async (branchCode) => {
@@ -113,7 +127,7 @@ const useShelfStore = create(
       },
 
       // =====================================================
-      // 📌 Add Product
+      //  Add Product
       // =====================================================
       handleAddProduct: async (newItem) => {
         set({ actionLoading: true });
@@ -157,7 +171,7 @@ const useShelfStore = create(
       },
 
       // =====================================================
-      // 📌 Delete Product
+      //  Delete Product
       // ลบด้วย id เป็นหลัก + reindex ใน state ให้ตรง backend ทันที
       // =====================================================
       handleDelete: async (productToDelete) => {
@@ -191,7 +205,7 @@ const useShelfStore = create(
       },
 
       // =====================================================
-      // 📌 Update Product
+      //  Update Product
       // =====================================================
       handleUpdateProducts: async (updatedProducts) => {
         set({ actionLoading: true });

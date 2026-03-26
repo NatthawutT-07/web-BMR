@@ -154,7 +154,7 @@ const ShelfTable = ({
       <React.Fragment key={`row-${rowNo}`}>
         {/* Row header */}
         <tr className="bg-blue-50">
-          <td colSpan={17} className="p-2 border font-semibold italic">
+          <td colSpan={18} className="p-2 border font-semibold italic">
             ➤ Row: {rowNo}
           </td>
 
@@ -172,8 +172,6 @@ const ShelfTable = ({
         {rowProducts.length > 0 ? (
           rowProducts.map((prod) => {
             const cost = getSafeStockCost(prod);
-
-            const salesCurrentMonthQty = Number(prod.salesCurrentMonthQty ?? 0);
 
             const rowKey = prod.id
               ? `prod-${prod.id}`
@@ -202,6 +200,13 @@ const ShelfTable = ({
                   {prod.nameProduct ?? "-"}
                 </td>
 
+                <td
+                  className="p-1 border text-left whitespace-nowrap text-ellipsis overflow-hidden max-w-[200px]"
+                  title={prod.groupName ?? "-"}
+                >
+                  {prod.groupName ?? "-"}
+                </td>
+
                 <td className="p-1 border whitespace-nowrap text-ellipsis overflow-hidden max-w-[160px]">
                   {prod.nameBrand ?? "-"}
                 </td>
@@ -214,17 +219,11 @@ const ShelfTable = ({
                   {prod.salesPriceIncVAT ?? "-"}
                 </td>
 
-                <td className="p-1 border text-center w-14 font-semibold text-blue-600">
-                  {salesCurrentMonthQty
-                    ? salesCurrentMonthQty.toLocaleString()
-                    : "-"}
-                </td>
-
-                <td className="p-1 border text-center w-14 text-green-600">
+                <td className="p-1 border text-center w-14 text-green-600 font-semibold">
                   {prod.salesQuantity ? prod.salesQuantity.toLocaleString() : "-"}
                 </td>
 
-                <td className="p-1 border text-center w-14 text-red-600">
+                <td className="p-1 border text-center w-14 text-red-600 font-semibold">
                   {prod.withdrawQuantity
                     ? prod.withdrawQuantity.toLocaleString()
                     : "-"}
@@ -238,7 +237,7 @@ const ShelfTable = ({
                   {prod.maxStore ?? "-"}
                 </td>
 
-                <td className="p-1 border text-center w-14 text-yellow-700">
+                <td className="p-1 border text-center w-14 text-yellow-700 font-semibold">
                   {prod.stockQuantity !== null && prod.stockQuantity !== undefined
                     ? prod.stockQuantity.toLocaleString()
                     : "0"}
@@ -262,6 +261,10 @@ const ShelfTable = ({
                   {formatMoney2(prod.withdrawValue)}
                 </td>
 
+                <td className="border text-center w-16 text-indigo-600 ">
+                  {prod.dayOff !== null && prod.dayOff !== undefined ? prod.dayOff : "-"}
+                </td>
+
                 <td className="border p-1 text-center w-16">
                   <button
                     onClick={() => handleDeleteClick(prod)}
@@ -275,7 +278,7 @@ const ShelfTable = ({
           })
         ) : (
           <tr>
-            <td colSpan={18} className="p-2 border text-center italic text-gray-500">
+            <td colSpan={19} className="p-2 border text-center italic text-gray-500">
               No products in this Row
             </td>
           </tr>
@@ -283,7 +286,7 @@ const ShelfTable = ({
 
         {/* Row total */}
         <tr className="bg-gray-100 font-semibold">
-          <td colSpan={11}></td>
+          <td colSpan={12}></td>
 
           <td colSpan={3} className="p-2 border text-right">
             Total Row {rowNo}
@@ -337,12 +340,12 @@ const ShelfTable = ({
               <th className="border p-1 text-center w-24">Barcode</th>
               <th className="border p-1 text-center w-16">Code</th>
               <th className="border p-1 text-center w-44">Name</th>
+              <th className="border text-center w-12">Group</th>
 
               <th className="border p-1 text-center w-32">Brand</th>
-              <th className="border text-center w-12">Shelf</th>
+              <th className="border text-center w-12">Life</th>
               <th className="border p-1 text-center w-16">RSP</th>
 
-              <th className="border p-1 text-center w-14">Sales M</th>
 
               <th className="border p-1 text-center w-14">Sales 3M</th>
               <th className="border p-1 text-center w-14">W. Qty</th>
@@ -369,6 +372,7 @@ const ShelfTable = ({
               </th>
 
               <th className="border p-1 text-center w-24">Withdraw Amount</th>
+              <th className="border p-1 text-center w-16">Day Off</th>
               <th className="border p-1 text-center w-16">Delete</th>
             </tr>
           </thead>
@@ -377,7 +381,7 @@ const ShelfTable = ({
             {Array.from({ length: Number(rows) || 0 }, (_, i) => renderRow(i + 1))}
 
             <tr className="bg-gray-200 font-semibold">
-              <td colSpan={14} className="p-2 border text-right">
+              <td colSpan={15} className="p-2 border text-right">
                 Total for All Rows
               </td>
 
