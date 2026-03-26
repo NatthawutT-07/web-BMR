@@ -173,6 +173,22 @@ const Template = () => {
     });
   }, [data]);
 
+  // หาสินค้าที่ซ้ำกันในสาขานี้
+  const duplicateCodes = useMemo(() => {
+    const counts = {};
+    data.forEach(p => {
+      const code = p.codeProduct ? String(p.codeProduct) : p.barcode ? String(p.barcode) : null;
+      if (code && code !== "-" && code !== "null") {
+        counts[code] = (counts[code] || 0) + 1;
+      }
+    });
+    const dupes = new Set();
+    Object.keys(counts).forEach(k => {
+      if (counts[k] > 1) dupes.add(k);
+    });
+    return dupes;
+  }, [data]);
+
   // Filter + Search
   const displayedShelves = useMemo(() => {
     const qRaw = searchText.trim();
@@ -617,6 +633,7 @@ const Template = () => {
                         rowQty: s.rowQty,
                         items: s.shelfProducts
                       }))}
+                      duplicateCodes={duplicateCodes}
                     />
                   </div>
                 ))}

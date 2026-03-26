@@ -102,6 +102,23 @@ const ShelfManager = () => {
     );
   }, [product, submittedBranchCode]);
 
+  // 🟡 หาสินค้าที่ซ้ำกันในระดับสาขา (ดูจาก codeProduct เป็นหลัก หรือ barcode)
+  const duplicateCodes = useMemo(() => {
+    const counts = {};
+    branchProduct.forEach(p => {
+      const code = p.codeProduct ? String(p.codeProduct) : p.barcode ? String(p.barcode) : null;
+      if (code && code !== "-" && code !== "null") {
+        counts[code] = (counts[code] || 0) + 1;
+      }
+    });
+    
+    const dupes = new Set();
+    Object.keys(counts).forEach(k => {
+      if (counts[k] > 1) dupes.add(k);
+    });
+    return dupes;
+  }, [branchProduct]);
+
   // initial load branches + templates + syncDates
   useEffect(() => {
     if (!accessToken) return;
@@ -449,6 +466,7 @@ const ShelfManager = () => {
                 template={t}
                 // ใช้เฉพาะ product ของสาขาที่กด OK แล้ว
                 product={branchProduct}
+                duplicateCodes={duplicateCodes}
                 onAdd={(item) => handleAddProduct(item)}
                 onDelete={(p) => handleDelete(p)}
                 onUpdateProducts={(updated) => handleUpdateProducts(updated)}

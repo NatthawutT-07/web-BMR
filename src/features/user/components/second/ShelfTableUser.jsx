@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import PogRequestModal from "../PogRequestModal";
 import useBmrStore from "../../../../store/bmr_store";
 
-const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves = [] }) => {
+const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves = [], duplicateCodes }) => {
   const storecode = useBmrStore((s) => s.user?.storecode);
   const [pogRequestOpen, setPogRequestOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -141,14 +141,20 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                       !Number.isNaN(currentSales) &&
                       currentSales >= targetVal;
 
+                    const code = p.codeProduct ? String(p.codeProduct) : p.barcode ? String(p.barcode) : null;
+                    const isDuplicate = code && duplicateCodes?.has(code);
+                    
+                    let bgClass = "";
+                    if (isDuplicate) {
+                      bgClass = "bg-yellow-200 hover:bg-yellow-300 print:bg-yellow-100";
+                    } else {
+                      bgClass = i % 2 ? "bg-gray-50 print:bg-gray-100 hover:bg-blue-50" : "bg-white print:bg-white hover:bg-blue-50";
+                    }
+
                     return (
                       <tr
                         key={`${rowNo}-${p.codeProduct || i}`}
-                        className={
-                          i % 2
-                            ? "bg-gray-50 print:bg-gray-100"
-                            : "bg-white print:bg-white"
-                        }
+                        className={bgClass}
                       >
                         <td className="border p-1 print:px-[2px] text-center align-middle">
                           {zeroToDash(p.index)}

@@ -9,6 +9,7 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
   openNonce,
   branchName = "",
   availableShelves = [],
+  duplicateCodes,
 }) {
   const shelfProducts = useMemo(
     () => (Array.isArray(template.shelfProducts) ? template.shelfProducts : []),
@@ -130,6 +131,7 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
               shelfProducts={shelfProducts}
               branchName={branchName}
               availableShelves={availableShelves}
+              duplicateCodes={duplicateCodes}
             />
           ) : null}
         </div>

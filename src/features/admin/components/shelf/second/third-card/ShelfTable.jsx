@@ -44,6 +44,7 @@ const ShelfTable = ({
   onAdd,
   shelfCode,
   branchCode,
+  duplicateCodes,
 }) => {
   const [deleteModal, setDeleteModal] = useState({
     isOpen: false,
@@ -177,8 +178,12 @@ const ShelfTable = ({
               ? `prod-${prod.id}`
               : `prod-${prod.codeProduct}-${prod.index}`;
 
+            const code = prod.codeProduct ? String(prod.codeProduct) : prod.barcode ? String(prod.barcode) : null;
+            const isDuplicate = code && duplicateCodes?.has(code);
+            const rowBg = isDuplicate ? "bg-yellow-200 hover:bg-yellow-300" : "even:bg-gray-50 hover:bg-blue-50";
+
             return (
-              <tr key={rowKey} className="even:bg-gray-50">
+              <tr key={rowKey} className={rowBg}>
                 <td className="p-1 border text-center w-10">
                   {prod.displayIndex ?? prod.index}
                 </td>

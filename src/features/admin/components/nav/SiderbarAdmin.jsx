@@ -99,8 +99,8 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
         <SidebarItem to="dashboard-shelf" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} expanded={isOpen} />
         <SidebarItem to="pog-requests" label="POG Requests" icon={<ClipboardList size={20} />} expanded={isOpen} />
         <SidebarItem to="branch-ack" label="Branch Status" icon={<Eye size={20} />} expanded={isOpen} />
-        {/* <SidebarItem to="analysis" label="Analysis" icon={<BarChart3 size={20} />} expanded={isOpen} /> */}
-        {/* <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} /> */}
+        <SidebarItem to="analysis" label="Analysis" icon={<BarChart3 size={20} />} expanded={isOpen} />
+        <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} />
         <SidebarItem to="upload" label="Upload XLSX" icon={<FileUp size={20} />} expanded={isOpen} />
 
 

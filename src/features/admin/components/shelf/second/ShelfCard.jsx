@@ -13,6 +13,7 @@ const EditShelfModal = lazy(() => import("./third-card/EditShelfModal"));
 const ShelfCard = ({
   template,
   product,
+  duplicateCodes,
   onAdd,
   onDelete,
   onUpdateProducts,
@@ -133,6 +134,7 @@ const ShelfCard = ({
             }}
             shelfCode={template.shelfCode}
             branchCode={template.branchCode}
+            duplicateCodes={duplicateCodes}
           />
         </Suspense>
       )}
