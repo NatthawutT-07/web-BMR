@@ -221,9 +221,9 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
 
       {/* Popup ผลลัพธ์ */}
       {popupOpen && (
-        <div className="fixed inset-0 z-[9998] flex items-center justify-center">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setPopupOpen(false)} />
-          <div className="relative w-[94vw] max-w-xl bg-white rounded-2xl shadow-xl border p-4">
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center pointer-events-none">
+          <div className="absolute inset-0 bg-transparent pointer-events-auto" onClick={() => setPopupOpen(false)} />
+          <div className="relative w-[94vw] max-w-xl bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 pointer-events-auto">
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-slate-800">ผลการสแกน</div>
@@ -253,28 +253,33 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
                 </div>
               </div>
             ) : !lookupRes.found ? (
-              <div className="mt-4 p-4 rounded-xl bg-rose-50 border border-rose-200">
-                <div className="flex items-start gap-3">
-                  <div className="text-2xl">❌</div>
-                  <div>
-                    <div className="text-sm font-bold text-rose-700">
+              <div className="mt-4 flex flex-col pt-2 w-full">
+                <div className="flex items-start gap-4 p-4 rounded-xl bg-rose-50 border border-rose-200 shadow-sm">
+                  <div className="flex shrink-0 items-center justify-center w-10 h-10 rounded-full bg-rose-200 text-rose-700">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-base font-bold text-rose-800">
                       {lookupRes.reason === "BARCODE_NOT_FOUND"
                         ? "ไม่พบสินค้านี้ในระบบร้านค้า"
                         : "ไม่พบข้อมูลตำแหน่งสินค้า"}
                     </div>
-                    <div className="text-xs text-rose-600 mt-1">
+                    <div className="text-sm text-rose-600/90 mt-0.5">
                       {lookupRes.reason === "BARCODE_NOT_FOUND"
-                        ? "สินค้านี้ยังไม่มีข้อมูลในระบบ"
-                        : reasonText(lookupRes.reason)}
+                        ? "สินค้านี้ยังไม่มีข้อมูลในระบบ หรือบาร์โค้ดไม่ถูกต้อง"
+                        : "พบสินค้าในระบบ แต่ยังไม่มีตำแหน่งจัดวางใน POG ของสาขานี้"}
                     </div>
 
                     {/* แสดงสินค้าที่พบ (แต่ไม่มี Location) */}
                     {lookupRes.reason === "NO_LOCATION_IN_POG" && lookupRes.product && (
-                      <div className="mt-2 p-2 bg-rose-50 rounded border text-slate-700">
-                        <div className="font-semibold">{lookupRes.product.name}</div>
-                        <div className="text-xs text-slate-500">
-                          {lookupRes.product.brand && <span>{lookupRes.product.brand}</span>}
-                          {lookupRes.product.price && <span> • ราคา: {lookupRes.product.price}</span>}
+                      <div className="mt-4 p-4 bg-white rounded-xl shadow-sm border border-rose-100 text-slate-800 w-full overflow-hidden relative">
+                        <div className="text-sm text-slate-500 mb-1">ข้อมูลสินค้าที่พบ</div>
+                        <div className="text-base font-bold whitespace-normal leading-tight" title={lookupRes.product.name}>
+                          {lookupRes.product.name}
+                        </div>
+                        <div className="flex flex-wrap gap-x-2 gap-y-2 mt-3 text-xs">
+                          {lookupRes.product.brand && <span className="bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-medium">{lookupRes.product.brand}</span>}
+                          {lookupRes.product.price && <span className="bg-emerald-100 text-emerald-800 px-2.5 py-1 rounded-md font-bold text-[13px]">ราคา {lookupRes.product.price} ฿</span>}
                         </div>
                       </div>
                     )}
@@ -288,9 +293,10 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
                           setPogRequestOpen(true);
                           setPopupOpen(false); // Close popup
                         }}
-                        className="mt-3 px-4 py-2 rounded-lg text-xs font-bold text-white bg-rose-600 hover:bg-rose-500 shadow-sm"
+                        className="mt-3 inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-md text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-500 shadow-sm transition-all border border-emerald-700"
                       >
-                        แจ้งเพิ่มสินค้านี้
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4" /></svg>
+                        แจ้งเพิ่มตำแหน่งให้สินค้านี้
                       </button>
                     )}
                   </div>
@@ -298,29 +304,61 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
               </div>
             ) : (
               <>
-                <div className="mt-4">
+                <div className="mt-4 mb-2">
                   <div className="text-xs text-slate-500">สินค้า</div>
                   <div className="text-sm font-semibold text-slate-900">{lookupRes.product?.name || "-"}</div>
                   <div className="text-xs text-slate-600 mt-1">
-                    {lookupRes.product?.brand ? `แบรนด์: ${lookupRes.product.brand}` : null}
-                    {lookupRes.product?.price != null ? ` • ราคา: ${lookupRes.product.price}` : null}
+                    {lookupRes.product?.brand ? `แบรนด์: ${lookupRes.product.brand}` : ""}
                   </div>
                 </div>
 
-                {primaryLoc && (
-                  <div className="mt-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
-                    <div className="text-xs text-emerald-700">ตำแหน่งที่ควรวาง</div>
-                    <div className="mt-1 text-3xl font-extrabold text-emerald-800 leading-none">
-                      {primaryLoc.shelfCode}
+                {primaryLoc ? (
+                  <div className="border-2 border-emerald-400 rounded-2xl shadow-sm overflow-hidden mt-3 relative">
+                    {/* Header */}
+                    <div className="flex items-center gap-2 px-2 py-1.5 border-b border-emerald-100 bg-emerald-50">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-full bg-emerald-200 text-emerald-700 shadow-sm">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                      <span className="text-emerald-700 font-bold text-sm">ตำแหน่งที่วาง</span>
                     </div>
-                    <div className="mt-2 text-sm font-semibold text-emerald-800">
-                      Row {primaryLoc.rowNo} • ตำแหน่ง {primaryLoc.index}
-                    </div>
-                    {primaryLoc.shelfName ? (
-                      <div className="mt-1 text-xs text-emerald-700">{primaryLoc.shelfName}</div>
-                    ) : null}
 
-                                      </div>
+                    {/* 3 Columns */}
+                    <div className="flex items-center justify-between px-4 py-5 bg-white relative">
+                      <div className="flex flex-col items-center flex-1">
+                        <span className="text-xs text-slate-400 mb-1">Shelf</span>
+                        <span className="text-lg font-bold text-slate-800">{primaryLoc.shelfCode}</span>
+                      </div>
+                      <div className="w-px h-8 bg-slate-100"></div>
+                      <div className="flex flex-col items-center flex-1">
+                        <span className="text-xs text-slate-400 mb-1">ชั้นที่</span>
+                        <span className="text-lg font-bold text-slate-800">{primaryLoc.rowNo}</span>
+                      </div>
+                      <div className="w-px h-8 bg-slate-100"></div>
+                      <div className="flex flex-col items-center flex-1">
+                        <span className="text-xs text-slate-400 mb-1">ลำดับ</span>
+                        <span className="text-lg font-bold text-slate-800">{primaryLoc.index}</span>
+                      </div>
+                    </div>
+
+                    {/* Price Footer */}
+                    <div className="flex justify-between items-center px-5 py-4 border-t border-slate-100 bg-white">
+                      <div className="flex items-center gap-2 text-slate-500">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                        </svg>
+                        <span className="text-sm font-medium">ราคา:</span>
+                      </div>
+                      <div className="text-lg font-bold text-emerald-500">
+                        {lookupRes.product?.price != null ? `${lookupRes.product.price} ฿` : "-"}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="mt-2 text-xs text-slate-600">
+                    {lookupRes.product?.price != null ? `ราคา: ${lookupRes.product.price} ฿` : null}
+                  </div>
                 )}
               </>
             )}

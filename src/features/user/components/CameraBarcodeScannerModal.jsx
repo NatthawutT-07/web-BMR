@@ -33,15 +33,8 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
     setLiveText("");
     setLiveDigits("");
 
-    //  จำกัดฟอร์แมตที่ใช้จริงในร้าน + เปิดโหมด TryHarder
+    // เปิดโหมด TryHarder อย่างเดียว เพื่อให้สแกนได้ทุก Format (เผื่อสินค้าเป็น CODE_39 หรือแบบอื่น)
     const hints = new Map();
-    hints.set(DecodeHintType.POSSIBLE_FORMATS, [
-      BarcodeFormat.EAN_13,
-      BarcodeFormat.EAN_8,
-      BarcodeFormat.UPC_A,
-      BarcodeFormat.UPC_E,
-      BarcodeFormat.CODE_128,
-    ]);
     hints.set(DecodeHintType.TRY_HARDER, true);
 
     const reader = new BrowserMultiFormatReader(hints, 500);
@@ -165,7 +158,7 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
 
         <div className="p-3">
           <div className="relative rounded-xl overflow-hidden bg-black">
-            <video ref={videoRef} className="w-full aspect-[3/4] object-cover" muted playsInline />
+            <video ref={videoRef} className="w-full aspect-[3/4] object-cover" autoPlay muted playsInline />
 
             {/*  กรอบสแกน “แนวนอน” สำหรับบาร์โค้ด */}
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">

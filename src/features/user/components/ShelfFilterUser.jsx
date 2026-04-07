@@ -7,7 +7,7 @@ const ShelfFilterUser = ({ shelves, selectedShelves, onToggle, onClear }) => {
     <div className="print:hidden">
       <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1 mb-3">
         <label className="text-sm font-semibold text-slate-700">
-          Filter Shelf
+          Filter
           {selectedShelves.length > 0 && (
             <span className="ml-1.5 text-xs font-normal text-emerald-600">
               ({selectedShelves.length})

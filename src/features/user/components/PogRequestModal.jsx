@@ -5,9 +5,9 @@ import api from "../../../utils/axios";
 const cx = (...a) => a.filter(Boolean).join(" ");
 
 const ACTION_OPTIONS = [
-    { value: "add", label: "เพิ่มสินค้า", desc: "เพิ่มสินค้านี้ไปยังตำแหน่งใหม่" },
-    { value: "move", label: "ย้ายตำแหน่ง", desc: "ย้ายสินค้านี้ไปตำแหน่งอื่น (แทรก)" },
-    { value: "delete", label: "ลบสินค้า", desc: "ลบสินค้าออกจากตำแหน่งปัจจุบัน" },
+    { value: "add", label: "เพิ่มสินค้า", desc: "" },
+    { value: "move", label: "ย้ายตำแหน่ง", desc: "" },
+    { value: "delete", label: "ลบสินค้า", desc: "" },
 ];
 
 export default function PogRequestModal({
@@ -317,14 +317,14 @@ export default function PogRequestModal({
             <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
             <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl border flex flex-col max-h-[85vh]">
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b bg-amber-50 flex-shrink-0 rounded-t-2xl">
+                <div className="flex items-center justify-between px-4 py-3 border-b bg-emerald-50 flex-shrink-0 rounded-t-2xl">
                     <div>
-                        <div className="text-base font-semibold text-amber-800">แจ้งขอเปลี่ยนแปลง</div>
-                        <div className="text-sm text-amber-700 mt-0.5">
+                        <div className="text-base font-semibold text-emerald-800">แจ้งขอเปลี่ยนแปลง</div>
+                        <div className="text-sm text-emerald-700 mt-0.5">
                             สาขา: {branchCode}{branchName ? ` - ${branchName}` : ""}
                         </div>
                     </div>
-                    
+
                 </div>
 
                 <div className="p-4 space-y-4 overflow-y-auto flex-grow">
@@ -356,7 +356,7 @@ export default function PogRequestModal({
 
                             {/* Action Selection */}
                             <div>
-                                <div className="text-sm font-semibold text-slate-800 mb-2">เลือกประเภทการเปลี่ยนแปลง</div>
+                                <div className="text-sm font-semibold text-slate-800 mb-2">เลือกประเภท</div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     {ACTION_OPTIONS.map((opt) => {
                                         // Disable conditions
@@ -375,7 +375,9 @@ export default function PogRequestModal({
                                                     isDisabled
                                                         ? "border-slate-200 bg-slate-100 opacity-50 cursor-not-allowed"
                                                         : action === opt.value
-                                                            ? "border-amber-500 bg-amber-50"
+                                                            ? (opt.value === 'add' ? "border-emerald-500 bg-emerald-50" :
+                                                               opt.value === 'move' ? "border-blue-500 bg-blue-50" :
+                                                               "border-rose-500 bg-rose-50")
                                                             : "border-slate-200 hover:border-slate-300"
                                                 )}
                                             >
@@ -389,20 +391,26 @@ export default function PogRequestModal({
 
                             {/* Target Position (for add/move) */}
                             {(action === "add" || action === "move") && (
-                                <div className="p-3 rounded-xl border bg-blue-50 space-y-3">
-                                    <div className="text-sm font-semibold text-blue-800">
+                                <div className={cx(
+                                    "p-3 rounded-xl border space-y-3",
+                                    action === "add" ? "bg-emerald-50 border-emerald-200" : "bg-blue-50 border-blue-200"
+                                )}>
+                                    <div className={cx(
+                                        "text-sm font-semibold",
+                                        action === "add" ? "text-emerald-800" : "text-blue-800"
+                                    )}>
                                         {action === "add" ? "ตำแหน่งที่ต้องการเพิ่ม" : "ตำแหน่งปลายทาง (ย้ายไป)"}
                                     </div>
 
                                     {/* Shelf Selector */}
                                     <div>
-                                        <label className="text-sm text-slate-600">ชั้นวาง (Shelf)</label>
+                                        <label className="text-sm text-slate-600">ชั้นวาง</label>
                                         {shelvesLoading ? (
                                             <div className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-slate-100 text-slate-500">
                                                 กำลังโหลดข้อมูลชั้นวาง...
                                             </div>
                                         ) : availableShelves.length === 0 ? (
-                                            <div className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-amber-50 text-amber-700">
+                                            <div className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-slate-50 text-slate-700">
                                                 ⚠️ ไม่พบข้อมูลชั้นวางในสาขานี้
                                             </div>
                                         ) : (
@@ -410,7 +418,7 @@ export default function PogRequestModal({
                                                 <button
                                                     type="button"
                                                     onClick={() => setIsShelfDropdownOpen(!isShelfDropdownOpen)}
-                                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm text-slate-700 focus:border-amber-400 focus:outline-none focus:ring-2 focus:ring-amber-200 flex items-center justify-between"
+                                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm text-slate-700 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200 flex items-center justify-between"
                                                 >
                                                     <span className={!toShelf ? "text-slate-500" : ""}>
                                                         {toShelf
@@ -434,7 +442,7 @@ export default function PogRequestModal({
                                                             {availableShelves.map((shelf) => (
                                                                 <li
                                                                     key={shelf.shelfCode}
-                                                                    className={`relative cursor-pointer select-none py-2 pl-3 pr-9 hover:bg-amber-50 ${toShelf === shelf.shelfCode ? 'text-amber-900 bg-amber-50 font-medium' : 'text-slate-700'
+                                                                    className={`relative cursor-pointer select-none py-2 pl-3 pr-9 hover:bg-emerald-50 ${toShelf === shelf.shelfCode ? 'text-emerald-900 bg-emerald-50 font-medium' : 'text-slate-700'
                                                                         }`}
                                                                     onClick={() => {
                                                                         setToShelf(shelf.shelfCode);
@@ -447,7 +455,7 @@ export default function PogRequestModal({
                                                                         {shelf.shelfCode} - {shelf.fullName || shelf.shelfCode}
                                                                     </span>
                                                                     {toShelf === shelf.shelfCode && (
-                                                                        <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-amber-600">
+                                                                        <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-emerald-600">
                                                                             ✓
                                                                         </span>
                                                                     )}
@@ -463,7 +471,7 @@ export default function PogRequestModal({
                                     <div className="grid grid-cols-2 gap-3">
                                         {/* Row Selector */}
                                         <div>
-                                            <label className="text-sm text-slate-600">ชั้นที่ (Row)</label>
+                                            <label className="text-sm text-slate-600">ชั้นที่</label>
                                             <select
                                                 value={toRow}
                                                 onChange={(e) => {
@@ -487,7 +495,7 @@ export default function PogRequestModal({
 
                                         {/* Index Selector */}
                                         <div>
-                                            <label className="text-sm text-slate-600">ลำดับ (Index)</label>
+                                            <label className="text-sm text-slate-600">ลำดับ</label>
                                             <select
                                                 value={toIndex}
                                                 onChange={(e) => setToIndex(e.target.value)}
@@ -507,10 +515,10 @@ export default function PogRequestModal({
                                     {/* Info about selected position */}
                                     {toShelf && toRow && toIndex && (
                                         <div className={cx(
-                                            "text-xs px-3 py-2 rounded-lg",
+                                            "text-xs px-3 py-2 rounded-lg border",
                                             isSamePosition
-                                                ? "text-rose-700 bg-rose-100 border border-rose-200"
-                                                : "text-blue-700 bg-blue-100"
+                                                ? "text-rose-700 bg-rose-100 border-rose-200"
+                                                : action === "add" ? "text-emerald-700 bg-emerald-100 border-emerald-200" : "text-blue-700 bg-blue-100 border-blue-200"
                                         )}>
                                             {isSamePosition ? (
                                                 <>
@@ -561,7 +569,7 @@ export default function PogRequestModal({
                                     type="button"
                                     onClick={handleSubmit}
                                     disabled={loading || !action || isDuplicateAdd || isSamePosition}
-                                    className="flex-1 px-4 py-3 rounded-xl font-semibold text-sm bg-amber-600 text-white hover:bg-amber-500 disabled:opacity-50"
+                                    className="flex-1 px-4 py-3 rounded-xl font-semibold text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
                                 >
                                     {loading ? "กำลังส่ง..." : "ส่งคำขอ"}
                                 </button>

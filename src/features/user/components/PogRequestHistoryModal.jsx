@@ -30,16 +30,23 @@ const formatDateShort = (dateStr) => {
     });
 };
 
+const ITEMS_PER_PAGE = 10;
+
 export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState([]);
     const [error, setError] = useState("");
-    const [cancellingId, setCancellingId] = useState(null); // เก็บ id ที่กำลังยกเลิก
+    const [cancellingId, setCancellingId] = useState(null);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const totalPages = Math.max(1, Math.ceil(data.length / ITEMS_PER_PAGE));
+    const pagedData = data.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     const loadData = async () => {
         if (!branchCode) return;
         setLoading(true);
         setError("");
+        setCurrentPage(1);
         try {
             const res = await api.get("/pog-request", {
                 params: { branchCode },
@@ -55,11 +62,10 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
 
     const handleCancel = async (id) => {
         if (!confirm("คุณต้องการยกเลิกคำขอนี้ใช่หรือไม่?")) return;
-        setCancellingId(id); // เริ่ม loading
+        setCancellingId(id);
         try {
             const res = await api.patch(`/pog-request/${id}/cancel`);
             if (res.data?.ok) {
-                // อัปเดต local state แทนการเรียก API ใหม่
                 setData(prev => prev.map(item =>
                     item.id === id ? { ...item, status: "cancelled" } : item
                 ));
@@ -75,7 +81,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
             }
             alert(msg || "ไม่สามารถยกเลิกคำขอได้");
         } finally {
-            setCancellingId(null); // หยุด loading
+            setCancellingId(null);
         }
     };
 
@@ -88,7 +94,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center">
             <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-            <div className="relative w-[95vw] max-w-7xl bg-white rounded-xl shadow-xl border overflow-hidden max-h-[90vh] flex flex-col">
+            <div className="relative w-[95vw] max-w-7xl bg-white rounded-xl shadow-xl border overflow-hidden flex flex-col" style={{ height: '620px' }}>
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50 shrink-0">
                     <div>
@@ -103,14 +109,14 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                     </button>
                 </div>
 
-                {/* Table Content */}
+                {/* Table Content — fixed height */}
                 <div className="flex-1 overflow-auto">
                     {loading ? (
-                        <div className="text-center py-12 text-slate-500">กำลังโหลด...</div>
+                        <div className="flex items-center justify-center h-full text-slate-500">กำลังโหลด...</div>
                     ) : error ? (
-                        <div className="text-center py-12 text-rose-600">{error}</div>
+                        <div className="flex items-center justify-center h-full text-rose-600">{error}</div>
                     ) : data.length === 0 ? (
-                        <div className="text-center py-12 text-slate-500">ไม่มีประวัติ</div>
+                        <div className="flex items-center justify-center h-full text-slate-500">ไม่มีประวัติ</div>
                     ) : (
                         <table className="w-full text-sm text-left border-collapse">
                             <thead className="bg-slate-100 text-slate-600 font-medium sticky top-0 z-10 shadow-sm text-xs">
@@ -124,7 +130,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                                {data.map((item) => {
+                                {pagedData.map((item) => {
                                     const statusInfo = STATUS_MAP[item.status] || STATUS_MAP.pending;
                                     return (
                                         <tr key={item.id} className="hover:bg-slate-50 transition-colors">
@@ -193,7 +199,6 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                                                                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                                                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                                                             </svg>
-
                                                         </span>
                                                     ) : (
                                                         <button
@@ -212,7 +217,46 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                         </table>
                     )}
                 </div>
+
+                {/* Pagination Footer */}
+                {!loading && !error && data.length > 0 && (
+                    <div className="flex items-center justify-between px-4 py-3 border-t bg-slate-50 shrink-0">
+                        <div className="text-xs text-slate-500">
+                            แสดง {(currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, data.length)} จาก {data.length} รายการ
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                            >
+                                ← ก่อนหน้า
+                            </button>
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={cx(
+                                        "w-8 h-8 text-xs font-semibold rounded-lg border transition",
+                                        page === currentPage
+                                            ? "bg-emerald-600 text-white border-emerald-600"
+                                            : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
+                                    )}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+                            <button
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                                className="px-3 py-1.5 text-xs font-medium rounded-lg border border-slate-200 bg-white hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition"
+                            >
+                                ถัดไป →
+                            </button>
+                        </div>
+                    </div>
+                )}
             </div>
-        </div >
+        </div>
     );
 }

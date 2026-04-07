@@ -113,91 +113,180 @@ export default function ShelfChangeNotification({ branchCode }) {
             </button>
 
             {open && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-xl shadow-xl border border-slate-200 z-50 overflow-hidden flex flex-col max-h-[80vh]">
-                    <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 bg-slate-50">
+                <div className="absolute right-0 mt-2 w-[28rem] sm:w-[32rem] bg-white rounded-2xl shadow-2xl border border-slate-200 z-50 overflow-hidden flex flex-col max-h-[85vh]">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 bg-slate-50">
                         <div className="flex flex-col">
-                            <h3 className="font-semibold text-slate-800 text-sm">การอัปเดต POG จากส่วนกลาง</h3>
-                            <span className="text-xs text-slate-500">รอรับทราบ {unacknowledgedCount} รายการ</span>
+                            <h3 className="font-bold text-slate-800 text-base">การอัปเดต POG จากส่วนกลาง</h3>
+                            <span className="text-sm text-slate-500 mt-0.5">รอรับทราบ {unacknowledgedCount} รายการ</span>
                         </div>
                         {logs.length > 0 && (
                             <button
                                 onClick={handleAcknowledgeAll}
                                 disabled={ackingAll}
-                                className="text-xs font-medium text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-2 py-1 rounded transition disabled:opacity-50"
+                                className="text-sm font-semibold text-emerald-600 hover:text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1.5 rounded-lg transition disabled:opacity-50"
                             >
                                 {ackingAll ? 'กำลังบันทึก...' : 'รับทราบทั้งหมด'}
                             </button>
                         )}
                     </div>
 
-                    <div className="overflow-y-auto flex-1 p-2 bg-white" style={{ maxHeight: '60vh' }}>
+                    <div className="overflow-y-auto flex-1 p-3 bg-white" style={{ maxHeight: '65vh' }}>
                         {loading && logs.length === 0 ? (
-                            <div className="flex justify-center items-center py-8">
-                                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-emerald-500"></div>
+                            <div className="flex justify-center items-center py-12">
+                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-500"></div>
                             </div>
                         ) : logs.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center py-8 text-slate-400">
-                                <CheckCircle2 size={32} className="text-emerald-300 mb-2" />
-                                <p className="text-sm font-medium">ไม่มีรายการค้างรับทราบ</p>
+                            <div className="flex flex-col items-center justify-center py-12 text-slate-400">
+                                <CheckCircle2 size={40} className="text-emerald-300 mb-3" />
+                                <p className="text-base font-medium">ไม่มีรายการค้างรับทราบ</p>
                             </div>
                         ) : (
-                            <div className="flex flex-col gap-2">
+                            <div className="flex flex-col gap-3">
                                 {logs.map(log => {
                                     const actionConf = ACTION_MAP[log.action] || ACTION_MAP.move;
                                     return (
-                                        <div key={log.id} className="p-3 border border-slate-100 rounded-lg hover:bg-slate-50 transition group">
-                                            <div className="flex justify-between items-start mb-2 gap-2">
+                                        <div key={log.id} className="p-4 border border-slate-200 rounded-xl hover:border-slate-300 hover:shadow-sm transition group bg-white">
+                                            {/* Top bar: Action + Shelf + Ack button */}
+                                            <div className="flex justify-between items-center mb-3 gap-2">
                                                 <div className="flex flex-wrap items-center gap-2">
-                                                    <span className={`text-[10px] font-medium px-2 py-0.5 rounded border ${actionConf.bg}`}>
+                                                    <span className={`text-xs font-bold px-2.5 py-1 rounded-lg border ${actionConf.bg}`}>
                                                         {actionConf.label}
                                                     </span>
-                                                    <span className="text-xs font-medium text-slate-600 bg-slate-100 px-1.5 py-0.5 rounded">
+                                                    <span className="text-sm font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-lg">
                                                         Shelf: {log.shelfCode}
                                                     </span>
                                                 </div>
                                                 <button
                                                     onClick={() => handleAcknowledgeOne(log.id)}
                                                     disabled={ackingId === log.id}
-                                                    className="p-1 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded disabled:opacity-50 flex shrink-0"
+                                                    className="p-1.5 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg disabled:opacity-50 flex shrink-0 transition"
                                                     title="รับทราบ"
                                                 >
                                                     {ackingId === log.id ? (
-                                                        <div className="w-4 h-4 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+                                                        <div className="w-5 h-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
                                                     ) : (
-                                                        <Check size={16} />
+                                                        <Check size={20} />
                                                     )}
                                                 </button>
                                             </div>
 
-                                            <div className="flex items-start gap-2 mb-2">
-                                                <Package size={14} className="text-slate-400 mt-0.5 shrink-0" />
+                                            {/* Product Name */}
+                                            <div className="flex items-start gap-2.5 mb-3">
+                                                <Package size={18} className="text-slate-400 mt-0.5 shrink-0" />
                                                 <div className="flex flex-col min-w-0">
-                                                    <span className="text-sm font-medium text-slate-800 line-clamp-1" title={log.productName}>
+                                                    <span className="text-base font-semibold text-slate-800 line-clamp-1" title={log.productName}>
                                                         {log.productName || `รหัส ${log.codeProduct}`}
                                                     </span>
                                                     {log.productName && (
-                                                        <span className="text-[10px] text-slate-500 font-mono">
+                                                        <span className="text-xs text-slate-500 font-mono mt-0.5">
                                                             {log.codeProduct}
                                                         </span>
                                                     )}
                                                 </div>
                                             </div>
 
-                                            <div className="bg-slate-50 p-2 rounded text-xs text-slate-600 border border-slate-100">
-                                                {log.action === 'add' ? (
-                                                    <span>เพิ่มที่ ชั้น <span className="font-semibold">{log.toRow}</span> ตำแหน่ง <span className="font-semibold">{log.toIndex}</span></span>
-                                                ) : log.action === 'delete' ? (
-                                                    <span>ลบออกจาก ชั้น <span className="font-semibold">{log.fromRow}</span> ตำแหน่ง <span className="font-semibold">{log.fromIndex}</span></span>
-                                                ) : (
-                                                    <span>จาก ชั้น <span className="font-semibold">{log.fromRow}</span> ({log.fromIndex}) ไป ชั้น <span className="font-semibold">{log.toRow}</span> ({log.toIndex})</span>
-                                                )}
-                                            </div>
-
-                                            <div className="mt-2 flex items-center justify-between text-[10px] text-slate-400">
-                                                <div className="flex items-center gap-1">
-                                                    <Clock size={12} />
-                                                    {formatDateShort(log.createdAt)}
+                                            {/* Position Info — Card style like search result */}
+                                            {log.action === 'add' ? (
+                                                <div className="border-2 border-emerald-300 rounded-2xl overflow-hidden">
+                                                    <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border-b border-emerald-200">
+                                                        <div className="w-5 h-5 flex items-center justify-center rounded-full bg-emerald-200">
+                                                            <svg className="w-3 h-3 text-emerald-700" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                                                        </div>
+                                                        <span className="text-emerald-700 font-bold text-xs">เพิ่มที่</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-around px-4 py-4 bg-white">
+                                                        <div className="flex flex-col items-center flex-1">
+                                                            <span className="text-[10px] text-slate-400 mb-1">Shelf</span>
+                                                            <span className="text-lg font-bold text-slate-800">{log.shelfCode}</span>
+                                                        </div>
+                                                        <div className="w-px h-8 bg-slate-100"></div>
+                                                        <div className="flex flex-col items-center flex-1">
+                                                            <span className="text-[10px] text-slate-400 mb-1">ชั้นที่</span>
+                                                            <span className="text-xl font-extrabold text-emerald-700">{log.toRow}</span>
+                                                        </div>
+                                                        <div className="w-px h-8 bg-slate-100"></div>
+                                                        <div className="flex flex-col items-center flex-1">
+                                                            <span className="text-[10px] text-slate-400 mb-1">ตำแหน่ง</span>
+                                                            <span className="text-xl font-extrabold text-emerald-700">{log.toIndex}</span>
+                                                        </div>
+                                                    </div>
                                                 </div>
+                                            ) : log.action === 'delete' ? (
+                                                <div className="border-2 border-rose-300 rounded-2xl overflow-hidden">
+                                                    <div className="flex items-center gap-2 px-4 py-2 bg-rose-50 border-b border-rose-200">
+                                                        <div className="w-5 h-5 flex items-center justify-center rounded-full bg-rose-200">
+                                                            <svg className="w-3 h-3 text-rose-700" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" /></svg>
+                                                        </div>
+                                                        <span className="text-rose-700 font-bold text-xs">ลบออกจาก</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-around px-4 py-4 bg-white">
+                                                        <div className="flex flex-col items-center flex-1">
+                                                            <span className="text-[10px] text-slate-400 mb-1">Shelf</span>
+                                                            <span className="text-lg font-bold text-slate-800">{log.shelfCode}</span>
+                                                        </div>
+                                                        <div className="w-px h-8 bg-slate-100"></div>
+                                                        <div className="flex flex-col items-center flex-1">
+                                                            <span className="text-[10px] text-slate-400 mb-1">ชั้นที่</span>
+                                                            <span className="text-xl font-extrabold text-rose-700">{log.fromRow}</span>
+                                                        </div>
+                                                        <div className="w-px h-8 bg-slate-100"></div>
+                                                        <div className="flex flex-col items-center flex-1">
+                                                            <span className="text-[10px] text-slate-400 mb-1">ตำแหน่ง</span>
+                                                            <span className="text-xl font-extrabold text-rose-700">{log.fromIndex}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="border-2 border-blue-300 rounded-2xl overflow-hidden">
+                                                    <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border-b border-blue-200">
+                                                        <div className="w-5 h-5 flex items-center justify-center rounded-full bg-blue-200">
+                                                            <svg className="w-3 h-3 text-blue-700" fill="none" stroke="currentColor" strokeWidth={3} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4M16 17H4m0 0l4 4m-4-4l4-4" /></svg>
+                                                        </div>
+                                                        <span className="text-blue-700 font-bold text-xs">เปลี่ยนตำแหน่ง</span>
+                                                    </div>
+                                                    {/* From Row */}
+                                                    <div className="flex items-center justify-around px-4 py-3 bg-slate-50 border-b border-slate-100">
+                                                        <div className="text-[10px] text-slate-400 font-medium w-10">จาก</div>
+                                                        <div className="flex flex-col items-center flex-1">
+                                                            <span className="text-[10px] text-slate-400 mb-0.5">Shelf</span>
+                                                            <span className="text-base font-bold text-slate-500">{log.shelfCode}</span>
+                                                        </div>
+                                                        <div className="w-px h-7 bg-slate-200"></div>
+                                                        <div className="flex flex-col items-center flex-1">
+                                                            <span className="text-[10px] text-slate-400 mb-0.5">ชั้นที่</span>
+                                                            <span className="text-base font-bold text-slate-500">{log.fromRow}</span>
+                                                        </div>
+                                                        <div className="w-px h-7 bg-slate-200"></div>
+                                                        <div className="flex flex-col items-center flex-1">
+                                                            <span className="text-[10px] text-slate-400 mb-0.5">ตำแหน่ง</span>
+                                                            <span className="text-base font-bold text-slate-500">{log.fromIndex}</span>
+                                                        </div>
+                                                    </div>
+                                                    {/* To Row */}
+                                                    <div className="flex items-center justify-around px-4 py-3 bg-white">
+                                                        <div className="text-[10px] text-blue-600 font-bold w-10">ไป</div>
+                                                        <div className="flex flex-col items-center flex-1">
+                                                            <span className="text-[10px] text-slate-400 mb-0.5">Shelf</span>
+                                                            <span className="text-lg font-bold text-slate-800">{log.shelfCode}</span>
+                                                        </div>
+                                                        <div className="w-px h-7 bg-slate-100"></div>
+                                                        <div className="flex flex-col items-center flex-1">
+                                                            <span className="text-[10px] text-blue-500 mb-0.5">ชั้นที่</span>
+                                                            <span className="text-xl font-extrabold text-blue-700">{log.toRow}</span>
+                                                        </div>
+                                                        <div className="w-px h-7 bg-slate-100"></div>
+                                                        <div className="flex flex-col items-center flex-1">
+                                                            <span className="text-[10px] text-blue-500 mb-0.5">ตำแหน่ง</span>
+                                                            <span className="text-xl font-extrabold text-blue-700">{log.toIndex}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Timestamp */}
+                                            <div className="mt-3 flex items-center text-xs text-slate-400">
+                                                <Clock size={14} className="mr-1" />
+                                                {formatDateShort(log.createdAt)}
                                             </div>
                                         </div>
                                     );

@@ -74,7 +74,7 @@ function MainNav() {
   const stockTimeText = useMemo(() => {
     if (stockStatus === "loading") return "กำลังเช็ค...";
     if (stockStatus === "error") return "-";
-    
+
     // Add 7 hours to the stock time
     if (!stockUpdatedAt) return "-";
     const adjustedDate = new Date(stockUpdatedAt);
@@ -91,28 +91,27 @@ function MainNav() {
             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
               <div className="flex shrink-0">
                 <div
-                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white shadow-sm border border-white/40 bg-contain bg-center bg-no-repeat select-none pointer-events-none"
+                  className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-contain bg-center bg-no-repeat select-none pointer-events-none"
                   style={{ backgroundImage: "url('/icon.png')" }}
                   aria-label="Shelf Check Logo"
                 />
               </div>
 
-              <div className="flex flex-col leading-tight min-w-0">
-                <span className="text-sm sm:text-base font-semibold tracking-tight truncate">
+              <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                <span className="text-sm sm:text-base font-semibold tracking-tight truncate whitespace-nowrap">
                   Shelf Check System
                 </span>
 
-                <div className="flex items-center gap-1.5 sm:gap-2 truncate">
-                  <span className="hidden sm:inline text-xs text-emerald-100 truncate">
-                    ตรวจสินค้า & สต็อกหน้าร้าน
-                  </span>
-                  <span className="hidden sm:inline text-emerald-100/90">•</span>
+                <span className="hidden sm:inline text-emerald-200/70">•</span>
 
-                  {/* เวลาอัปเดต Stock ล่าสุด */}
-                  <span className="text-[10px] sm:text-xs text-emerald-100/90 truncate">
-                    Stock {stockTimeText}
-                  </span>
-                </div>
+                {/* เวลาอัปเดต Stock ล่าสุด — Badge เด่น */}
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 border border-white/30 text-[10px] sm:text-xs font-semibold text-white truncate shrink-0">
+                  <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" />
+                    <path strokeLinecap="round" d="M12 6v6l4 2" />
+                  </svg>
+                  Stock: {stockTimeText}
+                </span>
               </div>
             </div>
 
@@ -122,52 +121,52 @@ function MainNav() {
                 <>
                   <ShelfChangeNotification branchCode={user.storecode} />
                   <div className="relative" ref={menuRef}>
-                  <button
-                    type="button"
-                    onClick={toggleUserMenu}
-                    className="flex items-center gap-2 sm:px-2.5 sm:py-1.5 p-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs sm:text-sm transition ml-auto"
-                  >
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-emerald-700 flex items-center justify-center text-xs sm:text-sm font-semibold shrink-0">
-                      {initial}
-                    </div>
-                    <div className="hidden sm:flex flex-col items-start leading-tight max-w-[160px]">
-                      <span className="font-medium truncate w-full text-left">{displayName}</span>
-                      <span className="text-[10px] uppercase tracking-wide text-emerald-100">
-                        {user.role || "user"}
-                      </span>
-                    </div>
-                    <span className="hidden sm:inline text-emerald-100 text-sm">
-                      {userMenuOpen ? "▴" : "▾"}
-                    </span>
-                  </button>
-
-                  {userMenuOpen && (
-                    <div className="absolute right-0 mt-1 w-44 bg-white text-slate-700 rounded-lg shadow-lg border border-slate-200 py-1 z-40">
-                      <div className="px-3 py-2 border-b border-slate-100">
-                        <div className="text-[11px] text-slate-400">Signed in as</div>
-                        <div className="text-[12px] font-medium truncate">{displayName}</div>
+                    <button
+                      type="button"
+                      onClick={toggleUserMenu}
+                      className="flex items-center gap-2 sm:px-2.5 sm:py-1.5 p-1 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-xs sm:text-sm transition ml-auto"
+                    >
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-emerald-700 flex items-center justify-center text-xs sm:text-sm font-semibold shrink-0">
+                        {initial}
                       </div>
+                      <div className="hidden sm:flex flex-col items-start leading-tight max-w-[160px]">
+                        <span className="font-medium truncate w-full text-left">{displayName}</span>
+                        <span className="text-[10px] uppercase tracking-wide text-emerald-100">
+                          {user.role || "user"}
+                        </span>
+                      </div>
+                      <span className="hidden sm:inline text-emerald-100 text-sm">
+                        {userMenuOpen ? "▴" : "▾"}
+                      </span>
+                    </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setUserMenuOpen(false);
-                          setHistoryOpen(true);
-                        }}
-                        className="w-full text-left px-3 py-2 text-[12px] text-blue-600 hover:bg-blue-50"
-                      >
-                        ประวัติคำขอเปลี่ยนแปลง
-                      </button>
-                      <button
-                        type="button"
-                        onClick={clearStorageAndLogout}
-                        className="w-full text-left px-3 py-2 text-[12px] text-red-600 hover:bg-red-50"
-                      >
-                        ออกจากระบบ
-                      </button>
-                    </div>
-                  )}
-                </div>
+                    {userMenuOpen && (
+                      <div className="absolute right-0 mt-1 w-44 bg-white text-slate-700 rounded-lg shadow-lg border border-slate-200 py-1 z-40">
+                        <div className="px-3 py-2 border-b border-slate-100">
+                          <div className="text-[11px] text-slate-400">Signed in as</div>
+                          <div className="text-[12px] font-medium truncate">{displayName}</div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setUserMenuOpen(false);
+                            setHistoryOpen(true);
+                          }}
+                          className="w-full text-left px-3 py-2 text-[12px] text-blue-600 hover:bg-blue-50"
+                        >
+                          ประวัติคำขอเปลี่ยนแปลง
+                        </button>
+                        <button
+                          type="button"
+                          onClick={clearStorageAndLogout}
+                          className="w-full text-left px-3 py-2 text-[12px] text-red-600 hover:bg-red-50"
+                        >
+                          ออกจากระบบ
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </>
               )}
             </div>

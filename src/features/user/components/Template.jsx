@@ -541,13 +541,15 @@ const Template = () => {
                                 return (
                                   <div
                                     key={rowNo}
-                                    className={`flex items-center justify-between px-3 py-2 rounded-lg border ${colorClass}`}
+                                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg border ${colorClass}`}
                                   >
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-xs font-bold uppercase tracking-wider opacity-70">Row</span>
-                                      <span className="text-sm font-bold">{rowNo}</span>
+                                    <div className="flex items-center gap-3">
+                                      <div className="w-7 h-7 rounded-full bg-white/80 flex items-center justify-center text-sm font-extrabold shadow-sm border border-current/10">
+                                        {rowNo}
+                                      </div>
+                                      <span className="text-sm font-semibold opacity-80">ชั้นที่ {rowNo}</span>
                                     </div>
-                                    <span className="text-sm font-semibold bg-white/60 px-2 rounded-md">
+                                    <span className="text-xs font-bold bg-white/60 px-2.5 py-1 rounded-full">
                                       {rowProducts.length} รายการ
                                     </span>
                                   </div>

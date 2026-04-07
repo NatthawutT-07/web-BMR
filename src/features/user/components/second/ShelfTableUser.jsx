@@ -60,7 +60,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
   };
 
   return (
-    <div className="overflow-x-auto w-full px-1 sm:px-3 print:px-0 print:overflow-visible">
+    <div className="overflow-x-auto w-full max-w-6xl mx-auto px-1 sm:px-3 print:px-0 print:max-w-none print:overflow-visible">
       <table
         className="
           w-full border text-[11px] sm:text-xs lg:text-sm text-gray-700
@@ -75,13 +75,13 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
             <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               บาร์โค้ด
             </th>
-            <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
+            <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600 hidden lg:table-cell print:table-cell">
               รหัส
             </th>
-            <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
+            <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600 sticky left-0 z-10 bg-slate-100 shadow-[1px_0_0_0_#cbd5e1] print:static print:shadow-none">
               ชื่อสินค้า
             </th>
-            <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
+            <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600 hidden lg:table-cell print:table-cell">
               ยี่ห้อ
             </th>
             <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
@@ -144,17 +144,16 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                     const code = p.codeProduct ? String(p.codeProduct) : p.barcode ? String(p.barcode) : null;
                     const isDuplicate = code && duplicateCodes?.has(code);
 
-                    let bgClass = "";
-                    if (isDuplicate) {
-                      bgClass = "bg-yellow-200 hover:bg-yellow-300 print:bg-yellow-100";
-                    } else {
-                      bgClass = i % 2 ? "bg-gray-50 print:bg-gray-100 hover:bg-blue-50" : "bg-white print:bg-white hover:bg-blue-50";
-                    }
+                    const baseBg = isDuplicate ? "bg-yellow-200" : (i % 2 ? "bg-gray-50" : "bg-white");
+                    const hoverBg = isDuplicate ? "hover:bg-yellow-400" : "hover:bg-emerald-100";
+                    const groupHoverBg = isDuplicate ? "group-hover:bg-yellow-400" : "group-hover:bg-emerald-100";
+                    const printBg = isDuplicate ? "print:bg-yellow-100" : (i % 2 ? "print:bg-gray-100" : "print:bg-white");
+                    const bgClass = `${baseBg} ${hoverBg} ${printBg}`;
 
                     return (
                       <tr
                         key={`${rowNo}-${p.codeProduct || i}`}
-                        className={bgClass}
+                        className={`${bgClass} group`}
                       >
                         <td className="border p-1 print:px-[2px] text-center align-middle">
                           {zeroToDash(p.index)}
@@ -164,7 +163,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                           {zeroToDash(p.barcode)}
                         </td>
 
-                        <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle">
+                        <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle hidden lg:table-cell print:table-cell">
                           {p.codeProduct
                             ? String(p.codeProduct).padStart(5, "0")
                             : "-"}
@@ -172,12 +171,15 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
 
                         {/* Name */}
                         <td
-                          className="
-    border p-1 print:px-[2px] align-middle
-    whitespace-nowrap
-    min-w-[240px] sm:min-w-[230px] lg:min-w-[260px]
-    print:min-w-0
-  "
+                          className={`
+                            border p-1 print:px-[2px] align-middle
+                            whitespace-nowrap
+                            min-w-[240px] sm:min-w-[230px] lg:min-w-[260px]
+                            print:min-w-0
+                            sticky left-0 z-10 print:static
+                            shadow-[1px_0_0_0_#e2e8f0] print:shadow-none
+                            ${baseBg} ${printBg} ${groupHoverBg}
+                          `}
                           title={p.nameProduct}
                         >
                           {p.nameProduct}
@@ -191,6 +193,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                             max-w-[100px] sm:max-w-[140px] lg:max-w-[180px]
                             whitespace-nowrap overflow-hidden text-ellipsis
                             print:whitespace-normal print:max-w-none
+                            hidden lg:table-cell print:table-cell
                           "
                           title={p.nameBrand}
                         >
