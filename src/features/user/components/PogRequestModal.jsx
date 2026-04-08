@@ -364,25 +364,29 @@ export default function PogRequestModal({
                                         const isMoveDisabled = (opt.value === "move" && !existingLocationForBarcode) || !hasCurrentPosition;
                                         const isDeleteDisabled = (opt.value === "delete" && !existingLocationForBarcode) || !hasCurrentPosition;
                                         const isDisabled = isAddDisabled || isMoveDisabled || isDeleteDisabled;
+                                        
+                                        // ถ้า action ปัจจุบันตรงกับปุ่มนี้ ให้มันดูเหมือน active เสมอ แม้ว่ามันจะถูก disable จากเงื่อนไขอื่น
+                                        const isActive = action === opt.value;
+
                                         return (
                                             <button
                                                 key={opt.value}
                                                 type="button"
                                                 onClick={() => !isDisabled && setAction(opt.value)}
-                                                disabled={isDisabled}
+                                                disabled={isDisabled && !isActive} // ไม่ disable ถ้ามัน active อยู่แล้วเพื่อให้เห็นสีชัดเจน
                                                 className={cx(
                                                     "w-full text-left p-3 rounded-xl border-2 transition",
-                                                    isDisabled
-                                                        ? "border-slate-200 bg-slate-100 opacity-50 cursor-not-allowed"
-                                                        : action === opt.value
-                                                            ? (opt.value === 'add' ? "border-emerald-500 bg-emerald-50" :
-                                                               opt.value === 'move' ? "border-blue-500 bg-blue-50" :
-                                                               "border-rose-500 bg-rose-50")
+                                                    isActive
+                                                        ? (opt.value === 'add' ? "border-emerald-500 bg-emerald-50" :
+                                                           opt.value === 'move' ? "border-blue-500 bg-blue-50" :
+                                                           "border-rose-500 bg-rose-50")
+                                                        : isDisabled
+                                                            ? "border-slate-200 bg-slate-100 opacity-50 cursor-not-allowed"
                                                             : "border-slate-200 hover:border-slate-300"
                                                 )}
                                             >
-                                                <div className={cx("font-semibold text-sm", isDisabled && "text-slate-400")}>{opt.label}</div>
-                                                <div className={cx("text-xs mt-0.5", isDisabled ? "text-slate-400" : "text-slate-500")}>{opt.desc}</div>
+                                                <div className={cx("font-semibold text-sm", (isDisabled && !isActive) && "text-slate-400", isActive && (opt.value === 'add' ? "text-emerald-700" : opt.value === 'move' ? "text-blue-700" : "text-rose-700"))}>{opt.label}</div>
+                                                <div className={cx("text-xs mt-0.5", (isDisabled && !isActive) ? "text-slate-400" : "text-slate-500")}>{opt.desc}</div>
                                             </button>
                                         );
                                     })}
@@ -545,6 +549,7 @@ export default function PogRequestModal({
                                     onChange={(e) => setNote(e.target.value)}
                                     placeholder="ระบุเหตุผลหรือรายละเอียดเพิ่มเติม..."
                                     rows={2}
+                                    maxLength={50}
                                     className="w-full mt-1 px-3 py-2 border rounded-lg text-sm resize-none"
                                 />
                             </div>
