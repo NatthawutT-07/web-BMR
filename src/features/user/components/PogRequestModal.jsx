@@ -361,8 +361,8 @@ export default function PogRequestModal({
                                     {ACTION_OPTIONS.map((opt) => {
                                         // Disable conditions
                                         const isAddDisabled = opt.value === "add" && existingLocationForBarcode;
-                                        const isMoveDisabled = opt.value === "move" && !existingLocationForBarcode;
-                                        const isDeleteDisabled = opt.value === "delete" && !existingLocationForBarcode;
+                                        const isMoveDisabled = (opt.value === "move" && !existingLocationForBarcode) || !hasCurrentPosition;
+                                        const isDeleteDisabled = (opt.value === "delete" && !existingLocationForBarcode) || !hasCurrentPosition;
                                         const isDisabled = isAddDisabled || isMoveDisabled || isDeleteDisabled;
                                         return (
                                             <button
