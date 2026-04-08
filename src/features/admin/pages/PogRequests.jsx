@@ -57,14 +57,16 @@ const formatDate = (dateStr) => {
 
 const StatCard = ({ count, type, active, onClick }) => {
     const style = STATUS_STYLES[type];
+    const isClickable = onClick && typeof onClick === 'function';
+    const Tag = isClickable ? 'button' : 'div';
     return (
-        <button
-            onClick={onClick}
+        <Tag
+            {...(isClickable ? { onClick } : {})}
             className={`
                 relative overflow-hidden rounded-xl border p-4 transition-all duration-200 text-left w-full
                 ${active
                     ? `bg-white shadow-md ring-2 ring-offset-1 ${style.text.replace('text', 'ring')}`
-                    : "bg-white hover:bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700"
+                    : `bg-white border-slate-200 text-slate-500 ${isClickable ? 'hover:bg-slate-50 hover:text-slate-700 cursor-pointer' : ''}`
                 }
             `}
         >
@@ -80,7 +82,7 @@ const StatCard = ({ count, type, active, onClick }) => {
             <div className="text-2xl font-bold text-slate-800">
                 {count.toLocaleString()}
             </div>
-        </button>
+        </Tag>
     );
 };
 
@@ -333,7 +335,7 @@ export default function PogRequests() {
     // Load detail data for selected branch
     const loadData = useCallback(async () => {
         if (viewMode === 'summary' || !selectedBranch) return;
-        
+
         setLoading(true);
         try {
             const params = { limit: 50, page, branchCode: selectedBranch, _t: Date.now() };
@@ -360,7 +362,7 @@ export default function PogRequests() {
     }, [viewMode, selectedBranch, filterStatus, filterAction, filterShelf, filterRow, page]);
 
     useEffect(() => { loadBranches(); }, [loadBranches]);
-    
+
     useEffect(() => {
         if (viewMode === 'summary') {
             loadSummary();
@@ -390,7 +392,7 @@ export default function PogRequests() {
     };
 
     const availableRows = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-    
+
     // Helper to get branch name
     const getBranchName = (code) => {
         const b = branches.find(b => b.branch_code === code);
@@ -539,8 +541,7 @@ export default function PogRequests() {
                         {/* Header */}
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
-                                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">คำขอเปลี่ยนแปลง POG</h1>
-                                <p className="text-slate-500 text-sm mt-1">เลือกสาขาเพื่อตรวจสอบและอนุมัติคำขอ</p>
+                                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">คำขอเปลี่ยนแปลงจากหน้าสาขา</h1>
                             </div>
                             <button
                                 onClick={loadSummary}
@@ -559,7 +560,7 @@ export default function PogRequests() {
                                     type={type}
                                     count={stats[type] || 0}
                                     active={false}
-                                    onClick={() => {}}
+                                    onClick={null}
                                 />
                             ))}
                         </div>
@@ -569,7 +570,6 @@ export default function PogRequests() {
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-2">
                                     <Store className="w-5 h-5 text-blue-600" />
-                                    <h3 className="font-semibold text-slate-800">สาขาที่มีคำขอรอดำเนินการ</h3>
                                 </div>
                                 <span className="text-xs text-slate-500">คลิกเพื่อเข้าดูรายละเอียดและอนุมัติ</span>
                             </div>
@@ -582,44 +582,44 @@ export default function PogRequests() {
                             ) : (
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {Object.entries(branchStats)
-                                        .sort(([,a], [,b]) => b.total - a.total)
+                                        .sort(([, a], [, b]) => b.total - a.total)
                                         .map(([branchCode, bStats]) => (
-                                        <button
-                                            key={branchCode}
-                                            onClick={() => enterBranchDetail(branchCode)}
-                                            className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-xl p-4 text-left hover:shadow-md hover:border-blue-300 hover:from-blue-50 hover:to-white transition-all group"
-                                        >
-                                            <div className="flex items-start justify-between">
-                                                <div>
-                                                    {/* <h4 className="font-semibold text-slate-800 group-hover:text-blue-700">
+                                            <button
+                                                key={branchCode}
+                                                onClick={() => enterBranchDetail(branchCode)}
+                                                className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-xl p-4 text-left hover:shadow-md hover:border-blue-300 hover:from-blue-50 hover:to-white transition-all group"
+                                            >
+                                                <div className="flex items-start justify-between">
+                                                    <div>
+                                                        {/* <h4 className="font-semibold text-slate-800 group-hover:text-blue-700">
                                                         {branchCode} - {getBranchName(branchCode)}
                                                     </h4> */}
-                                                    <span className="text-sm text-slate-800">{branchCode} - {getBranchName(branchCode)}</span>
+                                                        <span className="text-sm text-slate-800">{branchCode} - {getBranchName(branchCode)}</span>
+                                                    </div>
+                                                    <div className="flex items-center gap-1">
+                                                        <span className="text-2xl font-bold text-amber-600">{bStats.total}</span>
+                                                        <ChevronRight size={20} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-1">
-                                                    <span className="text-2xl font-bold text-amber-600">{bStats.total}</span>
-                                                    <ChevronRight size={20} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
+                                                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100">
+                                                    {bStats.add > 0 && (
+                                                        <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
+                                                            +{bStats.add} เพิ่ม
+                                                        </span>
+                                                    )}
+                                                    {bStats.move > 0 && (
+                                                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
+                                                            ⇄{bStats.move} ย้าย
+                                                        </span>
+                                                    )}
+                                                    {bStats.delete > 0 && (
+                                                        <span className="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded-full font-medium">
+                                                            -{bStats.delete} ลบ
+                                                        </span>
+                                                    )}
                                                 </div>
-                                            </div>
-                                            <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100">
-                                                {bStats.add > 0 && (
-                                                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
-                                                        +{bStats.add} เพิ่ม
-                                                    </span>
-                                                )}
-                                                {bStats.move > 0 && (
-                                                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
-                                                        ⇄{bStats.move} ย้าย
-                                                    </span>
-                                                )}
-                                                {bStats.delete > 0 && (
-                                                    <span className="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded-full font-medium">
-                                                        -{bStats.delete} ลบ
-                                                    </span>
-                                                )}
-                                            </div>
-                                        </button>
-                                    ))}
+                                            </button>
+                                        ))}
                                 </div>
                             )}
                         </div>
@@ -662,133 +662,111 @@ export default function PogRequests() {
                                     </p>
                                 </div>
                             </div>
-                            <button
-                                onClick={loadData}
-                                className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                title="รีเฟรชข้อมูล"
-                            >
-                                <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
-                            </button>
-                        </div>
-
-                        {/* Status Filter Tabs */}
-                        <div className="flex items-center gap-2 bg-white p-2 rounded-xl shadow-sm border border-slate-200">
-                            {["pending", "rejected", "completed"].map(type => {
-                                const style = STATUS_STYLES[type];
-                                return (
-                                    <button
-                                        key={type}
-                                        onClick={() => setFilterStatus(type)}
-                                        className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 transition-all ${
-                                            filterStatus === type
-                                                ? `${style.bg} ${style.text} shadow-sm`
-                                                : 'text-slate-500 hover:bg-slate-50'
-                                        }`}
-                                    >
-                                        {style.icon}
-                                        {style.label}
-                                    </button>
-                                );
-                            })}
+                            <div className="flex items-center gap-2">
+                                {/* Status Filter Tabs */}
+                                <div className="flex items-center gap-1 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200">
+                                    {["pending", "rejected", "completed"].map(type => {
+                                        const style = STATUS_STYLES[type];
+                                        return (
+                                            <button
+                                                key={type}
+                                                onClick={() => setFilterStatus(type)}
+                                                className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-all ${filterStatus === type
+                                                    ? `${style.bg} ${style.text} shadow-sm`
+                                                    : 'text-slate-500 hover:bg-slate-50'
+                                                    }`}
+                                            >
+                                                {style.icon}
+                                                {style.label}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                                <button
+                                    onClick={loadData}
+                                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    title="รีเฟรชข้อมูล"
+                                >
+                                    <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Toolbar */}
                         <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                            <div className="flex flex-wrap items-center gap-3">
-                                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[140px]">
-                                    <Filter size={16} className="text-slate-400" />
-                                    <select
-                                        value={filterAction}
-                                        onChange={e => setFilterAction(e.target.value)}
-                                        className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
-                                    >
-                                        <option value="">Action ทั้งหมด</option>
-                                        <option value="add">เพิ่มสินค้า</option>
-                                        <option value="move">ย้ายสินค้า</option>
-                                        <option value="delete">ลบสินค้า</option>
-                                    </select>
-                                </div>
+                            <div className="flex flex-wrap items-center justify-between gap-3">
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[140px]">
+                                        <Filter size={16} className="text-slate-400" />
+                                        <select
+                                            value={filterAction}
+                                            onChange={e => setFilterAction(e.target.value)}
+                                            className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
+                                        >
+                                            <option value="">Action ทั้งหมด</option>
+                                            <option value="add">เพิ่มสินค้า</option>
+                                            <option value="move">ย้ายสินค้า</option>
+                                            <option value="delete">ลบสินค้า</option>
+                                        </select>
+                                    </div>
 
-                                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg w-full max-w-[150px]">
-                                    <Layers size={16} className="text-slate-400" />
-                                    <input
-                                        type="text"
-                                        placeholder="ค้นหา Shelf"
-                                        defaultValue={filterShelf}
-                                        onBlur={e => setFilterShelf(e.target.value.trim().toUpperCase())}
-                                        onKeyDown={e => {
-                                            if (e.key === 'Enter') setFilterShelf(e.currentTarget.value.trim().toUpperCase());
-                                        }}
-                                        className="bg-transparent text-sm w-full outline-none text-slate-700 placeholder:text-slate-400"
-                                    />
-                                </div>
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg w-full max-w-[150px]">
+                                        <Layers size={16} className="text-slate-400" />
+                                        <input
+                                            type="text"
+                                            placeholder="ค้นหา Shelf"
+                                            defaultValue={filterShelf}
+                                            onBlur={e => setFilterShelf(e.target.value.trim().toUpperCase())}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter') setFilterShelf(e.currentTarget.value.trim().toUpperCase());
+                                            }}
+                                            className="bg-transparent text-sm w-full outline-none text-slate-700 placeholder:text-slate-400"
+                                        />
+                                    </div>
 
-                                <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[100px]">
-                                    <LayoutGrid size={16} className="text-slate-400" />
-                                    <select
-                                        value={filterRow}
-                                        onChange={e => setFilterRow(e.target.value)}
-                                        className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
-                                    >
-                                        <option value="">Row</option>
-                                        {availableRows.map(r => <option key={r} value={r}>Row {r}</option>)}
-                                    </select>
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[100px]">
+                                        <LayoutGrid size={16} className="text-slate-400" />
+                                        <select
+                                            value={filterRow}
+                                            onChange={e => setFilterRow(e.target.value)}
+                                            className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
+                                        >
+                                            <option value="">Row</option>
+                                            {availableRows.map(r => <option key={r} value={r}>Row {r}</option>)}
+                                        </select>
+                                    </div>
                                 </div>
+                                
+                                {/* ย้ายปุ่มอนุมัติทั้งหมด (สาขานี้) มาอยู่ด้านขวา */}
+                                {filterStatus === 'pending' && visibleData.length > 0 && selectedIds.size === 0 && (
+                                    <button
+                                        onClick={handleApproveAllPending}
+                                        disabled={bulkUpdating}
+                                        className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
+                                    >
+                                        <CheckCircle2 size={16} /> อนุมัติทั้งหมด (สาขานี้)
+                                    </button>
+                                )}
                             </div>
 
                             {/* Bulk Actions Bar */}
-                            {filterStatus === 'pending' && visibleData.length > 0 && (
+                            {filterStatus === 'pending' && visibleData.length > 0 && selectedIds.size > 0 && (
                                 <div className="flex items-center justify-between pt-3 border-t border-slate-100 animate-in slide-in-from-top-2">
-                                    <div className="flex items-center gap-4">
-                                        <label className="flex items-center gap-2 cursor-pointer group">
-                                            <input
-                                                type="checkbox"
-                                                className="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 transition-colors"
-                                                checked={selectedIds.size > 0 && selectedIds.size === visibleData.filter(d => d.status === 'pending').length}
-                                                onChange={(e) => {
-                                                    if (e.target.checked) setSelectedIds(new Set(visibleData.filter(d => d.status === 'pending').map(d => d.id)));
-                                                    else setSelectedIds(new Set());
-                                                }}
-                                            />
-                                            <span className="text-sm text-slate-600 font-medium group-hover:text-slate-900 transition-colors">
-                                                เลือกทั้งหมดในหน้านี้
-                                            </span>
-                                        </label>
-
-                                        {selectedIds.size > 0 && (
-                                            <span className="text-xs font-semibold text-blue-700 bg-blue-50 px-2.5 py-1 rounded-full border border-blue-100">
-                                                เลือกไว้ {selectedIds.size} รายการ
-                                            </span>
-                                        )}
-                                    </div>
-
                                     <div className="flex items-center gap-2">
-                                        {selectedIds.size > 0 ? (
-                                            <>
-                                                <button
-                                                    onClick={handleBulkReject}
-                                                    disabled={bulkUpdating}
-                                                    className="px-4 py-2 text-sm font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
-                                                >
-                                                    <X size={16} /> ปฏิเสธที่เลือก
-                                                </button>
-                                                <button
-                                                    onClick={handleBulkApprove}
-                                                    disabled={bulkUpdating}
-                                                    className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm hover:shadow rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
-                                                >
-                                                    <Check size={16} /> อนุมัติที่เลือก
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <button
-                                                onClick={handleApproveAllPending}
-                                                disabled={bulkUpdating}
-                                                className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
-                                            >
-                                                <CheckCircle2 size={16} /> อนุมัติทั้งหมด (สาขานี้)
-                                            </button>
-                                        )}
+                                        <button
+                                            onClick={handleBulkReject}
+                                            disabled={bulkUpdating}
+                                            className="px-4 py-2 text-sm font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
+                                        >
+                                            <X size={16} /> ปฏิเสธที่เลือก
+                                        </button>
+                                        <button
+                                            onClick={handleBulkApprove}
+                                            disabled={bulkUpdating}
+                                            className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm hover:shadow rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
+                                        >
+                                            <Check size={16} /> อนุมัติที่เลือก
+                                        </button>
                                     </div>
                                 </div>
                             )}

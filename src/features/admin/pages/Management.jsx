@@ -153,7 +153,7 @@ const Management = () => {
   return (
     <div className="p-4 md:p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-slate-800">ระบบจัดการ (Management)</h1>
+        <h1 className="text-2xl font-bold text-slate-800">Management</h1>
       </div>
 
       {/* Tabs */}
@@ -165,7 +165,7 @@ const Management = () => {
           }`}
         >
           <Users size={16} />
-          จัดการผู้ใช้
+          จัดการผู้ใช้ (Users)
         </button>
         <button
           onClick={() => setActiveTab("branches")}

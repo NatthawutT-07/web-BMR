@@ -20,31 +20,36 @@ const formatDate = (dateStr) => {
 
 // --- Components ---
 
-const StatCard = ({ title, count, icon, color, active, onClick }) => (
-    <button
-        onClick={onClick}
-        className={`
-            relative overflow-hidden rounded-xl border p-4 transition-all duration-200 text-left w-full
-            ${active
-                ? `bg-white shadow-md ring-2 ring-offset-1 ring-${color}-500 border-${color}-200`
-                : "bg-white hover:bg-slate-50 border-slate-200 text-slate-500 hover:text-slate-700"
-            }
-        `}
-    >
-        <div className={`absolute left-0 top-0 bottom-0 w-1 bg-${color}-500`} />
-        <div className="flex items-center justify-between mb-2">
-            <span className={`text-sm font-medium ${active ? `text-${color}-700` : "text-slate-600"}`}>
-                {title}
-            </span>
-            <div className={`p-1.5 rounded-full bg-${color}-100 text-${color}-600`}>
-                {icon}
+const StatCard = ({ title, count, icon, color, active, onClick, clickable = true }) => {
+    const CardElement = clickable ? "button" : "div";
+    
+    return (
+        <CardElement
+            onClick={clickable ? onClick : undefined}
+            className={`
+                relative overflow-hidden rounded-xl border p-4 transition-all duration-200 text-left w-full
+                ${active && clickable
+                    ? `bg-white shadow-md ring-2 ring-offset-1 ring-${color}-500 border-${color}-200`
+                    : "bg-white border-slate-200 text-slate-500"
+                }
+                ${clickable ? "hover:bg-slate-50 hover:text-slate-700 cursor-pointer" : "cursor-default"}
+            `}
+        >
+            <div className={`absolute left-0 top-0 bottom-0 w-1 bg-${color}-500`} />
+            <div className="flex items-center justify-between mb-2">
+                <span className={`text-sm font-medium ${active && clickable ? `text-${color}-700` : "text-slate-600"}`}>
+                    {title}
+                </span>
+                <div className={`p-1.5 rounded-full bg-${color}-100 text-${color}-600`}>
+                    {icon}
+                </div>
             </div>
-        </div>
-        <div className="text-2xl font-bold text-slate-800">
-            {count.toLocaleString()}
-        </div>
-    </button>
-);
+            <div className="text-2xl font-bold text-slate-800">
+                {count.toLocaleString()}
+            </div>
+        </CardElement>
+    );
+};
 
 export default function BranchAckStatus() {
     const [loading, setLoading] = useState(true);
@@ -118,7 +123,6 @@ export default function BranchAckStatus() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold text-slate-800 tracking-tight">สถานะการรับทราบของสาขา</h1>
-                        <p className="text-slate-500 text-sm mt-1">ติดตามการตอบรับการเปลี่ยนแปลง Shelf จากแต่ละสาขา</p>
                     </div>
                 </div>
 
@@ -134,7 +138,7 @@ export default function BranchAckStatus() {
                             onClick={() => setStatusFilter('all')}
                         />
                         <StatCard
-                            title="สาขารอรับทราบ"
+                            title="จำนวนสาขาที่รอรับทราบ"
                             count={summary.branchesWithPending || 0}
                             icon={<Clock size={18} />}
                             color="amber"
@@ -142,12 +146,12 @@ export default function BranchAckStatus() {
                             onClick={() => setStatusFilter(statusFilter === 'pending' ? 'all' : 'pending')}
                         />
                         <StatCard
-                            title="รายการค้างรับทราบ"
+                            title="รายการค้าง"
                             count={summary.totalPending || 0}
                             icon={<AlertTriangle size={18} />}
                             color="rose"
                             active={false} // Just info
-                            onClick={() => { }}
+                            clickable={false}
                         />
                     </div>
                 )}

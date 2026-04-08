@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { getShelfDashboardSummary, getShelfDashboardShelfSales } from "../../../api/admin/template";
+import useDashboardShelfStore from "../../../store/dashboard_shelf_store";
 import {
   BarChart2, Calendar, Search, RefreshCw, Store,
   Layers, Package, CircleDollarSign, TrendingUp,
@@ -18,23 +19,37 @@ const fmtMoney2 = (value) => {
 };
 
 const ShelfDashboard = () => {
-  const [rows, setRows] = useState([]);
-  const [range, setRange] = useState(null);
-  const [loading, setLoading] = useState(true);
+  // Global state from Zustand store
+  const {
+    rows, setRows,
+    range, setRange,
+    query, setQuery,
+    expandedBranch, setExpandedBranch,
+    shelfSalesByBranch, setShelfSalesByBranch,
+    overallUniqueSkus, setOverallUniqueSkus,
+    missingSalesDates, setMissingSalesDates,
+    hasLoadedInitialData, setHasLoadedInitialData
+  } = useDashboardShelfStore();
+
+  // Local state for loading and errors
+  const [loading, setLoading] = useState(!hasLoadedInitialData);
   const [error, setError] = useState("");
-  const [query, setQuery] = useState("");
-  const [expandedBranch, setExpandedBranch] = useState(null);
-  const [shelfSalesByBranch, setShelfSalesByBranch] = useState({});
   const [shelfSalesLoading, setShelfSalesLoading] = useState({});
   const [shelfSalesError, setShelfSalesError] = useState({});
 
-  const loadSummary = async () => {
+  const loadSummary = async (forceRefresh = false) => {
+    // Skip if already loaded and not forcing a refresh
+    if (!forceRefresh && hasLoadedInitialData) return;
+
     setLoading(true);
     setError("");
     try {
       const res = await getShelfDashboardSummary();
       setRows(Array.isArray(res?.rows) ? res.rows : []);
       setRange(res?.range || null);
+      setOverallUniqueSkus(res?.overallUniqueSkus || 0);
+      setMissingSalesDates(res?.missingSalesDates || []);
+      setHasLoadedInitialData(true);
     } catch (err) {
       setError(err?.message || "โหลดข้อมูลไม่สำเร็จ");
     } finally {
@@ -111,29 +126,19 @@ const ShelfDashboard = () => {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                <BarChart2 className="text-blue-600" size={24} />
-                ภาพรวมข้อมูลชั้นวางสินค้า
+                Dashboard Shelf
               </h1>
               {range?.start && range?.end && (
                 <div className="text-sm text-slate-500 mt-1 flex items-center gap-1.5">
-                  ข้อมูลระหว่าง: {range.start} - {range.end}
+                  Date: {range.start} - {range.end}
                 </div>
               )}
             </div>
 
             <div className="flex items-center gap-2">
-              <div className="relative w-full md:w-64">
-                <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="ค้นหาสาขา..."
-                  className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-md text-sm outline-none focus:bg-white focus:border-blue-400 transition-colors"
-                />
-              </div>
               <button
                 type="button"
-                onClick={loadSummary}
+                onClick={() => loadSummary(true)}
                 disabled={loading}
                 className="p-2 border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-md transition-colors"
                 title="รีเฟรชข้อมูล"
@@ -142,15 +147,39 @@ const ShelfDashboard = () => {
               </button>
             </div>
           </div>
+          
+          {/* Missing Sales Dates Warning */}
+          {!loading && missingSalesDates.length > 0 && (
+            <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md flex items-start gap-3">
+              <AlertCircle size={20} className="text-amber-600 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-semibold text-amber-800">วันที่ไม่พบข้อมูลยอดขายในระบบ</h3>
+                <p className="text-xs text-amber-700 mt-1">
+                  กรุณาตรวจสอบและอัปโหลดไฟล์ยอดขายสำหรับวันที่ต่อไปนี้:
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {missingSalesDates.map((dateStr) => {
+                    const d = new Date(dateStr);
+                    const formatted = !isNaN(d) 
+                      ? d.toLocaleDateString('th-TH', { year: 'numeric', month: 'short', day: 'numeric' })
+                      : dateStr;
+                    return (
+                      <span key={dateStr} className="px-2 py-1 bg-white border border-amber-300 text-amber-800 text-xs rounded-md shadow-sm">
+                        {formatted}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Summary Cards */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          <SummaryCard label="จำนวน Shelf รวม" value={fmtNumber(totals.shelves)} color="blue" />
-          <SummaryCard label="จำนวน SKU รวม" value={fmtNumber(totals.products)} color="blue" />
+          <SummaryCard label="จำนวน Shelf" value={fmtNumber(totals.shelves)} color="blue" />
+          <SummaryCard label="จำนวน SKU (ไม่ซ้ำ)" value={fmtNumber(overallUniqueSkus)} color="blue" />
           <SummaryCard label="มูลค่า Stock" value={fmtMoney2(totals.stockCost)} color="yellow" />
-          <SummaryCard label="ยอดขายรวม" value={fmtMoney2(totals.salesTotal)} color="green" />
-          <SummaryCard label="ตัดจ่ายรวม" value={fmtMoney2(totals.withdrawValue)} color="red" />
         </div>
 
         {/* Branch Table */}
@@ -158,7 +187,7 @@ const ShelfDashboard = () => {
           {loading ? (
             <div className="p-8 text-center text-slate-500 flex flex-col items-center gap-2">
               <Loader2 size={24} className="animate-spin text-blue-500" />
-              <span className="text-sm">กำลังโหลดข้อมูล...</span>
+              <span className="text-sm">Loading...</span>
             </div>
           ) : error ? (
             <div className="p-6 text-center text-red-500">
@@ -269,7 +298,7 @@ const ShelfDashboard = () => {
                                             {fmtNumber(shelf.skuCount)} SKU
                                           </div>
                                         </div>
-                                        
+
                                         <div className="space-y-1.5 text-xs">
                                           <div className="flex justify-between">
                                             <span className="text-slate-500">ยอดขาย</span>

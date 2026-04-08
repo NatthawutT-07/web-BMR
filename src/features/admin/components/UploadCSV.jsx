@@ -16,6 +16,10 @@ import {
   uploadGourmetXLSX,
   getUploadStatus,
   getSyncDates,
+  clearStock,
+  clearSku,
+  clearTemplate,
+  clearMinMax,
 } from "../../../api/admin/upload";
 
 // download APIs
@@ -283,6 +287,70 @@ const UploadCSV = () => {
     }
   };
 
+  const handleClearStock = async () => {
+    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูล Stock ทั้งหมดในระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
+    
+    setLoading(true);
+    try {
+      await clearStock();
+      toast.success("ลบข้อมูล Stock ทั้งหมดเรียบร้อยแล้ว");
+      fetchSyncDates();
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Clear stock failed";
+      toast.error(`ลบข้อมูล Stock ล้มเหลว: ${msg}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClearSku = async () => {
+    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูล POG SKU ทั้งหมดในระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
+    
+    setLoading(true);
+    try {
+      await clearSku();
+      toast.success("ลบข้อมูล POG SKU ทั้งหมดเรียบร้อยแล้ว");
+      fetchSyncDates();
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Clear SKU failed";
+      toast.error(`ลบข้อมูล POG SKU ล้มเหลว: ${msg}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClearTemplate = async () => {
+    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูล POG Shelf ทั้งหมดในระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
+    
+    setLoading(true);
+    try {
+      await clearTemplate();
+      toast.success("ลบข้อมูล POG Shelf ทั้งหมดเรียบร้อยแล้ว");
+      fetchSyncDates();
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Clear Shelf failed";
+      toast.error(`ลบข้อมูล POG Shelf ล้มเหลว: ${msg}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleClearMinMax = async () => {
+    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูล ItemMinMax ทั้งหมดในระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
+    
+    setLoading(true);
+    try {
+      await clearMinMax();
+      toast.success("ลบข้อมูล ItemMinMax ทั้งหมดเรียบร้อยแล้ว");
+      fetchSyncDates();
+    } catch (err) {
+      const msg = err?.response?.data?.message || err?.message || "Clear ItemMinMax failed";
+      toast.error(`ลบข้อมูล ItemMinMax ล้มเหลว: ${msg}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const renderFileUploadForm = (fileType) => {
     const labels = {
       sales: "Sales XLSX",
@@ -355,6 +423,15 @@ const UploadCSV = () => {
               <li>ข้อมูลชั้นวางใดในสาขานั้นๆ ที่มีในระบบแต่ <strong className="font-semibold text-rose-600">ไม่มีในไฟล์ จะถูกลบทิ้งทันที</strong> (Full Sync)</li>
               <li>ข้อมูลสาขาที่ไม่ได้อยู่ในไฟล์อัปโหลด จะไม่ได้รับผลกระทบใดๆ</li>
             </ul>
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={handleClearTemplate}
+                disabled={loading}
+                className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded shadow-sm transition-colors"
+              >
+                เคลียร์ข้อมูล POG Shelf ทั้งหมด
+              </button>
+            </div>
           </div>
         )}
 
@@ -367,6 +444,15 @@ const UploadCSV = () => {
               <li>หาก <strong className="font-semibold">รหัสสาขาและรหัสสินค้า</strong> ตรงกับในระบบ จะทำการอัปเดตตำแหน่งใหม่ (รหัสชั้นวาง, แถว, ลำดับ)</li>
               <li>หากในไฟล์มีข้อมูลที่ <strong className="font-semibold text-rose-600">รหัสสาขาและรหัสสินค้าซ้ำกันเอง</strong> ระบบจะแจ้ง Error ให้แก้ไขก่อนอัปโหลด</li>
             </ul>
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={handleClearSku}
+                disabled={loading}
+                className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded shadow-sm transition-colors"
+              >
+                เคลียร์ข้อมูล POG SKU ทั้งหมด
+              </button>
+            </div>
           </div>
         )}
 
@@ -390,6 +476,15 @@ const UploadCSV = () => {
               <li><strong className="font-semibold text-rose-600">คำเตือน:</strong> ข้อมูล Stock เดิมในระบบจะถูก <strong className="font-semibold">ลบทิ้งทั้งหมด (Truncate)</strong> ก่อนนำเข้าข้อมูลชุดใหม่</li>
               <li>ข้อมูลในไฟล์ใหม่ จะกลายเป็นข้อมูล Stock ปัจจุบันของทั้งระบบ</li>
             </ul>
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={handleClearStock}
+                disabled={loading}
+                className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded shadow-sm transition-colors"
+              >
+                เคลียร์ข้อมูล Stock ทั้งหมด
+              </button>
+            </div>
           </div>
         )}
 
@@ -401,6 +496,15 @@ const UploadCSV = () => {
               <li>ระบบทำงานแบบ <strong className="font-semibold">เพิ่มข้อมูลใหม่และอัปเดตทับข้อมูลเดิม</strong> (ไม่มีการลบข้อมูลทิ้ง)</li>
               <li>ใช้รหัสสาขาและรหัสสินค้า เป็นตัวตรวจสอบ หากตรงกันจะอัปเดตค่า Min/Max ใหม่</li>
             </ul>
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={handleClearMinMax}
+                disabled={loading}
+                className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded shadow-sm transition-colors"
+              >
+                เคลียร์ข้อมูล ItemMinMax ทั้งหมด
+              </button>
+            </div>
           </div>
         )}
 
@@ -615,7 +719,7 @@ const UploadCSV = () => {
         <option value="masterItem">MasterItem XLSX</option>
         <option value="bill">Bill XLSX</option>
         <option value="si">Order SI XLSX</option>
-        <option value="gourmet">Gourmet XLSX</option>
+        {/* <option value="gourmet">Gourmet XLSX</option> */}
       </select>
 
       {selectedFileType && renderFileUploadForm(selectedFileType)}

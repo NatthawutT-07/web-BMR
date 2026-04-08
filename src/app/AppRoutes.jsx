@@ -49,20 +49,20 @@ const router = createBrowserRouter([
 
     // Admin เต็มสิทธิ์
     {
-        path: "/admin",
+        path: "/sys-ahFvi1hmPw3iKCn",
         element: <ProtectRouteAdmin element={<LayoutAdmin />} />,
         children: [
             { index: true, element: <Suspense fallback={<PageLoader />}><Dashboard /></Suspense> },
-            { path: "shelf", element: <Suspense fallback={<PageLoader />}><Template /></Suspense> },
-            { path: "dashboard-shelf", element: <Suspense fallback={<PageLoader />}><ShelfDashboard /></Suspense> },
-            { path: "upload", element: <Suspense fallback={<PageLoader />}><Upload /></Suspense> },
-            { path: "sales", element: <Suspense fallback={<PageLoader />}><FilterSales /></Suspense> },
-            { path: "dashboard-sales", element: <Suspense fallback={<PageLoader />}><DashboardSales /></Suspense> },
-            { path: "stock", element: <Suspense fallback={<PageLoader />}><Stock /></Suspense> },
-            { path: "pog-requests", element: <Suspense fallback={<PageLoader />}><PogRequests /></Suspense> },
-            { path: "branch-ack", element: <Suspense fallback={<PageLoader />}><BranchAckStatus /></Suspense> },
-            { path: "analysis", element: <Suspense fallback={<PageLoader />}><Analysis /></Suspense> },
-            { path: "management", element: <Suspense fallback={<PageLoader />}><Management /></Suspense> },
+            { path: "qW3eR7tY2u", element: <Suspense fallback={<PageLoader />}><Template /></Suspense> },
+            { path: "pA9sD4fG6h", element: <Suspense fallback={<PageLoader />}><ShelfDashboard /></Suspense> },
+            { path: "zX5cV8bN1m", element: <Suspense fallback={<PageLoader />}><Upload /></Suspense> },
+            { path: "lK2jH7gF3d", element: <Suspense fallback={<PageLoader />}><FilterSales /></Suspense> },
+            { path: "oI9uY4tR6e", element: <Suspense fallback={<PageLoader />}><DashboardSales /></Suspense> },
+            { path: "mN1bV8cX5z", element: <Suspense fallback={<PageLoader />}><Stock /></Suspense> },
+            { path: "aS3dF7gH2j", element: <Suspense fallback={<PageLoader />}><PogRequests /></Suspense> },
+            { path: "qA8zW2sX7e", element: <Suspense fallback={<PageLoader />}><BranchAckStatus /></Suspense> },
+            { path: "pL5kO9iJ4u", element: <Suspense fallback={<PageLoader />}><Analysis /></Suspense> },
+            { path: "vB6nM2vC8x", element: <Suspense fallback={<PageLoader />}><Management /></Suspense> },
         ],
     },
 

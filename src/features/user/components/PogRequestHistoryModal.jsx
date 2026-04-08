@@ -98,7 +98,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50 shrink-0">
                     <div>
-                        <div className="text-base font-semibold text-slate-800">📋 ประวัติคำขอ (ทั้งหมด {data.length})</div>
+                        <div className="text-base font-semibold text-slate-800">ประวัติคำขอ (ทั้งหมด {data.length})</div>
                         <div className="text-xs text-slate-500">สาขา: {branchCode}</div>
                     </div>
                     <button
@@ -142,8 +142,16 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                                             </td>
 
                                             {/* Action */}
-                                            <td className="px-2 py-2 text-center align-middle font-medium text-slate-700">
-                                                {ACTION_MAP[item.action] || item.action}
+                                            <td className="px-2 py-2 text-center align-middle">
+                                                <span className={cx(
+                                                    "px-2 py-1.5 rounded-md text-[11px] font-bold border whitespace-nowrap",
+                                                    item.action === "add" ? "text-emerald-700 bg-emerald-50 border-emerald-200" :
+                                                    item.action === "move" ? "text-blue-700 bg-blue-50 border-blue-200" :
+                                                    item.action === "delete" ? "text-rose-700 bg-rose-50 border-rose-200" :
+                                                    "text-slate-700 bg-slate-50 border-slate-200"
+                                                )}>
+                                                    {ACTION_MAP[item.action] || item.action}
+                                                </span>
                                             </td>
 
                                             {/* Product */}

@@ -8,7 +8,7 @@ const Dashboard = () => {
 
   const shortcuts = [
     {
-      key: "shelf",
+      key: "qW3eR7tY2u",
       title: "Shelf Store",
       desc: "จัดการชั้นวาง, สินค้าหน้าร้าน และภาพรวม Physical Store",
       color: "from-sky-400 to-sky-500",
@@ -16,7 +16,7 @@ const Dashboard = () => {
       icon: <Store size={20} />,
     },
     {
-      key: "dashboard-shelf",
+      key: "pA9sD4fG6h",
       title: "Shelf Dashboard",
       desc: "Dashboard สรุปภาพรวม Shelf และสินค้า",
       color: "from-violet-400 to-violet-500",
@@ -24,7 +24,7 @@ const Dashboard = () => {
       icon: <LayoutDashboard size={20} />,
     },
     {
-      key: "pog-requests",
+      key: "aS3dF7gH2j",
       title: "POG Requests",
       desc: "จัดการคำขอปรับเปลี่ยน Planogram (อนุมัติ/ปฏิเสธ)",
       color: "from-amber-400 to-amber-500",
@@ -32,7 +32,7 @@ const Dashboard = () => {
       icon: <ClipboardList size={20} />,
     },
     {
-      key: "branch-ack",
+      key: "qA8zW2sX7e",
       title: "Branch Status",
       desc: "ตรวจสอบสถานะการรับทราบ POG ของแต่ละสาขา",
       color: "from-emerald-400 to-emerald-500",
@@ -40,7 +40,7 @@ const Dashboard = () => {
       icon: <Eye size={20} />,
     },
     {
-      key: "upload",
+      key: "zX5cV8bN1m",
       title: "Upload XLSX",
       desc: "อัปโหลดไฟล์ข้อมูล (SKU, Template)",
       color: "from-rose-400 to-rose-500",
@@ -48,7 +48,7 @@ const Dashboard = () => {
       icon: <FileUp size={20} />,
     },
     {
-      key: "management",
+      key: "vB6nM2vC8x",
       title: "Management",
       desc: "จัดการผู้ใช้งาน (Users) และข้อมูลสาขา (Branches)",
       color: "from-slate-600 to-slate-700",

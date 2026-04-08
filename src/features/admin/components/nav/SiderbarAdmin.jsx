@@ -51,18 +51,18 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
 
           {/* items */}
           <nav className="p-4 space-y-2">
-            {/* <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} close={closeMobile} /> */}
-            <SidebarItem to="shelf" label="Shelf Store" icon={<Store size={20} />} close={closeMobile} />
-            <SidebarItem to="dashboard-shelf" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} close={closeMobile} />
-            <SidebarItem to="pog-requests" label="POG Requests" icon={<ClipboardList size={20} />} close={closeMobile} />
-            <SidebarItem to="branch-ack" label="Branch Status" icon={<Eye size={20} />} close={closeMobile} />
-            {/* <SidebarItem to="analysis" label="Analysis" icon={<BarChart3 size={20} />} close={closeMobile} /> */}
-            {/* <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} close={closeMobile} /> */}
-            <SidebarItem to="upload" label="Upload XLSX" icon={<FileUp size={20} />} close={closeMobile} />
+            {/* <SidebarItem to="lK2jH7gF3d" label="Sales" icon={<ChartNoAxesCombined size={20} />} close={closeMobile} /> */}
+            <SidebarItem to="qW3eR7tY2u" label="Shelf Store" icon={<Store size={20} />} close={closeMobile} />
+            <SidebarItem to="pA9sD4fG6h" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} close={closeMobile} />
+            <SidebarItem to="aS3dF7gH2j" label="POG Requests" icon={<ClipboardList size={20} />} close={closeMobile} />
+            <SidebarItem to="qA8zW2sX7e" label="Branch Status" icon={<Eye size={20} />} close={closeMobile} />
+            {/* <SidebarItem to="pL5kO9iJ4u" label="Analysis" icon={<BarChart3 size={20} />} close={closeMobile} /> */}
+            {/* <SidebarItem to="mN1bV8cX5z" label="Stock" icon={<Package2 size={20} />} close={closeMobile} /> */}
+            <SidebarItem to="zX5cV8bN1m" label="Upload XLSX" icon={<FileUp size={20} />} close={closeMobile} />
 
 
             <div className="pt-4 ">
-              <SidebarItem to="management" label="Management" icon={<Users size={20} />} close={closeMobile} />
+              <SidebarItem to="vB6nM2vC8x" label="Management" icon={<Users size={20} />} close={closeMobile} />
               <SidebarButton onClick={handleLogout} label="Logout" icon={<LogOut size={20} />} />
             </div>
           </nav>
@@ -94,18 +94,18 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
 
       {/* items */}
       <nav className="flex-1 px-1 py-1 space-y-2">
-        {/* <SidebarItem to="sales" label="Sales" icon={<ChartNoAxesCombined size={20} />} expanded={isOpen} /> */}
-        <SidebarItem to="shelf" label="Shelf Store" icon={<Store size={20} />} expanded={isOpen} />
-        <SidebarItem to="dashboard-shelf" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} expanded={isOpen} />
-        <SidebarItem to="pog-requests" label="POG Requests" icon={<ClipboardList size={20} />} expanded={isOpen} />
-        <SidebarItem to="branch-ack" label="Branch Status" icon={<Eye size={20} />} expanded={isOpen} />
-        <SidebarItem to="analysis" label="Analysis" icon={<BarChart3 size={20} />} expanded={isOpen} />
-        <SidebarItem to="stock" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} />
-        <SidebarItem to="upload" label="Upload XLSX" icon={<FileUp size={20} />} expanded={isOpen} />
+        {/* <SidebarItem to="lK2jH7gF3d" label="Sales" icon={<ChartNoAxesCombined size={20} />} expanded={isOpen} /> */}
+        <SidebarItem to="qW3eR7tY2u" label="Shelf Store" icon={<Store size={20} />} expanded={isOpen} />
+        <SidebarItem to="pA9sD4fG6h" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} expanded={isOpen} />
+        <SidebarItem to="aS3dF7gH2j" label="POG Requests" icon={<ClipboardList size={20} />} expanded={isOpen} />
+        <SidebarItem to="qA8zW2sX7e" label="Branch Status" icon={<Eye size={20} />} expanded={isOpen} />
+        {/* <SidebarItem to="pL5kO9iJ4u" label="Analysis" icon={<BarChart3 size={20} />} expanded={isOpen} /> */}
+        {/* <SidebarItem to="mN1bV8cX5z" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} /> */}
+        <SidebarItem to="zX5cV8bN1m" label="Upload XLSX" icon={<FileUp size={20} />} expanded={isOpen} />
 
 
         <div className="pt-8 flex-1 px-1 py-1 space-y-2">
-          <SidebarItem to="management" label="Management" icon={<Users size={20} />} expanded={isOpen} />
+          <SidebarItem to="vB6nM2vC8x" label="Management" icon={<Users size={20} />} expanded={isOpen} />
           <SidebarButton onClick={handleLogout} label="Logout" icon={<LogOut size={20} />} expanded={isOpen} />
         </div>
       </nav>

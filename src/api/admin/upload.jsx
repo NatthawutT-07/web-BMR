@@ -62,6 +62,30 @@ export const uploadSI_XLSX = (file, onProgress, jobId) =>
 export const uploadGourmetXLSX = (file, onProgress, jobId) =>
   uploadXLSX(api, file, "/upload-gourmets", onProgress, jobId);
 
+// Clear Stock
+export const clearStock = async () => {
+  const res = await api.delete("/clear-stock");
+  return res.data;
+};
+
+// Clear SKU
+export const clearSku = async () => {
+  const res = await api.delete("/clear-sku");
+  return res.data;
+};
+
+// Clear Template (Shelf)
+export const clearTemplate = async () => {
+  const res = await api.delete("/clear-template");
+  return res.data;
+};
+
+// Clear ItemMinMax
+export const clearMinMax = async () => {
+  const res = await api.delete("/clear-minmax");
+  return res.data;
+};
+
 export const getUploadStatus = (jobId) =>
   api.get("/upload-status", { params: { jobId } });
 

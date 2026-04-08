@@ -9,6 +9,7 @@ import React, {
 
 import useBmrStore from "../../../../store/bmr_store";
 import useShelfStore from "../../../../store/shelf_store";
+import useStoreShelfManagerStore from "../../../../store/store_shelf_manager_store";
 
 
 // lazy load components
@@ -76,15 +77,18 @@ const ShelfManager = () => {
     fetchSyncDates,
   } = useShelfStore();
 
-  const [selectedBranchCode, setSelectedBranchCode] = useState("");
-  const [submittedBranchCode, setSubmittedBranchCode] = useState("");
-  const [selectedShelves, setSelectedShelves] = useState([]);
-  const [filteredTemplate, setFilteredTemplate] = useState([]);
-  const [branchSummary, setBranchSummary] = useState([]);
-  const [okLocked, setOkLocked] = useState(false);
-  const [searchText, setSearchText] = useState("");
-  const [searchResult, setSearchResult] = useState([]);
-  const [isFullscreenImage, setIsFullscreenImage] = useState(false);
+  const {
+    selectedBranchCode, setSelectedBranchCode,
+    submittedBranchCode, setSubmittedBranchCode,
+    selectedShelves, setSelectedShelves,
+    filteredTemplate, setFilteredTemplate,
+    branchSummary, setBranchSummary,
+    okLocked, setOkLocked,
+    searchText, setSearchText,
+    searchResult, setSearchResult,
+    isFullscreenImage, setIsFullscreenImage,
+    hasLoadedInitialData, setHasLoadedInitialData
+  } = useStoreShelfManagerStore();
 
   const captureRef = useRef(null);
 
@@ -122,12 +126,16 @@ const ShelfManager = () => {
   // initial load branches + templates + syncDates
   useEffect(() => {
     if (!accessToken) return;
-    fetchBranches();
-    fetchTemplate();
-    fetchSyncDates();
-  }, [accessToken, fetchBranches, fetchTemplate, fetchSyncDates]);
 
-  // 🟢 summary ใช้เฉพาะ branchProduct
+    // Load static global data only if we haven't loaded it in this session
+    if (!hasLoadedInitialData) {
+      fetchBranches();
+      fetchTemplate();
+      fetchSyncDates();
+      setHasLoadedInitialData(true);
+    }
+  }, [accessToken, fetchBranches, fetchTemplate, fetchSyncDates, hasLoadedInitialData, setHasLoadedInitialData]);
+
   useEffect(() => {
     if (!branchProduct || branchProduct.length === 0) {
       setBranchSummary([]);
@@ -233,7 +241,6 @@ const ShelfManager = () => {
     });
   }, [filteredTemplate, selectedShelves]);
 
-  // search product by brand / barcode (ใช้เฉพาะ branchProduct)
   const handleSearch = (value) => {
     setSearchText(value);
 

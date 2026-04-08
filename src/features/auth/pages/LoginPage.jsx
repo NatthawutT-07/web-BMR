@@ -52,7 +52,7 @@ function LoginPage() {
       });
       const role = res?.data?.payload?.role;
 
-      if (role === "admin") navigate("/admin", { replace: true });
+      if (role === "admin") navigate("/sys-ahFvi1hmPw3iKCn", { replace: true });
       else if (role === "user") navigate(`/store/${branchCode}`, { replace: true });
       else navigate("/", { replace: true });
     } catch (err) {
@@ -96,7 +96,7 @@ function LoginPage() {
       });
       const role = res?.data?.payload?.role;
 
-      if (role === "admin") navigate("/admin", { replace: true });
+      if (role === "admin") navigate("/sys-ahFvi1hmPw3iKCn", { replace: true });
       else if (role === "user") navigate(`/store/${res?.data?.payload?.storecode}`, { replace: true });
       else navigate("/", { replace: true });
     } catch (err) {
@@ -134,7 +134,7 @@ function LoginPage() {
   // ถ้าล็อกอินค้างอยู่แล้ว → เด้งตาม role
   useEffect(() => {
     if (accessToken && user) {
-      if (user.role === "admin") navigate("/admin", { replace: true });
+      if (user.role === "admin") navigate("/sys-ahFvi1hmPw3iKCn", { replace: true });
       else if (user.role === "user") navigate(`/store/${user.storecode}`, { replace: true });
       else navigate("/", { replace: true });
     }
