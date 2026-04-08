@@ -97,6 +97,9 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
               Max
             </th>
             <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
+              Pack
+            </th>
+            <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               สต็อค
             </th>
             {/* <th className="border px-1 py-2 text-center print:hidden align-middle font-semibold text-slate-600">
@@ -239,6 +242,10 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
 
                         <td className="border p-1 print:px-[2px] text-center align-middle">
                           {zeroToDash(p.maxStore)}
+                        </td>
+
+                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                          {zeroToDash(p.packOrder)}
                         </td>
 
                         <td className="border p-1 print:px-[2px] text-center text-yellow-700 align-middle font-semibold">

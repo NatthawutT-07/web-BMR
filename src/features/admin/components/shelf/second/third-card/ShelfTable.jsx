@@ -155,7 +155,7 @@ const ShelfTable = ({
       <React.Fragment key={`row-${rowNo}`}>
         {/* Row header */}
         <tr className="bg-blue-50">
-          <td colSpan={18} className="p-2 border font-semibold italic">
+          <td colSpan={19} className="p-2 border font-semibold italic">
             ➤ Row: {rowNo}
           </td>
 
@@ -242,6 +242,10 @@ const ShelfTable = ({
                   {prod.maxStore ?? "-"}
                 </td>
 
+                <td className="p-1 border text-center w-12">
+                  {prod.packOrder ?? "-"}
+                </td>
+
                 <td className="p-1 border text-center w-14 text-yellow-700 font-semibold">
                   {prod.stockQuantity !== null && prod.stockQuantity !== undefined
                     ? prod.stockQuantity.toLocaleString()
@@ -283,7 +287,7 @@ const ShelfTable = ({
           })
         ) : (
           <tr>
-            <td colSpan={19} className="p-2 border text-center italic text-gray-500">
+            <td colSpan={20} className="p-2 border text-center italic text-gray-500">
               No products in this Row
             </td>
           </tr>
@@ -291,7 +295,7 @@ const ShelfTable = ({
 
         {/* Row total */}
         <tr className="bg-gray-100 font-semibold">
-          <td colSpan={11}></td>
+          <td colSpan={12}></td>
 
           <td colSpan={3} className="p-2 border text-right">
             Total Row {rowNo}
@@ -356,6 +360,7 @@ const ShelfTable = ({
               <th className="border p-1 text-center w-14">W. Qty</th>
               <th className="border p-1 text-center w-12">MIN</th>
               <th className="border p-1 text-center w-12">MAX</th>
+              <th className="border p-1 text-center w-12">Pack</th>
               <th className="border p-1 text-center w-10">
                 <span className="block leading-tight">Stock</span>
                 <span className="block leading-tight">Qty</span>
@@ -386,7 +391,7 @@ const ShelfTable = ({
             {Array.from({ length: Number(rows) || 0 }, (_, i) => renderRow(i + 1))}
 
             <tr className="bg-gray-200 font-semibold">
-              <td colSpan={14} className="p-2 border text-right">
+              <td colSpan={15} className="p-2 border text-right">
                 Total for All Rows
               </td>
 

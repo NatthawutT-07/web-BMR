@@ -341,6 +341,7 @@ const SkuAnalysis = () => {
         { key: "status", label: "Status" },
         { key: "minStore", label: "Min" },
         { key: "maxStore", label: "Max" },
+        { key: "packOrder", label: "Pack" },
         { key: "stock_quantity", label: "Stock" },
         { key: "sale_quantity", label: "QTY Sale" },
         { key: "net_sales", label: "Actual Sale" },
@@ -368,7 +369,7 @@ const SkuAnalysis = () => {
     };
 
     // Number of leading info columns (before the numeric totals columns)
-    const infoColCount = mode === "store" ? 10 : mode === "brand" ? 2 : 7;
+    const infoColCount = mode === "store" ? 11 : mode === "brand" ? 2 : 7;
 
     const exportToExcel = () => {
         if (!displayRows.length) {
@@ -392,6 +393,7 @@ const SkuAnalysis = () => {
                     "Shelf Life": row.shelfLife || "",
                     "Min": row.minStore ?? "",
                     "Max": row.maxStore ?? "",
+                    "Pack": row.packOrder ?? "",
                     "Stock": row.stock_quantity,
                 };
                 for (const m of summaryMonths) {
@@ -413,7 +415,7 @@ const SkuAnalysis = () => {
 
             const totalRow = {
                 "สาขา": "รวม", "ชื่อสาขา": "", "รหัสสินค้า": "", "ชื่อสินค้า": "",
-                "แบรนด์": "", "ราคาขาย": "", "Shelf Life": "", "Min": "", "Max": "",
+                "แบรนด์": "", "ราคาขาย": "", "Shelf Life": "", "Min": "", "Max": "", "Pack": "",
                 "Stock": totals.stock_quantity,
             };
             for (const m of summaryMonths) {
@@ -676,6 +678,7 @@ const SkuAnalysis = () => {
                                         <th rowSpan={2} className="px-1.5 py-2 text-center whitespace-nowrap">Status</th>
                                         <th rowSpan={2} className="px-1.5 py-2 text-right whitespace-nowrap">Min</th>
                                         <th rowSpan={2} className="px-1.5 py-2 text-right whitespace-nowrap">Max</th>
+                                        <th rowSpan={2} className="px-1.5 py-2 text-right whitespace-nowrap">Pack</th>
                                         <th rowSpan={2} className="px-1.5 py-2 text-right whitespace-nowrap border-r border-gray-600 text-indigo-300">Stock</th>
                                     </>
                                 )}
@@ -724,7 +727,7 @@ const SkuAnalysis = () => {
                         <tbody className="divide-y">
                             {displayRows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={mode === "store" ? 9 + summaryMonths.length * 6 + 6 : 2 + summaryMonths.length * 3} className="text-center py-8 text-gray-400">
+                                    <td colSpan={mode === "store" ? 10 + summaryMonths.length * 6 + 6 : 2 + summaryMonths.length * 3} className="text-center py-8 text-gray-400">
                                         {loading ? "กำลังโหลด..." : "ไม่พบข้อมูล"}
                                     </td>
                                 </tr>
@@ -785,6 +788,7 @@ const SkuAnalysis = () => {
                                                 <td className="px-1.5 py-2 text-center text-xs">{row.status || "-"}</td>
                                                 <td className="px-1.5 py-2 text-right text-xs">{row.minStore ?? "-"}</td>
                                                 <td className="px-1.5 py-2 text-right text-xs">{row.maxStore ?? "-"}</td>
+                                                <td className="px-1.5 py-2 text-right text-xs">{row.packOrder ?? "-"}</td>
                                                 <td className="px-1.5 py-2 text-right font-medium text-indigo-600 text-xs border-r border-gray-200">{fmt(row.stock_quantity)}</td>
                                             </>
                                         )}
@@ -827,7 +831,7 @@ const SkuAnalysis = () => {
                                 <tr>
                                     {mode === "store" ? (
                                         <>
-                                            <td colSpan={8} className="px-3 py-2 text-right">รวมทั้งหมด</td>
+                                            <td colSpan={9} className="px-3 py-2 text-right">รวมทั้งหมด</td>
                                             <td className="px-1.5 py-2 text-right text-indigo-600 border-r border-gray-200">{fmt(totals.stock_quantity)}</td>
                                         </>
                                     ) : (
@@ -979,6 +983,7 @@ const SkuAnalysis = () => {
                                                 "Status": r.status || "",
                                                 "Min": r.minStore ?? "",
                                                 "Max": r.maxStore ?? "",
+                                                "Pack": r.packOrder ?? "",
                                                 "Stock": r.stock_quantity,
                                             };
                                             for (const m of drillDown.months) {
@@ -1025,6 +1030,7 @@ const SkuAnalysis = () => {
                                         <th rowSpan={2} className="px-2 py-2 text-center whitespace-nowrap">Status</th>
                                         <th rowSpan={2} className="px-2 py-2 text-right whitespace-nowrap">Min</th>
                                         <th rowSpan={2} className="px-2 py-2 text-right whitespace-nowrap">Max</th>
+                                        <th rowSpan={2} className="px-2 py-2 text-right whitespace-nowrap">Pack</th>
                                         <th rowSpan={2} className="px-2 py-2 text-right whitespace-nowrap border-r border-gray-600 text-indigo-300">Stock</th>
                                         {drillDown.months.map((m) => (
                                             <th key={m} colSpan={6} className="px-2 py-2 text-center border-r border-gray-600">{monthLabel(m)}</th>
@@ -1052,7 +1058,7 @@ const SkuAnalysis = () => {
                                 </thead>
                                 <tbody className="divide-y">
                                     {drillDown.rows.length === 0 ? (
-                                        <tr><td colSpan={9 + drillDown.months.length * 6 + 6} className="text-center py-8 text-gray-400">ไม่พบข้อมูล</td></tr>
+                                        <tr><td colSpan={10 + drillDown.months.length * 6 + 6} className="text-center py-8 text-gray-400">ไม่พบข้อมูล</td></tr>
                                     ) : (
                                         drillDown.rows.map((r, i) => (
                                             <tr key={r.product_code + i} className={`${i % 2 === 0 ? "bg-white" : "bg-gray-50"} hover:bg-blue-50 transition`}>
@@ -1064,6 +1070,7 @@ const SkuAnalysis = () => {
                                                 <td className="px-2 py-1.5 text-center text-xs">{r.status || "-"}</td>
                                                 <td className="px-2 py-1.5 text-right text-xs">{r.minStore ?? "-"}</td>
                                                 <td className="px-2 py-1.5 text-right text-xs">{r.maxStore ?? "-"}</td>
+                                                <td className="px-2 py-1.5 text-right text-xs">{r.packOrder ?? "-"}</td>
                                                 <td className="px-2 py-1.5 text-right font-medium text-indigo-600 text-xs border-r border-gray-200">{fmt(r.stock_quantity)}</td>
                                                 {drillDown.months.map((m) => (
                                                     <React.Fragment key={m}>
