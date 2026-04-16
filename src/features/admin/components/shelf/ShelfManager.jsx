@@ -92,13 +92,13 @@ const ShelfManager = () => {
 
   const captureRef = useRef(null);
 
-  // 🕒 ช่วงเวลายอดขาย 90 วัน (ตาม logic backend)
+  //  ช่วงเวลายอดขาย 90 วัน (ตาม logic backend)
   const { start: salesStart, end: salesEnd } = useMemo(
     () => getBangkok90DaysRange(),
     []
   );
 
-  // 🟢 ใช้เฉพาะ product ของ "สาขาที่กด OK แล้ว"
+  //  ใช้เฉพาะ product ของ "สาขาที่กด OK แล้ว"
   const branchProduct = useMemo(() => {
     if (!submittedBranchCode) return [];
     return (product || []).filter(
@@ -106,7 +106,7 @@ const ShelfManager = () => {
     );
   }, [product, submittedBranchCode]);
 
-  // 🟡 หาสินค้าที่ซ้ำกันในระดับสาขา (ดูจาก codeProduct เป็นหลัก หรือ barcode)
+  //  หาสินค้าที่ซ้ำกันในระดับสาขา (ดูจาก codeProduct เป็นหลัก หรือ barcode)
   const duplicateCodes = useMemo(() => {
     const counts = {};
     branchProduct.forEach(p => {

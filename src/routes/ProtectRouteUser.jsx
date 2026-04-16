@@ -21,15 +21,15 @@ const ProtectRouteUser = ({ element }) => {
 
   if (!accessToken || !user) return <Navigate to="/" replace />;
 
-  // 🟢 admin เข้าได้ทุก store page
+  //  admin เข้าได้ทุก store page
   if (user.role === "admin") return element;
 
   // อนุญาตเฉพาะ user ปกติ
   if (user.role !== "user") return <Navigate to="/" replace />;
 
-  // กันเคส user พิมพ์ /store/สาขาอื่นเอง
+  // กันเคส user พิมพ์ /xY7zA3bC9d/สาขาอื่นเอง
   if (user.storecode !== storecode) {
-    return <Navigate to={`/store/${user.storecode}`} replace />;
+    return <Navigate to={`/xY7zA3bC9d/${user.storecode}`} replace />;
   }
 
   return element;

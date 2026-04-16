@@ -249,13 +249,11 @@ const ShelfDashboard = () => {
                           <td className="px-4 py-3 text-center">
                             <button
                               type="button"
-                              onClick={() =>
-                                setExpandedBranch(() => {
-                                  const next = isOpen ? null : row.branchCode;
-                                  if (next) loadShelfSales(next);
-                                  return next;
-                                })
-                              }
+                              onClick={() => {
+                                const next = isOpen ? null : row.branchCode;
+                                setExpandedBranch(next);
+                                if (next) loadShelfSales(next);
+                              }}
                               className={`p-1 rounded text-slate-500 hover:bg-slate-200 transition-colors ${isOpen ? 'bg-slate-200' : ''}`}
                             >
                               {isOpen ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -272,8 +270,29 @@ const ShelfDashboard = () => {
                                 </h3>
 
                                 {isShelfLoading ? (
-                                  <div className="flex items-center gap-2 text-sm text-slate-500 py-2">
-                                    <Loader2 size={16} className="animate-spin" /> โหลดข้อมูล Shelf...
+                                  <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 animate-pulse">
+                                    {[1, 2, 3, 4].map((i) => (
+                                      <div key={i} className="bg-white p-3 rounded border border-slate-200 shadow-sm">
+                                        <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-100">
+                                          <div className="h-4 bg-slate-200 rounded w-16"></div>
+                                          <div className="h-4 bg-slate-200 rounded w-12"></div>
+                                        </div>
+                                        <div className="space-y-2">
+                                          <div className="flex justify-between">
+                                            <div className="h-3 bg-slate-200 rounded w-10"></div>
+                                            <div className="h-3 bg-slate-200 rounded w-16"></div>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <div className="h-3 bg-slate-200 rounded w-10"></div>
+                                            <div className="h-3 bg-slate-200 rounded w-16"></div>
+                                          </div>
+                                          <div className="flex justify-between">
+                                            <div className="h-3 bg-slate-200 rounded w-10"></div>
+                                            <div className="h-3 bg-slate-200 rounded w-16"></div>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))}
                                   </div>
                                 ) : shelfError ? (
                                   <div className="text-sm text-red-500 py-2">

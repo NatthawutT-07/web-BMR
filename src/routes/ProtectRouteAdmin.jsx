@@ -22,7 +22,7 @@ const ProtectRouteAdmin = ({ element }) => {
   // อนุญาตเฉพาะ admin
   if (user.role === "admin") return element;
 
-  if (user.role === "user") return <Navigate to={`/store/${user.storecode}`} replace />;
+  if (user.role === "user") return <Navigate to={`/xY7zA3bC9d/${user.storecode}`} replace />;
 
   return <Navigate to="/" replace />;
 };

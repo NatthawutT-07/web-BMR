@@ -53,7 +53,7 @@ function LoginPage() {
       const role = res?.data?.payload?.role;
 
       if (role === "admin") navigate("/sys-ahFvi1hmPw3iKCn", { replace: true });
-      else if (role === "user") navigate(`/store/${branchCode}`, { replace: true });
+      else if (role === "user") navigate(`/xY7zA3bC9d/${branchCode}`, { replace: true });
       else navigate("/", { replace: true });
     } catch (err) {
       const payload = err?.response?.data;
@@ -97,7 +97,7 @@ function LoginPage() {
       const role = res?.data?.payload?.role;
 
       if (role === "admin") navigate("/sys-ahFvi1hmPw3iKCn", { replace: true });
-      else if (role === "user") navigate(`/store/${res?.data?.payload?.storecode}`, { replace: true });
+      else if (role === "user") navigate(`/xY7zA3bC9d/${res?.data?.payload?.storecode}`, { replace: true });
       else navigate("/", { replace: true });
     } catch (err) {
       const payload = err?.response?.data;
@@ -135,7 +135,7 @@ function LoginPage() {
   useEffect(() => {
     if (accessToken && user) {
       if (user.role === "admin") navigate("/sys-ahFvi1hmPw3iKCn", { replace: true });
-      else if (user.role === "user") navigate(`/store/${user.storecode}`, { replace: true });
+      else if (user.role === "user") navigate(`/xY7zA3bC9d/${user.storecode}`, { replace: true });
       else navigate("/", { replace: true });
     }
   }, [accessToken, user, navigate]);

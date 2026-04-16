@@ -68,7 +68,7 @@ const router = createBrowserRouter([
 
     // User → store ตามสาขา
     {
-        path: "/store/:storecode",
+        path: "/xY7zA3bC9d/:storecode",
         element: <ProtectRouteUser element={<LayoutUser />} />,
         children: [{ index: true, element: <Suspense fallback={<PageLoader />}><Home /></Suspense> }],
     },
