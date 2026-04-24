@@ -295,7 +295,7 @@ const UploadCSV = () => {
 
   const handleClearStock = async () => {
     if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูล Stock ทั้งหมดในระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
-    
+
     setLoading(true);
     try {
       await clearStock();
@@ -310,7 +310,7 @@ const UploadCSV = () => {
 
   const handleClearSku = async () => {
     if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูล POG SKU ทั้งหมดในระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
-    
+
     setLoading(true);
     try {
       await clearSku();
@@ -325,7 +325,7 @@ const UploadCSV = () => {
 
   const handleClearTemplate = async () => {
     if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูล POG Shelf ทั้งหมดในระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
-    
+
     setLoading(true);
     try {
       await clearTemplate();
@@ -340,7 +340,7 @@ const UploadCSV = () => {
 
   const handleClearMinMax = async () => {
     if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูล ItemMinMax ทั้งหมดในระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
-    
+
     setLoading(true);
     try {
       await clearMinMax();
@@ -478,7 +478,7 @@ const UploadCSV = () => {
         <option value="minMax">ItemMinMax XLSX</option>
         <option value="masterItem">MasterItem XLSX</option>
         <option value="bill">Bill XLSX</option>
-        <option value="si">Order SI XLSX</option>
+        {/* <option value="si">Order SI XLSX</option> */}
         <option value="gourmet">Gourmet XLSX</option>
       </select>
 
