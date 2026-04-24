@@ -1,5 +1,5 @@
 import React from 'react'
-import SkuAnalysis from '../components/SkuAnalysis'
+import SkuAnalysis from '../components/SkuAnalysis/index'
 
 const Analysis = () => {
     return (
