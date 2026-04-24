@@ -58,7 +58,21 @@ const isRefreshEndpoint = (config) => {
 };
 
 api.interceptors.response.use(
-  (res) => res,
+  (res) => {
+    // If it's our standardized format, unwrap it
+    if (res.data && res.data.success === true && res.data.data !== undefined) {
+      const originalData = res.data;
+      // Replace res.data with the actual payload so components don't break
+      res.data = originalData.data;
+      // Attach meta and message to the response object in case components need them
+      res.meta = originalData.meta;
+      res.message = originalData.message;
+      res.success = true;
+      res.ok = true; 
+      return res;
+    }
+    return res;
+  },
   async (error) => {
     const original = error.config;
     const status = error?.response?.status;

@@ -106,25 +106,6 @@ const useShelfStore = create(
         }
       },
 
-      refreshDataProduct: async (branchCode) => {
-        const accessToken = useBmrStore.getState().accessToken;
-        if (!accessToken) return;
-
-        set({ loading: true });
-        try {
-          const res = await getSKU(branchCode);
-          const list = Array.isArray(res) ? res : [];
-
-          set((state) => {
-            const other = state.product.filter((p) => p.branchCode !== branchCode);
-            return { product: [...other, ...list] };
-          });
-        } catch (error) {
-          logger.error("refresh Data Product failed", error);
-        } finally {
-          set({ loading: false });
-        }
-      },
 
       // =====================================================
       //  Add Product
@@ -239,11 +220,48 @@ const useShelfStore = create(
           set({ actionLoading: false });
         }
       },
+      // =====================================================
+      //  UI STATE (Merged from store_shelf_manager_store)
+      // =====================================================
+      selectedBranchCode: "",
+      submittedBranchCode: "",
+      selectedShelves: [],
+      filteredTemplate: [],
+      okLocked: false,
+      searchText: "",
+      searchResult: [],
+      isFullscreenImage: false,
+      hasLoadedInitialData: false,
+
+      // Setters
+      setSelectedBranchCode: (val) => set({ selectedBranchCode: val }),
+      setSubmittedBranchCode: (val) => set({ submittedBranchCode: val }),
+      setSelectedShelves: (updater) => set((state) => ({
+        selectedShelves: typeof updater === "function" ? updater(state.selectedShelves) : updater
+      })),
+      setFilteredTemplate: (val) => set({ filteredTemplate: val }),
+      setOkLocked: (val) => set({ okLocked: val }),
+      setSearchText: (val) => set({ searchText: val }),
+      setSearchResult: (val) => set({ searchResult: val }),
+      setIsFullscreenImage: (val) => set({ isFullscreenImage: val }),
+      setHasLoadedInitialData: (val) => set({ hasLoadedInitialData: val }),
+
+      resetShelfUI: () => set({
+        selectedBranchCode: "",
+        submittedBranchCode: "",
+        selectedShelves: [],
+        filteredTemplate: [],
+        okLocked: false,
+        searchText: "",
+        searchResult: [],
+        isFullscreenImage: false,
+        hasLoadedInitialData: false
+      }),
     }),
     {
       name: "shelf-store",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ branches: state.branches }), // ตัด state อื่นออกเพื่อป้องกันบวม
+      partialize: (state) => ({ branches: state.branches }), // ตัด UI state ออก ไม่ต้องจำ
     }
   )
 );

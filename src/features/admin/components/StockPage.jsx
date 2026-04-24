@@ -132,7 +132,6 @@ const StockPage = () => {
       map[branchKey].items.push({
         ...row,
         branchKey,
-        // เก็บตัวเลขที่ใช้บ่อยไว้เลย
         _qty: qty,
         stockCost,
         sales90dQty,
@@ -181,22 +180,19 @@ const StockPage = () => {
           if (!passesFilter(it)) continue;
 
           itemsCount += 1;
-
-          totalCost += Number(it.stockCost ?? 0) || 0;
+          totalCost += it.stockCost || 0;
 
           const q = it._qty;
           if (q > 0) totalQtyPos += q;
           if (q < 0) totalQtyNeg += q;
 
-          const s90 = it.sales90dQty === null || it.sales90dQty === undefined ? 0 : Number(it.sales90dQty) || 0;
-          totalSales90dQty += s90;
+          totalSales90dQty += Number(it.sales90dQty || 0);
         }
 
         if (itemsCount === 0) return null;
 
         return {
-          branchKey: branch.branchKey,
-          branchCode: branch.branchCode,
+          ...branch,
           itemsCount,
           totalCost,
           totalQtyPos,
@@ -205,7 +201,7 @@ const StockPage = () => {
         };
       })
       .filter(Boolean);
-  }, [branchSummary, parsedFilters]); // ใช้ debounced search ผ่าน parsedFilters แล้ว
+  }, [branchSummary, parsedFilters]);
 
   // สร้าง “รายการจริง” เฉพาะสาขาที่เปิดอยู่เท่านั้น + apply sort เฉพาะตอนต้องแสดงตาราง
   const openBranchItemsMap = useMemo(() => {

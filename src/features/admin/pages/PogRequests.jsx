@@ -323,8 +323,8 @@ export default function PogRequests() {
         try {
             // Add timestamp to prevent HTTP 304 caching
             const res = await api.get("/pog-requests", { params: { limit: 1, _t: Date.now() } });
-            if (res.data?.stats) setStats(res.data.stats);
-            if (res.data?.branchStats) setBranchStats(res.data.branchStats);
+            if (res.meta?.stats) setStats(res.meta.stats);
+            if (res.meta?.branchStats) setBranchStats(res.meta.branchStats);
         } catch (e) {
             console.error("Load summary error:", e);
         } finally {
@@ -345,13 +345,13 @@ export default function PogRequests() {
             if (filterRow) params.row = filterRow;
 
             const res = await api.get("/pog-requests", { params });
-            setData(res.data?.data || []);
-            setTotalPages(res.data?.totalPages || 1);
-            setTotalItems(res.data?.total || 0);
+            setData(res.data || []);
+            setTotalPages(res.meta?.totalPages || 1);
+            setTotalItems(res.meta?.total || 0);
             setDataVersion(Date.now()); // Track version for concurrency
 
-            if (res.data?.stats) setStats(res.data.stats);
-            if (res.data?.branchStats) setBranchStats(res.data.branchStats);
+            if (res.meta?.stats) setStats(res.meta.stats);
+            if (res.meta?.branchStats) setBranchStats(res.meta.branchStats);
 
             setSelectedIds(new Set());
         } catch (e) {
@@ -408,7 +408,7 @@ export default function PogRequests() {
             const payload = { status: newStatus, ...(reason && { rejectReason: reason }) };
             const res = await api.patch(`/pog-requests/${id}`, payload);
 
-            if (res.data?.ok !== false) {
+            if (res.ok) {
                 setData(prev => prev.map(item => item.id === id ? { ...item, status: newStatus, note: reason || item.note } : item));
                 setStats(prev => {
                     const next = { ...prev };
@@ -437,7 +437,7 @@ export default function PogRequests() {
         setBulkUpdating(true);
         try {
             const res = await api.post("/pog-requests/bulk-approve", { ids });
-            if (res.data?.ok) {
+            if (res.ok) {
                 setData(prev => prev.map(d => ids.includes(d.id) ? { ...d, status: "completed" } : d));
                 // Refetch stats simplier for bulk
                 const successCount = res.data.successCount || ids.length;
@@ -465,7 +465,7 @@ export default function PogRequests() {
         setBulkUpdating(true);
         try {
             const res = await api.post("/pog-requests/bulk-approve", { ids: pending.map(p => p.id) });
-            if (res.data?.ok) {
+            if (res.ok) {
                 setData(prev => prev.map(d => d.status === 'pending' ? { ...d, status: "completed" } : d));
                 const successCount = res.data.successCount || pending.length;
                 setStats(prev => ({
@@ -891,7 +891,7 @@ export default function PogRequests() {
                 item={editModal.item}
                 onSave={async (id, data) => {
                     const res = await api.put(`/pog-requests/${id}/position`, data);
-                    if (res.data.ok) {
+                    if (res.ok) {
                         setData(prev => prev.map(d => d.id === id ? { ...d, ...data } : d));
                         alert("แก้ไขสำเร็จ");
                     }

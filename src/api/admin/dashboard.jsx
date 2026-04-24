@@ -40,7 +40,11 @@ export const getDashboardProductList = async (start, end) => {
         end: onlyISODate(end),
       },
     });
-    return response.data;
+    // Reconstruct { summary, rows }
+    return {
+      rows: response.data,
+      summary: response.meta,
+    };
   } catch (error) {
     console.error("Dashboard Product List API Error:", error);
     throw error;

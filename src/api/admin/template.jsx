@@ -24,13 +24,15 @@ export const getSKU = async (branchCode) => {
     }
 };
 
-// ------------------------------------------------------------
 // POST: Add a new item
-// ------------------------------------------------------------
 export const addTemplate = async (newItem) => {
     try {
         const response = await api.post("/shelf-add", newItem);
-        return response.data;
+        return {
+            success: response.success,
+            data: response.data,
+            message: response.message
+        };
     } catch (error) {
         return error;
     }
@@ -55,13 +57,15 @@ export const deleteTemplate = async (product) => {
     }
 };
 
-// ------------------------------------------------------------
 // PUT: Update products
-// ------------------------------------------------------------
 export const updateProducts = async (data) => {
     try {
         const response = await api.put("/shelf-update", data);
-        return response.data;
+        return {
+            success: response.success,
+            data: response.data,
+            message: response.message
+        };
     } catch (error) {
         return error;
     }
@@ -86,7 +90,10 @@ export const getMasterItem = async (q) => {
 export const getShelfDashboardSummary = async () => {
     try {
         const response = await api.get("/shelf-dashboard-summary");
-        return response.data;
+        return {
+            rows: response.data,
+            ...response.meta
+        };
     } catch (error) {
         return error;
     }

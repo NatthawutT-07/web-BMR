@@ -42,10 +42,10 @@ export default function ShelfChangeNotification({ branchCode }) {
         try {
             // Get unacknowledged logs
             const res = await api.get(`/shelf-change-logs/${branchCode}?limit=50`);
-            if (res.data?.ok) {
-                const pendingLogs = res.data.logs || [];
+            if (res.ok) {
+                const pendingLogs = res.data || [];
                 setLogs(pendingLogs);
-                setUnacknowledgedCount(res.data.total || pendingLogs.length);
+                setUnacknowledgedCount(res.meta?.unacknowledgedCount || pendingLogs.length);
             }
         } catch (error) {
             console.error('Fetch shelf change logs error:', error);

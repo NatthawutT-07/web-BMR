@@ -78,10 +78,10 @@ export default function BranchAckStatus() {
                 setBranchMap(map);
             }
 
-            if (ackRes.data.ok) {
+            if (ackRes.ok) {
                 setData(ackRes.data);
             } else {
-                setError(ackRes.data.message || "Failed to load data");
+                setError(ackRes.message || "Failed to load data");
             }
         } catch (err) {
             console.error("Fetch error:", err);

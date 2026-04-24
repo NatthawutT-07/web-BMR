@@ -16,7 +16,11 @@ export const fetchSkuAnalysis = async ({ startDate, endDate, branchCodes, brands
         reasons,
         shelfLifeFilter,
     });
-    return res.data;
+    // Reconstruct old format: { rows, total, range, months }
+    return {
+        rows: res.data,
+        ...res.meta,
+    };
 };
 
 // POST: Store analysis data (per branch × product)
@@ -29,7 +33,10 @@ export const fetchStoreAnalysis = async ({ startDate, endDate, branchCodes, bran
         reasons,
         shelfLifeFilter,
     });
-    return res.data;
+    return {
+        rows: res.data,
+        ...res.meta,
+    };
 };
 
 // POST: Brand analysis data (aggregated by brand)
@@ -40,7 +47,10 @@ export const fetchBrandAnalysis = async ({ startDate, endDate, reasons, shelfLif
         reasons,
         shelfLifeFilter,
     });
-    return res.data;
+    return {
+        rows: res.data,
+        ...res.meta,
+    };
 };
 
 // POST: Store Summary (aggregated per branch, monthly breakdown)
@@ -51,5 +61,8 @@ export const fetchStoreSummary = async ({ startDate, endDate, reasons, shelfLife
         reasons,
         shelfLifeFilter,
     });
-    return res.data;
+    return {
+        rows: res.data,
+        ...res.meta,
+    };
 };
