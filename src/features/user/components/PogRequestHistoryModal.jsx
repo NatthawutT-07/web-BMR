@@ -72,14 +72,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
             }
         } catch (e) {
             console.error("Cancel error:", e);
-            let msg = e?.response?.data?.message;
-            if (typeof msg === 'string' && msg.trim().startsWith('{')) {
-                try {
-                    const parsed = JSON.parse(msg);
-                    msg = parsed.message || msg;
-                } catch { }
-            }
-            alert(msg || "ไม่สามารถยกเลิกคำขอได้");
+            alert(e.message || "ไม่สามารถยกเลิกคำขอได้");
         } finally {
             setCancellingId(null);
         }

@@ -612,7 +612,7 @@ const Member = () => {
       setSearch("");
       setJumpPage("");
     } catch (e) {
-      setError(e?.response?.data?.message || e?.message || "โหลดข้อมูลไม่สำเร็จ");
+      setError(e.message || "โหลดข้อมูลไม่สำเร็จ");
       setSummary(null);
     } finally {
       setLoading(false);
@@ -628,7 +628,7 @@ const Member = () => {
       const data = await fetchSalesMember({ start, end, customerId });
       setDetail(data);
     } catch (e) {
-      setError(e?.response?.data?.message || e?.message || "โหลดรายละเอียดไม่สำเร็จ");
+      setError(e.message || "โหลดรายละเอียดไม่สำเร็จ");
       setOpenDetail(false);
       setDetail(null);
     } finally {
@@ -646,7 +646,7 @@ const Member = () => {
       const data = await fetchBillItems(billId);
       setBillItemsData(data);
     } catch (e) {
-      setError(e?.response?.data?.message || e?.message || "โหลดรายการสินค้าไม่สำเร็จ");
+      setError(e.message || "โหลดรายการสินค้าไม่สำเร็จ");
       setOpenBillItems(false);
       setBillItemsData(null);
     } finally {

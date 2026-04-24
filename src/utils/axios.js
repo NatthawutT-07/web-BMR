@@ -75,17 +75,37 @@ api.interceptors.response.use(
   },
   async (error) => {
     const original = error.config;
-    const status = error?.response?.status;
-    const payload = error?.response?.data;
-    const normalizedMessage =
-      payload?.message ||
-      payload?.msg ||
-      payload?.error ||
-      (status ? "เกิดข้อผิดพลาด" : "เชื่อมต่อไม่ได้");
+    const data = error?.response?.data;
+    
+    if (data) {
+      let extractedMessage = null;
 
-    if (normalizedMessage) {
-      error.message = normalizedMessage;
-      error.userMessage = normalizedMessage;
+      if (typeof data === 'object') {
+        extractedMessage = data.message || data.msg || data.error || (data.error?.message);
+      } else if (typeof data === 'string') {
+        try {
+          const parsed = JSON.parse(data);
+          extractedMessage = parsed.message || parsed.msg || parsed.error;
+        } catch (e) {
+          // Not a JSON string
+        }
+      }
+
+      if (extractedMessage) {
+        // Handle if extractedMessage itself is a JSON string
+        if (typeof extractedMessage === 'string' && extractedMessage.trim().startsWith('{')) {
+          try {
+            const innerParsed = JSON.parse(extractedMessage);
+            extractedMessage = innerParsed.message || innerParsed.msg || extractedMessage;
+          } catch (e) {}
+        }
+        error.message = extractedMessage;
+        error.userMessage = extractedMessage;
+      }
+    }
+
+    if (!error.message) {
+      error.message = error.response?.status ? "เกิดข้อผิดพลาด" : "เชื่อมต่อไม่ได้";
     }
 
     // ถ้าไม่มี config หรือเป็น refresh เองแล้วพัง -> logout

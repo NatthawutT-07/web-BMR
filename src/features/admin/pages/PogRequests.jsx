@@ -422,7 +422,7 @@ export default function PogRequests() {
             }
             return { success: true };
         } catch (e) {
-            return { success: false, message: e.response?.data?.message || "Failed" };
+            return { success: false, message: e.message || "Failed" };
         } finally {
             setUpdating(null);
         }
@@ -450,7 +450,7 @@ export default function PogRequests() {
                 alert(`สำเร็จ ${successCount} รายการ`);
             }
         } catch (e) {
-            const msg = e.response?.data?.message || e.message;
+            const msg = e.message;
             alert(`Error: ${msg}`);
         } finally {
             setBulkUpdating(false);

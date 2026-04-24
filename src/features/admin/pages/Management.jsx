@@ -80,7 +80,7 @@ const Management = () => {
       fetchUsers();
     } catch (err) {
       console.error("Error creating user:", err);
-      alert(err.response?.data?.message || "ไม่สามารถสร้างผู้ใช้ได้");
+      alert(err.message || "ไม่สามารถสร้างผู้ใช้ได้");
     }
   };
 
@@ -92,7 +92,7 @@ const Management = () => {
       fetchUsers();
     } catch (err) {
       console.error("Error deleting user:", err);
-      alert(err.response?.data?.message || "ไม่สามารถลบผู้ใช้ได้");
+      alert(err.message || "ไม่สามารถลบผู้ใช้ได้");
     }
   };
 
@@ -128,7 +128,7 @@ const Management = () => {
       fetchBranches();
     } catch (err) {
       console.error("Error saving branch:", err);
-      alert(err.response?.data?.message || "ไม่สามารถบันทึกข้อมูลสาขาได้");
+      alert(err.message || "ไม่สามารถบันทึกข้อมูลสาขาได้");
     }
   };
 
@@ -140,7 +140,7 @@ const Management = () => {
       fetchBranches();
     } catch (err) {
       console.error("Error deleting branch:", err);
-      alert(err.response?.data?.message || "ไม่สามารถลบสาขาได้ เนื่องจากอาจมีข้อมูลอื่นอ้างอิงอยู่");
+      alert(err.message || "ไม่สามารถลบสาขาได้ เนื่องจากอาจมีข้อมูลอื่นอ้างอิงอยู่");
     }
   };
 

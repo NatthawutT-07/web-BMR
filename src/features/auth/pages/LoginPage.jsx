@@ -56,14 +56,7 @@ function LoginPage() {
       else if (role === "user") navigate(`/xY7zA3bC9d/${branchCode}`, { replace: true });
       else navigate("/", { replace: true });
     } catch (err) {
-      const payload = err?.response?.data;
-      let errMsg =
-        payload?.message ||
-        payload?.msg ||
-        (typeof payload === "string" ? payload : "") ||
-        err?.userMessage ||
-        err?.message ||
-        "เข้าสู่ระบบไม่สำเร็จ";
+      let errMsg = err.message || "เข้าสู่ระบบไม่สำเร็จ";
 
       const lowered = String(errMsg || "").toLowerCase();
       if (lowered.includes("user not found") || lowered.includes("not enabled")) {

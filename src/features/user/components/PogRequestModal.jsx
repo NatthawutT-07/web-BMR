@@ -297,14 +297,7 @@ export default function PogRequestModal({
             }
         } catch (e) {
             console.error("POG request error:", e);
-            let msg = e?.response?.data?.message;
-            if (typeof msg === 'string' && msg.trim().startsWith('{')) {
-                try {
-                    const parsed = JSON.parse(msg);
-                    msg = parsed.message || msg;
-                } catch { }
-            }
-            setError(msg || "เกิดข้อผิดพลาด");
+            setError(e.message || "เกิดข้อผิดพลาด");
         } finally {
             setLoading(false);
         }

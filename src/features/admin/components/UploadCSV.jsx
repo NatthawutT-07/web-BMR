@@ -302,8 +302,7 @@ const UploadCSV = () => {
       toast.success("ลบข้อมูล Stock ทั้งหมดเรียบร้อยแล้ว");
       fetchSyncDates();
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Clear stock failed";
-      toast.error(`ลบข้อมูล Stock ล้มเหลว: ${msg}`);
+      toast.error(`ลบข้อมูล Stock ล้มเหลว: ${err.message || "Clear stock failed"}`);
     } finally {
       setLoading(false);
     }
@@ -318,8 +317,7 @@ const UploadCSV = () => {
       toast.success("ลบข้อมูล POG SKU ทั้งหมดเรียบร้อยแล้ว");
       fetchSyncDates();
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Clear SKU failed";
-      toast.error(`ลบข้อมูล POG SKU ล้มเหลว: ${msg}`);
+      toast.error(`ลบข้อมูล POG SKU ล้มเหลว: ${err.message || "Clear SKU failed"}`);
     } finally {
       setLoading(false);
     }
@@ -334,8 +332,7 @@ const UploadCSV = () => {
       toast.success("ลบข้อมูล POG Shelf ทั้งหมดเรียบร้อยแล้ว");
       fetchSyncDates();
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Clear Shelf failed";
-      toast.error(`ลบข้อมูล POG Shelf ล้มเหลว: ${msg}`);
+      toast.error(`ลบข้อมูล POG Shelf ล้มเหลว: ${err.message || "Clear Shelf failed"}`);
     } finally {
       setLoading(false);
     }
@@ -350,8 +347,7 @@ const UploadCSV = () => {
       toast.success("ลบข้อมูล ItemMinMax ทั้งหมดเรียบร้อยแล้ว");
       fetchSyncDates();
     } catch (err) {
-      const msg = err?.response?.data?.message || err?.message || "Clear ItemMinMax failed";
-      toast.error(`ลบข้อมูล ItemMinMax ล้มเหลว: ${msg}`);
+      toast.error(`ลบข้อมูล ItemMinMax ล้มเหลว: ${err.message || "Clear ItemMinMax failed"}`);
     } finally {
       setLoading(false);
     }
