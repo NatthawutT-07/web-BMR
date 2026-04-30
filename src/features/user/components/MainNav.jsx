@@ -4,6 +4,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import * as XLSX from "xlsx";
 import useBmrStore from "../../../store/bmr_store";
 import useStockMetaStore from "../../../store/stock_meta_store";
 import api from "../../../utils/axios";
@@ -73,13 +74,84 @@ function MainNav() {
   // ตัวแปรสำหรับแสดงผลนาที
   const cooldownMin = Math.ceil(cooldownRemaining / 60);
 
-  const handleStockUpload = (e) => {
+  const [validating, setValidating] = useState(false);
+
+  const handleStockUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (cooldownMin > 0) {
       toast.warning(`กรุณารออีก ${cooldownMin} นาที จึงจะอัปโหลดได้ใหม่`);
       return;
     }
+
+    // --- Pre-validation: ตรวจสอบจำนวนสาขาในไฟล์ก่อนอัปโหลด ---
+    setValidating(true);
+    try {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: "array" });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+      // หา header row ที่มีคอลัมน์ "รหัสสาขา"
+      const headerRowIndex = raw.findIndex(row =>
+        row.includes("รหัสสินค้า") &&
+        row.includes("รหัสสาขา") &&
+        row.includes("จำนวนคงเหลือ")
+      );
+
+      if (headerRowIndex === -1) {
+        toast.error("รูปแบบไฟล์ไม่ถูกต้อง: ไม่พบหัวตาราง (รหัสสินค้า, รหัสสาขา, จำนวนคงเหลือ)");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
+      const header = raw[headerRowIndex];
+      const branchColIndex = header.indexOf("รหัสสาขา");
+      const dataRows = raw.slice(headerRowIndex + 1);
+
+      // ดึง unique branch codes จากไฟล์
+      const uniqueBranches = [
+        ...new Set(
+          dataRows
+            .map(r => (r[branchColIndex] || "").toString().trim())
+            .filter(Boolean)
+        ),
+      ];
+
+      if (uniqueBranches.length === 0) {
+        toast.error("ไม่พบข้อมูลสาขาในไฟล์");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
+      if (uniqueBranches.length > 1) {
+        toast.error(
+          `ไฟล์นี้มีข้อมูลมากกว่า 1 สาขา (${uniqueBranches.join(", ")}) กรุณาอัปโหลดไฟล์ที่มีสาขาเดียวเท่านั้น`,
+          { autoClose: 6000 }
+        );
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+
+      // ตรวจสอบว่าสาขาในไฟล์ตรงกับสาขาของ user หรือไม่
+      if (user?.role !== "admin" && uniqueBranches[0] !== user?.storecode) {
+        toast.error(
+          `สาขาในไฟล์ (${uniqueBranches[0]}) ไม่ตรงกับสาขาของคุณ (${user?.storecode})`,
+          { autoClose: 6000 }
+        );
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+    } catch (err) {
+      console.error("Pre-validation error:", err);
+      toast.error("ไม่สามารถอ่านไฟล์ได้ กรุณาตรวจสอบไฟล์ .xlsx ของคุณ");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    } finally {
+      setValidating(false);
+    }
+
+    // ผ่านการตรวจสอบแล้ว → แสดง Confirm Modal
     setConfirmModal({ open: true, file });
   };
 
@@ -200,7 +272,7 @@ function MainNav() {
                       />
                       <button
                         type="button"
-                        disabled={uploading || cooldownRemaining > 0}
+                        disabled={uploading || validating || cooldownRemaining > 0}
                         onClick={() => fileInputRef.current?.click()}
                         className={`p-1.5 rounded-md border transition-all flex items-center gap-1 ${
                           cooldownRemaining > 0
@@ -209,7 +281,7 @@ function MainNav() {
                         }`}
                         title={cooldownRemaining > 0 ? `กรุณารออีก ${cooldownMin} นาที` : "อัปโหลดไฟล์ Stock (.xlsx)"}
                       >
-                        {uploading ? (
+                        {uploading || validating ? (
                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                         ) : (
                           <>
