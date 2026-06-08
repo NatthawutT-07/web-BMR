@@ -1,5 +1,5 @@
-// src/pages/admin/StockPage.jsx
 import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
 import { getStockData } from "../../../api/admin/download";
 
 const formatMoney = (v) => {
@@ -321,6 +321,133 @@ const StockPage = () => {
     setMaxCost("");
   };
 
+  const handleExportBranch = async (branch) => {
+    try {
+      const XLSX = await import("xlsx");
+
+      // Get items for this branch, apply the same filters as the UI
+      const branchItems = branch.items.filter(passesFilter);
+
+      if (branchItems.length === 0) {
+        toast.warning("ไม่มีข้อมูลที่จะส่งออก");
+        return;
+      }
+
+      // Prepare data for Excel
+      const data = branchItems.map((item, idx) => ({
+        "#": idx + 1,
+        "Code": item.codeProduct ? String(item.codeProduct).padStart(5, "0") : "-",
+        "Name": item.nameProduct || "-",
+        "Brand": item.nameBrand || "-",
+        "Qty": item._qty,
+        "Sales 90D": item.sales90dQty ?? "-",
+        "Min": item.minStore ?? "-",
+        "Max": item.maxStore ?? "-",
+        "Pack": item.packOrder ?? "-",
+        "Unit Cost": item.purchasePriceExcVAT || 0,
+        "Stock Cost": item.stockCost || 0,
+        "RSP": item.salesPriceIncVAT || 0,
+      }));
+
+      // Create worksheet
+      const ws = XLSX.utils.json_to_sheet(data);
+
+      // Set column widths
+      const wscols = [
+        { wch: 5 },  // #
+        { wch: 10 }, // Code
+        { wch: 40 }, // Name
+        { wch: 20 }, // Brand
+        { wch: 8 },  // Qty
+        { wch: 10 }, // Sales 90D
+        { wch: 8 },  // Min
+        { wch: 8 },  // Max
+        { wch: 8 },  // Pack
+        { wch: 12 }, // Unit Cost
+        { wch: 12 }, // Stock Cost
+        { wch: 12 }, // RSP
+      ];
+      ws['!cols'] = wscols;
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Stock");
+
+      // Generate filename
+      const dateStr = new Date().toISOString().split('T')[0];
+      const cleanBranchName = branch.branchCode.replace(/[^a-z0-9]/gi, '_');
+      const filename = `Stock_${cleanBranchName}_${dateStr}.xlsx`;
+
+      // Save file
+      XLSX.writeFile(wb, filename);
+      // toast.success(`Exported ${branch.branchCode} successfully`);
+    } catch (err) {
+      console.error("Export error:", err);
+      toast.error("ไม่สามารถส่งออกข้อมูลได้");
+    }
+  };
+
+  const handleExportAll = async () => {
+    try {
+      const XLSX = await import("xlsx");
+
+      const allData = [];
+      filteredBranchMeta.forEach(branch => {
+        const branchItems = branch.items.filter(passesFilter);
+        branchItems.forEach((item, idx) => {
+          allData.push({
+            "Branch": branch.branchCode,
+            "#": idx + 1,
+            "Code": item.codeProduct ? String(item.codeProduct).padStart(5, "0") : "-",
+            "Name": item.nameProduct || "-",
+            "Brand": item.nameBrand || "-",
+            "Qty": item._qty,
+            "Sales 90D": item.sales90dQty ?? "-",
+            "Min": item.minStore ?? "-",
+            "Max": item.maxStore ?? "-",
+            "Pack": item.packOrder ?? "-",
+            "Unit Cost": item.purchasePriceExcVAT || 0,
+            "Stock Cost": item.stockCost || 0,
+            "RSP": item.salesPriceIncVAT || 0,
+          });
+        });
+      });
+
+      if (allData.length === 0) {
+        toast.warning("ไม่มีข้อมูลที่จะส่งออก");
+        return;
+      }
+
+      const ws = XLSX.utils.json_to_sheet(allData);
+
+      // Set column widths
+      ws['!cols'] = [
+        { wch: 15 }, // Branch
+        { wch: 5 },  // #
+        { wch: 10 }, // Code
+        { wch: 40 }, // Name
+        { wch: 20 }, // Brand
+        { wch: 8 },  // Qty
+        { wch: 10 }, // Sales 90D
+        { wch: 8 },  // Min
+        { wch: 8 },  // Max
+        { wch: 8 },  // Pack
+        { wch: 12 }, // Unit Cost
+        { wch: 12 }, // Stock Cost
+        { wch: 12 }, // RSP
+      ];
+
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Stock");
+
+      const dateStr = new Date().toISOString().split('T')[0];
+      XLSX.writeFile(wb, `Stock_AllBranches_${dateStr}.xlsx`);
+      // toast.success("Exported all branches successfully");
+    } catch (err) {
+      console.error("Export all error:", err);
+      toast.error("ไม่สามารถส่งออกข้อมูลได้");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       {/* Header */}
@@ -427,11 +554,21 @@ const StockPage = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
+                  <button
+                    type="button"
+                    onClick={handleExportAll}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-md bg-emerald-600 text-white text-[11px] sm:text-xs font-semibold hover:bg-emerald-700 transition-all duration-200 shadow-sm active:scale-95"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Export All (.xlsx)
+                  </button>
                   <button
                     type="button"
                     onClick={clearFilters}
-                    className="px-3 py-1.5 rounded-md border border-slate-300 text-[11px] sm:text-xs text-slate-600 hover:bg-slate-50"
+                    className="px-3 py-1.5 rounded-md border border-slate-300 text-[11px] sm:text-xs text-slate-600 hover:bg-slate-50 transition-colors"
                   >
                     Clear filter
                   </button>
@@ -469,6 +606,26 @@ const StockPage = () => {
                   </div>
 
                   <div className="flex items-center gap-4">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleExportBranch(branch);
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:border-emerald-300 transition-all duration-200 group"
+                      title="Export to Excel"
+                    >
+                      <svg
+                        className="w-4 h-4 text-emerald-600 group-hover:scale-110 transition-transform"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      <span className="text-[11px] font-bold uppercase tracking-wider">XLSX</span>
+                    </button>
+
                     <div className="text-right">
                       <div className="text-[11px] text-slate-500">Stock cost</div>
                       <div className="text-sm sm:text-base font-semibold text-emerald-700">
@@ -495,6 +652,9 @@ const StockPage = () => {
                             <th className="border px-2 py-1 text-left">Name</th>
                             <th className="border px-2 py-1 text-left">Brand</th>
 
+                            <th className="border px-2 py-1 text-center">Min</th>
+                            <th className="border px-2 py-1 text-center">Max</th>
+                            <th className="border px-2 py-1 text-center">Pack</th>
                             <th className="border px-2 py-1 text-center">
                               <button
                                 type="button"
@@ -521,8 +681,9 @@ const StockPage = () => {
                               </button>
                             </th>
 
-                            <th className="border px-2 py-1 text-right">Unit cost</th>
 
+                            <th className="border px-2 py-1 text-right">Unit cost</th>
+                            <th className="border px-2 py-1 text-right">RSP</th>
                             <th className="border px-2 py-1 text-right">
                               <button
                                 type="button"
@@ -536,7 +697,6 @@ const StockPage = () => {
                               </button>
                             </th>
 
-                            <th className="border px-2 py-1 text-right">RSP</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -563,6 +723,15 @@ const StockPage = () => {
                                 >
                                   {item.nameBrand || "-"}
                                 </td>
+                                <td className="border px-2 py-1 text-center">
+                                  {item.minStore !== null && item.minStore !== undefined ? formatInt(item.minStore) : "-"}
+                                </td>
+                                <td className="border px-2 py-1 text-center">
+                                  {item.maxStore !== null && item.maxStore !== undefined ? formatInt(item.maxStore) : "-"}
+                                </td>
+                                <td className="border px-2 py-1 text-center">
+                                  {item.packOrder !== null && item.packOrder !== undefined ? formatInt(item.packOrder) : "-"}
+                                </td>
 
                                 <td className={`border px-2 py-1 text-center ${isNeg ? "bg-red-50 text-red-600" : ""}`}>
                                   {formatInt(item._qty)}
@@ -570,13 +739,14 @@ const StockPage = () => {
 
                                 <td className="border px-2 py-1 text-center">{formatInt(item.sales90dQty)}</td>
 
-                                <td className="border px-2 py-1 text-right">{formatMoney(item.purchasePriceExcVAT)}</td>
 
+
+                                <td className="border px-2 py-1 text-right">{formatMoney(item.purchasePriceExcVAT)}</td>
+                                <td className="border px-2 py-1 text-right">{formatMoney(item.salesPriceIncVAT)}</td>
                                 <td className="border px-2 py-1 text-right text-emerald-700 font-semibold">
                                   {formatMoney(item.stockCost)}
                                 </td>
 
-                                <td className="border px-2 py-1 text-right">{formatMoney(item.salesPriceIncVAT)}</td>
                               </tr>
                             );
                           })}

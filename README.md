@@ -69,53 +69,19 @@ frontend-BMR/
 
 ---
 
+## 📚 เอกสารเพิ่มเติมในระบบ (System Documentation)
+
+สำหรับการศึกษาและเข้าใจการทำงานเชิงลึกของโปรเจกต์ สามารถอ่านเอกสารประกอบเพิ่มเติมที่จัดทำขึ้นได้ตามรายละเอียดดังนี้:
+
+*   **[สถาปัตยกรรมระบบ (System Architecture)](file:///c:/BrightMindRetail/brightmind_project/planogram_project/frontend-BMR/docs/ARCHITECTURE.md)** — รายละเอียดทางเทคนิคเกี่ยวกับ Domain-Driven Folder Layout, ระบบรักษาความปลอดภัยแบบ In-memory JWT Access Token & HttpOnly Cookies, กลไก Request Interceptor Queueing เมื่อ Token 401 และ Zustand Stores Optimistic Updates
+*   **[Flow การใช้งานของ User และ Admin](file:///c:/BrightMindRetail/brightmind_project/planogram_project/frontend-BMR/docs/USER_ADMIN_FLOWS.md)** — แผนภาพและขั้นตอนการทำงานจำลองของพนักงานหน้าสาขา (User Mode: Scan, Add/Move/Delete request, Acknowledge) และผู้ดูแลระบบหลังบ้าน (Admin Mode: Decisions, Bulk approval, Template configuration, Analytics)
+*   **[คู่มือระบบ POG Request](file:///c:/BrightMindRetail/brightmind_project/planogram_project/frontend-BMR/docs/POG_REQUEST_README.md)** — รายละเอียดข้อจำกัด เงื่อนไขการป้องกัน Bug ในกรณีส่งคำร้องขอขยับขยายสินค้าของสาขา
+*   **[คู่มือระบบ Shelf Manager](file:///c:/BrightMindRetail/brightmind_project/planogram_project/frontend-BMR/docs/SHELF_MANAGER_README.md)** — วิธีการทำงานและรายละเอียดทางเทคนิคของหน้าจอการควบคุม Layout Grid ชั้นวางของแอดมิน
+
+---
+
 ## 🛠️ การติดตั้งและรันโปรเจคเครื่องตัวเอง (Local Development)
 
 ### สิ่งที่ต้องเตรียม
 *   **Node.js** (แนะนำเวอร์ชัน 18 หรือ 20 ขึ้นไป)
 *   **Backend BMR** ต้องรันอยู่ (เพื่อให้ Frontend ยิง API ได้)
-
-### ขั้นตอนการรัน
-
-1.  **เปิด Terminal และเข้าไปที่โฟลเดอร์ `frontend-BMR`:**
-    ```bash
-    cd c:\BrightMindRetail\brightmind_project\planogram_project\frontend-BMR
-    ```
-
-2.  **ติดตั้งไลบรารีทั้งหมด:**
-    ```bash
-    npm install
-    ```
-
-3.  **ตั้งค่า Environment:**
-    สร้างไฟล์ `.env` ที่ root ของโปรเจค (หรือเช็คไฟล์ `.env.development` / `.env.local`) และกำหนดค่า URL ของ Backend:
-    ```env
-    VITE_API_URL=http://localhost:5001/api
-    ```
-
-4.  **เปิด Development Server:**
-    ```bash
-    npm run dev
-    ```
-    เซิร์ฟเวอร์จะรันขึ้นมา (มักจะอยู่ที่ `http://localhost:5173` หรือตามที่ Terminal แจ้ง)
-
----
-
-## 💻 Script คำสั่งที่สำคัญ
-
-*   `npm run dev` : เปิดเซิร์ฟเวอร์สำหรับการพัฒนา (รองรับ Hot-reload)
-*   `npm run build` : สร้างไฟล์ Production-ready (Minified) ไปไว้ที่โฟลเดอร์ `dist/`
-*   `npm run preview` : รันเซิร์ฟเวอร์จำลองเพื่อทดสอบไฟล์ที่ได้จากการ Build ก่อนนำขึ้นโฮสต์จริง
-*   `npm run lint` : ตรวจสอบข้อผิดพลาดของโค้ดด้วย ESLint
-
----
-
-## 🌐 การนำระบบขึ้นใช้งานจริง (Deployment)
-
-1.  รันคำสั่งเพื่อสร้าง Build:
-    ```bash
-    npm run build
-    ```
-2.  ไฟล์ทั้งหมดจะถูกสร้างในโฟลเดอร์ `dist/`
-3.  นำไฟล์ในโฟลเดอร์ `dist/` ไปอัปโหลดขึ้นโฮสติ้งที่รองรับ Static Site (เช่น Netlify, Vercel, Firebase Pages, หรือเซิร์ฟเวอร์ Nginx ของคุณเอง)
-4.  *(สำคัญ)* อย่าลืมตั้งค่า Server ให้ชี้ทุก Path กลับมาที่ `index.html` เสมอ เพื่อให้ React Router ทำงานได้ถูกต้อง (เช่น ใน Netlify จะใช้ไฟล์ `_redirects` ที่เตรียมไว้ในโฟลเดอร์ `public/`)

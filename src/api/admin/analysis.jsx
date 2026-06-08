@@ -54,12 +54,13 @@ export const fetchBrandAnalysis = async ({ startDate, endDate, reasons, shelfLif
 };
 
 // POST: Store Summary (aggregated per branch, monthly breakdown)
-export const fetchStoreSummary = async ({ startDate, endDate, reasons, shelfLifeFilter }) => {
+export const fetchStoreSummary = async ({ startDate, endDate, reasons, shelfLifeFilter, consingItemFilter }) => {
     const res = await api.post("/analysis-store-summary", {
         startDate,
         endDate,
         reasons,
         shelfLifeFilter,
+        consingItemFilter,
     });
     return {
         rows: res.data,

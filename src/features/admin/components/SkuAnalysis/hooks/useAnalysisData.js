@@ -16,6 +16,7 @@ export const useAnalysisData = () => {
     const [searched, setSearched] = useState(false);
     const [drillDown, setDrillDown] = useState(null);
     const [drillLoading, setDrillLoading] = useState(false);
+    const [consingItemFilter, setConsingItemFilter] = useState("all");
 
     useEffect(() => {
         (async () => {
@@ -76,7 +77,7 @@ export const useAnalysisData = () => {
                 });
                 setSummaryMonths(data.months || []);
             } else if (mode === "storeSummary") {
-                data = await fetchStoreSummary({ startDate, endDate, shelfLifeFilter });
+                data = await fetchStoreSummary({ startDate, endDate, shelfLifeFilter, consingItemFilter });
                 setSummaryMonths(data.months || []);
             } else {
                 data = await fetchSkuAnalysis({
@@ -100,7 +101,7 @@ export const useAnalysisData = () => {
         } finally {
             setLoading(false);
         }
-    }, [mode, startDate, endDate, selBranches, selBrands, shelfLifeFilter]);
+    }, [mode, startDate, endDate, selBranches, selBrands, shelfLifeFilter, consingItemFilter]);
 
     const handleDrillDown = async (row) => {
         setDrillLoading(true);
@@ -197,5 +198,7 @@ export const useAnalysisData = () => {
         drillLoading,
         handleDrillDown,
         handleSkuDrillDown,
+        consingItemFilter,
+        setConsingItemFilter,
     };
 };

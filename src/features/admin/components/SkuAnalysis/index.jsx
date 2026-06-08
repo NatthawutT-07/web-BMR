@@ -35,6 +35,8 @@ const SkuAnalysis = () => {
         drillLoading,
         handleDrillDown,
         handleSkuDrillDown,
+        consingItemFilter,
+        setConsingItemFilter,
     } = useAnalysisData();
 
     const {
@@ -101,6 +103,21 @@ const SkuAnalysis = () => {
                         <MultiSelect label="แบรนด์" options={filterOpts.brands}
                             selected={selBrands} onChange={setSelBrands} disabled={loading} />
                     )}
+                    {mode === "storeSummary" && (
+                        <div>
+                            <label className="block text-xs font-medium text-gray-500 mb-1">ประเภทสินค้า</label>
+                            <select
+                                value={consingItemFilter}
+                                onChange={(e) => setConsingItemFilter(e.target.value)}
+                                disabled={loading}
+                                className="w-full border rounded-lg px-3 py-2 text-sm bg-white hover:border-blue-400 transition"
+                            >
+                                <option value="all">ทั้งหมด</option>
+                                <option value="no">ไม่เป็นสินค้าฝากขาย</option>
+                                <option value="yes">เป็นสินค้าฝากขาย</option>
+                            </select>
+                        </div>
+                    )}
                     <div>
                         <label className="block text-xs font-medium text-gray-500 mb-1">Shelf Life</label>
                         <select
@@ -121,7 +138,7 @@ const SkuAnalysis = () => {
                     disabled={loading || (mode === "store" && selBranches.length === 0 && selBrands.length === 0)}
                     className="mt-4 w-full sm:w-auto px-8 py-2.5 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
                     title={mode === "store" && selBranches.length === 0 && selBrands.length === 0 ? "กรุณาเลือกฟิลเตอร์อย่างน้อย 1 รายการ" : ""}>
-                    {loading ? "กำลังโหลด..." : "🔍 ค้นหา"}
+                    {loading ? "กำลังโหลด..." : "ค้นหา"}
                 </button>
             </div>
 
