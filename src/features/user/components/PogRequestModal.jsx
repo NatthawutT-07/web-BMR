@@ -1,5 +1,5 @@
 // PogRequestModal.jsx - Modal สำหรับสร้าง Request เปลี่ยนแปลง POG
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useCallback, useState, useMemo, useEffect } from "react";
 import api from "../../../utils/axios";
 
 const cx = (...a) => a.filter(Boolean).join(" ");
@@ -49,7 +49,7 @@ export default function PogRequestModal({
     const branchName = initialBranchName || branchNameFromApi;
 
     // โหลด shelves จาก API
-    const fetchShelves = async () => {
+    const fetchShelves = useCallback(async () => {
         setShelvesLoading(true);
         try {
             const res = await api.get("/branch-shelves", { params: { branchCode } });
@@ -72,13 +72,13 @@ export default function PogRequestModal({
         } finally {
             setShelvesLoading(false);
         }
-    };
+    }, [branchCode, initialShelves]);
 
     // โหลดข้อมูลครั้งแรกเมื่อเปิด Modal
     useEffect(() => {
         if (!open || !branchCode) return;
         fetchShelves();
-    }, [open, branchCode, initialShelves]);
+    }, [open, branchCode, initialShelves, fetchShelves]);
 
     // ระบบ Auto-Refresh เมื่อไม่ได้ใช้งาน (Idle Timeout = 5 นาที)
     const lastActivityRef = React.useRef(Date.now());
@@ -120,7 +120,7 @@ export default function PogRequestModal({
             window.removeEventListener('scroll', handleActivity);
             clearInterval(checkIdleInterval);
         };
-    }, [open, branchCode]);
+    }, [open, branchCode, fetchShelves, isIdle]);
 
     // คำนวณ available rows สำหรับ shelf ที่เลือก
     const selectedShelfData = useMemo(() => {
@@ -579,4 +579,3 @@ export default function PogRequestModal({
         </div>
     );
 }
-

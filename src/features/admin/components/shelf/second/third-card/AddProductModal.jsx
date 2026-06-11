@@ -49,7 +49,6 @@ const AddProductModal = React.memo(
                 setCameraOpen(false);
                 focusInput();
             }
-            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, [isOpen]);
 
         const handleChangeQuery = (v) => {
@@ -218,7 +217,6 @@ const AddProductModal = React.memo(
                     }
                 }, 100);
             }
-            // eslint-disable-next-line react-hooks/exhaustive-deps
         }, []);
 
         const onKeyDownInput = (e) => {

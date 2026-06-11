@@ -1,5 +1,5 @@
 // PogRequestHistoryModal.jsx - Modal แสดงประวัติ Request (Compact Table)
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import api from "../../../utils/axios";
 
 const cx = (...a) => a.filter(Boolean).join(" ");
@@ -42,7 +42,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
     const totalPages = Math.max(1, Math.ceil(data.length / ITEMS_PER_PAGE));
     const pagedData = data.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         if (!branchCode) return;
         setLoading(true);
         setError("");
@@ -58,7 +58,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
         } finally {
             setLoading(false);
         }
-    };
+    }, [branchCode]);
 
     const handleCancel = async (id) => {
         if (!confirm("คุณต้องการยกเลิกคำขอนี้ใช่หรือไม่?")) return;
@@ -80,7 +80,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
 
     useEffect(() => {
         if (open) loadData();
-    }, [open, branchCode]);
+    }, [open, branchCode, loadData]);
 
     if (!open) return null;
 

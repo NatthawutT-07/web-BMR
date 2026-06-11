@@ -42,10 +42,11 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
 
     let stopped = false;
     let mediaStream = null; //  เก็บ reference ไว้สำหรับ cleanup
+    const videoElement = videoRef.current;
 
     const start = async () => {
       try {
-        if (!videoRef.current) return;
+        if (!videoElement) return;
 
         await reader.decodeFromConstraints(
           {
@@ -56,7 +57,7 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
               height: { ideal: 1080 },
             },
           },
-          videoRef.current,
+          videoElement,
           (result) => {
             if (stopped) return;
             if (!result) return;
@@ -87,8 +88,8 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
         );
 
         //  เก็บ mediaStream ไว้สำหรับ cleanup
-        if (videoRef.current && videoRef.current.srcObject) {
-          mediaStream = videoRef.current.srcObject;
+        if (videoElement.srcObject) {
+          mediaStream = videoElement.srcObject;
         }
       } catch (e) {
         console.error("camera start error:", e);
@@ -123,10 +124,10 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
             track.stop();
           });
         }
-        if (videoRef.current && videoRef.current.srcObject) {
-          const stream = videoRef.current.srcObject;
+        if (videoElement?.srcObject) {
+          const stream = videoElement.srcObject;
           stream.getTracks().forEach(track => track.stop());
-          videoRef.current.srcObject = null;
+          videoElement.srcObject = null;
         }
       } catch (e) {
         console.error("cleanup video tracks error:", e);

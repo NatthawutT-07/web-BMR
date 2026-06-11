@@ -113,7 +113,7 @@ export default function BranchAckStatus() {
 
             return matchSearch && matchStatus;
         }).sort((a, b) => b.pending - a.pending); // Show pending pending first
-    }, [branches, search, statusFilter]);
+    }, [branches, branchMap, search, statusFilter]);
 
     return (
         <div className="min-h-screen bg-slate-50/50 p-6 md:p-8">

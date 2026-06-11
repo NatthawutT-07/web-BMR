@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { getShelfDashboardSummary, getShelfDashboardShelfSales } from "../../../api/admin/template";
 import useDashboardShelfStore from "../../../store/dashboard_shelf_store";
 import {
@@ -37,7 +37,7 @@ const ShelfDashboard = () => {
   const [shelfSalesLoading, setShelfSalesLoading] = useState({});
   const [shelfSalesError, setShelfSalesError] = useState({});
 
-  const loadSummary = async (forceRefresh = false) => {
+  const loadSummary = useCallback(async (forceRefresh = false) => {
     // Skip if already loaded and not forcing a refresh
     if (!forceRefresh && hasLoadedInitialData) return;
 
@@ -55,11 +55,18 @@ const ShelfDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    hasLoadedInitialData,
+    setHasLoadedInitialData,
+    setMissingSalesDates,
+    setOverallUniqueSkus,
+    setRange,
+    setRows,
+  ]);
 
   useEffect(() => {
     loadSummary();
-  }, []);
+  }, [loadSummary]);
 
   const loadShelfSales = async (branchCode) => {
     const code = String(branchCode || "").trim();
