@@ -34,11 +34,6 @@ export const FILE_TYPE_CONFIG = {
     syncKey: "dashboard",
     uploadFnKey: "bill",
   },
-  si: {
-    label: "Order SI XLSX",
-    syncKey: "si",
-    uploadFnKey: "si",
-  },
   gourmet: {
     label: "Gourmet Sales XLSX",
     syncKey: "gourmet",

@@ -12,7 +12,6 @@ import {
   uploadItemMinMaxXLSX,
   uploadMasterItemXLSX,
   uploadBillXLSX,
-  uploadSI_XLSX,
   uploadGourmetXLSX,
   getUploadStatus,
   getSyncDates,
@@ -39,7 +38,6 @@ const uploadFunctions = {
   minMax: uploadItemMinMaxXLSX,
   masterItem: uploadMasterItemXLSX,
   bill: uploadBillXLSX,
-  si: uploadSI_XLSX,
   gourmet: uploadGourmetXLSX,
 };
 
@@ -486,7 +484,6 @@ const UploadCSV = () => {
         <option value="minMax">ItemMinMax XLSX</option>
         <option value="masterItem">MasterItem XLSX</option>
         <option value="bill">Bill XLSX</option>
-        <option value="si">Order SI XLSX</option>
         <option value="gourmet">Gourmet XLSX</option>
       </select>
 

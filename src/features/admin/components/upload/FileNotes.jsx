@@ -120,17 +120,6 @@ const FileNotes = ({ fileType, loading, actions }) => {
         </div>
       );
 
-    case "si":
-      return (
-        <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
-          <strong className="font-semibold">หมายเหตุการอัปโหลด (Order SI):</strong>
-          <ul className="list-disc ml-5 mt-1 space-y-1 text-xs text-blue-700">
-            <li>ทำงานแบบ <strong className="font-semibold">เพิ่มข้อมูลใหม่เท่านั้น</strong></li>
-            <li>ระบบจะข้ามข้อมูลที่ซ้ำกัน (สาขา + เลขที่ SI + รหัสสินค้า + บาร์โค้ด ตรงกัน) โดยไม่เกิด Error</li>
-          </ul>
-        </div>
-      );
-
     case "gourmet":
       return (
         <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
