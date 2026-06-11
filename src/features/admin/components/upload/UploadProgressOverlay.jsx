@@ -54,13 +54,9 @@ const UploadProgressOverlay = ({ uploadInfo, progress, serverProgress }) => {
           <div>
             <div className="flex items-center justify-between text-[11px] text-slate-500">
               <span>ประมวลผลบนเซิร์ฟเวอร์</span>
-              <span className="tabular-nums">{serverProgress.percent}%</span>
             </div>
-            <div className="mt-1 h-2 w-full rounded-full bg-slate-200 overflow-hidden">
-              <div
-                className="h-full rounded-full bg-indigo-500 transition-all"
-                style={{ width: `${serverProgress.percent}%` }}
-              />
+            <div className="mt-1 h-2 w-full rounded-full bg-indigo-200 overflow-hidden">
+              <div className="h-full rounded-full bg-indigo-600 animate-pulse w-full" />
             </div>
             {serverProgress.message && (
               <div className="mt-1 text-[11px] text-slate-500">{serverProgress.message}</div>

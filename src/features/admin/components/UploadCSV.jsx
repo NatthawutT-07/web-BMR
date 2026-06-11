@@ -64,6 +64,7 @@ const UploadCSV = () => {
   const [branches, setBranches] = useState([]);
   const [activeBranchCodes, setActiveBranchCodes] = useState([]);
   const [syncDates, setSyncDates] = useState({});
+  const [uploadResult, setUploadResult] = useState(null);
 
   const fetchSyncDates = async () => {
     try {
@@ -106,76 +107,14 @@ const UploadCSV = () => {
   const filteredBranches = branches.filter(b => activeBranchCodes.includes(b.branch_code));
 
   const fileInputRef = useRef(null);
-  const pollRef = useRef(null);
-  const pollErrorRef = useRef(false);
-  const currentJobIdRef = useRef(null);
 
   // เลือกประเภทไฟล์
   const handleSelectFileType = (type) => {
     if (loading) return;
     setSelectedFileType(type);
     setFiles([]);
+    setUploadResult(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-
-  const makeJobId = () => {
-    if (typeof crypto !== "undefined" && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-    return `job_${Date.now()}_${Math.random().toString(16).slice(2)}`;
-  };
-
-  const stopPolling = () => {
-    if (pollRef.current) clearInterval(pollRef.current);
-    pollRef.current = null;
-    currentJobIdRef.current = null;
-  };
-
-  const startPolling = (jobId) => {
-    stopPolling();
-    pollErrorRef.current = false;
-    currentJobIdRef.current = jobId;
-    setServerProgress({ percent: 0, status: "processing", message: "starting" });
-
-    pollRef.current = setInterval(async () => {
-      try {
-        const { data } = await getUploadStatus(jobId);
-        if (currentJobIdRef.current !== jobId) return;
-
-        const nextPercent = Math.max(
-          0,
-          Math.min(100, Number(data?.progress) || 0)
-        );
-        const nextStatus = data?.status || "";
-        const nextMessage = data?.message || "";
-
-        setServerProgress({
-          percent: nextPercent,
-          status: nextStatus,
-          message: nextMessage,
-        });
-
-        if (nextStatus === "done") stopPolling();
-        if (nextStatus === "error" && !pollErrorRef.current) {
-          pollErrorRef.current = true;
-          toast.error(`Upload failed: ${nextMessage || "processing error"}`);
-          stopPolling();
-        }
-      } catch (err) {
-        const status = err?.response?.status;
-        if (status === 404) return;
-        if (!pollErrorRef.current) {
-          pollErrorRef.current = true;
-          setServerProgress((prev) => ({
-            ...prev,
-            status: "error",
-            message: "status error",
-          }));
-        }
-        stopPolling();
-      }
-    }, 1200);
   };
 
   // โหลดไฟล์ XLSX (Dynamic Import → ลด bundle)
@@ -188,31 +127,8 @@ const UploadCSV = () => {
     if (loading) return;
     const selectedFiles = Array.from(e.target.files || []);
     setFiles(selectedFiles);
+    setUploadResult(null);
   };
-
-  useEffect(() => {
-    if (!loading) return undefined;
-
-    const onBeforeUnload = (e) => {
-      e.preventDefault();
-      e.returnValue = "";
-    };
-
-    const onPopState = () => {
-      window.history.pushState(null, "", window.location.href);
-    };
-
-    window.history.pushState(null, "", window.location.href);
-    window.addEventListener("beforeunload", onBeforeUnload);
-    window.addEventListener("popstate", onPopState);
-
-    return () => {
-      window.removeEventListener("beforeunload", onBeforeUnload);
-      window.removeEventListener("popstate", onPopState);
-    };
-  }, [loading]);
-
-  useEffect(() => () => stopPolling(), []);
 
   // Upload handler
   const handleFileUpload = async (uploadFn, label) => {
@@ -225,8 +141,10 @@ const UploadCSV = () => {
     setUploadInfo({ label, current: 0, total: files.length, fileName: "" });
     setProgress({ filePercent: 0, overallPercent: 0 });
     setServerProgress({ percent: 0, status: "", message: "" });
+    setUploadResult(null);
 
     try {
+      let finalRes = null;
       for (let i = 0; i < files.length; i += 1) {
         const file = files[i];
         setUploadInfo({
@@ -236,9 +154,14 @@ const UploadCSV = () => {
           fileName: file?.name || "",
         });
         setProgress((prev) => ({ ...prev, filePercent: 0 }));
-        const jobId = makeJobId();
-        startPolling(jobId);
-        await uploadFn(file, (pct) => {
+
+        setServerProgress({
+          percent: 0,
+          status: "processing",
+          message: "กำลังประมวลผลบนเซิร์ฟเวอร์ กรุณารอผลลัพธ์ตอบกลับ...",
+        });
+
+        const res = await uploadFn(file, (pct) => {
           const totalFiles = files.length || 1;
           const completed = i;
           const safePct = Math.max(0, Math.min(100, pct));
@@ -246,20 +169,22 @@ const UploadCSV = () => {
             ((completed + safePct / 100) / totalFiles) * 100
           );
           setProgress({ filePercent: safePct, overallPercent: overall });
-        }, jobId);
+        });
+        finalRes = res?.data;
+
         const doneOverall = Math.round(((i + 1) / (files.length || 1)) * 100);
         setProgress({ filePercent: 100, overallPercent: doneOverall });
-        stopPolling();
+
         setServerProgress({ percent: 100, status: "done", message: "completed" });
       }
 
+      setUploadResult(finalRes);
       toast.success(`${label} upload completed!`);
       setFiles([]);
       if (fileInputRef.current) fileInputRef.current.value = "";
     } catch (err) {
       const msg = err?.message || "Upload failed";
       toast.error(`Upload failed: ${msg}`);
-      stopPolling();
     }
 
     setLoading(false);
@@ -400,6 +325,25 @@ const UploadCSV = () => {
           {loading ? "Uploading..." : `Upload ${config.label}`}
         </button>
 
+        {/* Inline Progress Bar */}
+        {loading && (
+          <div className="mt-4 space-y-2">
+            <div className="text-xs text-slate-600 text-center animate-pulse">
+              {progress.filePercent < 100 
+                ? `กำลังอัปโหลดไฟล์... (${progress.filePercent}%)` 
+                : "อัปโหลดไฟล์เสร็จแล้ว กำลังประมวลผลและบันทึกข้อมูลลงฐานข้อมูล..."}
+            </div>
+            <div className="h-2.5 w-full bg-slate-200 rounded-full overflow-hidden">
+              <div
+                className={`h-full bg-green-600 rounded-full transition-all duration-300 ${
+                  progress.filePercent >= 100 ? "animate-pulse w-full" : ""
+                }`}
+                style={{ width: `${progress.filePercent}%` }}
+              />
+            </div>
+          </div>
+        )}
+
         {/* Filter สาขาสำหรับ SKU */}
         {fileType === "SKU" && (
           <div className="mt-6 mb-2">
@@ -455,16 +399,18 @@ const UploadCSV = () => {
     );
   };
 
+  const totalRows = uploadResult 
+    ? (uploadResult.raw_rows || uploadResult.inserted || uploadResult.parsed_rows || 0)
+    : 0;
+  const successRows = uploadResult 
+    ? (uploadResult.bills_created !== undefined ? uploadResult.bills_created : (uploadResult.inserted || 0))
+    : 0;
+  const skippedRows = uploadResult 
+    ? (uploadResult.bills_skipped !== undefined ? uploadResult.bills_skipped : 0)
+    : 0;
+
   return (
     <div className="p-4 sm:p-6 max-w-xl mx-auto">
-      {loading && (
-        <UploadProgressOverlay
-          uploadInfo={uploadInfo}
-          progress={progress}
-          serverProgress={serverProgress}
-        />
-      )}
-
       <h2 className="text-2xl font-bold mb-6 text-center">
         Choose File Type to Upload
       </h2>
@@ -488,6 +434,63 @@ const UploadCSV = () => {
       </select>
 
       {selectedFileType && renderFileUploadForm(selectedFileType)}
+
+      {/* Success results cards shown below */}
+      {!loading && uploadResult && (
+        <div className="mt-6 space-y-6">
+          {/* Green Alert Box */}
+          <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl p-4 flex items-start gap-3">
+            <svg
+              className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <div>
+              <div className="font-bold text-sm">สำเร็จ</div>
+              <div className="text-xs mt-1">
+                {selectedFileType === "bill"
+                  ? `Sales Bill import completed: ${successRows.toLocaleString()} bills imported, ${skippedRows.toLocaleString()} duplicates skipped`
+                  : `${FILE_TYPE_CONFIG[selectedFileType]?.label || "Data"} import completed: ${successRows.toLocaleString()} rows imported`}
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Cards (3 cards row) */}
+          <div className="grid grid-cols-3 gap-4">
+            {/* Card 1: Total Rows */}
+            <div className="bg-white border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm">
+              <span className="text-[11px] font-medium text-gray-500 text-center">จำนวนแถวทั้งหมด</span>
+              <span className="text-2xl font-black text-gray-800 mt-1 tabular-nums">
+                {totalRows.toLocaleString()}
+              </span>
+            </div>
+
+            {/* Card 2: Imported Successfully */}
+            <div className="bg-teal-50 border border-teal-100 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm">
+              <span className="text-[11px] font-medium text-teal-600 text-center">นำเข้าสำเร็จ</span>
+              <span className="text-2xl font-black text-teal-600 mt-1 tabular-nums">
+                {successRows.toLocaleString()}
+              </span>
+            </div>
+
+            {/* Card 3: Duplicates Skipped */}
+            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm">
+              <span className="text-[11px] font-medium text-amber-700 text-center">ข้อมูลซ้ำ (ข้าม)</span>
+              <span className="text-2xl font-black text-amber-600 mt-1 tabular-nums">
+                {skippedRows.toLocaleString()}
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
