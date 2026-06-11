@@ -17,7 +17,6 @@ const Dashboard = lazy(() => import("../features/admin/pages/Dashboard"));
 const Upload = lazy(() => import("../features/admin/pages/Upload"));
 const Template = lazy(() => import("../features/admin/pages/Template"));
 const FilterSales = lazy(() => import("../features/admin/pages/sales/FilterSales"));
-const Stock = lazy(() => import("../features/admin/pages/Stock"));
 const ShelfDashboard = lazy(() => import("../features/admin/pages/ShelfDashboard"));
 const DashboardSales = lazy(() => import("../features/admin/components/sales/dashboard/DashboardSales"));
 const PogRequests = lazy(() => import("../features/admin/pages/PogRequests"));
@@ -58,7 +57,6 @@ const router = createBrowserRouter([
             { path: "zX5cV8bN1m", element: <Suspense fallback={<PageLoader />}><Upload /></Suspense> },
             { path: "lK2jH7gF3d", element: <Suspense fallback={<PageLoader />}><FilterSales /></Suspense> },
             { path: "oI9uY4tR6e", element: <Suspense fallback={<PageLoader />}><DashboardSales /></Suspense> },
-            { path: "mN1bV8cX5z", element: <Suspense fallback={<PageLoader />}><Stock /></Suspense> },
             { path: "aS3dF7gH2j", element: <Suspense fallback={<PageLoader />}><PogRequests /></Suspense> },
             { path: "qA8zW2sX7e", element: <Suspense fallback={<PageLoader />}><BranchAckStatus /></Suspense> },
             { path: "pL5kO9iJ4u", element: <Suspense fallback={<PageLoader />}><Analysis /></Suspense> },

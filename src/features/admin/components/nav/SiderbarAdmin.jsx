@@ -6,13 +6,10 @@ import {
   X,
   Store,
   FileUp,
-  ChartNoAxesCombined,
-  Package2,
   LayoutDashboard,
   ClipboardList,
   Eye,
   BarChart3,
-  Settings,
   Users,
 } from "lucide-react";
 import useBmrStore from "../../../../store/bmr_store";
@@ -51,13 +48,11 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
 
           {/* items */}
           <nav className="p-4 space-y-2">
-            {/* <SidebarItem to="lK2jH7gF3d" label="Sales" icon={<ChartNoAxesCombined size={20} />} close={closeMobile} /> */}
             <SidebarItem to="qW3eR7tY2u" label="Shelf Store" icon={<Store size={20} />} close={closeMobile} />
             <SidebarItem to="pA9sD4fG6h" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} close={closeMobile} />
             <SidebarItem to="aS3dF7gH2j" label="POG Requests" icon={<ClipboardList size={20} />} close={closeMobile} />
             <SidebarItem to="qA8zW2sX7e" label="Branch Status" icon={<Eye size={20} />} close={closeMobile} />
             {/* <SidebarItem to="pL5kO9iJ4u" label="Analysis" icon={<BarChart3 size={20} />} close={closeMobile} /> */}
-            {/* <SidebarItem to="mN1bV8cX5z" label="Stock" icon={<Package2 size={20} />} close={closeMobile} /> */}
             <SidebarItem to="zX5cV8bN1m" label="Upload XLSX" icon={<FileUp size={20} />} close={closeMobile} />
 
 
@@ -94,13 +89,11 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
 
       {/* items */}
       <nav className="flex-1 px-1 py-1 space-y-2">
-        {/* <SidebarItem to="lK2jH7gF3d" label="Sales" icon={<ChartNoAxesCombined size={20} />} expanded={isOpen} /> */}
         <SidebarItem to="qW3eR7tY2u" label="Shelf Store" icon={<Store size={20} />} expanded={isOpen} />
         <SidebarItem to="pA9sD4fG6h" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} expanded={isOpen} />
         <SidebarItem to="aS3dF7gH2j" label="POG Requests" icon={<ClipboardList size={20} />} expanded={isOpen} />
         <SidebarItem to="qA8zW2sX7e" label="Branch Status" icon={<Eye size={20} />} expanded={isOpen} />
         <SidebarItem to="pL5kO9iJ4u" label="Analysis" icon={<BarChart3 size={20} />} expanded={isOpen} />
-        {/* <SidebarItem to="mN1bV8cX5z" label="Stock" icon={<Package2 size={20} />} expanded={isOpen} /> */}
         <SidebarItem to="zX5cV8bN1m" label="Upload XLSX" icon={<FileUp size={20} />} expanded={isOpen} />
 
 
