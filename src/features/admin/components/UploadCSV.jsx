@@ -1,7 +1,7 @@
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
-import useSalesStore from "../../../store/sales_store";
 import api from "../../../utils/axios";
+import { getBranches } from "../../../api/admin/branch";
 
 // upload APIs
 import {
@@ -63,10 +63,9 @@ const UploadCSV = () => {
     message: "",
   });
   const [selectedBranch, setSelectedBranch] = useState("");
+  const [branches, setBranches] = useState([]);
   const [activeBranchCodes, setActiveBranchCodes] = useState([]);
   const [syncDates, setSyncDates] = useState({});
-
-  const { branches, fetchListBranches } = useSalesStore();
 
   const fetchSyncDates = async () => {
     try {
@@ -78,8 +77,16 @@ const UploadCSV = () => {
   };
 
   useEffect(() => {
-    fetchListBranches();
     fetchSyncDates();
+
+    const fetchBranches = async () => {
+      try {
+        const branchList = await getBranches();
+        setBranches(Array.isArray(branchList) ? branchList : []);
+      } catch (error) {
+        console.error("Failed to fetch branches", error);
+      }
+    };
 
     const fetchActiveUsers = async () => {
       try {
@@ -93,9 +100,10 @@ const UploadCSV = () => {
 
     const interval = setInterval(fetchSyncDates, 60000); // refresh every minute
 
+    fetchBranches();
     fetchActiveUsers();
     return () => clearInterval(interval);
-  }, [fetchListBranches]);
+  }, []);
 
   const filteredBranches = branches.filter(b => activeBranchCodes.includes(b.branch_code));
 

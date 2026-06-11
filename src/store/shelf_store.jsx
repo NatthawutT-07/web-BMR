@@ -2,9 +2,9 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { getSKU, getTemplate, addTemplate, deleteTemplate, updateProducts } from "../api/admin/template";
 import { getSyncDates } from "../api/admin/upload";
+import { getBranches } from "../api/admin/branch";
 
 import logger from "../utils/logger";
-import { fetchBranchListSales } from "../api/admin/sales";
 import useBmrStore from "./bmr_store";
 
 // ใช้ id เป็นหลัก ถ้ามี (กัน index โยก)
@@ -40,7 +40,7 @@ const useShelfStore = create(
 
         set({ loading: true });
         try {
-          const res = await fetchBranchListSales();
+          const res = await getBranches();
           set({ branches: Array.isArray(res) ? res : [] });
         } catch (error) {
           logger.error("Fetch branches failed", error);
