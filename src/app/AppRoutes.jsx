@@ -21,7 +21,6 @@ const ShelfDashboard = lazy(() => import("../features/admin/pages/ShelfDashboard
 const DashboardSales = lazy(() => import("../features/admin/components/sales/dashboard/DashboardSales"));
 const PogRequests = lazy(() => import("../features/admin/pages/PogRequests"));
 const BranchAckStatus = lazy(() => import("../features/admin/pages/BranchAckStatus"));
-const Analysis = lazy(() => import("../features/admin/pages/Analysis"));
 const Management = lazy(() => import("../features/admin/pages/Management"));
 
 // Loading Component
@@ -59,7 +58,6 @@ const router = createBrowserRouter([
             { path: "oI9uY4tR6e", element: <Suspense fallback={<PageLoader />}><DashboardSales /></Suspense> },
             { path: "aS3dF7gH2j", element: <Suspense fallback={<PageLoader />}><PogRequests /></Suspense> },
             { path: "qA8zW2sX7e", element: <Suspense fallback={<PageLoader />}><BranchAckStatus /></Suspense> },
-            { path: "pL5kO9iJ4u", element: <Suspense fallback={<PageLoader />}><Analysis /></Suspense> },
             { path: "vB6nM2vC8x", element: <Suspense fallback={<PageLoader />}><Management /></Suspense> },
         ],
     },

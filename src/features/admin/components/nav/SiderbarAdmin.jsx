@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   ClipboardList,
   Eye,
-  BarChart3,
   Users,
 } from "lucide-react";
 import useBmrStore from "../../../../store/bmr_store";
@@ -52,7 +51,6 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
             <SidebarItem to="pA9sD4fG6h" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} close={closeMobile} />
             <SidebarItem to="aS3dF7gH2j" label="POG Requests" icon={<ClipboardList size={20} />} close={closeMobile} />
             <SidebarItem to="qA8zW2sX7e" label="Branch Status" icon={<Eye size={20} />} close={closeMobile} />
-            {/* <SidebarItem to="pL5kO9iJ4u" label="Analysis" icon={<BarChart3 size={20} />} close={closeMobile} /> */}
             <SidebarItem to="zX5cV8bN1m" label="Upload XLSX" icon={<FileUp size={20} />} close={closeMobile} />
 
 
@@ -93,7 +91,6 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
         <SidebarItem to="pA9sD4fG6h" label="Shelf Dashboard" icon={<LayoutDashboard size={20} />} expanded={isOpen} />
         <SidebarItem to="aS3dF7gH2j" label="POG Requests" icon={<ClipboardList size={20} />} expanded={isOpen} />
         <SidebarItem to="qA8zW2sX7e" label="Branch Status" icon={<Eye size={20} />} expanded={isOpen} />
-        <SidebarItem to="pL5kO9iJ4u" label="Analysis" icon={<BarChart3 size={20} />} expanded={isOpen} />
         <SidebarItem to="zX5cV8bN1m" label="Upload XLSX" icon={<FileUp size={20} />} expanded={isOpen} />
 
 
