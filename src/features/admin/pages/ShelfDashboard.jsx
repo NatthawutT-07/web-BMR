@@ -23,7 +23,7 @@ const ShelfDashboard = () => {
   const {
     rows, setRows,
     range, setRange,
-    query, setQuery,
+    query,
     expandedBranch, setExpandedBranch,
     shelfSalesByBranch, setShelfSalesByBranch,
     overallUniqueSkus, setOverallUniqueSkus,

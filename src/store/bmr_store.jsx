@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 // C:\BMR\bmr_data\edit\web-BMR\src\store\bmr_store.jsx
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
@@ -131,7 +132,7 @@ const BmrStore = (set, get) => ({
       // await get().fetchCurrentUser();
 
       set({ authReady: true, refreshing: false });
-    } catch (e) {
+    } catch {
       // refresh ไม่ผ่าน → เคลียร์สถานะให้ไปหน้า login ได้แบบไม่กระพริบ
       set({
         user: null,

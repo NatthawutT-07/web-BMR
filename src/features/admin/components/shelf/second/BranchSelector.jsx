@@ -52,10 +52,6 @@ const BranchSelector = React.memo(
         return numA - numB;
       });
 
-    const selectedBranch = sortedBranches.find(
-      (b) => b.branch_code === selectedBranchCode
-    );
-
     return (
       <form
         onSubmit={handleSubmit}

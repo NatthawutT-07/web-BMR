@@ -43,7 +43,6 @@ function MainNav() {
   const stockUpdatedAt = useStockMetaStore((s) => s.updatedAt);
   const stockStatus = useStockMetaStore((s) => s.status); // idle | loading | loaded | error
   const loadStockMetaOnce = useStockMetaStore((s) => s.loadOnce);
-  const refreshStockMeta = useStockMetaStore((s) => s.refresh);
 
   const [confirmModal, setConfirmModal] = useState({ open: false, file: null });
   const [showRefreshModal, setShowRefreshModal] = useState(false);

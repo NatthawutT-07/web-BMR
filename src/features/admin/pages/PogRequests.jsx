@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import api from "../../../utils/axios";
 import {
     Filter, RefreshCw, CheckCircle2, XCircle, Clock,
@@ -301,9 +301,6 @@ export default function PogRequests() {
     const [selectedIds, setSelectedIds] = useState(new Set());
     const [bulkUpdating, setBulkUpdating] = useState(false);
 
-    // Concurrency protection: track data version
-    const [dataVersion, setDataVersion] = useState(0);
-
     // Modals
     const [rejectModal, setRejectModal] = useState({ open: false, ids: [], count: 0 });
     const [editModal, setEditModal] = useState({ open: false, item: null });
@@ -348,8 +345,6 @@ export default function PogRequests() {
             setData(res.data || []);
             setTotalPages(res.meta?.totalPages || 1);
             setTotalItems(res.meta?.total || 0);
-            setDataVersion(Date.now()); // Track version for concurrency
-
             if (res.meta?.stats) setStats(res.meta.stats);
             if (res.meta?.branchStats) setBranchStats(res.meta.branchStats);
 

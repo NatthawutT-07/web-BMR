@@ -4,9 +4,7 @@ import api from "../../../utils/axios";
 import CameraBarcodeScannerModal from "./CameraBarcodeScannerModal";
 import PogRequestModal from "./PogRequestModal";
 
-const cx = (...a) => a.filter(Boolean).join(" ");
-
-const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelves = [] }) => {
+const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) => {
   const barcodeInputRef = useRef(null);
 
   const [barcode, setBarcode] = useState("");
@@ -40,14 +38,6 @@ const TemplateBarcodePanel = ({ storecode, branchName, onGoShelf, availableShelv
     const code = storecode || "-";
     return branchName ? `${code} (${branchName})` : code;
   }, [storecode, branchName]);
-
-  const reasonText = (r) => {
-    if (r === "BARCODE_NOT_FOUND") return "ไม่พบบาร์โค้ดในรายการสินค้า";
-    if (r === "NO_LOCATION_IN_POG") return "พบสินค้า แต่ยังไม่มีตำแหน่งใน POG";
-    if (r === "TIMEOUT") return "ระบบตอบช้าเกินไป (ลองสแกนใหม่อีกครั้ง)";
-    if (r === "REQUEST_ERROR") return "โหลดไม่สำเร็จ";
-    return "ไม่พบข้อมูล";
-  };
 
   const clearAll = () => {
     setBarcode("");

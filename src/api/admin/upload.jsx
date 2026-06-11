@@ -1,11 +1,4 @@
 import api from "../../utils/axios";   // axios instance พร้อม interceptors
-import axios from "axios";
-
-const uploadApi = axios.create({
-  baseURL: import.meta.env.VITE_API_URL_SERVICE + "/api",
-  withCredentials: true,
-});
-
 // ฟังก์ชันอัปโหลดกลาง (ใช้ instance ที่ส่งเข้ามา)
 const uploadXLSX = async (apiInstance, file, path, onProgress, jobId) => {
   const formData = new FormData();

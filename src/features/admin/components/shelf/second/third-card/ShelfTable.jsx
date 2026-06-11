@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { calcTotalSales, calcTotalWithdraw } from "../../../../../../utils/shelfUtils";
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import AddProductModal from "./AddProductModal";
@@ -120,11 +120,6 @@ const ShelfTable = ({
     setAddModal((m) => ({ ...m, nextIndex: (m.nextIndex || 1) + 1 }));
   }, []);
 
-  const format = useCallback((v) => {
-    if (v === null || v === undefined || v === "-") return "-";
-    return Number(v).toLocaleString();
-  }, []);
-
   const formatMoney2 = useCallback((v) => {
     if (v === null || v === undefined || v === "-") return "-";
     const n = Number(v);
@@ -134,14 +129,6 @@ const ShelfTable = ({
       maximumFractionDigits: 2,
     });
   }, []);
-
-  const formatIntLocal = (v) => {
-    if (v === null || v === undefined) return "-";
-    const n = Number(v);
-    if (Number.isNaN(n)) return "-";
-    if (n === 0) return "-";
-    return Math.round(n);
-  };
 
   /* Render table row (per RowNo) */
   const renderRow = (rowNo) => {

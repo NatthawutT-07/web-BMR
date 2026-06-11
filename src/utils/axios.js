@@ -45,7 +45,9 @@ const alertAndLogout = async () => {
     if (typeof window !== "undefined") {
       window.alert("เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่");
     }
-  } catch {}
+  } catch (err) {
+    console.warn("Session expiration alert failed", err);
+  }
 
   await useBmrStore.getState().logout();
   isSessionExpiredHandling = false;
@@ -86,7 +88,7 @@ api.interceptors.response.use(
         try {
           const parsed = JSON.parse(data);
           extractedMessage = parsed.message || parsed.msg || parsed.error;
-        } catch (e) {
+        } catch {
           // Not a JSON string
         }
       }
@@ -97,7 +99,9 @@ api.interceptors.response.use(
           try {
             const innerParsed = JSON.parse(extractedMessage);
             extractedMessage = innerParsed.message || innerParsed.msg || extractedMessage;
-          } catch (e) {}
+          } catch {
+            // Keep the original extracted message.
+          }
         }
         error.message = extractedMessage;
         error.userMessage = extractedMessage;

@@ -1,6 +1,6 @@
 // src/utils/logger.js
 
-const isDev = process.env.NODE_ENV !== "production";
+const isDev = import.meta.env.MODE !== "production";
 // localStorage.setItem("debug", "true");
 
 

@@ -21,7 +21,7 @@ const ShelfCard = ({
 }) => {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isOpen, setIsOpen] = useState(false); // เปิด/ปิด table
-  const [isImageOpen, setIsImageOpen] = useState(false); // ซูมรูปภาพ
+  const isImageOpen = false;
   const [localShelfProducts, setLocalShelfProducts] = useState([]);
 
   /* ------------------------------------------------

@@ -5,20 +5,15 @@ import useBmrStore from "../../../../store/bmr_store";
 const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves = [], duplicateCodes }) => {
   const storecode = useBmrStore((s) => s.user?.storecode);
   const [pogRequestOpen, setPogRequestOpen] = useState(false);
-  const [selectedProduct, setSelectedProduct] = useState(null);
-
-  const handleRequest = (product) => {
-    setSelectedProduct(product);
-    setPogRequestOpen(true);
-  };
-  if (!Array.isArray(shelfProducts)) {
-    return <div className="text-xs text-red-500">Invalid data.</div>;
-  }
-
+  const [selectedProduct] = useState(null);
+  const safeShelfProducts = useMemo(
+    () => (Array.isArray(shelfProducts) ? shelfProducts : []),
+    [shelfProducts]
+  );
   // เอาเฉพาะตัวที่มี rowNo
   const valid = useMemo(
-    () => shelfProducts.filter((p) => p.rowNo !== undefined),
-    [shelfProducts]
+    () => safeShelfProducts.filter((p) => p.rowNo !== undefined),
+    [safeShelfProducts]
   );
 
   // จำนวนแถวทั้งหมด (Row)
@@ -50,14 +45,9 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
     return v;
   };
 
-  // ปัดเศษเป็น int สำหรับ 3M Avg และ Target
-  const formatInt = (v) => {
-    if (v === null || v === undefined) return "-";
-    const n = Number(v);
-    if (Number.isNaN(n)) return "-";
-    if (n === 0) return "-";
-    return Math.round(n); // ถ้าอยากปัดลงใช้ Math.floor ได้
-  };
+  if (!Array.isArray(shelfProducts)) {
+    return <div className="text-xs text-red-500">Invalid data.</div>;
+  }
 
   return (
     <div className="overflow-x-auto w-full max-w-6xl mx-auto px-1 sm:px-3 print:px-0 print:max-w-none print:overflow-visible">
@@ -137,13 +127,6 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
 
                 {items.length > 0 ? (
                   items.map((p, i) => {
-                    const currentSales = Number(p.salesCurrentMonthQty ?? 0);
-                    const targetVal = Number(p.salesTargetQty ?? 0);
-                    const hitTarget =
-                      targetVal > 0 &&
-                      !Number.isNaN(currentSales) &&
-                      currentSales >= targetVal;
-
                     const code = p.codeProduct ? String(p.codeProduct) : p.barcode ? String(p.barcode) : null;
                     const isDuplicate = code && duplicateCodes?.has(code);
 

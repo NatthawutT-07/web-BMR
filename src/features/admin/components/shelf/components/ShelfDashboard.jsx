@@ -21,8 +21,7 @@ const ShelfDashboard = ({
   branchSummary, 
   salesStart, 
   salesEnd, 
-  syncDates, 
-  submittedBranchCode 
+  syncDates
 }) => {
   return (
     <div className="flex-1 flex flex-col">

@@ -48,6 +48,7 @@ const LoadingToRedirect = ({ to = "/", seconds = 0, forceRedirect = false }) => 
         </div>
 
         <div className="mt-3 text-sm text-gray-500">
+          {forceRedirect && count > 0 ? <span>{count}</span> : null}
           {!authReady || refreshing ? (
             <span></span>
             // <span>กำลังเช็คโทเคน / รีเฟรชโทเคน</span>

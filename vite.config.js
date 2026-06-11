@@ -16,8 +16,6 @@ export default defineConfig({
           react: ["react", "react-dom"],
 
           // แยก Chart.js ออก (ตัวนี้หนักมาก)
-          chart: ["chart.js"],
-
           // แยก XLSX ออก (หนักมาก ใช้เฉพาะหน้า upload)
           xlsx: ["xlsx"],
         },
@@ -30,7 +28,6 @@ export default defineConfig({
     include: [
       "react",
       "react-dom",
-      "chart.js",
       "xlsx",
     ],
   },

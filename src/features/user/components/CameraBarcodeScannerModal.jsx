@@ -57,7 +57,7 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
             },
           },
           videoRef.current,
-          (result, _error) => {
+          (result) => {
             if (stopped) return;
             if (!result) return;
 
@@ -111,7 +111,9 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
       // 1. Reset ZXing reader
       try {
         readerRef.current?.reset?.();
-      } catch { }
+      } catch (err) {
+        console.warn("ZXing reader reset failed", err);
+      }
       readerRef.current = null;
 
       // 2.  หยุด video tracks ทั้งหมด (สำคัญมาก! ป้องกันกล้องค้าง)
