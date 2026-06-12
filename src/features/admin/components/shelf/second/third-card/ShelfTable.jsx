@@ -11,9 +11,9 @@ const toNumber = (v) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-// คำนวณ Stock Cost ต่อรายการ โดยถ้า stockQuantity < 0 ⇒ ใช้ 0 แทนในการคิดต้นทุน
+// คำนวณ Stock Cost ต่อรายการ โดยถ้า quantity_stock < 0 ⇒ ใช้ 0 แทนในการคิดต้นทุน
 const getSafeStockCost = (p) => {
-  const qtyRaw = toNumber(p.stockQuantity ?? 0);
+  const qtyRaw = toNumber(p.quantity_stock ?? 0);
   const unit = toNumber(p.purchasePriceExcVAT ?? 0);
   const qtyForCost = qtyRaw < 0 ? 0 : qtyRaw;
   return qtyForCost * unit;
@@ -212,12 +212,12 @@ const ShelfTable = ({
                 </td>
 
                 <td className="p-1 border text-center w-14 text-green-600 font-semibold">
-                  {prod.salesQuantity ? prod.salesQuantity.toLocaleString() : "-"}
+                  {prod.quantity_sale_bill ? prod.quantity_sale_bill.toLocaleString() : "-"}
                 </td>
 
                 <td className="p-1 border text-center w-14 text-red-600 font-semibold">
-                  {prod.withdrawQuantity
-                    ? prod.withdrawQuantity.toLocaleString()
+                  {prod.quantity_withdraw
+                    ? prod.quantity_withdraw.toLocaleString()
                     : "-"}
                 </td>
 
@@ -234,8 +234,8 @@ const ShelfTable = ({
                 </td>
 
                 <td className="p-1 border text-center w-14 text-yellow-700 font-semibold">
-                  {prod.stockQuantity !== null && prod.stockQuantity !== undefined
-                    ? prod.stockQuantity.toLocaleString()
+                  {prod.quantity_stock !== null && prod.quantity_stock !== undefined
+                    ? prod.quantity_stock.toLocaleString()
                     : "0"}
                 </td>
                 {/* <td colSpan={4}>  </td> */}

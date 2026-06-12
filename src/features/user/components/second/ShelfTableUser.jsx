@@ -216,7 +216,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                         </td> */}
 
                         {/* <td className="border p-1 print:px-[2px] text-center text-red-600 align-middle">
-                          {zeroToDash(p.withdrawQuantity)}
+                          {zeroToDash(p.quantity_withdraw)}
                         </td> */}
 
                         <td className="border p-1 print:px-[2px] text-center align-middle">
@@ -232,7 +232,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                         </td>
 
                         <td className="border p-1 print:px-[2px] text-center text-yellow-700 align-middle font-semibold">
-                          {zeroToDash(p.stockQuantity)}
+                          {zeroToDash(p.quantity_stock)}
                         </td>
 
                         {/* Audit: บนจอ = checkbox, PDF = กล่องติ๊ก */}
