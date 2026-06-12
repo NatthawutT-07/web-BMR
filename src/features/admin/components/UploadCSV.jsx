@@ -13,7 +13,6 @@ import {
   uploadMasterItemXLSX,
   uploadBillXLSX,
   uploadGourmetXLSX,
-  getUploadStatus,
   getSyncDates,
   clearStock,
   clearSku,
@@ -26,7 +25,6 @@ import { downloadSKU, downloadTemplate } from "../../../api/admin/download";
 
 // sub-components
 import SyncStatusInfo from "./upload/SyncStatusInfo";
-import UploadProgressOverlay from "./upload/UploadProgressOverlay";
 import FileNotes from "./upload/FileNotes";
 import { FILE_TYPE_CONFIG } from "./upload/uploadConfig";
 
@@ -54,11 +52,6 @@ const UploadCSV = () => {
   const [progress, setProgress] = useState({
     filePercent: 0,
     overallPercent: 0,
-  });
-  const [serverProgress, setServerProgress] = useState({
-    percent: 0,
-    status: "",
-    message: "",
   });
   const [selectedBranch, setSelectedBranch] = useState("");
   const [branches, setBranches] = useState([]);
@@ -140,7 +133,6 @@ const UploadCSV = () => {
     setLoading(true);
     setUploadInfo({ label, current: 0, total: files.length, fileName: "" });
     setProgress({ filePercent: 0, overallPercent: 0 });
-    setServerProgress({ percent: 0, status: "", message: "" });
     setUploadResult(null);
 
     try {
@@ -154,12 +146,6 @@ const UploadCSV = () => {
           fileName: file?.name || "",
         });
         setProgress((prev) => ({ ...prev, filePercent: 0 }));
-
-        setServerProgress({
-          percent: 0,
-          status: "processing",
-          message: "กำลังประมวลผลบนเซิร์ฟเวอร์ กรุณารอผลลัพธ์ตอบกลับ...",
-        });
 
         const res = await uploadFn(file, (pct) => {
           const totalFiles = files.length || 1;
@@ -175,7 +161,6 @@ const UploadCSV = () => {
         const doneOverall = Math.round(((i + 1) / (files.length || 1)) * 100);
         setProgress({ filePercent: 100, overallPercent: doneOverall });
 
-        setServerProgress({ percent: 100, status: "done", message: "completed" });
       }
 
       setUploadResult(finalRes);
@@ -190,7 +175,6 @@ const UploadCSV = () => {
     setLoading(false);
     setUploadInfo({ label: "", current: 0, total: 0, fileName: "" });
     setProgress({ filePercent: 0, overallPercent: 0 });
-    setServerProgress({ percent: 0, status: "", message: "" });
   };
 
   // DOWNLOAD XLSX (Lazy XLSX)

@@ -13,6 +13,7 @@ const SyncStatusInfo = ({ syncInfo }) => {
   try {
     const dateObj = new Date(syncInfo.updatedAt);
     lastUpdateStr = dateObj.toLocaleString("th-TH", {
+      timeZone: "Asia/Bangkok",
       year: "numeric",
       month: "2-digit",
       day: "2-digit",

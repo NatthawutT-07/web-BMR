@@ -17,6 +17,13 @@ const formatDDMMYYYY = (d) => {
   return `${day}/${month}/${year}`;
 };
 
+const formatBangkokDateTime = (value) => {
+  if (!value) return "-";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "-";
+  return d.toLocaleString("th-TH", { timeZone: "Asia/Bangkok" });
+};
+
 const ShelfDashboard = ({ 
   branchSummary, 
   salesStart, 
@@ -34,12 +41,12 @@ const ShelfDashboard = ({
           <div className="text-[11px] text-center text-gray-500 mb-3 leading-relaxed">
             <p>Sales & Withdraw period: {formatDDMMYYYY(salesStart)} - {formatDDMMYYYY(salesEnd)}</p>
             <p>
-              Stock : {syncDates?.stock?.updatedAt ? new Date(syncDates.stock.updatedAt).toLocaleString("th-TH") : "-"} | 
-              MinMax : {syncDates?.minMax?.updatedAt ? new Date(syncDates.minMax.updatedAt).toLocaleString("th-TH") : "-"}
+              Stock : {formatBangkokDateTime(syncDates?.stock?.updatedAt)} | 
+              MinMax : {formatBangkokDateTime(syncDates?.minMax?.updatedAt)}
             </p>
             <p>
-              Bill : {syncDates?.dashboard?.updatedAt ? new Date(syncDates.dashboard.updatedAt).toLocaleString("th-TH") : "-"} | 
-              Withdraw : {syncDates?.withdraw?.updatedAt ? new Date(syncDates.withdraw.updatedAt).toLocaleString("th-TH") : "-"}
+              Bill : {formatBangkokDateTime(syncDates?.dashboard?.updatedAt)} | 
+              Withdraw : {formatBangkokDateTime(syncDates?.withdraw?.updatedAt)}
             </p>
           </div>
         )}
