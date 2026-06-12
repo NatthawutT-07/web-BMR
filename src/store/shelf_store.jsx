@@ -120,10 +120,10 @@ const useShelfStore = create(
             ...newItem,
             ...(typeof res === "object" ? res : {}),
             quantity_sale_bill: newItem.quantity_sale_bill ?? null,
-            salesTotalPrice: newItem.salesTotalPrice ?? null,
+            total_sales_rounding_no_end_discount: newItem.total_sales_rounding_no_end_discount ?? null,
             quantity_stock: newItem.quantity_stock ?? null,
             quantity_withdraw: newItem.quantity_withdraw ?? 0,
-            withdrawValue: newItem.withdrawValue ?? 0,
+            value_withdraw: newItem.value_withdraw ?? 0,
           };
 
           set((state) => {

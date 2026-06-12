@@ -79,8 +79,8 @@ const ShelfTable = ({
 
   /* Memo: calculate totals for entire shelf */
   const totalAll = useMemo(() => {
-    const sales = shelfProducts.reduce((a, b) => a + (b.salesTotalPrice || 0), 0);
-    const withdraw = shelfProducts.reduce((a, b) => a + (b.withdrawValue || 0), 0);
+    const sales = shelfProducts.reduce((a, b) => a + (b.total_sales_rounding_no_end_discount || 0), 0);
+    const withdraw = shelfProducts.reduce((a, b) => a + (b.value_withdraw || 0), 0);
     const stockCost = shelfProducts.reduce((sum, p) => sum + getSafeStockCost(p), 0);
     return { sales, withdraw, stockCost };
   }, [shelfProducts]);
@@ -250,11 +250,11 @@ const ShelfTable = ({
                 </td>
 
                 <td className="p-1 border text-right w-24 text-green-600">
-                  {formatMoney2(prod.salesTotalPrice)}
+                  {formatMoney2(prod.total_sales_rounding_no_end_discount)}
                 </td>
 
                 <td className="p-1 border text-right w-24 text-orange-600">
-                  {formatMoney2(prod.withdrawValue)}
+                  {formatMoney2(prod.value_withdraw)}
                 </td>
 
                 <td className="border text-center w-16 text-indigo-600 ">
