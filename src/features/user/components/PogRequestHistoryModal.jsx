@@ -32,7 +32,7 @@ const formatDateShort = (dateStr) => {
 
 const ITEMS_PER_PAGE = 10;
 
-export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
+export default function PogRequestHistoryModal({ open, onClose, branch_code }) {
     const [loading, setLoading] = useState(false);
     const [data, setData] = useState([]);
     const [error, setError] = useState("");
@@ -43,13 +43,13 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
     const pagedData = data.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
     const loadData = useCallback(async () => {
-        if (!branchCode) return;
+        if (!branch_code) return;
         setLoading(true);
         setError("");
         setCurrentPage(1);
         try {
             const res = await api.get("/pog-request", {
-                params: { branchCode },
+                params: { branch_code },
             });
             setData(res.data?.data || []);
         } catch (e) {
@@ -58,7 +58,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
         } finally {
             setLoading(false);
         }
-    }, [branchCode]);
+    }, [branch_code]);
 
     const handleCancel = async (id) => {
         if (!confirm("คุณต้องการยกเลิกคำขอนี้ใช่หรือไม่?")) return;
@@ -80,7 +80,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
 
     useEffect(() => {
         if (open) loadData();
-    }, [open, branchCode, loadData]);
+    }, [open, branch_code, loadData]);
 
     if (!open) return null;
 
@@ -92,7 +92,7 @@ export default function PogRequestHistoryModal({ open, onClose, branchCode }) {
                 <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50 shrink-0">
                     <div>
                         <div className="text-base font-semibold text-slate-800">ประวัติคำขอ (ทั้งหมด {data.length})</div>
-                        <div className="text-xs text-slate-500">สาขา: {branchCode}</div>
+                        <div className="text-xs text-slate-500">สาขา: {branch_code}</div>
                     </div>
                     <button
                         className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-slate-200 text-slate-500"

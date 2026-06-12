@@ -133,7 +133,7 @@ const ShelfCard = ({
               if (onAdd) onAdd(p);
             }}
             shelfCode={template.shelfCode}
-            branchCode={template.branchCode}
+            branch_code={template.branch_code}
             duplicateCodes={duplicateCodes}
           />
         </Suspense>

@@ -3,13 +3,13 @@ import api from "../../utils/axios";
 
 /**
  * NEW backend:
- * POST -> { branchCode }
- * return -> { branchCode, branchName, items: [...] }
+ * POST -> { branch_code }
+ * return -> { branch_code, branchName, items: [...] }
  */
-export const getTemplateAndProduct = async (branchCode) => {
+export const getTemplateAndProduct = async (branch_code) => {
   try {
-    const res = await api.post("/template-item", { branchCode });
-    return res.data; // { branchCode, branchName, items }
+    const res = await api.post("/template-item", { branch_code });
+    return res.data; // { branch_code, branchName, items }
   } catch (error) {
     console.error("getTemplateAndProduct error:", error);
     throw error;

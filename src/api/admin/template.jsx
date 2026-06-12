@@ -15,9 +15,9 @@ export const getTemplate = async () => {
 // ------------------------------------------------------------
 // POST: SKU (สินค้าตาม branch)
 // ------------------------------------------------------------
-export const getSKU = async (branchCode) => {
+export const getSKU = async (branch_code) => {
     try {
-        const response = await api.post("/shelf-sku", { branchCode });
+        const response = await api.post("/shelf-sku", { branch_code });
         return response.data;
     } catch (error) {
         return error;
@@ -45,7 +45,7 @@ export const deleteTemplate = async (product) => {
     try {
         await api.delete("/shelf-delete", {
             data: {
-                branchCode: product.branchCode,
+                branch_code: product.branch_code,
                 shelfCode: product.shelfCode,
                 rowNo: product.rowNo,
                 item_code: product.item_code,
@@ -102,10 +102,10 @@ export const getShelfDashboardSummary = async () => {
 // ------------------------------------------------------------
 // GET: Shelf dashboard shelf sales (per branch)
 // ------------------------------------------------------------
-export const getShelfDashboardShelfSales = async (branchCode) => {
+export const getShelfDashboardShelfSales = async (branch_code) => {
     try {
         const response = await api.get("/shelf-dashboard-shelf-sales", {
-            params: { branchCode },
+            params: { branch_code },
         });
         return response.data;
     } catch (error) {

@@ -8,7 +8,7 @@ const AddProductModal = React.memo(
         onClose,
         onSubmit,
         nextIndex,
-        branchCode,
+        branch_code,
         shelfCode,
         rowNo,
         shelfProducts = [],
@@ -160,7 +160,7 @@ const AddProductModal = React.memo(
                 salesPriceIncVAT: selected.salesPriceIncVAT ?? null,
 
                 index: nextIndex,
-                branchCode,
+                branch_code,
                 shelfCode,
                 rowNo,
             };
@@ -404,7 +404,7 @@ const AddProductModal = React.memo(
                                 <div className="text-xs text-gray-600">
                                     <div className="flex flex-wrap gap-x-6 gap-y-1">
                                         <span>
-                                            Branch: <b>{branchCode}</b>
+                                            Branch: <b>{branch_code}</b>
                                         </span>
                                         <span>
                                             Shelf: <b>{shelfCode}</b>

@@ -37,23 +37,23 @@ function LoginPage() {
   }, []);
 
   const handleBranchLogin = async (code) => {
-    const branchCode = String(code || "").trim().toUpperCase();
-    if (!branchCode) return;
+    const branch_code = String(code || "").trim().toUpperCase();
+    if (!branch_code) return;
 
     setErrorMsg("");
 
     try {
       setIsSubmitting(true);
-      const branchPassword = `POG@${branchCode}`;
+      const branchPassword = `POG@${branch_code}`;
       const res = await actionLogin({
-        name: branchCode,
+        name: branch_code,
         password: branchPassword,
-        storecode: branchCode,
+        storecode: branch_code,
       });
       const role = res?.data?.payload?.role;
 
       if (role === "admin") navigate("/sys-ahFvi1hmPw3iKCn", { replace: true });
-      else if (role === "user") navigate(`/xY7zA3bC9d/${branchCode}`, { replace: true });
+      else if (role === "user") navigate(`/xY7zA3bC9d/${branch_code}`, { replace: true });
       else navigate("/", { replace: true });
     } catch (err) {
       let errMsg = err.message || "เข้าสู่ระบบไม่สำเร็จ";

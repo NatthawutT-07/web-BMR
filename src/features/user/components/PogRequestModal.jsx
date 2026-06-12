@@ -13,7 +13,7 @@ const ACTION_OPTIONS = [
 export default function PogRequestModal({
     open,
     onClose,
-    branchCode,
+    branch_code,
     branchName: initialBranchName = "",
     barcode,
     productName,
@@ -34,7 +34,7 @@ export default function PogRequestModal({
     const [success, setSuccess] = useState(false);
 
     // LocalStorage key สำหรับจำค่า ADD position ล่าสุด
-    const LAST_ADD_POSITION_KEY = `pog_last_add_position_${branchCode}`;
+    const LAST_ADD_POSITION_KEY = `pog_last_add_position_${branch_code}`;
 
     // Dropdown state
     const [isShelfDropdownOpen, setIsShelfDropdownOpen] = useState(false);
@@ -52,7 +52,7 @@ export default function PogRequestModal({
     const fetchShelves = useCallback(async () => {
         setShelvesLoading(true);
         try {
-            const res = await api.get("/branch-shelves", { params: { branchCode } });
+            const res = await api.get("/branch-shelves", { params: { branch_code } });
             const apiShelves = res.data?.shelves || [];
 
             // Merge API data กับ initialShelves
@@ -72,13 +72,13 @@ export default function PogRequestModal({
         } finally {
             setShelvesLoading(false);
         }
-    }, [branchCode, initialShelves]);
+    }, [branch_code, initialShelves]);
 
     // โหลดข้อมูลครั้งแรกเมื่อเปิด Modal
     useEffect(() => {
-        if (!open || !branchCode) return;
+        if (!open || !branch_code) return;
         fetchShelves();
-    }, [open, branchCode, initialShelves, fetchShelves]);
+    }, [open, branch_code, initialShelves, fetchShelves]);
 
     // ระบบ Auto-Refresh เมื่อไม่ได้ใช้งาน (Idle Timeout = 5 นาที)
     const lastActivityRef = React.useRef(Date.now());
@@ -120,7 +120,7 @@ export default function PogRequestModal({
             window.removeEventListener('scroll', handleActivity);
             clearInterval(checkIdleInterval);
         };
-    }, [open, branchCode, fetchShelves, isIdle]);
+    }, [open, branch_code, fetchShelves, isIdle]);
 
     // คำนวณ available rows สำหรับ shelf ที่เลือก
     const selectedShelfData = useMemo(() => {
@@ -267,7 +267,7 @@ export default function PogRequestModal({
 
         try {
             await api.post("/pog-request", {
-                branchCode,
+                branch_code,
                 action,
                 barcode,
                 productName,
@@ -314,7 +314,7 @@ export default function PogRequestModal({
                     <div>
                         <div className="text-base font-semibold text-emerald-800">แจ้งขอเปลี่ยนแปลง</div>
                         <div className="text-sm text-emerald-700 mt-0.5">
-                            สาขา: {branchCode}{branchName ? ` - ${branchName}` : ""}
+                            สาขา: {branch_code}{branchName ? ` - ${branchName}` : ""}
                         </div>
                     </div>
 

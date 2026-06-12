@@ -62,7 +62,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
 
     try {
       const res = await api.get("/lookup", {
-        params: { branchCode: storecode, barcode: code },
+        params: { branch_code: storecode, barcode: code },
         timeout: 15000,
       });
       setLookupRes(res.data);
@@ -121,7 +121,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
       <PogRequestModal
         open={pogRequestOpen}
         onClose={() => setPogRequestOpen(false)}
-        branchCode={storecode}
+        branch_code={storecode}
         branchName={branchName}
         barcode={scannedBarcode}
         productName={lookupRes?.product?.name}

@@ -278,7 +278,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
         <PogRequestModal
           open={pogRequestOpen}
           onClose={() => setPogRequestOpen(false)}
-          branchCode={storecode}
+          branch_code={storecode}
           branchName={branchName}
           barcode={selectedProduct?.barcode}
           productName={selectedProduct?.nameProduct}

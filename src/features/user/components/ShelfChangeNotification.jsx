@@ -16,7 +16,7 @@ const formatDateShort = (dateStr) => {
     });
 };
 
-export default function ShelfChangeNotification({ branchCode }) {
+export default function ShelfChangeNotification({ branch_code }) {
     const [open, setOpen] = useState(false);
     const [logs, setLogs] = useState([]);
     const [unacknowledgedCount, setUnacknowledgedCount] = useState(0);
@@ -37,11 +37,11 @@ export default function ShelfChangeNotification({ branchCode }) {
     }, [open]);
 
     const fetchLogs = useCallback(async () => {
-        if (!branchCode) return;
+        if (!branch_code) return;
         setLoading(true);
         try {
             // Get unacknowledged logs
-            const res = await api.get(`/shelf-change-logs/${branchCode}?limit=50`);
+            const res = await api.get(`/shelf-change-logs/${branch_code}?limit=50`);
             if (res.ok) {
                 const pendingLogs = res.data || [];
                 setLogs(pendingLogs);
@@ -52,7 +52,7 @@ export default function ShelfChangeNotification({ branchCode }) {
         } finally {
             setLoading(false);
         }
-    }, [branchCode]);
+    }, [branch_code]);
 
     // Initial fetch and polling
     useEffect(() => {
@@ -83,7 +83,7 @@ export default function ShelfChangeNotification({ branchCode }) {
         if (!logs.length) return;
         setAckingAll(true);
         try {
-            await api.post(`/shelf-change-logs-acknowledge-all/${branchCode}`);
+            await api.post(`/shelf-change-logs-acknowledge-all/${branch_code}`);
             setLogs([]);
             setUnacknowledgedCount(0);
         } catch (error) {
@@ -94,7 +94,7 @@ export default function ShelfChangeNotification({ branchCode }) {
         }
     };
 
-    if (!branchCode) return null;
+    if (!branch_code) return null;
 
     return (
         <div className="relative" ref={dropdownRef}>

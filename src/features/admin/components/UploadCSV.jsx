@@ -55,7 +55,7 @@ const UploadCSV = () => {
   });
   const [selectedBranch, setSelectedBranch] = useState("");
   const [branches, setBranches] = useState([]);
-  const [activeBranchCodes, setActiveBranchCodes] = useState([]);
+  const [activebranch_codes, setActivebranch_codes] = useState([]);
   const [syncDates, setSyncDates] = useState({});
   const [uploadResult, setUploadResult] = useState(null);
 
@@ -84,7 +84,7 @@ const UploadCSV = () => {
       try {
         const res = await api.get("/users");
         const activeUsers = res.data.filter(u => u.enabled).map(u => u.name);
-        setActiveBranchCodes(activeUsers);
+        setActivebranch_codes(activeUsers);
       } catch (error) {
         console.error("Failed to fetch users", error);
       }
@@ -97,7 +97,7 @@ const UploadCSV = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const filteredBranches = branches.filter(b => activeBranchCodes.includes(b.branch_code));
+  const filteredBranches = branches.filter(b => activebranch_codes.includes(b.branch_code));
 
   const fileInputRef = useRef(null);
 
@@ -371,7 +371,7 @@ const UploadCSV = () => {
             disabled={loading}
             onClick={() =>
               downloadXLSXFile("POG_SKU_Template.xlsx", downloadSKU, {
-                branchCode: selectedBranch,
+                branch_code: selectedBranch,
               })
             }
             className="mt-4 w-full py-2 bg-blue-600 text-white rounded"

@@ -48,8 +48,8 @@ const ShelfManager = () => {
     branches, fetchBranches, template, fetchTemplate, product, fetchProduct,
     loading, actionLoading, handleAddProduct, handleDelete, handleUpdateProducts,
     syncDates, fetchSyncDates,
-    selectedBranchCode, setSelectedBranchCode,
-    submittedBranchCode, setSubmittedBranchCode,
+    selectedbranch_code, setSelectedbranch_code,
+    submittedbranch_code, setSubmittedbranch_code,
     selectedShelves, setSelectedShelves,
     filteredTemplate, setFilteredTemplate,
     okLocked, setOkLocked,
@@ -69,11 +69,11 @@ const ShelfManager = () => {
 
   //  ใช้เฉพาะ product ของ "สาขาที่กด OK แล้ว"
   const branchProduct = useMemo(() => {
-    if (!submittedBranchCode) return [];
+    if (!submittedbranch_code) return [];
     return (product || []).filter(
-      (p) => String(p.branchCode) === String(submittedBranchCode)
+      (p) => String(p.branch_code) === String(submittedbranch_code)
     );
-  }, [product, submittedBranchCode]);
+  }, [product, submittedbranch_code]);
 
   //  หาสินค้าที่ซ้ำกันในระดับสาขา
   const duplicateCodes = useMemo(() => {
@@ -134,12 +134,12 @@ const ShelfManager = () => {
 
   const handleSubmit = (e) => {
     if (e) e.preventDefault();
-    if (!selectedBranchCode) return;
+    if (!selectedbranch_code) return;
     setOkLocked(true);
-    fetchProduct(selectedBranchCode);
-    const matched = (template || []).filter(item => String(item.branchCode) === String(selectedBranchCode));
+    fetchProduct(selectedbranch_code);
+    const matched = (template || []).filter(item => String(item.branch_code) === String(selectedbranch_code));
     setFilteredTemplate(matched);
-    setSubmittedBranchCode(selectedBranchCode);
+    setSubmittedbranch_code(selectedbranch_code);
     setSelectedShelves([]);
     setSearchText("");
     setSearchResult([]);
@@ -160,7 +160,7 @@ const ShelfManager = () => {
 
   const handleSearch = (value) => {
     setSearchText(value);
-    if (!value || !submittedBranchCode) {
+    if (!value || !submittedbranch_code) {
       setSearchResult([]);
       return;
     }
@@ -175,19 +175,19 @@ const ShelfManager = () => {
     setSearchResult(found);
   };
 
-  const handleRefreshProduct = (branchCode) => {
-    const code = branchCode || submittedBranchCode || selectedBranchCode;
+  const handleRefreshProduct = (branch_code) => {
+    const code = branch_code || submittedbranch_code || selectedbranch_code;
     if (code) fetchProduct(code);
   };
 
-  const imageUrl = submittedBranchCode ? `/images/branch/${submittedBranchCode}.png` : "";
+  const imageUrl = submittedbranch_code ? `/images/branch/${submittedbranch_code}.png` : "";
 
   return (
     <div className="container mx-auto p-3 sm:p-6 space-y-6">
       <ShelfHeader
         branches={branches}
-        selectedBranchCode={selectedBranchCode}
-        setSelectedBranchCode={setSelectedBranchCode}
+        selectedbranch_code={selectedbranch_code}
+        setSelectedbranch_code={setSelectedbranch_code}
         okLocked={okLocked}
         setOkLocked={setOkLocked}
         handleSubmit={handleSubmit}
@@ -198,7 +198,7 @@ const ShelfManager = () => {
 
       <div ref={captureRef}>
         <section className="w-full print:hidden mb-6">
-          <div className={`bg-white p-4 lg:p-6 rounded-xl shadow-sm border flex flex-col xl:flex-row gap-6 mx-auto w-full max-w-[1400px] ${!submittedBranchCode ? 'opacity-60 grayscale-[50%]' : ''}`}>
+          <div className={`bg-white p-4 lg:p-6 rounded-xl shadow-sm border flex flex-col xl:flex-row gap-6 mx-auto w-full max-w-[1400px] ${!submittedbranch_code ? 'opacity-60 grayscale-[50%]' : ''}`}>
             
             <ShelfImageThumb 
               imageUrl={imageUrl} 
@@ -210,7 +210,7 @@ const ShelfManager = () => {
               salesStart={salesStart}
               salesEnd={salesEnd}
               syncDates={syncDates}
-              submittedBranchCode={submittedBranchCode}
+              submittedbranch_code={submittedbranch_code}
             />
 
             <ShelfSearchFilter 
@@ -223,7 +223,7 @@ const ShelfManager = () => {
               handleSearch={handleSearch}
               searchResult={searchResult}
               setSelectedShelves={setSelectedShelves}
-              submittedBranchCode={submittedBranchCode}
+              submittedbranch_code={submittedbranch_code}
             />
           </div>
         </section>

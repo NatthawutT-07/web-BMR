@@ -4,8 +4,8 @@ const BranchSelector = lazy(() => import("../second/BranchSelector"));
 
 const ShelfHeader = ({ 
   branches, 
-  selectedBranchCode, 
-  setSelectedBranchCode, 
+  selectedbranch_code, 
+  setSelectedbranch_code, 
   okLocked, 
   setOkLocked, 
   handleSubmit, 
@@ -25,9 +25,9 @@ const ShelfHeader = ({
         >
           <BranchSelector
             branches={branches || []}
-            selectedBranchCode={selectedBranchCode}
+            selectedbranch_code={selectedbranch_code}
             onChange={(val) => {
-              setSelectedBranchCode(val);
+              setSelectedbranch_code(val);
               setOkLocked(false);
             }}
             okLocked={okLocked}

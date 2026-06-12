@@ -301,7 +301,7 @@ function MainNav() {
             <div className="flex items-center gap-2 sm:gap-3">
               {user && (
                 <>
-                  <ShelfChangeNotification branchCode={user.storecode} />
+                  <ShelfChangeNotification branch_code={user.storecode} />
                   <div className="relative" ref={menuRef}>
                     <button
                       type="button"
@@ -360,7 +360,7 @@ function MainNav() {
       <PogRequestHistoryModal
         open={historyOpen}
         onClose={() => setHistoryOpen(false)}
-        branchCode={user?.storecode}
+        branch_code={user?.storecode}
       />
 
       {/* Custom Confirmation Modal for Stock Upload */}

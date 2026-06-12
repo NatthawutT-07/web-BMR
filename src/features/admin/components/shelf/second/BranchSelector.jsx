@@ -4,14 +4,14 @@ import api from "../../../../../utils/axios";
 const BranchSelector = React.memo(
   ({
     branches,
-    selectedBranchCode,
+    selectedbranch_code,
     onChange,
     onSubmit,
     okLocked,
     onRefreshProduct,
 
   }) => {
-    const [activeBranchCodes, setActiveBranchCodes] = useState([]);
+    const [activebranch_codes, setActivebranch_codes] = useState([]);
 
     useEffect(() => {
       const fetchActiveBranches = async () => {
@@ -19,7 +19,7 @@ const BranchSelector = React.memo(
           const res = await api.get("/active-branches");
           if (Array.isArray(res.data)) {
             // res.data is expected to be array of objects with { code, label }
-            setActiveBranchCodes(res.data.map(b => b.code));
+            setActivebranch_codes(res.data.map(b => b.code));
           }
         } catch (err) {
           console.error("Failed to fetch active branches:", err);
@@ -35,8 +35,8 @@ const BranchSelector = React.memo(
     };
 
     const handleRefresh = () => {
-      if (!selectedBranchCode || !onRefreshProduct) return;
-      onRefreshProduct(selectedBranchCode);
+      if (!selectedbranch_code || !onRefreshProduct) return;
+      onRefreshProduct(selectedbranch_code);
     };
 
 
@@ -45,7 +45,7 @@ const BranchSelector = React.memo(
     const excludedBranches = [];
     const sortedBranches = [...(branches || [])]
       .filter((b) => !excludedBranches.includes(b.branch_code))
-      .filter((b) => activeBranchCodes.length === 0 || activeBranchCodes.includes(b.branch_code)) // Filter active branches
+      .filter((b) => activebranch_codes.length === 0 || activebranch_codes.includes(b.branch_code)) // Filter active branches
       .sort((a, b) => {
         const numA = parseInt(a.branch_code?.replace(/\D/g, '') || '0', 10);
         const numB = parseInt(b.branch_code?.replace(/\D/g, '') || '0', 10);
@@ -65,7 +65,7 @@ const BranchSelector = React.memo(
 
           <select
             id="branches"
-            value={selectedBranchCode}
+            value={selectedbranch_code}
             onChange={(e) => onChange && onChange(e.target.value)}
             className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white flex-1 min-w-[200px]"
           >
@@ -79,8 +79,8 @@ const BranchSelector = React.memo(
 
           <button
             type="submit"
-            disabled={okLocked || !selectedBranchCode}
-            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${okLocked || !selectedBranchCode
+            disabled={okLocked || !selectedbranch_code}
+            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap ${okLocked || !selectedbranch_code
               ? "bg-slate-100 text-slate-400 cursor-not-allowed"
               : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
@@ -89,7 +89,7 @@ const BranchSelector = React.memo(
           </button>
 
           {/* Action buttons inline */}
-          {okLocked && selectedBranchCode && (
+          {okLocked && selectedbranch_code && (
             <>
               <button
                 type="button"

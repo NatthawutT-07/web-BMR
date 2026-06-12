@@ -10,11 +10,11 @@ import useBmrStore from "./bmr_store";
 // ใช้ id เป็นหลัก ถ้ามี (กัน index โยก)
 const getDeleteKey = (p) => {
   if (p?.id != null) return `id:${p.id}`;
-  return `cmp:${p.branchCode}-${p.shelfCode}-${p.rowNo}-${p.item_code}-${p.index}`;
+  return `cmp:${p.branch_code}-${p.shelfCode}-${p.rowNo}-${p.item_code}-${p.index}`;
 };
 
 const sameRow = (a, b) =>
-  a.branchCode === b.branchCode && a.shelfCode === b.shelfCode && Number(a.rowNo) === Number(b.rowNo);
+  a.branch_code === b.branch_code && a.shelfCode === b.shelfCode && Number(a.rowNo) === Number(b.rowNo);
 
 const useShelfStore = create(
   persist(
@@ -86,17 +86,17 @@ const useShelfStore = create(
       //  Product by Branch
       // เปลี่ยนเป็น "replace ข้อมูลของสาขานั้น" กันของเก่าค้าง/ซ้อน
       // =====================================================
-      fetchProduct: async (branchCode) => {
+      fetchProduct: async (branch_code) => {
         const accessToken = useBmrStore.getState().accessToken;
         if (!accessToken) return;
 
         set({ loading: true });
         try {
-          const res = await getSKU(branchCode);
+          const res = await getSKU(branch_code);
           const list = Array.isArray(res) ? res : [];
 
           set((state) => {
-            const other = state.product.filter((p) => p.branchCode !== branchCode);
+            const other = state.product.filter((p) => p.branch_code !== branch_code);
             return { product: [...other, ...list] };
           });
         } catch (error) {
@@ -135,10 +135,10 @@ const useShelfStore = create(
             }
 
             // fallback กันซ้ำแบบเดิม
-            const key = `${updatedItem.branchCode}-${updatedItem.shelfCode}-${updatedItem.rowNo}-${updatedItem.item_code}-${updatedItem.index}`;
+            const key = `${updatedItem.branch_code}-${updatedItem.shelfCode}-${updatedItem.rowNo}-${updatedItem.item_code}-${updatedItem.index}`;
             const exists = state.product.some(
               (p) =>
-                `${p.branchCode}-${p.shelfCode}-${p.rowNo}-${p.item_code}-${p.index}` === key
+                `${p.branch_code}-${p.shelfCode}-${p.rowNo}-${p.item_code}-${p.index}` === key
             );
             if (exists) return state;
             return { product: [...state.product, updatedItem] };
@@ -197,16 +197,16 @@ const useShelfStore = create(
           if (res.success) {
             set((state) => {
               const updatedMap = new Map(
-                updatedProducts.map((p) => [`${p.branchCode}-${p.shelfCode}-${p.item_code}`, p])
+                updatedProducts.map((p) => [`${p.branch_code}-${p.shelfCode}-${p.item_code}`, p])
               );
 
               const merged = state.product.map((p) => {
-                const key = `${p.branchCode}-${p.shelfCode}-${p.item_code}`;
+                const key = `${p.branch_code}-${p.shelfCode}-${p.item_code}`;
                 return updatedMap.get(key) || p;
               });
 
               const unique = Array.from(
-                new Map(merged.map((p) => [`${p.branchCode}-${p.shelfCode}-${p.item_code}`, p])).values()
+                new Map(merged.map((p) => [`${p.branch_code}-${p.shelfCode}-${p.item_code}`, p])).values()
               );
 
               return { product: unique };
@@ -223,8 +223,8 @@ const useShelfStore = create(
       // =====================================================
       //  UI STATE (Merged from store_shelf_manager_store)
       // =====================================================
-      selectedBranchCode: "",
-      submittedBranchCode: "",
+      selectedbranch_code: "",
+      submittedbranch_code: "",
       selectedShelves: [],
       filteredTemplate: [],
       okLocked: false,
@@ -234,8 +234,8 @@ const useShelfStore = create(
       hasLoadedInitialData: false,
 
       // Setters
-      setSelectedBranchCode: (val) => set({ selectedBranchCode: val }),
-      setSubmittedBranchCode: (val) => set({ submittedBranchCode: val }),
+      setSelectedbranch_code: (val) => set({ selectedbranch_code: val }),
+      setSubmittedbranch_code: (val) => set({ submittedbranch_code: val }),
       setSelectedShelves: (updater) => set((state) => ({
         selectedShelves: typeof updater === "function" ? updater(state.selectedShelves) : updater
       })),
@@ -247,8 +247,8 @@ const useShelfStore = create(
       setHasLoadedInitialData: (val) => set({ hasLoadedInitialData: val }),
 
       resetShelfUI: () => set({
-        selectedBranchCode: "",
-        submittedBranchCode: "",
+        selectedbranch_code: "",
+        submittedbranch_code: "",
         selectedShelves: [],
         filteredTemplate: [],
         okLocked: false,

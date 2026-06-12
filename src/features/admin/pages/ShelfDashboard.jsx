@@ -68,8 +68,8 @@ const ShelfDashboard = () => {
     loadSummary();
   }, [loadSummary]);
 
-  const loadShelfSales = async (branchCode) => {
-    const code = String(branchCode || "").trim();
+  const loadShelfSales = async (branch_code) => {
+    const code = String(branch_code || "").trim();
     if (!code) return;
     if (shelfSalesLoading[code]) return;
     if (shelfSalesByBranch[code]) return;
@@ -118,7 +118,7 @@ const ShelfDashboard = () => {
     const base = rows.filter((r) => Number(r.shelfCount || 0) > 0);
     if (!q) return base;
     return base.filter((r) => {
-      const code = String(r.branchCode || "").toLowerCase();
+      const code = String(r.branch_code || "").toLowerCase();
       const name = String(r.branchName || "").toLowerCase();
       return code.includes(q) || name.includes(q);
     });
@@ -221,19 +221,19 @@ const ShelfDashboard = () => {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {filteredRows.map((row) => {
-                    const isOpen = expandedBranch === row.branchCode;
-                    const shelfSalesRaw = shelfSalesByBranch[row.branchCode] || [];
+                    const isOpen = expandedBranch === row.branch_code;
+                    const shelfSalesRaw = shelfSalesByBranch[row.branch_code] || [];
                     const shelfSales = shelfSalesRaw.filter(
                       (s) => Number(s.skuCount || 0) > 0
                     );
-                    const isShelfLoading = !!shelfSalesLoading[row.branchCode];
-                    const shelfError = shelfSalesError[row.branchCode];
+                    const isShelfLoading = !!shelfSalesLoading[row.branch_code];
+                    const shelfError = shelfSalesError[row.branch_code];
 
                     return (
-                      <React.Fragment key={row.branchCode}>
+                      <React.Fragment key={row.branch_code}>
                         <tr className={`hover:bg-slate-50 transition-colors ${isOpen ? 'bg-slate-50' : ''}`}>
                           <td className="px-4 py-3 font-medium text-slate-800">
-                            {row.branchCode}
+                            {row.branch_code}
                           </td>
                           <td className="px-4 py-3 text-slate-600">
                             {row.branchName || "-"}
@@ -257,7 +257,7 @@ const ShelfDashboard = () => {
                             <button
                               type="button"
                               onClick={() => {
-                                const next = isOpen ? null : row.branchCode;
+                                const next = isOpen ? null : row.branch_code;
                                 setExpandedBranch(next);
                                 if (next) loadShelfSales(next);
                               }}
@@ -273,7 +273,7 @@ const ShelfDashboard = () => {
                             <td colSpan={8} className="p-0">
                               <div className="p-4 sm:p-6 bg-slate-100/50 border-t border-slate-200/50 shadow-inner">
                                 <h3 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                                  <Layers size={16} /> ข้อมูลราย Shelf - {row.branchCode}
+                                  <Layers size={16} /> ข้อมูลราย Shelf - {row.branch_code}
                                 </h3>
 
                                 {isShelfLoading ? (

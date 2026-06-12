@@ -12,7 +12,7 @@ const ShelfSearchFilter = ({
   handleSearch,
   searchResult,
   setSelectedShelves,
-  submittedBranchCode
+  submittedbranch_code
 }) => {
   return (
     <div className="xl:w-[320px] 2xl:w-[380px] flex-shrink-0 flex flex-col gap-4">
@@ -44,7 +44,7 @@ const ShelfSearchFilter = ({
               value={searchText}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder=""
-              disabled={!submittedBranchCode}
+              disabled={!submittedbranch_code}
               className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all disabled:bg-slate-100 disabled:cursor-not-allowed"
             />
 

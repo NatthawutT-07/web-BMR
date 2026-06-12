@@ -99,10 +99,10 @@ export default function BranchAckStatus() {
     const filteredBranches = useMemo(() => {
         return branches.filter(b => {
             // Search
-            const branchName = branchMap[b.branchCode] || "";
+            const branchName = branchMap[b.branch_code] || "";
             const searchLower = search.toLowerCase();
             const matchSearch =
-                b.branchCode.toLowerCase().includes(searchLower) ||
+                b.branch_code.toLowerCase().includes(searchLower) ||
                 branchName.toLowerCase().includes(searchLower);
 
             // Status
@@ -231,7 +231,7 @@ export default function BranchAckStatus() {
                                     <tr><td colSpan="5" className="p-12 text-center text-slate-400">ไม่พบข้อมูล</td></tr>
                                 ) : filteredBranches.map((branch) => (
                                     <tr
-                                        key={branch.branchCode}
+                                        key={branch.branch_code}
                                         className={`transition-colors hover:bg-slate-50 ${branch.pending > 0 ? 'bg-amber-50/30' : ''}`}
                                     >
                                         <td className="px-6 py-4">
@@ -241,10 +241,10 @@ export default function BranchAckStatus() {
                                                 </div>
                                                 <div>
                                                     <div className="font-medium text-slate-800">
-                                                        {branchMap[branch.branchCode] || branch.branchCode}
+                                                        {branchMap[branch.branch_code] || branch.branch_code}
                                                     </div>
                                                     <div className="text-xs text-slate-400 font-mono">
-                                                        {branch.branchCode}
+                                                        {branch.branch_code}
                                                     </div>
                                                 </div>
                                             </div>

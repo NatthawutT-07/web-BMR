@@ -43,7 +43,7 @@ const ShelfTable = ({
   onDelete,
   onAdd,
   shelfCode,
-  branchCode,
+  branch_code,
   duplicateCodes,
 }) => {
   const [deleteModal, setDeleteModal] = useState({
@@ -314,7 +314,7 @@ const ShelfTable = ({
         onSubmit={handleAddSubmit}
         nextIndex={addModal.nextIndex}
         onIncNextIndex={incNextIndex}
-        branchCode={branchCode}
+        branch_code={branch_code}
         shelfCode={shelfCode}
         rowNo={addModal.rowNo}
         shelfProducts={shelfProducts}

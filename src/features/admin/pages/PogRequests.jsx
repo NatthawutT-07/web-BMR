@@ -335,7 +335,7 @@ export default function PogRequests() {
 
         setLoading(true);
         try {
-            const params = { limit: 50, page, branchCode: selectedBranch, _t: Date.now() };
+            const params = { limit: 50, page, branch_code: selectedBranch, _t: Date.now() };
             if (filterStatus) params.status = filterStatus;
             if (filterAction) params.action = filterAction;
             if (filterShelf) params.shelf = filterShelf;
@@ -371,8 +371,8 @@ export default function PogRequests() {
     }, [filterStatus, filterAction, filterShelf, filterRow]);
 
     // Enter branch detail view
-    const enterBranchDetail = (branchCode) => {
-        setSelectedBranch(branchCode);
+    const enterBranchDetail = (branch_code) => {
+        setSelectedBranch(branch_code);
         setViewMode('detail');
         setPage(1);
         setSelectedIds(new Set());
@@ -578,18 +578,18 @@ export default function PogRequests() {
                                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                     {Object.entries(branchStats)
                                         .sort(([, a], [, b]) => b.total - a.total)
-                                        .map(([branchCode, bStats]) => (
+                                        .map(([branch_code, bStats]) => (
                                             <button
-                                                key={branchCode}
-                                                onClick={() => enterBranchDetail(branchCode)}
+                                                key={branch_code}
+                                                onClick={() => enterBranchDetail(branch_code)}
                                                 className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-xl p-4 text-left hover:shadow-md hover:border-blue-300 hover:from-blue-50 hover:to-white transition-all group"
                                             >
                                                 <div className="flex items-start justify-between">
                                                     <div>
                                                         {/* <h4 className="font-semibold text-slate-800 group-hover:text-blue-700">
-                                                        {branchCode} - {getBranchName(branchCode)}
+                                                        {branch_code} - {getBranchName(branch_code)}
                                                     </h4> */}
-                                                        <span className="text-sm text-slate-800">{branchCode} - {getBranchName(branchCode)}</span>
+                                                        <span className="text-sm text-slate-800">{branch_code} - {getBranchName(branch_code)}</span>
                                                     </div>
                                                     <div className="flex items-center gap-1">
                                                         <span className="text-2xl font-bold text-amber-600">{bStats.total}</span>
