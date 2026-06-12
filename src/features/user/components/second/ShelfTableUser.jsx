@@ -220,15 +220,15 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                         </td> */}
 
                         <td className="border p-1 print:px-[2px] text-center align-middle">
-                          {zeroToDash(p.minStore)}
+                          {zeroToDash(p.min_stock)}
                         </td>
 
                         <td className="border p-1 print:px-[2px] text-center align-middle">
-                          {zeroToDash(p.maxStore)}
+                          {zeroToDash(p.max_stock)}
                         </td>
 
                         <td className="border p-1 print:px-[2px] text-center align-middle">
-                          {zeroToDash(p.packOrder)}
+                          {zeroToDash(p.pack_order)}
                         </td>
 
                         <td className="border p-1 print:px-[2px] text-center text-yellow-700 align-middle font-semibold">

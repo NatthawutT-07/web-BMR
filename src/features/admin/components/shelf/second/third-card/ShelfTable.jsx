@@ -222,15 +222,15 @@ const ShelfTable = ({
                 </td>
 
                 <td className="p-1 border text-center w-12">
-                  {prod.minStore ?? "-"}
+                  {prod.min_stock ?? "-"}
                 </td>
 
                 <td className="p-1 border text-center w-12">
-                  {prod.maxStore ?? "-"}
+                  {prod.max_stock ?? "-"}
                 </td>
 
                 <td className="p-1 border text-center w-12">
-                  {prod.packOrder ?? "-"}
+                  {prod.pack_order ?? "-"}
                 </td>
 
                 <td className="p-1 border text-center w-14 text-yellow-700 font-semibold">
