@@ -4,7 +4,7 @@ import { CSS } from "@dnd-kit/utilities";
 
 const SortableItem = React.memo(({ item, index }) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: item.codeProduct });
+    useSortable({ id: item.item_code });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -28,7 +28,7 @@ const SortableItem = React.memo(({ item, index }) => {
 
       {/* Code Product */}
       <div className="text-center text-gray-700">
-        {String(item.codeProduct).padStart(5, "0")}
+        {item.item_code}
       </div>
 
       {/* Product Name */}

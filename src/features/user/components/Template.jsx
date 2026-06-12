@@ -177,7 +177,7 @@ const Template = () => {
   const duplicateCodes = useMemo(() => {
     const counts = {};
     data.forEach(p => {
-      const code = p.codeProduct ? String(p.codeProduct) : p.barcode ? String(p.barcode) : null;
+      const code = p.item_code ? String(p.item_code) : p.barcode ? String(p.barcode) : null;
       if (code && code !== "-" && code !== "null") {
         counts[code] = (counts[code] || 0) + 1;
       }

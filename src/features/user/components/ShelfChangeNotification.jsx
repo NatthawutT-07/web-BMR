@@ -175,11 +175,11 @@ export default function ShelfChangeNotification({ branchCode }) {
                                                 <Package size={18} className="text-slate-400 mt-0.5 shrink-0" />
                                                 <div className="flex flex-col min-w-0">
                                                     <span className="text-base font-semibold text-slate-800 line-clamp-1" title={log.productName}>
-                                                        {log.productName || `รหัส ${log.codeProduct}`}
+                                                        {log.productName || `รหัส ${log.item_code}`}
                                                     </span>
                                                     {log.productName && (
                                                         <span className="text-xs text-slate-500 font-mono mt-0.5">
-                                                            {log.codeProduct}
+                                                            {log.item_code}
                                                         </span>
                                                     )}
                                                 </div>

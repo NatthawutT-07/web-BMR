@@ -10,7 +10,7 @@ import useBmrStore from "./bmr_store";
 // ใช้ id เป็นหลัก ถ้ามี (กัน index โยก)
 const getDeleteKey = (p) => {
   if (p?.id != null) return `id:${p.id}`;
-  return `cmp:${p.branchCode}-${p.shelfCode}-${p.rowNo}-${p.codeProduct}-${p.index}`;
+  return `cmp:${p.branchCode}-${p.shelfCode}-${p.rowNo}-${p.item_code}-${p.index}`;
 };
 
 const sameRow = (a, b) =>
@@ -135,10 +135,10 @@ const useShelfStore = create(
             }
 
             // fallback กันซ้ำแบบเดิม
-            const key = `${updatedItem.branchCode}-${updatedItem.shelfCode}-${updatedItem.rowNo}-${updatedItem.codeProduct}-${updatedItem.index}`;
+            const key = `${updatedItem.branchCode}-${updatedItem.shelfCode}-${updatedItem.rowNo}-${updatedItem.item_code}-${updatedItem.index}`;
             const exists = state.product.some(
               (p) =>
-                `${p.branchCode}-${p.shelfCode}-${p.rowNo}-${p.codeProduct}-${p.index}` === key
+                `${p.branchCode}-${p.shelfCode}-${p.rowNo}-${p.item_code}-${p.index}` === key
             );
             if (exists) return state;
             return { product: [...state.product, updatedItem] };
@@ -197,16 +197,16 @@ const useShelfStore = create(
           if (res.success) {
             set((state) => {
               const updatedMap = new Map(
-                updatedProducts.map((p) => [`${p.branchCode}-${p.shelfCode}-${p.codeProduct}`, p])
+                updatedProducts.map((p) => [`${p.branchCode}-${p.shelfCode}-${p.item_code}`, p])
               );
 
               const merged = state.product.map((p) => {
-                const key = `${p.branchCode}-${p.shelfCode}-${p.codeProduct}`;
+                const key = `${p.branchCode}-${p.shelfCode}-${p.item_code}`;
                 return updatedMap.get(key) || p;
               });
 
               const unique = Array.from(
-                new Map(merged.map((p) => [`${p.branchCode}-${p.shelfCode}-${p.codeProduct}`, p])).values()
+                new Map(merged.map((p) => [`${p.branchCode}-${p.shelfCode}-${p.item_code}`, p])).values()
               );
 
               return { product: unique };

@@ -48,7 +48,7 @@ export const deleteTemplate = async (product) => {
                 branchCode: product.branchCode,
                 shelfCode: product.shelfCode,
                 rowNo: product.rowNo,
-                codeProduct: product.codeProduct,
+                item_code: product.item_code,
                 index: product.index,
             },
         });
@@ -73,7 +73,7 @@ export const updateProducts = async (data) => {
 
 
 // ------------------------------------------------------------
-// GET: Master items by barcode/name/codeProduct
+// GET: Master items by barcode/name/item_code
 // ------------------------------------------------------------
 export const getMasterItem = async (q) => {
     try {

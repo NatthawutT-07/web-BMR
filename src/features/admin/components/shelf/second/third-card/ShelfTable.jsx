@@ -163,9 +163,9 @@ const ShelfTable = ({
 
             const rowKey = prod.id
               ? `prod-${prod.id}`
-              : `prod-${prod.codeProduct}-${prod.index}`;
+              : `prod-${prod.item_code}-${prod.index}`;
 
-            const code = prod.codeProduct ? String(prod.codeProduct) : prod.barcode ? String(prod.barcode) : null;
+            const code = prod.item_code ? String(prod.item_code) : prod.barcode ? String(prod.barcode) : null;
             const isDuplicate = code && duplicateCodes?.has(code);
             const rowBg = isDuplicate ? "bg-yellow-200 hover:bg-yellow-300" : "even:bg-gray-50 hover:bg-blue-50";
 
@@ -180,8 +180,8 @@ const ShelfTable = ({
                 </td>
 
                 <td className="p-1 border text-center w-16 whitespace-nowrap">
-                  {prod.codeProduct
-                    ? String(prod.codeProduct).padStart(5, "0")
+                  {prod.item_code
+                    ? prod.item_code
                     : "-"}
                 </td>
 

@@ -89,7 +89,7 @@ const AddProductModal = React.memo(
                 if (
                     selected &&
                     !items.some(
-                        (x) => Number(x.codeProduct) === Number(selected.codeProduct)
+                        (x) => x.item_code === selected.item_code
                     )
                 ) {
                     setSelected(null);
@@ -132,19 +132,19 @@ const AddProductModal = React.memo(
                 return;
             }
 
-            if (!selected?.codeProduct) {
+            if (!selected?.item_code) {
                 setError("กรุณาเลือกสินค้าจากรายการก่อน");
                 return;
             }
 
-            const codeNum = Number(selected.codeProduct);
+            const codeNum = selected.item_code;
             if (Number.isNaN(codeNum)) {
-                setError("codeProduct ไม่ถูกต้อง");
+                setError("item_code ไม่ถูกต้อง");
                 return;
             }
 
             const duplicate = shelfProducts.some(
-                (p) => Number(p.codeProduct) === codeNum
+                (p) => p.item_code === codeNum
             );
             if (duplicate) {
                 setError("สินค้านี้มีอยู่แล้วใน Shelf นี้");
@@ -152,7 +152,7 @@ const AddProductModal = React.memo(
             }
 
             const payload = {
-                codeProduct: codeNum,
+                item_code: codeNum,
                 barcode: selected.barcode ?? null,
                 nameProduct: selected.nameProduct ?? null,
                 nameBrand: selected.nameBrand ?? null,
@@ -353,19 +353,19 @@ const AddProductModal = React.memo(
                                         ) : (
                                             results.map((it) => {
                                                 const isSelected =
-                                                    Number(selected?.codeProduct) ===
-                                                    Number(it.codeProduct);
+                                                    selected?.item_code ===
+                                                    it.item_code;
 
                                                 return (
                                                     <tr
-                                                        key={it.codeProduct}
+                                                        key={it.item_code}
                                                         className={isSelected ? "bg-emerald-50" : "bg-white"}
                                                     >
                                                         <td className="px-2 py-2 whitespace-nowrap">
                                                             {it.barcode || "-"}
                                                         </td>
                                                         <td className="px-2 py-2 text-center whitespace-nowrap">
-                                                            {String(it.codeProduct || "").padStart(5, "0")}
+                                                            {it.item_code}
                                                         </td>
                                                         <td
                                                             className="px-2 py-2 max-w-[520px] whitespace-nowrap overflow-hidden text-ellipsis"
@@ -421,9 +421,7 @@ const AddProductModal = React.memo(
                                         Selected:{" "}
                                         <b>
                                             {selected?.nameProduct
-                                                ? `${selected.nameProduct} (${String(
-                                                    selected.codeProduct
-                                                ).padStart(5, "0")})`
+                                                ? `${selected.nameProduct} (${selected.item_code})`
                                                 : "-"}
                                         </b>
                                         {selected?.barcode ? (
@@ -450,9 +448,9 @@ const AddProductModal = React.memo(
                                 type="button"
                                 onClick={handleAdd}
                                 disabled={
-                                    !selected?.codeProduct || saving || checking || !isFreshChecked
+                                    !selected?.item_code || saving || checking || !isFreshChecked
                                 }
-                                className={`px-3 py-1.5 text-sm rounded ${selected?.codeProduct && !saving && !checking && isFreshChecked
+                                className={`px-3 py-1.5 text-sm rounded ${selected?.item_code && !saving && !checking && isFreshChecked
                                     ? "bg-emerald-500 text-white hover:bg-emerald-600"
                                     : "bg-gray-300 text-gray-600 cursor-not-allowed"
                                     }`}

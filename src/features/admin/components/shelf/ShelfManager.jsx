@@ -79,7 +79,7 @@ const ShelfManager = () => {
   const duplicateCodes = useMemo(() => {
     const counts = {};
     branchProduct.forEach(p => {
-      const code = p.codeProduct ? String(p.codeProduct) : p.barcode ? String(p.barcode) : null;
+      const code = p.item_code ? String(p.item_code) : p.barcode ? String(p.barcode) : null;
       if (code && code !== "-" && code !== "null") {
         counts[code] = (counts[code] || 0) + 1;
       }
@@ -168,7 +168,7 @@ const ShelfManager = () => {
     const found = (branchProduct || [])
       .filter((p) => {
         const brand = (p.nameBrand || p.product_brand || "").toLowerCase();
-        const barcode = (p.barcode || p.product_code || "").toString();
+        const barcode = (p.barcode || p.item_code || "").toString();
         return brand.includes(text) || barcode.includes(text);
       })
       .sort((a, b) => String(a.shelfCode || "").localeCompare(String(b.shelfCode || "")));

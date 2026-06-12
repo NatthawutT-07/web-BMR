@@ -127,7 +127,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
 
                 {items.length > 0 ? (
                   items.map((p, i) => {
-                    const code = p.codeProduct ? String(p.codeProduct) : p.barcode ? String(p.barcode) : null;
+                    const code = p.item_code ? String(p.item_code) : p.barcode ? String(p.barcode) : null;
                     const isDuplicate = code && duplicateCodes?.has(code);
 
                     const baseBg = isDuplicate ? "bg-yellow-200" : (i % 2 ? "bg-gray-50" : "bg-white");
@@ -138,7 +138,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
 
                     return (
                       <tr
-                        key={`${rowNo}-${p.codeProduct || i}`}
+                        key={`${rowNo}-${p.item_code || i}`}
                         className={`${bgClass} group`}
                       >
                         <td className="border p-1 print:px-[2px] text-center align-middle">
@@ -150,8 +150,8 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                         </td>
 
                         <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle hidden lg:table-cell print:table-cell">
-                          {p.codeProduct
-                            ? String(p.codeProduct).padStart(5, "0")
+                          {p.item_code
+                            ? p.item_code
                             : "-"}
                         </td>
 

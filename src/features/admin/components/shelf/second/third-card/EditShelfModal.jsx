@@ -79,7 +79,7 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelfCode, row
       const targetRow = parseInt(overId.replace('empty-row-', ''), 10);
       
       setEditedProducts((prev) => {
-        const activeIndex = prev.findIndex(p => p.codeProduct === activeId);
+        const activeIndex = prev.findIndex(p => p.item_code === activeId);
         if (activeIndex === -1) return prev;
         
         const activeItem = prev[activeIndex];
@@ -95,8 +95,8 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelfCode, row
     if (activeId === overId) return;
 
     setEditedProducts((prev) => {
-      const activeIndex = prev.findIndex(p => p.codeProduct === activeId);
-      const overIndex = prev.findIndex(p => p.codeProduct === overId);
+      const activeIndex = prev.findIndex(p => p.item_code === activeId);
+      const overIndex = prev.findIndex(p => p.item_code === overId);
 
       if (activeIndex === -1 || overIndex === -1) return prev;
 
@@ -128,8 +128,8 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelfCode, row
 
       setEditedProducts((prev) => {
         const edited = [...prev];
-        const activeIndex = edited.findIndex(p => p.codeProduct === activeId);
-        const overIndex = edited.findIndex(p => p.codeProduct === overId);
+        const activeIndex = edited.findIndex(p => p.item_code === activeId);
+        const overIndex = edited.findIndex(p => p.item_code === overId);
 
         if (activeIndex === -1) return prev;
 
@@ -150,11 +150,11 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelfCode, row
           .filter(p => p.rowNo === targetRow)
           .sort((a, b) => a.index - b.index);
 
-        const oldIdx = sameRow.findIndex(p => p.codeProduct === activeId);
+        const oldIdx = sameRow.findIndex(p => p.item_code === activeId);
         let newIdx = oldIdx;
         
         if (typeof overId !== 'string' || !overId.startsWith('empty-row-')) {
-             newIdx = sameRow.findIndex(p => p.codeProduct === overId);
+             newIdx = sameRow.findIndex(p => p.item_code === overId);
         }
 
         let reordered;
@@ -194,7 +194,7 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelfCode, row
   // For the DragOverlay
   const activeProduct = useMemo(() => {
     if (!activeId) return null;
-    return editedProducts.find((p) => p.codeProduct === activeId);
+    return editedProducts.find((p) => p.item_code === activeId);
   }, [activeId, editedProducts]);
 
   /* --------------------------------------------
@@ -259,14 +259,14 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelfCode, row
                     
                     <div className="p-2 min-h-[50px]">
                         <SortableContext
-                        items={items.map((p) => p.codeProduct).concat([`empty-row-${row}`])} // Allow dropping on empty row
+                        items={items.map((p) => p.item_code).concat([`empty-row-${row}`])} // Allow dropping on empty row
                         strategy={verticalListSortingStrategy}
                         >
                         {items.length > 0 && (
                             <div className="space-y-1">
                                 {items.map((prod, index) => (
                                 <SortableItem
-                                    key={prod.codeProduct}
+                                    key={prod.item_code}
                                     item={prod}
                                     index={index}
                                 />
