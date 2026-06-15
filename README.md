@@ -1,87 +1,203 @@
-# 🏪 บริหารจัดการชั้นวางสินค้า - ระบบหน้าเว็บ (Frontend BMR)
+# Frontend BMR
 
-โปรเจคนี้คือระบบ **Frontend Web Application** สำหรับผู้ดูแลระบบ (Admin) และพนักงานหน้าร้าน (User) ในการจัดการข้อมูลสินค้า ชั้นวางสินค้า (Planogram) วิเคราะห์ยอดขาย และตรวจสอบสต็อกสินค้า
+เว็บสำหรับบริหาร Planogram ของ BrightMind Retail เชื่อมต่อกับ `backend-BMR` รองรับผู้ใช้ 2 กลุ่ม:
 
----
+- Admin: dashboard, จัดการชั้นวาง, อัปโหลดข้อมูล, อนุมัติ POG และจัดการผู้ใช้/สาขา
+- Branch user: ดูผังสินค้า, ค้นหา/สแกนบาร์โค้ด, ส่งคำขอเปลี่ยน POG และยืนยันการจัดชั้น
 
-## 🚀 เทคโนโลยีที่ใช้ (Tech Stack)
+## เทคโนโลยีหลัก
 
-**Core Framework & Build Tool:**
-*   **React (v19.1.1)** - ไลบรารีหลักสำหรับการสร้าง UI
-*   **Vite (v7.1.7)** - Build tool และ Development Server ที่มีความเร็วสูง
+- React 19
+- Vite 7
+- React Router 7
+- Zustand
+- Tailwind CSS และ Material UI
+- Axios
+- DnD Kit
+- Chart.js
+- ZXing สำหรับสแกนบาร์โค้ด
+- XLSX สำหรับจัดการไฟล์ Excel
 
-**Styling & UI Components:**
-*   **Tailwind CSS (v3.4)** - Utility-first CSS framework
-*   **@mui/material** - Material UI Components
-*   **@emotion/react & @emotion/styled** - ใช้ร่วมกับ MUI
-*   **lucide-react & react-icons & @heroicons/react** - ไอคอนต่างๆ ในระบบ
+## สิ่งที่ต้องติดตั้ง
 
-**State Management & Routing:**
-*   **Zustand (v5.0)** - จัดการ State กลางของแอปพลิเคชัน
-*   **React Router DOM (v7.9)** - จัดการการนำทาง (Routing) ระหว่างหน้า
+- Node.js `20.19+` หรือ `22.12+` ตามข้อกำหนดของ Vite 7
+- npm
+- `backend-BMR` ที่รันและเชื่อมต่อฐานข้อมูลได้
 
-**Data Processing & Utils:**
-*   **Axios** - สำหรับยิง HTTP Requests ติดต่อกับ Backend
-*   **Lodash** - Utility functions สำหรับจัดการข้อมูล
-*   **idb** - จัดการ IndexedDB สำหรับทำ Offline Caching
-*   **Chart.js & react-chartjs-2** - สร้างกราฟวิเคราะห์ข้อมูล
-*   **dayjs** - จัดการวันที่และเวลา
+ตรวจสอบเวอร์ชัน:
 
-**Drag & Drop (Planogram):**
-*   **@dnd-kit/core, @dnd-kit/sortable, @dnd-kit/modifiers** - ระบบลากวางสินค้าบนชั้น
+```powershell
+node --version
+npm --version
+```
 
-**Barcode / QR / OCR:**
-*   **@zxing/browser & @zxing/library** - สำหรับอ่านบาร์โค้ดผ่านกล้อง
-*   **tesseract.js** - สำหรับอ่านข้อความ (OCR) จากรูปภาพ
+## เริ่มต้นใช้งาน
 
-**File Export / Processing:**
-*   **xlsx** - จัดการและอ่านไฟล์ Excel
-*   **html2pdf.js** - แปลงหน้าเว็บเป็นไฟล์ PDF
+```powershell
+cd frontend-BMR
+npm ci
+```
 
----
+สร้างไฟล์ `.env` ที่ root ของ `frontend-BMR`:
 
-## 📁 โครงสร้างโปรเจคหลัก (Project Structure)
+```dotenv
+VITE_API_URL=http://localhost:5001
+```
+
+ค่า `VITE_API_URL` ต้องเป็น base URL ของ backend โดยไม่ต่อท้าย `/api` เพราะ Axios instance จะเติม `/api` ให้เอง
+
+รัน development server:
+
+```powershell
+npm run dev
+```
+
+เปิด `http://localhost:5173`
+
+ลำดับเปิดระบบสำหรับ local:
+
+1. เปิด PostgreSQL
+2. เปิด backend ที่ port `5001`
+3. เปิด frontend ที่ port `5173`
+4. ตรวจ `http://localhost:5001/health`
+5. login ผ่านหน้า `/`
+
+## คำสั่งที่ใช้บ่อย
+
+```powershell
+npm run dev       # Vite development server
+npm run build     # สร้าง production bundle ใน dist/
+npm run lint      # ตรวจ ESLint
+npm run preview   # preview production build ที่ port 4173
+```
+
+ก่อนส่งขึ้น production ควรรันอย่างน้อย:
+
+```powershell
+npm run lint
+npm run build
+```
+
+
+## โครงสร้างโปรเจกต์
 
 ```text
 frontend-BMR/
-├── public/                 # เก็บไฟล์ Static ทั่วไป เช่น รูปภาพ (images/), ไฟล์ _redirects
-├── src/
-│   ├── api/                # ตั้งค่าการเรียก API (เช่น การเซ็ตอัป Axios)
-│   ├── app/                # การตั้งค่าแอปหลัก
-│   ├── features/           # Components และ Pages แยกตาม Feature
-│   │   ├── admin/          # หน้าสำหรับ Admin (เช่น จัดการสินค้า, อัปโหลด, วิเคราะห์)
-│   │   ├── auth/           # ระบบ Login/Logout
-│   │   └── user/           # หน้าสำหรับ User พนักงานสาขา
-│   ├── routes/             # จัดการ Route และระบบ Protect Route (เช็คสิทธิ์)
-│   ├── store/              # ไฟล์ Zustand stores สำหรับ State Management
-│   │   ├── bmr_store.jsx
-│   │   ├── dashboard_sales_store.jsx
-│   │   ├── sales_store.jsx
-│   │   ├── shelf_store.jsx
-│   │   └── stock_meta_store.jsx
-│   ├── utils/              # ฟังก์ชันตัวช่วยต่างๆ (Helpers)
-│   ├── index.css           # สไตล์หลัก (Tailwind imports)
-│   └── main.jsx            # จุดเริ่มต้นแอป (Entry point)
-├── .env                    # (ไม่มีใน Git) ตัวแปรระบบ (Environment Variables)
-├── package.json            # กำหนด Dependencies
-└── vite.config.js          # (ถ้ามี) การตั้งค่า Vite
+|-- public/                    # static files, branch images, hosting headers/redirects
+|-- src/
+|   |-- api/                   # functions เรียก backend
+|   |-- app/                   # App และ route definitions
+|   |-- features/
+|   |   |-- admin/             # หน้าและ component ของ admin
+|   |   |-- auth/              # login
+|   |   `-- user/              # หน้าและ component ของสาขา
+|   |-- routes/                # route guards
+|   |-- store/                 # Zustand stores
+|   |-- utils/                 # Axios instance, logger และ shelf helpers
+|   |-- index.css
+|   `-- main.jsx
+|-- vite.config.js
+|-- tailwind.config.js
+`-- package.json
 ```
 
----
+## Routes
 
-## 📚 เอกสารเพิ่มเติมในระบบ (System Documentation)
+Routes ถูกกำหนดใน `src/app/AppRoutes.jsx`
 
-สำหรับการศึกษาและเข้าใจการทำงานเชิงลึกของโปรเจกต์ สามารถอ่านเอกสารประกอบเพิ่มเติมที่จัดทำขึ้นได้ตามรายละเอียดดังนี้:
+- `/`: หน้า login
+- `/sys-ahFvi1hmPw3iKCn`: admin dashboard
+- `/xY7zA3bC9d/:storecode`: หน้าสาขา
 
-*   **[สถาปัตยกรรมระบบ (System Architecture)](file:///c:/BrightMindRetail/brightmind_project/planogram_project/frontend-BMR/docs/ARCHITECTURE.md)** — รายละเอียดทางเทคนิคเกี่ยวกับ Domain-Driven Folder Layout, ระบบรักษาความปลอดภัยแบบ In-memory JWT Access Token & HttpOnly Cookies, กลไก Request Interceptor Queueing เมื่อ Token 401 และ Zustand Stores Optimistic Updates
-*   **[Flow การใช้งานของ User และ Admin](file:///c:/BrightMindRetail/brightmind_project/planogram_project/frontend-BMR/docs/USER_ADMIN_FLOWS.md)** — แผนภาพและขั้นตอนการทำงานจำลองของพนักงานหน้าสาขา (User Mode: Scan, Add/Move/Delete request, Acknowledge) และผู้ดูแลระบบหลังบ้าน (Admin Mode: Decisions, Bulk approval, Template configuration, Analytics)
-*   **[คู่มือระบบ POG Request](file:///c:/BrightMindRetail/brightmind_project/planogram_project/frontend-BMR/docs/POG_REQUEST_README.md)** — รายละเอียดข้อจำกัด เงื่อนไขการป้องกัน Bug ในกรณีส่งคำร้องขอขยับขยายสินค้าของสาขา
-*   **[คู่มือระบบ Shelf Manager](file:///c:/BrightMindRetail/brightmind_project/planogram_project/frontend-BMR/docs/SHELF_MANAGER_README.md)** — วิธีการทำงานและรายละเอียดทางเทคนิคของหน้าจอการควบคุม Layout Grid ชั้นวางของแอดมิน
+Admin subroutes ใช้ path แบบ obfuscated และ menu ต้องอ้าง path ชุดเดียวกัน หากเปลี่ยน route ให้ตรวจทั้ง `AppRoutes.jsx`, sidebar และ route guards
 
----
+## Authentication
 
-## 🛠️ การติดตั้งและรันโปรเจคเครื่องตัวเอง (Local Development)
+จุดศูนย์กลางอยู่ที่:
 
-### สิ่งที่ต้องเตรียม
-*   **Node.js** (แนะนำเวอร์ชัน 18 หรือ 20 ขึ้นไป)
-*   **Backend BMR** ต้องรันอยู่ (เพื่อให้ Frontend ยิง API ได้)
+- `src/store/bmr_store.jsx`
+- `src/utils/axios.js`
+- `src/routes/ProtectRouteAdmin.jsx`
+- `src/routes/ProtectRouteUser.jsx`
+- `src/routes/ProtectGuest.jsx`
+
+พฤติกรรมสำคัญ:
+
+- access token อยู่ใน Zustand memory และไม่ถูก persist
+- refresh token อยู่ใน HttpOnly cookie จาก backend
+- `storecodeHint` เท่านั้นที่ถูก persist ใน localStorage
+- Axios ส่ง `withCredentials: true`
+- เมื่อ access token หมดอายุ ระบบจะ queue request ระหว่าง refresh token
+- CSRF token อ่านจาก cookie `csrfToken` และส่งเป็น `x-csrf-token`
+- logout ล้าง localStorage และ IndexedDB ชื่อ `dashboardDataDB`
+
+ห้ามเปลี่ยน cookie, CORS หรือ Axios credentials เพียงฝั่งเดียว ต้องตรวจ backend และ production domain พร้อมกัน
+
+## Feature สำคัญ
+
+Admin:
+
+- Dashboard และ Shelf Dashboard
+- จัดการ Shelf Template/SKU ด้วย drag and drop
+- Upload และ clear ข้อมูลแต่ละชุด
+- ตรวจและอนุมัติ POG Request
+- ตรวจสถานะ acknowledgment ของสาขา
+- จัดการ user และ branch
+
+Branch user:
+
+- ดูผังชั้นวางตาม `storecode`
+- ค้นหาและสแกน barcode
+- ส่ง/ยกเลิก POG Request
+- ลงทะเบียนสินค้าเข้าชั้น
+- รับทราบการเปลี่ยนผัง
+
+ชนิดไฟล์ upload กำหนดใน `src/features/admin/components/upload/uploadConfig.js` และ API อยู่ใน `src/api/admin/upload.jsx`
+
+## Production Build และ Deploy
+
+สร้าง production bundle:
+
+```powershell
+npm ci
+npm run build
+```
+
+ไฟล์ที่ deploy อยู่ใน `dist/`
+
+ตัวอย่าง production environment:
+
+```dotenv
+VITE_API_URL=https://api.example.com
+```
+
+Vite ฝังค่า environment ตอน build ดังนั้นเมื่อเปลี่ยน `VITE_API_URL` ต้อง build ใหม่
+
+ข้อกำหนดของ hosting:
+
+- ให้ทุก route ที่ไม่ใช่ static asset fallback ไป `index.html`
+- เปิด HTTPS
+- อนุญาต frontend origin ใน CORS ของ backend
+- ส่งไฟล์ใน `public/_headers` และ `public/_redirects` ไปกับ build
+- cache hashed assets ได้ยาว แต่ไม่ควร cache `index.html`
+
+Production ปัจจุบันของ backend อนุญาต origin:
+
+- `https://bmrpog.com`
+- `https://hq.bmrpog.com`
+
+หาก frontend อยู่คนละ site กับ API ระบบ cookie ต้องทำงานผ่าน HTTPS และ backend ต้องคง `SameSite=None; Secure`
+
+## Checklist ทดสอบก่อนส่งมอบ
+
+- `npm run lint` และ `npm run build`
+- เปิดหน้า login และตรวจรายการสาขา
+- login ด้วย admin และ branch user
+- refresh หน้าย่อยโดยตรงแล้วไม่เกิด 404
+- ทดสอบ token refresh หลัง reload browser
+- ทดสอบ upload ไฟล์ตัวอย่างและดู sync status
+- ทดสอบแก้ shelf และ POG request ตั้งแต่ส่งคำขอจน acknowledgment
+- ทดสอบกล้อง/สแกน barcode บนอุปกรณ์จริงผ่าน HTTPS
+- ตรวจ dashboard หลัง backend import ข้อมูล
+
+

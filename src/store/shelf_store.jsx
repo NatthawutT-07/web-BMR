@@ -7,7 +7,6 @@ import { getBranches } from "../api/admin/branch";
 import logger from "../utils/logger";
 import useBmrStore from "./bmr_store";
 
-// ใช้ id เป็นหลัก ถ้ามี (กัน index โยก)
 const getDeleteKey = (p) => {
   if (p?.id != null) return `id:${p.id}`;
   return `cmp:${p.branch_code}-${p.shelf_code}-${p.shelf_row_number}-${p.item_code}-${p.shelf_index_number}`;
@@ -19,7 +18,6 @@ const sameRow = (a, b) =>
 const useShelfStore = create(
   persist(
     (set, get) => ({
-      // --- STATE ---
       branches: [],
       shelfTemplate: [],
       product: [],
@@ -28,9 +26,6 @@ const useShelfStore = create(
       loading: false,
       actionLoading: false,
 
-      // 
-      //  BranchMain List
-      // 
       fetchBranches: async () => {
         const { branches } = get();
         if (branches.length > 0) return;
@@ -49,9 +44,6 @@ const useShelfStore = create(
         }
       },
 
-      // 
-      //  Data Sync Dates
-      // 
       fetchSyncDates: async () => {
         try {
           const res = await getSyncDates();
@@ -61,9 +53,6 @@ const useShelfStore = create(
         }
       },
 
-      // 
-      //  ShelfTemplate
-      // 
       fetchTemplate: async () => {
         const { shelfTemplate } = get();
         if (shelfTemplate.length > 0) return;
@@ -82,10 +71,6 @@ const useShelfStore = create(
         }
       },
 
-      // 
-      //  Product by BranchMain
-      // เปลี่ยนเป็น "replace ข้อมูลของสาขานั้น" กันของเก่าค้าง/ซ้อน
-      // 
       fetchProduct: async (branch_code) => {
         const accessToken = useBmrStore.getState().accessToken;
         if (!accessToken) return;
@@ -106,10 +91,6 @@ const useShelfStore = create(
         }
       },
 
-
-      // 
-      //  Add Product
-      // 
       handleAddProduct: async (newItem) => {
         set({ actionLoading: true });
 
@@ -127,14 +108,12 @@ const useShelfStore = create(
           };
 
           set((state) => {
-            // ถ้ามี id ก็กันซ้ำด้วย id
             if (updatedItem.id != null) {
               const exists = state.product.some((p) => p.id === updatedItem.id);
               if (exists) return state;
               return { product: [...state.product, updatedItem] };
             }
 
-            // fallback กันซ้ำแบบเดิม
             const key = `${updatedItem.branch_code}-${updatedItem.shelf_code}-${updatedItem.shelf_row_number}-${updatedItem.item_code}-${updatedItem.shelf_index_number}`;
             const exists = state.product.some(
               (p) =>
@@ -151,10 +130,6 @@ const useShelfStore = create(
         }
       },
 
-      // 
-      //  Delete Product
-      // ลบด้วย id เป็นหลัก + reindex ใน state ให้ตรง backend ทันที
-      // 
       handleDelete: async (productToDelete) => {
         set({ actionLoading: true });
 
@@ -164,10 +139,8 @@ const useShelfStore = create(
           set((state) => {
             const delKey = getDeleteKey(productToDelete);
 
-            // 1) remove
             const kept = state.product.filter((p) => getDeleteKey(p) !== delKey);
 
-            // 2) reindex เฉพาะ row เดียวกัน (ให้ index ใน state ตรงกับ backend ที่ reindex)
             const rowItems = kept
               .filter((p) => sameRow(p, productToDelete))
               .sort((a, b) => Number(a.shelf_index_number) - Number(b.shelf_index_number))
@@ -185,9 +158,6 @@ const useShelfStore = create(
         }
       },
 
-      // 
-      //  Update Product
-      // 
       handleUpdateProducts: async (updatedProducts) => {
         set({ actionLoading: true });
 
@@ -220,9 +190,7 @@ const useShelfStore = create(
           set({ actionLoading: false });
         }
       },
-      // 
-      //  UI STATE (Merged from store_shelf_manager_store)
-      // 
+
       selectedbranch_code: "",
       submittedbranch_code: "",
       selectedShelves: [],
@@ -261,7 +229,7 @@ const useShelfStore = create(
     {
       name: "shelf-store",
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ branches: state.branches }), // ตัด UI state ออก ไม่ต้องจำ
+      partialize: (state) => ({ branches: state.branches }),
     }
   )
 );

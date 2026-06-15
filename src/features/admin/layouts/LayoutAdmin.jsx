@@ -10,7 +10,6 @@ const LayoutAdmin = () => {
 
   const location = useLocation();
 
-  //  Detect screen size 
   useEffect(() => {
     const resizeHandler = () => {
       setIsMobile(window.innerWidth < 1024);
@@ -19,19 +18,18 @@ const LayoutAdmin = () => {
     return () => window.removeEventListener("resize", resizeHandler);
   }, []);
 
-  //  Auto-close sidebar when route changes 
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);
     } else {
-      setSidebarExpanded(false); // desktop: collapse back to icon
+      setSidebarExpanded(false);
     }
   }, [location.pathname, isMobile]);
 
   return (
     <div className="relative min-h-screen flex bg-gray-100 overflow-hidden min-w-0">
 
-      {/* 🔥 Mobile Hamburger button */}
+      {/* Mobile Hamburger button */}
       {isMobile && (
         <button
           onClick={() => setSidebarOpen(true)}
@@ -53,7 +51,7 @@ const LayoutAdmin = () => {
         closeMobile={() => setSidebarOpen(false)}
       />
 
-      {/* Desktop content shift (only when expanded) */}
+      {/* Desktop content shift */}
       <div
         className="flex-1 min-w-0 min-h-screen transition-all duration-300"
         style={{

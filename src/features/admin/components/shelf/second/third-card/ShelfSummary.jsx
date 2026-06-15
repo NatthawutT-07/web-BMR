@@ -6,7 +6,6 @@ import {
 } from "../../../../../../utils/shelfUtils";
 
 const ShelfSummary = React.memo(({ shelfProducts }) => {
-  // คำนวณผลรวมแบบ memo ลด re-render 80%+
   const summary = useMemo(() => {
     return {
       sales: calcTotalSales(shelfProducts),

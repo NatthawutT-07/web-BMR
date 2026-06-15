@@ -18,7 +18,6 @@ const BranchSelector = React.memo(
         try {
           const res = await api.get("/active-branches");
           if (Array.isArray(res.data)) {
-            // res.data is expected to be array of objects with { code, label }
             setActivebranch_codes(res.data.map(b => b.code));
           }
         } catch (err) {
@@ -39,9 +38,6 @@ const BranchSelector = React.memo(
       onRefreshProduct(selectedbranch_code);
     };
 
-
-
-    // เรียงสาขาตามตัวเลข (ST001, ST002, ST003...)
     const excludedBranches = [];
     const sortedBranches = [...(branches || [])]
       .filter((b) => !excludedBranches.includes(b.branch_code))
@@ -57,7 +53,6 @@ const BranchSelector = React.memo(
         onSubmit={handleSubmit}
         className="mb-4 bg-white p-4 rounded-lg shadow-sm w-full max-w-3xl mx-auto border border-slate-200"
       >
-        {/* Selector Row - all inline with wrap */}
         <div className="flex flex-wrap items-center gap-2">
           <label className="text-sm font-medium text-slate-700 whitespace-nowrap">
             เลือกสาขา:
@@ -88,7 +83,6 @@ const BranchSelector = React.memo(
             {okLocked ? "โหลดแล้ว" : "ดูข้อมูล"}
           </button>
 
-          {/* Action buttons inline */}
           {okLocked && selectedbranch_code && (
             <>
               <button
@@ -103,13 +97,6 @@ const BranchSelector = React.memo(
             </>
           )}
         </div>
-
-        {/* Selected branchMain info (subtle) */}
-        {/* {okLocked && selectedBranch && (
-          <div className="mt-2 text-xs text-slate-500">
-            กำลังดู: <span className="font-medium text-slate-700">{selectedBranch.branch_code} - {selectedBranch.branch_name}</span>
-          </div>
-        )} */}
       </form>
     );
   }

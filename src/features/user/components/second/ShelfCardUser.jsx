@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ShelfTableUser from "./ShelfTableUser";
 
-// รับ isPrinting + openNonce จาก parent (ShelfTemplate)
 const ShelfCardUser = React.memo(function ShelfCardUser({
   shelfTemplate,
   autoOpen,
@@ -22,26 +21,21 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
 
   const [isOpen, setIsOpen] = useState(false);
 
-  // ทำ animation แบบ "วัดความสูงจริง"
   const contentRef = useRef(null);
   const [maxH, setMaxH] = useState(0);
 
-  // auto open ตอนค้นหา (หน้าจอ)
   useEffect(() => {
     if (autoOpen) setIsOpen(true);
   }, [autoOpen]);
 
-  // auto open ตอน “กดไปหน้า shelf”
   useEffect(() => {
     if (openNonce) setIsOpen(true);
   }, [openNonce]);
 
-  // คำนวณ maxHeight ใหม่เมื่อเปิด/ปิด หรือเมื่อสินค้าข้างในเปลี่ยน หรือเมื่อเข้าโหมดพิมพ์
   useEffect(() => {
     const el = contentRef.current;
     if (!el) return;
 
-    // Use ResizeObserver to update max height dynamically if content changes size while open
     let observer;
     if (isOpen || isPrinting) {
       observer = new ResizeObserver(() => {
@@ -53,7 +47,6 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
       });
       observer.observe(el);
       
-      // Initial set
       requestAnimationFrame(() => {
         setMaxH(el.scrollHeight || 0);
       });
@@ -61,7 +54,6 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
       setMaxH(0);
     }
 
-    // Cleanup function
     return () => {
       if (observer) {
         observer.disconnect();
@@ -71,7 +63,6 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
 
   const toggleOpen = () => setIsOpen((o) => !o);
 
-  // เรนเดอร์ตารางตอน "เปิด" หรือ "กำลัง print"
   const shouldRenderTable = isOpen || isPrinting;
 
   return (

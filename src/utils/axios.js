@@ -3,7 +3,7 @@ import useBmrStore from "../store/bmr_store";
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL + "/api",
-  withCredentials: true, // ให้ส่ง cookie refresh token ไปด้วย
+  withCredentials: true,
 });
 
 const getCookieValue = (name) => {
@@ -15,9 +15,6 @@ const getCookieValue = (name) => {
   return match ? decodeURIComponent(match.split("=")[1] || "") : null;
 };
 
-// 
-//  REQUEST INTERCEPTOR
-// 
 api.interceptors.request.use((config) => {
   const token = useBmrStore.getState().accessToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -26,9 +23,6 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// 
-//   RESPONSE INTERCEPTOR
-// 
 let isRefreshing = false;
 let queue = [];
 let isSessionExpiredHandling = false;
@@ -37,7 +31,6 @@ const alertAndLogout = async () => {
   if (isSessionExpiredHandling) return;
   isSessionExpiredHandling = true;
 
-  // เคลียร์คิวที่ค้าง
   isRefreshing = false;
   queue = [];
 
@@ -53,7 +46,6 @@ const alertAndLogout = async () => {
   isSessionExpiredHandling = false;
 };
 
-// กันชน refresh loop
 const isRefreshEndpoint = (config) => {
   const url = config?.url || "";
   return url.includes("/refresh-token");
@@ -61,12 +53,9 @@ const isRefreshEndpoint = (config) => {
 
 api.interceptors.response.use(
   (res) => {
-    // If it's our standardized format, unwrap it
     if (res.data && res.data.success === true && res.data.data !== undefined) {
       const originalData = res.data;
-      // Replace res.data with the actual payload so components don't break
       res.data = originalData.data;
-      // Attach meta and message to the response object in case components need them
       res.meta = originalData.meta;
       res.message = originalData.message;
       res.success = true;
@@ -94,7 +83,6 @@ api.interceptors.response.use(
       }
 
       if (extractedMessage) {
-        // Handle if extractedMessage itself is a JSON string
         if (typeof extractedMessage === 'string' && extractedMessage.trim().startsWith('{')) {
           try {
             const innerParsed = JSON.parse(extractedMessage);
@@ -112,17 +100,13 @@ api.interceptors.response.use(
       error.message = error.response?.status ? "เกิดข้อผิดพลาด" : "เชื่อมต่อไม่ได้";
     }
 
-    // ถ้าไม่มี config หรือเป็น refresh เองแล้วพัง -> logout
     if (!original || isRefreshEndpoint(original)) {
       await alertAndLogout();
       return Promise.reject(error);
     }
-
-    // เงื่อนไข refresh: 401 และยังไม่ retry
     if (error?.response?.status === 401 && !original._retry) {
       original._retry = true;
 
-      // ถ้ามีการ refresh อยู่แล้ว -> เข้าคิวรอ token ใหม่
       if (isRefreshing) {
         return new Promise((resolve, reject) => {
           queue.push((newToken) => {
@@ -136,7 +120,6 @@ api.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        // ใช้ axios ตรง ๆ เพื่อไม่ให้ชน interceptor ของ api
         const res = await axios.post(
           (import.meta.env.VITE_API_URL || "") + "/api/refresh-token",
           {},
@@ -145,16 +128,13 @@ api.interceptors.response.use(
 
         const newToken = res.data.accessToken;
 
-        // เซ็ต token ใน store (memory)
         useBmrStore.getState().setAccessToken(newToken);
 
-        // ปล่อยคิว
         queue.forEach((cb) => cb(newToken));
         queue = [];
 
         isRefreshing = false;
 
-        // retry original
         original.headers.Authorization = `Bearer ${newToken}`;
         return api(original);
       } catch (err) {

@@ -54,14 +54,12 @@ export default function ShelfChangeNotification({ branch_code }) {
         }
     }, [branch_code]);
 
-    // Initial fetch and polling
     useEffect(() => {
         fetchLogs();
-        const interval = setInterval(fetchLogs, 60000); // Check every minute
+        const interval = setInterval(fetchLogs, 60000);
         return () => clearInterval(interval);
     }, [fetchLogs]);
 
-    // Fetch on open
     useEffect(() => {
         if (open) fetchLogs();
     }, [open, fetchLogs]);
@@ -185,7 +183,7 @@ export default function ShelfChangeNotification({ branch_code }) {
                                                 </div>
                                             </div>
 
-                                            {/* Position Info — Card style like search result */}
+                                            {/* Position Info */}
                                             {log.action === 'add' ? (
                                                 <div className="border-2 border-emerald-300 rounded-2xl overflow-hidden">
                                                     <div className="flex items-center gap-2 px-4 py-2 bg-emerald-50 border-b border-emerald-200">

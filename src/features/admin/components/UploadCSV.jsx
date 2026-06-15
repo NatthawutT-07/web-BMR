@@ -23,7 +23,6 @@ import {
 // download APIs
 import { downloadSKU, downloadTemplate } from "../../../api/admin/download";
 
-// sub-components
 import SyncStatusInfo from "./upload/SyncStatusInfo";
 import FileNotes from "./upload/FileNotes";
 import { FILE_TYPE_CONFIG } from "./upload/uploadConfig";
@@ -43,12 +42,7 @@ const UploadCSV = () => {
   const [selectedFileType, setSelectedFileType] = useState(null);
   const [files, setFiles] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [uploadInfo, setUploadInfo] = useState({
-    label: "",
-    current: 0,
-    total: 0,
-    fileName: "",
-  });
+
   const [progress, setProgress] = useState({
     filePercent: 0,
     overallPercent: 0,
@@ -101,7 +95,6 @@ const UploadCSV = () => {
 
   const fileInputRef = useRef(null);
 
-  // เลือกประเภทไฟล์
   const handleSelectFileType = (type) => {
     if (loading) return;
     setSelectedFileType(type);
@@ -110,7 +103,6 @@ const UploadCSV = () => {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  // โหลดไฟล์ XLSX (Dynamic Import → ลด bundle)
   const loadXLSX = async () => {
     const XLSX = await import("xlsx");
     return XLSX;
@@ -123,7 +115,6 @@ const UploadCSV = () => {
     setUploadResult(null);
   };
 
-  // Upload handler
   const handleFileUpload = async (uploadFn, label) => {
     if (!files.length) {
       toast.error(`Please select ${label} file`);
@@ -131,7 +122,7 @@ const UploadCSV = () => {
     }
 
     setLoading(true);
-    setUploadInfo({ label, current: 0, total: files.length, fileName: "" });
+
     setProgress({ filePercent: 0, overallPercent: 0 });
     setUploadResult(null);
 
@@ -139,12 +130,7 @@ const UploadCSV = () => {
       let finalRes = null;
       for (let i = 0; i < files.length; i += 1) {
         const file = files[i];
-        setUploadInfo({
-          label,
-          current: i + 1,
-          total: files.length,
-          fileName: file?.name || "",
-        });
+
         setProgress((prev) => ({ ...prev, filePercent: 0 }));
 
         const res = await uploadFn(file, (pct) => {
@@ -173,16 +159,15 @@ const UploadCSV = () => {
     }
 
     setLoading(false);
-    setUploadInfo({ label: "", current: 0, total: 0, fileName: "" });
+
     setProgress({ filePercent: 0, overallPercent: 0 });
   };
 
-  // DOWNLOAD XLSX (Lazy XLSX)
   const downloadXLSXFile = async (name, fetchApiFn, params = {}) => {
     try {
       setLoading(true);
 
-      const XLSX = await loadXLSX(); // โหลดเฉพาะตอนใช้
+      const XLSX = await loadXLSX(); 
       const data = await fetchApiFn(params);
 
       const sheet = XLSX.utils.json_to_sheet(data);
@@ -419,10 +404,9 @@ const UploadCSV = () => {
 
       {selectedFileType && renderFileUploadForm(selectedFileType)}
 
-      {/* Success results cards shown below */}
+      {/* Success results */}
       {!loading && uploadResult && (
         <div className="mt-6 space-y-6">
-          {/* Green Alert Box */}
           <div className="bg-green-50 border border-green-200 text-green-800 rounded-xl p-4 flex items-start gap-3">
             <svg
               className="w-5 h-5 text-green-500 mt-0.5 flex-shrink-0"
@@ -447,9 +431,7 @@ const UploadCSV = () => {
             </div>
           </div>
 
-          {/* Stats Cards (3 cards row) */}
           <div className="grid grid-cols-3 gap-4">
-            {/* Card 1: Total Rows */}
             <div className="bg-white border rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm">
               <span className="text-[11px] font-medium text-gray-500 text-center">จำนวนแถวทั้งหมด</span>
               <span className="text-2xl font-black text-gray-800 mt-1 tabular-nums">
@@ -457,7 +439,6 @@ const UploadCSV = () => {
               </span>
             </div>
 
-            {/* Card 2: Imported Successfully */}
             <div className="bg-teal-50 border border-teal-100 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm">
               <span className="text-[11px] font-medium text-teal-600 text-center">นำเข้าสำเร็จ</span>
               <span className="text-2xl font-black text-teal-600 mt-1 tabular-nums">
@@ -465,7 +446,6 @@ const UploadCSV = () => {
               </span>
             </div>
 
-            {/* Card 3: Duplicates Skipped */}
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-4 flex flex-col items-center justify-center shadow-sm">
               <span className="text-[11px] font-medium text-amber-700 text-center">ข้อมูลซ้ำ (ข้าม)</span>
               <span className="text-2xl font-black text-amber-600 mt-1 tabular-nums">

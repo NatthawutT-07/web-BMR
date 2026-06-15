@@ -1,4 +1,3 @@
-// PogRequestHistoryModal.jsx - Modal แสดงประวัติ Request (Compact Table)
 import React, { useCallback, useEffect, useState } from "react";
 import api from "../../../utils/axios";
 

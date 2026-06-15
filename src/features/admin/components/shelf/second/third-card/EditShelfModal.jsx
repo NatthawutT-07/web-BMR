@@ -22,9 +22,6 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
   const [editedProducts, setEditedProducts] = useState([]);
   const [activeId, setActiveId] = useState(null);
 
-  /* 
-   * เปิด Modal → โหลดข้อมูลทีเดียว
-   *  */
   useEffect(() => {
     if (isOpen) {
       setOriginalProducts(shelfProducts);
@@ -32,18 +29,12 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
     }
   }, [isOpen, shelfProducts]);
 
-  /* 
-   * SENSOR ใช้แค่ Pointer → เบาที่สุด
-   *  */
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
     })
   );
 
-  /* 
-   * Group by Row → memo ลดการคำนวณ 90%
-   *  */
   const groupedByRow = useMemo(() => {
     const groups = {};
     for (const p of editedProducts) {
@@ -54,15 +45,11 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
     return groups;
   }, [editedProducts]);
 
-  // Generate an array of row numbers from 1 to shelf_total_row
   const rowNumbers = useMemo(
     () => Array.from({ length: shelf_total_row }, (_, i) => i + 1),
     [shelf_total_row]
   );
 
-  /* 
-   * DRAG LOGIC (เลือกเฉพาะเฉพาะจุดที่จำเป็น)
-   *  */
   const handleDragStart = useCallback((event) => {
     setActiveId(event.active.id);
   }, []);
@@ -74,7 +61,6 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
     const activeId = active.id;
     const overId = over.id;
 
-    // Check if dragging over an empty row (the over.id will be a string like 'empty-row-1')
     if (typeof overId === 'string' && overId.startsWith('empty-row-')) {
       const targetRow = parseInt(overId.replace('empty-row-', ''), 10);
       
@@ -83,7 +69,7 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
         if (activeIndex === -1) return prev;
         
         const activeItem = prev[activeIndex];
-        if (activeItem.shelf_row_number === targetRow) return prev; // Already in the target row
+        if (activeItem.shelf_row_number === targetRow) return prev;
         
         const newProducts = [...prev];
         newProducts[activeIndex] = { ...activeItem, shelf_row_number: targetRow, shelf_index_number: 1 };
@@ -104,7 +90,6 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
       const overItem = prev[overIndex];
 
       if (activeItem.shelf_row_number !== overItem.shelf_row_number) {
-        // Moving to a different row
         const newProducts = [...prev];
         newProducts[activeIndex] = { ...activeItem, shelf_row_number: overItem.shelf_row_number };
         return newProducts;
@@ -136,7 +121,6 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
         const activeItem = edited[activeIndex];
         let targetRow = activeItem.shelf_row_number;
 
-        // If dropped on an empty row
         if (typeof overId === 'string' && overId.startsWith('empty-row-')) {
             targetRow = parseInt(overId.replace('empty-row-', ''), 10);
             edited[activeIndex] = { ...activeItem, shelf_row_number: targetRow };
@@ -145,7 +129,6 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
             edited[activeIndex] = { ...activeItem, shelf_row_number: targetRow };
         }
 
-        // Reorder within the row
         const sameRow = edited
           .filter(p => p.shelf_row_number === targetRow)
           .sort((a, b) => a.shelf_index_number - b.shelf_index_number);
@@ -167,7 +150,6 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
             reordered = sameRow.map((p, i) => ({...p, shelf_index_number: i+1}));
         }
 
-        // Re-index source row (and any other row) so indices stay sequential
         const otherProducts = edited.filter(p => p.shelf_row_number !== targetRow);
         const otherByRow = {};
         for (const p of otherProducts) {
@@ -191,15 +173,11 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
     []
   );
 
-  // For the DragOverlay
   const activeProduct = useMemo(() => {
     if (!activeId) return null;
     return editedProducts.find((p) => p.item_code === activeId);
   }, [activeId, editedProducts]);
 
-  /* 
-   * SAVE / CANCEL
-   *  */
   const handleSave = useCallback(() => onSave(editedProducts), [editedProducts, onSave]);
   const handleCancel = useCallback(() => {
     setEditedProducts(originalProducts);
@@ -268,7 +246,7 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
                                 <SortableItem
                                     key={prod.item_code}
                                     item={prod}
-                                    index={index}
+                                    shelf_index_number={index}
                                 />
                                 ))}
                             </div>
@@ -286,7 +264,7 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
                 <div className="opacity-90 shadow-xl ring-2 ring-green-500 scale-105 cursor-grabbing z-50">
                   <SortableItem
                     item={activeProduct}
-                    index={activeProduct.shelf_index_number - 1} // Just for visual in overlay
+                    shelf_index_number={activeProduct.shelf_index_number - 1} 
                     isDragging={true}
                   />
                 </div>

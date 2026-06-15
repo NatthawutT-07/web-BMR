@@ -1,7 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Store, LayoutDashboard, ClipboardList, Eye, FileUp, Users } from "lucide-react";
-// import ShowDashboard from "../../components/admin/ShowDashboard";
 
 const Dashboard = () => {
   const navigate = useNavigate();

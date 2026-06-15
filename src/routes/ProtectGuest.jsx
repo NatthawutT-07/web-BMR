@@ -8,19 +8,16 @@ const ProtectGuest = ({ element }) => {
 
   const hasHydrated = useBmrStore((s) => s.hasHydrated);
 
-  // รอ hydrate ให้เสร็จก่อน (กันกระพริบ)
   if (!hasHydrated) {
     return <LoadingToRedirect />;
   }
 
-  // ถ้ามี token + user แล้ว → ส่งตาม role
   if (token && user) {
     if (user.role === "admin") return <Navigate to="/sys-ahFvi1hmPw3iKCn" replace />;
     if (user.role === "user") return <Navigate to={`/xY7zA3bC9d/${user.storecode}`} replace />;
     return <Navigate to="/" replace />;
   }
 
-  // ยังไม่ล็อกอิน → ให้เข้า login ได้ปกติ
   return element;
 };
 

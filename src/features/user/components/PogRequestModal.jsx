@@ -1,4 +1,3 @@
-// PogRequestModal.jsx - Modal สำหรับสร้าง Request เปลี่ยนแปลง POG
 import React, { useCallback, useState, useMemo, useEffect } from "react";
 import api from "../../../utils/axios";
 
@@ -29,33 +28,26 @@ export default function PogRequestModal({
     const [toIndex, setToIndex] = useState("");
     const [note, setNote] = useState("");
     const [loading, setLoading] = useState(false);
-    const [submitted, setSubmitted] = useState(false); // ป้องกัน double-click
+    const [submitted, setSubmitted] = useState(false);
     const [error, setError] = useState("");
     const [success, setSuccess] = useState(false);
 
-    // LocalStorage key สำหรับจำค่า ADD position ล่าสุด
     const LAST_ADD_POSITION_KEY = `pog_last_add_position_${branch_code}`;
-
-    // Dropdown state
     const [isShelfDropdownOpen, setIsShelfDropdownOpen] = useState(false);
 
-    // State สำหรับ shelves ที่โหลดจาก API
     const [shelves, setShelves] = useState([]);
     const [shelvesLoading, setShelvesLoading] = useState(false);
     const [branchNameFromApi, setBranchNameFromApi] = useState("");
 
-    // ใช้ shelves จาก API (ถูก merge กับ initialShelves แล้ว)
     const availableShelves = shelves;
     const branchName = initialBranchName || branchNameFromApi;
 
-    // โหลด shelves จาก API
     const fetchShelves = useCallback(async () => {
         setShelvesLoading(true);
         try {
             const res = await api.get("/branch-shelves", { params: { branch_code } });
             const apiShelves = res.data?.shelves || [];
 
-            // Merge API data กับ initialShelves
             const merged = apiShelves.map(apiShelf => {
                 const propsShelf = initialShelves.find(s => s.shelf_code === apiShelf.shelf_code);
                 return {
@@ -74,41 +66,34 @@ export default function PogRequestModal({
         }
     }, [branch_code, initialShelves]);
 
-    // โหลดข้อมูลครั้งแรกเมื่อเปิด Modal
     useEffect(() => {
         if (!open || !branch_code) return;
         fetchShelves();
     }, [open, branch_code, initialShelves, fetchShelves]);
 
-    // ระบบ Auto-Refresh เมื่อไม่ได้ใช้งาน (Idle Timeout = 5 นาที)
     const lastActivityRef = React.useRef(Date.now());
     const [isIdle, setIsIdle] = useState(false);
 
     useEffect(() => {
         if (!open) return;
 
-        // อัปเดตเวลาใช้งานล่าสุด
         const handleActivity = () => {
             lastActivityRef.current = Date.now();
             if (isIdle) setIsIdle(false);
         };
 
-        // จับ Event การขยับเมาส์ พิมพ์ หรือคลิก
         window.addEventListener('mousemove', handleActivity);
         window.addEventListener('keydown', handleActivity);
         window.addEventListener('click', handleActivity);
         window.addEventListener('scroll', handleActivity);
 
-        // เช็ค Idle ทุกๆ 1 นาที
         const checkIdleInterval = setInterval(() => {
             const now = Date.now();
             const inactiveDuration = now - lastActivityRef.current;
 
-            // ถ้าปล่อยทิ้งไว้เกิน 5 นาที (300,000 ms) ให้ดึงข้อมูลใหม่
             if (inactiveDuration >= 5 * 60 * 1000) {
-                // console.log("Idle detected, refreshing shelf data...");
                 fetchShelves();
-                lastActivityRef.current = now; // รีเซ็ตเวลาเพื่อไม่ให้โหลดถี่เกินไป
+                lastActivityRef.current = now;
                 setIsIdle(true);
             }
         }, 60 * 1000);
@@ -122,7 +107,6 @@ export default function PogRequestModal({
         };
     }, [open, branch_code, fetchShelves, isIdle]);
 
-    // คำนวณ available rows สำหรับ shelf ที่เลือก
     const selectedShelfData = useMemo(() => {
         if (!toShelf) return null;
         return availableShelves.find(s => s.shelf_code === toShelf);
@@ -134,24 +118,20 @@ export default function PogRequestModal({
         return Array.from({ length: shelf_total_row }, (_, i) => i + 1);
     }, [selectedShelfData]);
 
-    // คำนวณ available index สำหรับ row ที่เลือก (current items + 1 for new)
     const availableIndices = useMemo(() => {
         if (!selectedShelfData || !toRow) return [];
 
-        // นับจำนวน items ใน row นี้
         const items = selectedShelfData.items || [];
         const rowNum = Number(toRow);
         const itemsInRow = items.filter(item => Number(item.shelf_row_number) === rowNum);
         const maxIndex = itemsInRow.length;
 
-        // แสดง 1 ถึง maxIndex+1 (new position)
         return Array.from({ length: maxIndex + 1 }, (_, i) => ({
             value: i + 1,
             label: i + 1 === maxIndex + 1 ? `${i + 1} (ตำแหน่งใหม่)` : String(i + 1)
         }));
     }, [selectedShelfData, toRow]);
 
-    // ตรวจสอบว่า barcode นี้มีอยู่ในสาขาแล้วหรือไม่ (1 SKU = 1 สาขา)
     const existingLocationForBarcode = useMemo(() => {
         if (!barcode) return null;
         const bc = String(barcode).trim();
@@ -171,13 +151,8 @@ export default function PogRequestModal({
         return null;
     }, [barcode, availableShelves]);
 
-    // Check if trying to add duplicate
     const isDuplicateAdd = action === "add" && existingLocationForBarcode !== null;
-
-    // Check if product has current position (for delete validation)
     const hasCurrentPosition = Boolean(currentShelf && currentRow && currentIndex);
-
-    // Check if trying to move to same position
     const isSamePosition = useMemo(() => {
         if (action !== "move" || !toShelf || !toRow || !toIndex) return false;
         return (
@@ -195,21 +170,17 @@ export default function PogRequestModal({
         setNote("");
         setError("");
         setSuccess(false);
-        setSubmitted(false); // Reset submitted state
+        setSubmitted(false);
     };
 
-    // Reset action when initialAction changes
     useEffect(() => {
         if (initialAction) setAction(initialAction);
     }, [initialAction]);
 
-    // โหลดค่า position ล่าสุดจาก localStorage เมื่อ action = add
-    // เซ็ตว่างเมื่อ action = move
     useEffect(() => {
         if (!open) return;
 
         if (action === "add") {
-            // โหลดค่าที่เคยใช้ล่าสุดสำหรับ ADD
             try {
                 const saved = localStorage.getItem(LAST_ADD_POSITION_KEY);
                 if (saved) {
@@ -217,13 +188,12 @@ export default function PogRequestModal({
 
                     if (shelf) setToShelf(shelf);
                     if (row) setToRow(String(row));
-                    if (index) setToIndex(String(index));
+                    if (shelf_index_number) setToIndex(String(shelf_index_number));
                 }
             } catch (e) {
                 console.error("Failed to load last position:", e);
             }
         } else if (action === "move") {
-            // MOVE เซ็ตว่างเสมอ
             setToShelf("");
             setToRow("");
             setToIndex("");
@@ -236,32 +206,26 @@ export default function PogRequestModal({
     };
 
     const handleSubmit = async () => {
-        // ป้องกัน double-click: ถ้ากำลังโหลดหรือส่งไปแล้ว ไม่ทำอะไร
         if (loading || submitted) return;
 
         if (!action) {
             setError("กรุณาเลือกประเภทการเปลี่ยนแปลง");
             return;
         }
-
         if ((action === "add" || action === "move") && (!toShelf || !toRow || !toIndex)) {
             setError("กรุณาระบุตำแหน่งปลายทางให้ครบถ้วน");
             return;
         }
-
-        // Block duplicate add
         if (isDuplicateAdd) {
             setError(`สินค้านี้มีอยู่ในสาขาแล้ว (${existingLocationForBarcode?.shelf_code} / ชั้น ${existingLocationForBarcode?.shelf_row_number} / ลำดับ ${existingLocationForBarcode?.shelf_index_number}) ไม่สามารถเพิ่มซ้ำได้`);
             return;
         }
-
-        // Block move to same position
         if (isSamePosition) {
             setError("ตำแหน่งปลายทางเหมือนกับตำแหน่งปัจจุบัน กรุณาเลือกตำแหน่งอื่น");
             return;
         }
 
-        setSubmitted(true); // ป้องกัน double-click
+        setSubmitted(true);
         setLoading(true);
         setError("");
 
@@ -283,7 +247,6 @@ export default function PogRequestModal({
 
             setSuccess(true);
 
-            // บันทึก position ล่าสุดสำหรับ ADD เพื่อใช้เป็นค่าเริ่มต้นครั้งถัดไป
             if (action === "add" && toShelf && toRow && toIndex) {
                 try {
                     localStorage.setItem(LAST_ADD_POSITION_KEY, JSON.stringify({
@@ -358,7 +321,6 @@ export default function PogRequestModal({
                                         const isDeleteDisabled = (opt.value === "delete" && !existingLocationForBarcode) || !hasCurrentPosition;
                                         const isDisabled = isAddDisabled || isMoveDisabled || isDeleteDisabled;
                                         
-                                        // ถ้า action ปัจจุบันตรงกับปุ่มนี้ ให้มันดูเหมือน active เสมอ แม้ว่ามันจะถูก disable จากเงื่อนไขอื่น
                                         const isActive = action === opt.value;
 
                                         return (
@@ -366,7 +328,7 @@ export default function PogRequestModal({
                                                 key={opt.value}
                                                 type="button"
                                                 onClick={() => !isDisabled && setAction(opt.value)}
-                                                disabled={isDisabled && !isActive} // ไม่ disable ถ้ามัน active อยู่แล้วเพื่อให้เห็นสีชัดเจน
+                                                disabled={isDisabled && !isActive}
                                                 className={cx(
                                                     "w-full text-left p-3 rounded-xl border-2 transition",
                                                     isActive
@@ -408,7 +370,7 @@ export default function PogRequestModal({
                                             </div>
                                         ) : availableShelves.length === 0 ? (
                                             <div className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-slate-50 text-slate-700">
-                                                ⚠️ ไม่พบข้อมูลชั้นวางในสาขานี้
+                                                ไม่พบข้อมูลชั้นวางในสาขานี้
                                             </div>
                                         ) : (
                                             <div className="relative">
@@ -519,7 +481,7 @@ export default function PogRequestModal({
                                         )}>
                                             {isSamePosition ? (
                                                 <>
-                                                    ⚠️ <strong>ตำแหน่งเดิม!</strong> กรุณาเลือกตำแหน่งอื่น
+                                                    <strong>ตำแหน่งเดิม!</strong> กรุณาเลือกตำแหน่งอื่น
                                                 </>
                                             ) : (
                                                 <>

@@ -1,20 +1,13 @@
-
-// ShelfTemplate.jsx
 import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import useBmrStore from "../../../store/bmr_store";
 import useStockMetaStore from "../../../store/stock_meta_store";
 import { getTemplateAndProduct } from "../../../api/users/home";
 
-// Lazy load component หนัก ๆ
 const ShelfCardUser = React.lazy(() => import("./second/ShelfCardUser"));
 const ShelfFilterUser = React.lazy(() => import("./ShelfFilterUser"));
 
-// แยกบาร์โค้ดออกไปไฟล์ข้าง ๆ
 import TemplateBarcodePanel from "./TemplateBarcodePanel";
 
-/* 
-   Helpers: Thai/BKK datetime
- */
 const fmtThaiDateTime = (value) => {
   if (!value) return "-";
   const d = new Date(value);
@@ -51,33 +44,22 @@ const ShelfTemplate = () => {
   const [loading, setLoading] = useState(false);
   const [searchText, setSearchText] = useState("");
   const [searchHint, setSearchHint] = useState("");
-
-  // โหมด 2 ปุ่ม
-  const [mode, setMode] = useState("shelf"); // "barcode" | "shelf"
-
-  // แสดงรูปภาพเต็มจอ
+  const [mode, setMode] = useState("shelf");
   const [isFullscreen, setIsFullscreen] = useState(false);
-
-  //  Stock Meta (ยิงครั้งเดียว) 
   const stockUpdatedAt = useStockMetaStore((s) => s.updatedAt);
   const stockStatus = useStockMetaStore((s) => s.status);
   const loadStockMetaOnce = useStockMetaStore((s) => s.loadOnce);
-
-  //  Print modal + print target 
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [printPick, setPrintPick] = useState([]);
   const [printAll, setPrintAll] = useState(true);
-  const [printTargetShelves, setPrintTargetShelves] = useState(null); // null=all
+  const [printTargetShelves, setPrintTargetShelves] = useState(null);
   const [isPrinting, setIsPrinting] = useState(false);
 
-  // ใช้ scroll ไป shelf (ตอนมาจาก barcode -> ไป shelf)
   const shelfRefs = useRef({});
   const [jumpShelfCode, setJumpShelfCode] = useState(null);
 
-  // สั่ง “เปิดการ์ด shelf” 1 ครั้ง เมื่อมาจาก barcode
   const [openShelfOnce, setOpenShelfOnce] = useState({ code: null, nonce: 0 });
 
-  // โหลด ShelfTemplate + Product
   useEffect(() => {
     if (!storecode) return;
 
@@ -99,13 +81,11 @@ const ShelfTemplate = () => {
     load();
   }, [storecode]);
 
-  // โหลด stock meta ครั้งเดียวต่อการเปิดเว็บ
   useEffect(() => {
     if (!storecode) return;
     loadStockMetaOnce?.();
   }, [storecode, loadStockMetaOnce]);
 
-  // จับเหตุการณ์ print เพื่อ reset state หลังพิมพ์
   useEffect(() => {
     const before = () => setIsPrinting(true);
     const after = () => {
@@ -131,7 +111,6 @@ const ShelfTemplate = () => {
     };
   }, []);
 
-  // scroll ไป shelf card หลังสลับมา shelf
   useEffect(() => {
     if (mode !== "shelf") return;
     if (!jumpShelfCode) return;
@@ -142,8 +121,6 @@ const ShelfTemplate = () => {
       setJumpShelfCode(null);
     });
   }, [mode, jumpShelfCode]);
-
-  // Group ตาม shelf_code
   const groupedShelves = useMemo(() => {
     if (!data.length) return [];
 
@@ -173,7 +150,6 @@ const ShelfTemplate = () => {
     });
   }, [data]);
 
-  // หาสินค้าที่ซ้ำกันในสาขานี้
   const duplicateCodes = useMemo(() => {
     const counts = {};
     data.forEach(p => {
@@ -189,7 +165,6 @@ const ShelfTemplate = () => {
     return dupes;
   }, [data]);
 
-  // Filter + Search
   const displayedShelves = useMemo(() => {
     const qRaw = searchText.trim();
     const q = qRaw.toLowerCase();
@@ -260,7 +235,7 @@ const ShelfTemplate = () => {
   return (
     <div className="min-h-screen bg-slate-100 print:bg-white">
       <div className="max-w-8xl mx-auto px-3 sm:px-4 lg:px-8 py-1 sm:py-1 space-y-2 sm:space-y-2">
-        {/*  PRINT HEADER (แสดงเฉพาะตอนพิมพ์)  */}
+        {/*  PRINT HEADER */}
         <div className="hidden print:block pb-1 mb-1">
           <p className="text-xs sm:text-sm text-slate-500">
             สาขา: <span className="font-semibold text-slate-700">{storecode || "-"}</span>
@@ -275,7 +250,7 @@ const ShelfTemplate = () => {
           </p>
         </div>
 
-        {/* HEADER + ปุ่มโหมด + ปุ่ม PRINT */}
+        {/* HEADER */}
         <header className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="flex items-center gap-2 print:hidden">
             <p className="text-xs sm:text-sm text-slate-500">
@@ -284,7 +259,6 @@ const ShelfTemplate = () => {
             </p>
           </div>
 
-          {/* ปุ่มเลือกโหมด */}
           <div className="flex items-center gap-3 print:hidden">
             <div className="inline-flex rounded-xl border bg-white p-1 shadow-sm">
               <button
@@ -437,7 +411,7 @@ const ShelfTemplate = () => {
               shelf_code: s.shelf_code,
               shelf_name: s.shelf_name,
               shelf_total_row: s.shelf_total_row,
-              items: s.shelfProducts // for calculating available indices
+              items: s.shelfProducts
             }))}
             onGoShelf={(shelf_code) => {
               setMode("shelf");
@@ -445,22 +419,19 @@ const ShelfTemplate = () => {
               setSearchText("");
               setJumpShelfCode(shelf_code);
 
-              // สั่งเปิดการ์ด shelf นี้ 1 ครั้ง
               setOpenShelfOnce({ code: shelf_code, nonce: Date.now() });
             }}
           />
         )}
 
-        {/* โหมด shelf */}
         {mode === "shelf" && (
           <>
 
-            {/* SUMMARY + IMAGE */}
             {!loading && groupedShelves.length > 0 && (
               <section className="w-full print:hidden">
                 <div className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border flex flex-col xl:flex-row gap-6 mx-auto w-full max-w-[1400px]">
 
-                  {/* LEFT: BranchMain Image */}
+                  {/* LEFT */}
                   <div
                     className="flex justify-center xl:justify-start xl:w-[260px] flex-shrink-0 cursor-pointer transition-transform hover:scale-105 active:scale-95"
                     onClick={() => setIsFullscreen(true)}
@@ -488,7 +459,7 @@ const ShelfTemplate = () => {
                     </div>
                   )}
 
-                  {/* CENTER: Shelf Structure List */}
+                  {/* CENTER */}
                   <div className="flex-1 flex flex-col">
                     <div
                       className="bg-gradient-to-b from-emerald-50 to-white border-2 border-emerald-200 rounded-xl p-4 shadow-inner 
@@ -521,7 +492,6 @@ const ShelfTemplate = () => {
                               </span>
                             </div>
 
-                            {/* รายการแต่ละ Row */}
                             <div className="mt-2 space-y-1.5">
                               {Array.from({ length: shelf.shelf_total_row }).map((_, idx) => {
                                 const shelf_row_number = idx + 1;
@@ -562,7 +532,7 @@ const ShelfTemplate = () => {
                     </div>
                   </div>
 
-                  {/* RIGHT: Filter & Search Panel */}
+                  {/* RIGHT */}
                   <div className="xl:w-[320px] 2xl:w-[380px] flex-shrink-0 flex flex-col gap-4">
                     <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 h-full">
                       <div className="space-y-4">

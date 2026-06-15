@@ -3,7 +3,7 @@ import api from "../../../utils/axios";
 import { Users, Store, Pencil, Trash2, Shield, ShieldCheck, Check, X } from "lucide-react";
 
 const Management = () => {
-  const [activeTab, setActiveTab] = useState("users"); // "users" or "branches"
+  const [activeTab, setActiveTab] = useState("users");
 
   // Users state
   const [users, setUsers] = useState([]);
@@ -26,7 +26,7 @@ const Management = () => {
     }
   }, [activeTab]);
 
-  // --- Users Management ---
+  //  Users Management 
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
@@ -96,7 +96,7 @@ const Management = () => {
     }
   };
 
-  // --- Branches Management ---
+  //  Branches Management 
   const fetchBranches = async () => {
     setLoadingBranches(true);
     try {

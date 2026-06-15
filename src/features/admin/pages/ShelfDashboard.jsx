@@ -38,7 +38,6 @@ const ShelfDashboard = () => {
   const [shelfSalesError, setShelfSalesError] = useState({});
 
   const loadSummary = useCallback(async (forceRefresh = false) => {
-    // Skip if already loaded and not forcing a refresh
     if (!forceRefresh && hasLoadedInitialData) return;
 
     setLoading(true);

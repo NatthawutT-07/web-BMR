@@ -12,28 +12,22 @@ import useShelfStore from "../../../../store/shelf_store";
 const ShelfCard = lazy(() => import("./second/ShelfCard"));
 
 
-// lazy load components
 import ShelfHeader from "./components/ShelfHeader";
 import ShelfDashboard from "./components/ShelfDashboard";
 import ShelfSearchFilter from "./components/ShelfSearchFilter";
 import ShelfImageOverlay from "./components/ShelfImageOverlay";
 import ShelfImageThumb from "./components/ShelfImageThumb";
 
-/* 
- * Helper: ช่วงเวลา 90 วันย้อนหลัง (ตามเวลาไทย, yesterday = end)
- *  */
 const getBangkok90DaysRange = () => {
   const now = new Date();
   const bangkokNow = new Date(
     now.toLocaleString("en-US", { timeZone: "Asia/Bangkok" })
   );
 
-  // yesterday = end
   const end = new Date(bangkokNow);
   end.setDate(end.getDate() - 1);
   end.setHours(23, 59, 59, 999);
 
-  // start = yesterday - 89 วัน (รวมทั้งหมด 90 วัน)
   const start = new Date(end);
   start.setDate(start.getDate() - 89);
   start.setHours(0, 0, 0, 0);
@@ -61,13 +55,11 @@ const ShelfManager = () => {
 
   const captureRef = useRef(null);
 
-  //  ช่วงเวลายอดขาย 90 วัน (ตาม logic backend)
   const { start: salesStart, end: salesEnd } = useMemo(
     () => getBangkok90DaysRange(),
     []
   );
 
-  //  ใช้เฉพาะ product ของ "สาขาที่กด OK แล้ว"
   const branchProduct = useMemo(() => {
     if (!submittedbranch_code) return [];
     return (product || []).filter(
@@ -75,7 +67,6 @@ const ShelfManager = () => {
     );
   }, [product, submittedbranch_code]);
 
-  //  หาสินค้าที่ซ้ำกันในระดับสาขา
   const duplicateCodes = useMemo(() => {
     const counts = {};
     branchProduct.forEach(p => {
@@ -92,7 +83,6 @@ const ShelfManager = () => {
     return dupes;
   }, [branchProduct]);
 
-  // initial load data
   useEffect(() => {
     if (!accessToken) return;
     if (!hasLoadedInitialData) {

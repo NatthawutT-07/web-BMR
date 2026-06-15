@@ -2,7 +2,6 @@ import React, { useMemo } from "react";
 
 const ShelfFilter = React.memo(
   ({ shelves, selectedShelves, onToggle, onClear }) => {
-    // unique shelves เฉพาะตอน shelves เปลี่ยน
     const uniqueShelves = useMemo(() => [...new Set(shelves)], [shelves]);
 
     return (

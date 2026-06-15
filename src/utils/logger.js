@@ -1,9 +1,4 @@
-// src/utils/logger.js
-
 const isDev = import.meta.env.MODE !== "production";
-// localStorage.setItem("debug", "true");
-
-
 const logger = {
   log: (...args) => {
     if (isDev) console.log(...args);

@@ -6,7 +6,6 @@ import HeaderAdmin from '../components/nav/HeaderAdmin'
 const ShelfTemplate = () => {
     return (
         <div>
-            {/* <HeaderAdmin /> */}
             <div>
                 <ShelfManager />
 

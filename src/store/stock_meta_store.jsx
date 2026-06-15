@@ -1,11 +1,6 @@
-// src/store/stock_meta_store.jsx
 import { create } from "zustand";
 import { getStockLastUpdate } from "../api/users/home";
 
-/**
- * ฟอร์แมตเวลาไทย: "23/12/2568 13:45"
- * - ใช้ th-TH + Buddhist calendar + timeZone Asia/Bangkok
- */
 export const fmtThaiDateTime = (v) => {
   if (!v) return "-";
   const d = new Date(v);
@@ -31,18 +26,15 @@ export const fmtThaiDateTime = (v) => {
 };
 
 const useStockMetaStore = create((set, get) => ({
-  updatedAt: null, // ISO string หรือ Date string ที่ backend ส่งมา
+  updatedAt: null,
   rowCount: null,
   status: "idle", // idle | loading | loaded | error
   error: null,
 
-  // ยิงแค่ครั้งเดียวต่อ "การเปิดเว็บรอบนั้น" (จนกว่าจะ refresh)
   loadedOnce: false,
 
-  // กัน async ซ้อน (เผื่อ StrictMode หรือหลาย component เรียกพร้อมกัน)
   _inFlight: false,
 
-  // call หลัก
   loadOnce: async () => {
     const { loadedOnce, status, _inFlight } = get();
     if (loadedOnce || status === "loading" || _inFlight) return;
@@ -50,7 +42,7 @@ const useStockMetaStore = create((set, get) => ({
     set({ status: "loading", error: null, _inFlight: true });
 
     try {
-      const meta = await getStockLastUpdate(); // { updatedAt, rowCount }
+      const meta = await getStockLastUpdate();
       set({
         updatedAt: meta?.updatedAt ?? null,
         rowCount: meta?.rowCount ?? null,
@@ -70,9 +62,7 @@ const useStockMetaStore = create((set, get) => ({
     }
   },
 
-  // เผื่อคุณอยาก “รีเฟรชจริง ๆ” จากปุ่ม/หน้า admin
   refresh: async () => {
-    // ตั้งให้เป็น loading และกันซ้อน
     set({ status: "loading", error: null, loadedOnce: false, _inFlight: true });
 
     try {
@@ -96,7 +86,6 @@ const useStockMetaStore = create((set, get) => ({
     }
   },
 
-  // ใช้ได้ถ้าต้องการ reset ตอน logout
   reset: () =>
     set({
       updatedAt: null,

@@ -5,7 +5,6 @@ const DeleteConfirmModal = React.memo(
         const [deleting, setDeleting] = useState(false);
         const [deleted, setDeleted] = useState(false);
 
-        // Reset states when modal opens/closes
         useEffect(() => {
             if (isOpen) {
                 setDeleting(false);
@@ -18,7 +17,6 @@ const DeleteConfirmModal = React.memo(
             try {
                 await onConfirm?.();
                 setDeleted(true);
-                // Auto close after showing success
                 setTimeout(() => {
                     onClose?.();
                 }, 1000);
@@ -34,9 +32,8 @@ const DeleteConfirmModal = React.memo(
             <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
                 <div className="bg-white rounded-lg p-6 max-w-md w-full shadow-lg">
                     {deleted ? (
-                        // Success state
                         <div className="text-center py-4">
-                            <div className="text-4xl mb-3">✅</div>
+                            <div className="text-4xl mb-3"></div>
                             <h3 className="text-lg font-semibold text-emerald-700">
                                 ลบสำเร็จแล้ว
                             </h3>
@@ -45,7 +42,6 @@ const DeleteConfirmModal = React.memo(
                             </p>
                         </div>
                     ) : (
-                        // Confirm state
                         <>
                             <h3 className="text-lg font-semibold text-gray-900 mb-2">
                                 Confirm Delete

@@ -7,7 +7,7 @@ import {
     Store, LayoutGrid, Layers, ArrowLeft, ChevronRight
 } from "lucide-react";
 
-// --- Constants & Styles ---
+// Constants & Styles
 
 const STATUS_STYLES = {
     pending: {
@@ -53,7 +53,7 @@ const formatDate = (dateStr) => {
     });
 };
 
-// --- Sub-Components ---
+// Sub-Components
 
 const StatCard = ({ count, type, active, onClick }) => {
     const style = STATUS_STYLES[type];
@@ -86,7 +86,7 @@ const StatCard = ({ count, type, active, onClick }) => {
     );
 };
 
-// --- Modals ---
+// Modals
 
 const RejectReasonModal = ({ isOpen, onClose, onConfirm, count = 1 }) => {
     const [reason, setReason] = useState("");
@@ -276,7 +276,7 @@ const EditPositionModal = ({ isOpen, onClose, item, onSave }) => {
     );
 };
 
-// --- Main Page ---
+// Main Page
 
 export default function PogRequests() {
     const [loading, setLoading] = useState(false);
@@ -286,11 +286,10 @@ export default function PogRequests() {
     const [filterShelf, setFilterShelf] = useState("");
     const [filterRow, setFilterRow] = useState("");
     const [updating, setUpdating] = useState(null);
-    const [stats, setStats] = useState({ pending: 0, rejected: 0, completed: 0 }); // API stats
-    const [branchStats, setBranchStats] = useState({}); // Branch-level pending stats
-    const [branches, setBranches] = useState([]); // Dynamic branches from API
+    const [stats, setStats] = useState({ pending: 0, rejected: 0, completed: 0 });
+    const [branchStats, setBranchStats] = useState({});
+    const [branches, setBranches] = useState([]);
 
-    // View mode: 'summary' = branchMain cards, 'detail' = single branchMain requests
     const [viewMode, setViewMode] = useState('summary');
     const [selectedBranch, setSelectedBranch] = useState(null);
 
@@ -314,11 +313,9 @@ export default function PogRequests() {
         }
     }, []);
 
-    // Load summary stats (for landing page)
     const loadSummary = useCallback(async () => {
         setLoading(true);
         try {
-            // Add timestamp to prevent HTTP 304 caching
             const res = await api.get("/pog-requests", { params: { limit: 1, _t: Date.now() } });
             if (res.meta?.stats) setStats(res.meta.stats);
             if (res.meta?.branchStats) setBranchStats(res.meta.branchStats);
@@ -329,7 +326,6 @@ export default function PogRequests() {
         }
     }, []);
 
-    // Load detail data for selected branchMain
     const loadData = useCallback(async () => {
         if (viewMode === 'summary' || !selectedBranch) return;
 
@@ -370,7 +366,6 @@ export default function PogRequests() {
         setPage(1);
     }, [filterStatus, filterAction, filterShelf, filterRow]);
 
-    // Enter branchMain detail view
     const enterBranchDetail = (branch_code) => {
         setSelectedBranch(branch_code);
         setViewMode('detail');
@@ -378,7 +373,6 @@ export default function PogRequests() {
         setSelectedIds(new Set());
     };
 
-    // Back to summary view
     const backToSummary = () => {
         setViewMode('summary');
         setSelectedBranch(null);
@@ -388,7 +382,6 @@ export default function PogRequests() {
 
     const availableRows = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-    // Helper to get branchMain name
     const getBranchName = (code) => {
         const b = branches.find(b => b.branch_code === code);
         return b ? b.branch_name : code;
@@ -396,7 +389,6 @@ export default function PogRequests() {
 
     const visibleData = data;
 
-    // Status Updates
     const updateStatus = async (id, newStatus, reason = null) => {
         setUpdating(id);
         try {
@@ -434,7 +426,6 @@ export default function PogRequests() {
             const res = await api.post("/pog-requests/bulk-approve", { ids });
             if (res.ok) {
                 setData(prev => prev.map(d => ids.includes(d.id) ? { ...d, status: "completed" } : d));
-                // Refetch stats simplier for bulk
                 const successCount = res.data.successCount || ids.length;
                 setStats(prev => ({
                     ...prev,
@@ -618,24 +609,10 @@ export default function PogRequests() {
                                 </div>
                             )}
                         </div>
-
-                        {/* Info Card */}
-                        {/* <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 text-sm text-blue-800">
-                            <div className="flex items-start gap-3">
-                                <AlertCircle className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                                <div>
-                                    <strong className="font-semibold">วิธีการอนุมัติที่ปลอดภัย</strong>
-                                    <p className="mt-1 text-blue-700">
-                                        ระบบจะประมวลผลคำขอตามลำดับเวลาที่ส่งมา (เก่าสุดก่อน) พร้อมชดเชย Index อัตโนมัติ 
-                                        เพื่อป้องกันปัญหาตำแหน่งคลาดเคลื่อน กรุณาอนุมัติทีละสาขาเพื่อความถูกต้อง
-                                    </p>
-                                </div>
-                            </div>
-                        </div> */}
                     </>
                 )}
 
-                {/*  DETAIL VIEW (Per BranchMain)  */}
+                {/*  DETAIL VIEW  */}
                 {viewMode === 'detail' && selectedBranch && (
                     <>
                         {/* Header with Back Button */}

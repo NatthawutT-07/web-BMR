@@ -10,19 +10,16 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
     () => (Array.isArray(shelfProducts) ? shelfProducts : []),
     [shelfProducts]
   );
-  // เอาเฉพาะตัวที่มี shelf_row_number
   const valid = useMemo(
     () => safeShelfProducts.filter((p) => p.shelf_row_number !== undefined),
     [safeShelfProducts]
   );
 
-  // จำนวนแถวทั้งหมด (Row)
   const rowCount = useMemo(() => {
     if (!valid.length) return 0;
     return Math.max(...valid.map((p) => p.shelf_row_number || 0), 0);
   }, [valid]);
 
-  // group ตาม shelf_row_number
   const groupedRows = useMemo(() => {
     const result = {};
     valid.forEach((p) => {
@@ -31,7 +28,6 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
       result[shelf_row_number].push(p);
     });
 
-    // sort index ในแต่ละ row ให้เป็นระเบียบ
     Object.keys(result).forEach((shelf_row_number) => {
       result[shelf_row_number].sort((a, b) => (a.shelf_index_number || 0) - (b.shelf_index_number || 0));
     });
@@ -193,31 +189,6 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                         <td className="border p-1 print:px-[2px] text-center align-middle">
                           {zeroToDash(p.selling_price_vat)}
                         </td>
-
-                        {/* ⭐ 3M Qty (รวม 3 เดือน ปัดเป็น int) */}
-                        {/* <td className="border p-1 print:px-[2px] text-center text-indigo-700 align-middle">
-                          {formatInt(p.sales3mQty)}
-                        </td> */}
-
-                        {/* ⭐ Target (80% ของ avg 3 เดือน) ปัดเป็น int */}
-                        {/* <td className=" border p-1 print:px-[2px] text-center text-purple-700 align-middle">
-                          {formatInt(p.salesTargetQty)}
-                        </td> */}
-
-                        {/* ⭐ Sales เดือนนี้เท่านั้น + ไฮไลต์ถ้าถึงเป้า */}
-                        {/* <td
-                          className={`
-                            border p-1 print:px-[2px] text-center font-semibold align-middle
-                            text-blue-600
-                            ${hitTarget ? "bg-green-50" : ""}
-                          `}
-                        >
-                          {zeroToDash(p.salesCurrentMonthQty)}
-                        </td> */}
-
-                        {/* <td className="border p-1 print:px-[2px] text-center text-red-600 align-middle">
-                          {zeroToDash(p.quantity_withdraw)}
-                        </td> */}
 
                         <td className="border p-1 print:px-[2px] text-center align-middle">
                           {zeroToDash(p.min_stock)}

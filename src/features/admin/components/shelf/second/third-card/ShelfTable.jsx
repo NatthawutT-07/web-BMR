@@ -3,15 +3,11 @@ import { calcTotalSales, calcTotalWithdraw } from "../../../../../../utils/shelf
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import AddProductModal from "./AddProductModal";
 
-/* 
-   Helper: number formatter
- */
 const toNumber = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 };
 
-// คำนวณ Stock Cost ต่อรายการ โดยถ้า quantity_stock < 0 ⇒ ใช้ 0 แทนในการคิดต้นทุน
 const getSafeStockCost = (p) => {
   const qtyRaw = toNumber(p.quantity_stock ?? 0);
   const unit = toNumber(p.purchase_price ?? 0);
@@ -19,7 +15,6 @@ const getSafeStockCost = (p) => {
   return qtyForCost * unit;
 };
 
-// หาเลข index ตัวถัดไปแบบ "ไม่ให้ขาด" (ใช้เลขว่างตัวแรก)
 const getNextAvailableIndex = (rowProducts = []) => {
   const used = new Set(
     rowProducts
@@ -32,11 +27,6 @@ const getNextAvailableIndex = (rowProducts = []) => {
   return i;
 };
 
-
-
-/* 
-   Shelf Table (Main)
- */
 const ShelfTable = ({
   rows,
   shelfProducts,
@@ -57,7 +47,6 @@ const ShelfTable = ({
     nextIndex: 1,
   });
 
-  /* Memo: group products by row + sort + ใส่ displayIndex ให้เรียง 1..n ใหม่เสมอ */
   const productsByRow = useMemo(() => {
     const map = {};
     shelfProducts.forEach((p) => {
@@ -77,7 +66,6 @@ const ShelfTable = ({
     return map;
   }, [shelfProducts]);
 
-  /* Memo: calculate totals for entire shelf */
   const totalAll = useMemo(() => {
     const sales = shelfProducts.reduce((a, b) => a + (b.total_sales_rounding_no_end_discount || 0), 0);
     const withdraw = shelfProducts.reduce((a, b) => a + (b.value_withdraw || 0), 0);
@@ -85,7 +73,6 @@ const ShelfTable = ({
     return { sales, withdraw, stockCost };
   }, [shelfProducts]);
 
-  /* Action callbacks */
   const handleAddClick = useCallback(
     (shelf_row_number) => {
       const row = productsByRow[shelf_row_number] || [];
@@ -103,19 +90,16 @@ const ShelfTable = ({
     if (deleteModal.product && onDelete) {
       await onDelete(deleteModal.product);
     }
-    // Modal will close itself after showing success message
   }, [deleteModal, onDelete]);
 
   const closeDeleteModal = useCallback(() => {
     setDeleteModal({ isOpen: false, product: null });
   }, []);
 
-  // ให้ Add modal เรียกแบบ async ได้เหมือนตัวอย่าง
   const handleAddSubmit = useCallback(async (item) => {
     await onAdd?.(item);
   }, [onAdd]);
 
-  // เหมือนตัวอย่าง: เพิ่ม index ต่อไป (ถ้าอยากเป๊ะ “ไม่ให้ขาด” ให้คุณสลับไปคำนวณใหม่ได้)
   const incNextIndex = useCallback(() => {
     setAddModal((m) => ({ ...m, nextIndex: (m.nextIndex || 1) + 1 }));
   }, []);
@@ -130,7 +114,6 @@ const ShelfTable = ({
     });
   }, []);
 
-  /* Render table row (per RowNo) */
   const renderRow = (shelf_row_number) => {
     const rowProducts = productsByRow[shelf_row_number] || [];
 
@@ -238,8 +221,6 @@ const ShelfTable = ({
                     ? prod.quantity_stock.toLocaleString()
                     : "0"}
                 </td>
-                {/* <td colSpan={4}>  </td> */}
-
 
                 <td className="p-1 border text-right w-16">
                   {formatMoney2(prod.purchase_price)}

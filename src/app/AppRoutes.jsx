@@ -32,23 +32,23 @@ const PageLoader = () => (
 );
 
 const router = createBrowserRouter([
-    // หน้า Login
+    //Login page
     {
         path: "/",
         children: [
             {
-                shelf_index_number: true,
+                index: true,
                 element: <ProtectGuest element={<LoginPage />} />,
             },
         ],
     },
 
-    // Admin เต็มสิทธิ์
+    // Admin
     {
         path: "/sys-ahFvi1hmPw3iKCn",
         element: <ProtectRouteAdmin element={<LayoutAdmin />} />,
         children: [
-            { shelf_index_number: true, element: <Suspense fallback={<PageLoader />}><Dashboard /></Suspense> },
+            { index: true, element: <Suspense fallback={<PageLoader />}><Dashboard /></Suspense> },
             { path: "qW3eR7tY2u", element: <Suspense fallback={<PageLoader />}><ShelfTemplate /></Suspense> },
             { path: "pA9sD4fG6h", element: <Suspense fallback={<PageLoader />}><ShelfDashboard /></Suspense> },
             { path: "zX5cV8bN1m", element: <Suspense fallback={<PageLoader />}><Upload /></Suspense> },
@@ -58,11 +58,11 @@ const router = createBrowserRouter([
         ],
     },
 
-    // User → store ตามสาขา
+    // User → store
     {
         path: "/xY7zA3bC9d/:storecode",
         element: <ProtectRouteUser element={<LayoutUser />} />,
-        children: [{ shelf_index_number: true, element: <Suspense fallback={<PageLoader />}><Home /></Suspense> }],
+        children: [{ index: true, element: <Suspense fallback={<PageLoader />}><Home /></Suspense> }],
     },
 ]);
 

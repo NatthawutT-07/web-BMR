@@ -1,6 +1,3 @@
-// MainNav.jsx  (ทุกอย่างเหมือนเดิม + เพิ่มโชว์เวลา Stock อัปเดตล่าสุด)
-// ปรับ: ยิง stock meta แค่ครั้งเดียว (ใช้ useStockMetaStore.loadOnce)
-
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -39,7 +36,6 @@ function MainNav() {
   const fileInputRef = useRef(null);
   const menuRef = useRef(null);
 
-  // ดึงจาก store (ยิงครั้งเดียวทั้งแอป)
   const stockUpdatedAt = useStockMetaStore((s) => s.updatedAt);
   const stockStatus = useStockMetaStore((s) => s.status); // idle | loading | loaded | error
   const loadStockMetaOnce = useStockMetaStore((s) => s.loadOnce);
@@ -48,7 +44,6 @@ function MainNav() {
   const [showRefreshModal, setShowRefreshModal] = useState(false);
   const [now, setNow] = useState(new Date());
 
-  // อัปเดตเวลา 'now' ทุก 1 นาที เพื่อให้ countdown เดิน
   useEffect(() => {
     const timer = setInterval(() => {
       setNow(new Date());
@@ -56,7 +51,6 @@ function MainNav() {
     return () => clearInterval(timer);
   }, []);
 
-  // ตรวจสอบ Cooldown 1 ชั่วโมง (ยกเว้น Admin)
   const cooldownRemaining = useMemo(() => {
     if (!user || user.role === "admin") return 0;
     if (!stockUpdatedAt) return 0;
@@ -64,13 +58,11 @@ function MainNav() {
     const diffMs = now.getTime() - last.getTime();
     const oneHourMs = 60 * 60 * 1000;
     if (diffMs < oneHourMs) {
-      // คืนค่าเป็นวินาทีเพื่อให้คำนวณแม่นยำขึ้น
       return Math.max(0, Math.ceil((oneHourMs - diffMs) / 1000));
     }
     return 0;
   }, [stockUpdatedAt, user, now]);
 
-  // ตัวแปรสำหรับแสดงผลนาที
   const cooldownMin = Math.ceil(cooldownRemaining / 60);
 
   const [validating, setValidating] = useState(false);
@@ -83,7 +75,6 @@ function MainNav() {
       return;
     }
 
-    // --- Pre-validation: ตรวจสอบจำนวนสาขาในไฟล์ก่อนอัปโหลด ---
     setValidating(true);
     try {
       const buffer = await file.arrayBuffer();
@@ -91,7 +82,6 @@ function MainNav() {
       const sheet = workbook.Sheets[workbook.SheetNames[0]];
       const raw = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
 
-      // หา header row ที่มีคอลัมน์ "รหัสสาขา"
       const headerRowIndex = raw.findIndex(row =>
         row.includes("รหัสสินค้า") &&
         row.includes("รหัสสาขา") &&
@@ -108,7 +98,6 @@ function MainNav() {
       const branchColIndex = header.indexOf("รหัสสาขา");
       const dataRows = raw.slice(headerRowIndex + 1);
 
-      // ดึง unique branchMain codes จากไฟล์
       const uniqueBranches = [
         ...new Set(
           dataRows
@@ -132,7 +121,6 @@ function MainNav() {
         return;
       }
 
-      // ตรวจสอบว่าสาขาในไฟล์ตรงกับสาขาของ user หรือไม่
       if (user?.role !== "admin" && uniqueBranches[0] !== user?.storecode) {
         toast.error(
           `สาขาในไฟล์ (${uniqueBranches[0]}) ไม่ตรงกับสาขาของคุณ (${user?.storecode})`,
@@ -150,7 +138,6 @@ function MainNav() {
       setValidating(false);
     }
 
-    // ผ่านการตรวจสอบแล้ว → แสดง Confirm Modal
     setConfirmModal({ open: true, file });
   };
 
@@ -168,7 +155,6 @@ function MainNav() {
         headers: { "Content-Type": "multipart/form-data" },
       });
       toast.success("อัปโหลดข้อมูล Stock สำเร็จ");
-      // ไม่รีเฟรช meta ทันที แต่ให้ user กด Refresh หน้าเอง
       setShowRefreshModal(true);
     } catch (err) {
       console.error("Upload failed", err);
@@ -186,7 +172,6 @@ function MainNav() {
   };
 
   const clearStorageAndLogout = () => {
-    // เคลียร์ localStorage + Zustand (ตามของเดิม)
     if (useBmrStore.persist?.clearStorage) {
       useBmrStore.persist.clearStorage();
     }
@@ -201,7 +186,6 @@ function MainNav() {
   const displayName = user?.storecode || user?.name || "Unknown";
   const initial = displayName.charAt(0).toUpperCase();
 
-  // ปิด dropdown เมื่อคลิกนอกเมนู (กันค้าง)
   useEffect(() => {
     const onDocClick = (e) => {
       if (!menuRef.current) return;
@@ -211,17 +195,15 @@ function MainNav() {
     return () => document.removeEventListener("mousedown", onDocClick);
   }, [userMenuOpen]);
 
-  // โหลด stock meta แค่ครั้งเดียวตอนเข้าระบบ/มี user
   useEffect(() => {
     if (!user) return;
-    loadStockMetaOnce?.(); // store จะกันยิงซ้ำให้เอง (loadedOnce / loading)
+    loadStockMetaOnce?.();
   }, [user, loadStockMetaOnce]);
 
   const stockTimeText = useMemo(() => {
     if (stockStatus === "loading") return "กำลังเช็ค...";
     if (stockStatus === "error") return "-";
 
-    // Intl.DateTimeFormat with timeZone: "Asia/Bangkok" handles the conversion correctly
     if (!stockUpdatedAt) return "-";
     const adjustedDate = new Date(stockUpdatedAt);
     return formatBangkokTime(adjustedDate);
@@ -232,7 +214,6 @@ function MainNav() {
       <nav className="bg-emerald-600 text-white shadow-md print:hidden">
         <div className="max-w-8xl mx-auto px-3 sm:px-6">
           <div className="flex items-center justify-between h-12 sm:h-14">
-            {/* ซ้าย: โลโก้ + ชื่อระบบ + เวลา stock */}
             <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
               <div className="flex shrink-0">
                 <div
@@ -249,7 +230,6 @@ function MainNav() {
 
                 <span className="hidden sm:inline text-emerald-200/70">•</span>
 
-                {/* เวลาอัปเดต Stock ล่าสุด — Badge เด่น */}
                 <div className="flex items-center gap-1.5">
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/20 border border-white/30 text-[10px] sm:text-xs font-semibold text-white truncate shrink-0">
                     <svg className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -259,7 +239,6 @@ function MainNav() {
                     Stock: {stockTimeText}
                   </span>
 
-                  {/* ปุ่ม Upload สำหรับ User (โชว์เมื่อไม่ใช่ admin) */}
                   {user && user.role !== "admin" && (
                     <>
                       <input
@@ -273,11 +252,10 @@ function MainNav() {
                         type="button"
                         disabled={uploading || validating || cooldownRemaining > 0}
                         onClick={() => fileInputRef.current?.click()}
-                        className={`p-1.5 rounded-md border transition-all flex items-center gap-1 ${
-                          cooldownRemaining > 0
+                        className={`p-1.5 rounded-md border transition-all flex items-center gap-1 ${cooldownRemaining > 0
                             ? "bg-slate-200 text-slate-400 border-slate-300 cursor-not-allowed"
                             : "bg-white/10 hover:bg-white/30 border-white/20 text-white animate-in zoom-in duration-300"
-                        }`}
+                          }`}
                         title={cooldownRemaining > 0 ? `กรุณารออีก ${cooldownMin} นาที` : "อัปโหลดไฟล์ Stock (.xlsx)"}
                       >
                         {uploading || validating ? (
@@ -297,7 +275,6 @@ function MainNav() {
               </div>
             </div>
 
-            {/* ขวา: เมนูผู้ใช้ + Logout ใน dropdown */}
             <div className="flex items-center gap-2 sm:gap-3">
               {user && (
                 <>
@@ -356,17 +333,14 @@ function MainNav() {
         </div>
       </nav>
 
-      {/* Pog Request History Modal */}
       <PogRequestHistoryModal
         open={historyOpen}
         onClose={() => setHistoryOpen(false)}
         branch_code={user?.storecode}
       />
 
-      {/* Custom Confirmation Modal for Stock Upload */}
       {confirmModal.open && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-hidden">
-          {/* Overlay */}
           <div
             className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-300"
             onClick={cancelUpload}

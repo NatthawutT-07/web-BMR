@@ -5,8 +5,7 @@ import {
     CheckCircle2, Clock, Store
 } from "lucide-react";
 
-// --- Constants ---
-
+// Constants
 const formatDate = (dateStr) => {
     if (!dateStr) return "-";
     return new Date(dateStr).toLocaleString("th-TH", {
@@ -18,7 +17,7 @@ const formatDate = (dateStr) => {
     });
 };
 
-// --- Components ---
+// Components 
 
 const StatCard = ({ title, count, icon, color, active, onClick, clickable = true }) => {
     const CardElement = clickable ? "button" : "div";
@@ -112,7 +111,7 @@ export default function BranchAckStatus() {
                         b.status === 'completed';
 
             return matchSearch && matchStatus;
-        }).sort((a, b) => b.pending - a.pending); // Show pending pending first
+        }).sort((a, b) => b.pending - a.pending);
     }, [branches, branchMap, search, statusFilter]);
 
     return (
@@ -150,7 +149,7 @@ export default function BranchAckStatus() {
                             count={summary.totalPending || 0}
                             icon={<AlertTriangle size={18} />}
                             color="rose"
-                            active={false} // Just info
+                            active={false}  
                             clickable={false}
                         />
                     </div>

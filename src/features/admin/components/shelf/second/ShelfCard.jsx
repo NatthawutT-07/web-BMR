@@ -6,7 +6,6 @@ import React, {
   useMemo,
 } from "react";
 
-// lazy load component หนัก ๆ
 const ShelfTable = lazy(() => import("./third-card/ShelfTable"));
 const EditShelfModal = lazy(() => import("./third-card/EditShelfModal"));
 
@@ -24,9 +23,6 @@ const ShelfCard = ({
   const isImageOpen = false;
   const [localShelfProducts, setLocalShelfProducts] = useState([]);
 
-  /* 
-   * OPTIMIZE: ใช้ useMemo() ลดการ filter/sort บ่อย ๆ
-   *  */
   const filteredShelfProducts = useMemo(() => {
     return product
       .filter((p) => p.shelf_code === shelfTemplate.shelf_code)
@@ -37,9 +33,6 @@ const ShelfCard = ({
     setLocalShelfProducts(filteredShelfProducts);
   }, [filteredShelfProducts]);
 
-  /* 
-   * Save after Edit
-   *  */
   const handleSaveEdit = async (updatedProducts) => {
     setLocalShelfProducts(updatedProducts);
 

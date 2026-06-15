@@ -18,13 +18,11 @@ function LoginPage() {
   const [manualUser, setManualUser] = useState("");
   const [manualPassword, setManualPassword] = useState("");
 
-  // State สำหรับควบคุม Dropdown
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const [quickBranches, setQuickBranches] = useState([]);
 
   useEffect(() => {
-    // Fetch active branches from public API
     const fetchBranches = async () => {
       try {
         const res = await axios.get(import.meta.env.VITE_API_URL + "/api/active-branches");
@@ -124,7 +122,6 @@ function LoginPage() {
     }
   };
 
-  // ถ้าล็อกอินค้างอยู่แล้ว → เด้งตาม role
   useEffect(() => {
     if (accessToken && user) {
       if (user.role === "admin") navigate("/sys-ahFvi1hmPw3iKCn", { replace: true });
@@ -161,7 +158,6 @@ function LoginPage() {
                   <span className="text-emerald-400 text-xs ml-2">▼</span>
                 </button>
 
-                {/* Custom Scrollable Dropdown */}
                 {isDropdownOpen && (
                   <>
                     <div

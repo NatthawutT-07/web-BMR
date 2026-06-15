@@ -9,17 +9,13 @@ const useDashboardShelfStore = create((set) => ({
   shelfSalesByBranch: {},
   overallUniqueSkus: 0,
   missingSalesDates: [],
-  
-  // Track if data has been initially loaded to avoid refetching on every mount
   hasLoadedInitialData: false,
 
-  // Setters
   setRows: (rows) => set({ rows }),
   setRange: (range) => set({ range }),
   setQuery: (query) => set({ query }),
   setExpandedBranch: (expandedBranch) => set({ expandedBranch }),
   
-  // For shelfSalesByBranch, we might want to update specific branches or the whole object
   setShelfSalesByBranch: (updater) => set((state) => ({
     shelfSalesByBranch: typeof updater === 'function' 
       ? updater(state.shelfSalesByBranch) 
@@ -30,7 +26,6 @@ const useDashboardShelfStore = create((set) => ({
   setMissingSalesDates: (missingSalesDates) => set({ missingSalesDates }),
   setHasLoadedInitialData: (hasLoadedInitialData) => set({ hasLoadedInitialData }),
 
-  // Reset store (useful for logout or manual refresh)
   resetDashboardShelfStore: () => set({
     rows: [],
     range: null,

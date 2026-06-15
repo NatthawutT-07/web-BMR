@@ -10,7 +10,6 @@ const LoadingToRedirect = ({ to = "/", seconds = 0, forceRedirect = false }) => 
   const [count, setCount] = useState(seconds);
   const [redirect, setRedirect] = useState(false);
 
-  // ใช้เฉพาะกรณี “อยากให้มันนับถอยหลังแล้วเด้งจริง ๆ”
   useEffect(() => {
     if (!forceRedirect) return;
     setCount(seconds);
@@ -36,14 +35,12 @@ const LoadingToRedirect = ({ to = "/", seconds = 0, forceRedirect = false }) => 
 
   if (redirect) return <Navigate to={to} replace />;
 
-  // หน้ารอเช็ค token (กันกระพริบไปหน้า login)
   return (
     <div className="flex justify-center items-center min-h-screen bg-gray-100">
       <div className="text-center bg-white p-8 rounded-lg shadow-lg w-[92%] max-w-md">
         <div className="flex items-center justify-center gap-3">
           <div className="w-5 h-5 rounded-full border-2 border-gray-300 border-t-transparent animate-spin" />
           <p className="text-lg text-gray-700 font-medium">
-            {/* กำลังตรวจสอบสิทธิ์... */}
           </p>
         </div>
 
@@ -51,13 +48,13 @@ const LoadingToRedirect = ({ to = "/", seconds = 0, forceRedirect = false }) => 
           {forceRedirect && count > 0 ? <span>{count}</span> : null}
           {!authReady || refreshing ? (
             <span></span>
-            // <span>กำลังเช็คโทเคน / รีเฟรชโทเคน</span>
+            // กำลังเช็คโทเคน
           ) : accessToken ? (
             <span></span>
-            // <span>พร้อมใช้งาน</span>
+            // พร้อมใช้งาน
           ) : (
             <span></span>
-            // <span>ไม่พบโทเคน (กำลังพาไปหน้าเข้าสู่ระบบ)</span>
+            // ไม่พบโทเคน
           )}
         </div>
       </div>

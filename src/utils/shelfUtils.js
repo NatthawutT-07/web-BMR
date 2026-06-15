@@ -1,4 +1,3 @@
-
 export const calcTotalSales = (items) =>
   items.reduce((sum, i) => sum + Number(i.total_sales_rounding_no_end_discount ?? 0), 0);
 

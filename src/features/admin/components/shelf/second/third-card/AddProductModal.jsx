@@ -56,7 +56,6 @@ const AddProductModal = React.memo(
             setError("");
             setSuccess("");
 
-            // เปลี่ยนข้อความแล้ว = ต้องเช็คใหม่
             setLastCheckedQuery("");
             setResults([]);
             setSelected(null);
@@ -85,7 +84,6 @@ const AddProductModal = React.memo(
                 setResults(items);
                 setLastCheckedQuery(q);
 
-                // ถ้าผลลัพธ์ไม่มี selected เดิม → เคลียร์
                 if (
                     selected &&
                     !items.some(
@@ -173,7 +171,6 @@ const AddProductModal = React.memo(
                 await onSubmit?.(payload);
                 setSuccess("Added");
 
-                // เหมือนตัวอย่าง: เพิ่ม nextIndex เพื่อยิงตัวถัดไป
                 onIncNextIndex?.();
 
                 clearForNextScan();
@@ -186,7 +183,6 @@ const AddProductModal = React.memo(
             }
         };
 
-        // Camera detected: set query and auto-check
         const onCameraDetected = React.useCallback((code) => {
             setCameraOpen(false);
             const trimmed = String(code || "").trim();
@@ -197,7 +193,6 @@ const AddProductModal = React.memo(
                 setLastCheckedQuery("");
                 setResults([]);
                 setSelected(null);
-                // Auto trigger check
                 setTimeout(async () => {
                     setChecking(true);
                     try {

@@ -1,4 +1,3 @@
-// TemplateBarcodePanel.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import api from "../../../utils/axios";
 import CameraBarcodeScannerModal from "./CameraBarcodeScannerModal";
@@ -13,11 +12,10 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
   const [lookupLoading, setLookupLoading] = useState(false);
   const [lookupRes, setLookupRes] = useState(null);
 
-  // กล้อง + popup
   const [cameraOpen, setCameraOpen] = useState(false);
   const [popupOpen, setPopupOpen] = useState(false);
   const [pogRequestOpen, setPogRequestOpen] = useState(false);
-  const [requestAction, setRequestAction] = useState(""); // State for initial action
+  const [requestAction, setRequestAction] = useState("");
 
   useEffect(() => {
     requestAnimationFrame(() => barcodeInputRef.current?.focus?.());
@@ -48,7 +46,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
     requestAnimationFrame(() => barcodeInputRef.current?.focus?.());
   };
 
-  const lookupByBarcode = async (bc) => {
+  const lookupByBarcode = React.useCallback(async (bc) => {
     const code = String(bc || "").trim();
     if (!storecode || !code) return;
     if (code.length < 5) {
@@ -73,7 +71,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
     } finally {
       setLookupLoading(false);
     }
-  };
+  }, [storecode]);
 
   const onCameraDetected = React.useCallback((code) => {
     setCameraOpen(false);
@@ -84,15 +82,11 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
     }
     setBarcodeError("");
     setScannedBarcode(code);
-    setBarcode(""); // เคลียร์ทันทีที่สแกน
+    setBarcode("");
 
-    // เปิด popup ทันทีเพื่อโชว์สปิน
     setPopupOpen(true);
-
-    // ยิง lookup รอ backend
     lookupByBarcode(code);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [lookupByBarcode]);
 
   const openPopupAndLookup = (bc) => {
     const code = String(bc || "").trim();
@@ -103,7 +97,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
     }
     setBarcodeError("");
     setScannedBarcode(code);
-    setBarcode(""); // เคลียร์ทันทีที่กดค้นหาเพื่อรับบาร์โค้ดถัดไป
+    setBarcode("");
     setPopupOpen(true);
     lookupByBarcode(code);
   };
@@ -133,7 +127,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
       />
 
       <div className="bg-white border rounded-xl shadow-sm p-4">
-        {/* Header: หัวข้อซ้าย + ปุ่มกล้องขวา */}
+        {/* Header */}
         <div className="flex items-start justify-between">
           <div>
             <div className="text-base font-semibold text-slate-800">ค้นหาสินค้าจากบาร์โค้ด</div>
@@ -141,7 +135,6 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
               สแกนบาร์โค้ดเพื่อค้นหาสินค้า
             </div>
           </div>
-          {/* ปุ่มกล้อง มุมบนขวา เฉพาะมือถือ */}
           <button
             type="button"
             onClick={() => setCameraOpen(true)}
@@ -152,7 +145,6 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
           </button>
         </div>
 
-        {/* แถบแดงบอกสถานะ Scanner Ready (เฉพาะบน PC) */}
         <div className="hidden sm:flex mt-3 items-center gap-2 px-3 py-2 rounded-lg bg-red-50 border border-red-200">
           <span className="relative flex h-3 w-3">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
@@ -161,7 +153,6 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
           <span className="text-xs font-semibold text-red-700">พร้อมรับสแกนจากเครื่องยิงบาร์โค้ด</span>
         </div>
 
-        {/* ช่องกรอก + ปุ่มค้นหา */}
         <div className="mt-3 flex gap-2">
           <div className="flex flex-1 relative min-w-0">
             <input
@@ -217,7 +208,6 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
             <div className="flex items-start justify-between gap-3">
               <div>
                 <div className="text-sm font-semibold text-slate-800">ผลการสแกน</div>
-                {/* แสดงชื่อสาขา */}
                 <div className="text-xs text-slate-500 mt-1">สาขา: {branchText}</div>
               </div>
               <button
@@ -229,7 +219,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
               </button>
             </div>
 
-            {/* สปินตอนรอ backend */}
+            {/* Spin backend */}
             {lookupLoading || !lookupRes ? (
               <div className="mt-4 p-4 rounded-xl border bg-slate-50">
                 <div className="flex items-center gap-3">
@@ -260,7 +250,6 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
                         : "พบสินค้าในระบบ แต่ยังไม่มีตำแหน่งจัดวางใน POG ของสาขานี้"}
                     </div>
 
-                    {/* แสดงสินค้าที่พบ (แต่ไม่มี Location) */}
                     {lookupRes.reason === "NO_LOCATION_IN_POG" && lookupRes.product && (
                       <div className="mt-4 p-4 bg-white rounded-xl shadow-sm border border-rose-100 text-slate-800 w-full overflow-hidden relative">
                         <div className="text-sm text-slate-500 mb-1">ข้อมูลสินค้าที่พบ</div>
@@ -274,12 +263,11 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
                       </div>
                     )}
 
-                    {/* ปุ่มแจ้งเพิ่มสินค้า (เฉพาะกรณีมีสินค้าในระบบแต่ไม่มี Location) */}
                     {lookupRes.reason !== "BARCODE_NOT_FOUND" && (
                       <button
                         type="button"
                         onClick={() => {
-                          setRequestAction("add"); // Pre-select 'add'
+                          setRequestAction("add");
                           setPogRequestOpen(true);
                           setPopupOpen(false); // Close popup
                         }}
@@ -358,7 +346,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
                 <button
                   type="button"
                   onClick={() => {
-                    setRequestAction(""); // Default (user selects)
+                    setRequestAction("");
                     setPogRequestOpen(true);
                     setPopupOpen(false); // Close popup
                   }}

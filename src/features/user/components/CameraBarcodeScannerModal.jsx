@@ -9,16 +9,13 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
   const videoRef = useRef(null);
   const readerRef = useRef(null);
 
-  // กันสแกนซ้ำรัว ๆ
   const lastRef = useRef({ code: "", ts: 0 });
 
   const [err, setErr] = useState(null);
 
-  //โชว์ตัวเลขที่อ่านได้ระหว่างสแกน
   const [liveText, setLiveText] = useState("");
   const [liveDigits, setLiveDigits] = useState("");
 
-  //Memoize callback refs เพื่อไม่ให้ re-create useEffect
   const onDetectedRef = useRef(onDetected);
   const onCloseRef = useRef(onClose);
   useEffect(() => {
@@ -33,7 +30,6 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
     setLiveText("");
     setLiveDigits("");
 
-    // เปิดโหมด TryHarder อย่างเดียว เพื่อให้สแกนได้ทุก Format (เผื่อสินค้าเป็น CODE_39 หรือแบบอื่น)
     const hints = new Map();
     hints.set(DecodeHintType.TRY_HARDER, true);
 
@@ -41,7 +37,7 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
     readerRef.current = reader;
 
     let stopped = false;
-    let mediaStream = null; //  เก็บ reference ไว้สำหรับ cleanup
+    let mediaStream = null;
     const videoElement = videoRef.current;
 
     const start = async () => {
@@ -62,9 +58,6 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
             if (stopped) return;
             if (!result) return;
 
-            //  ถอดการเช็ค Bounding Box (Safe Zone) ออก
-            // เพื่อให้สแกนได้ง่ายขึ้น ไม่ว่าบาร์โค้ดจะอยู่ส่วนไหนของจอ (บ่อยครั้งพิกัดมีปัญหาบนมือถือ)
-
             const raw = String(result.getText() || "").trim();
             if (!raw) return;
 
@@ -77,17 +70,14 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
             if (lastRef.current.code === key && now - lastRef.current.ts < 1200) return;
             lastRef.current = { code: key, ts: now };
 
-            //  ใช้ ref แทน dependency
             onDetectedRef.current?.(digits || raw);
 
-            //  ปิดกล้องอัตโนมัติหลังสแกนสำเร็จ
             setTimeout(() => {
               onCloseRef.current?.();
             }, 100);
           }
         );
 
-        //  เก็บ mediaStream ไว้สำหรับ cleanup
         if (videoElement.srcObject) {
           mediaStream = videoElement.srcObject;
         }
@@ -105,11 +95,9 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
 
     start();
 
-    //  Cleanup function - ปิดกล้องอย่างสมบูรณ์
     return () => {
       stopped = true;
 
-      // 1. Reset ZXing reader
       try {
         readerRef.current?.reset?.();
       } catch (err) {
@@ -117,7 +105,6 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
       }
       readerRef.current = null;
 
-      // 2.  หยุด video tracks ทั้งหมด (สำคัญมาก! ป้องกันกล้องค้าง)
       try {
         if (mediaStream) {
           mediaStream.getTracks().forEach(track => {
@@ -133,11 +120,10 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
         console.error("cleanup video tracks error:", e);
       }
 
-      // 3.  Clear live state
       setLiveText("");
       setLiveDigits("");
     };
-  }, [open]); //  ลบ onDetected ออกจาก dependency เพื่อไม่ให้ re-init ทุกครั้ง
+  }, [open]);
 
   if (!open) return null;
 
@@ -189,7 +175,6 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
               <div className="text-sm font-semibold text-rose-700">เปิดกล้องไม่สำเร็จ</div>
               <div className="text-xs text-rose-700 mt-1">{err}</div>
               <div className="text-[11px] text-rose-700 mt-2">
-                {/* * บนมือถือ ต้องเป็น HTTPS (ยกเว้น localhost) */}
               </div>
             </div>
           )}

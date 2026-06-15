@@ -23,20 +23,13 @@ const SortableItem = React.memo(({ item, shelf_index_number }) => {
         items-center hover:bg-gray-50 cursor-move rounded-lg
       "
     >
-      {/* Running No. */}
-      <div className="text-center text-gray-700">{index + 1}</div>
-
-      {/* Code Product */}
+      <div className="text-center text-gray-700">{shelf_index_number + 1}</div>
       <div className="text-center text-gray-700">
         {item.item_code}
       </div>
-
-      {/* Product Name */}
       <div className="whitespace-nowrap overflow-hidden text-gray-700 text-sm">
         {item.item_name}
       </div>
-
-      {/* Brand */}
       <div
         className="text-left text-gray-700 text-sm overflow-hidden whitespace-nowrap text-ellipsis"
         style={{ maxWidth: "150px" }}

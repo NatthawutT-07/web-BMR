@@ -11,7 +11,6 @@ const EmptyRowDropZone = React.memo(({ rowId, isEmpty }) => {
     transition,
   };
 
-  // When row already has items, render a minimal but measurable element
   if (!isEmpty) {
     return <div ref={setNodeRef} style={{ ...style, height: 0 }} {...attributes} />;
   }

@@ -1,5 +1,3 @@
-/* eslint-disable react-refresh/only-export-components */
-// C:\BMR\bmr_data\edit\web-BMR\src\store\bmr_store.jsx
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import api from "../utils/axios";
@@ -27,18 +25,16 @@ const ensureCsrfToken = async () => {
   return getCookieValue("csrfToken");
 };
 
-const BmrStore = (set, get) => ({
+const bmrStore = (set, get) => ({
   user: null,
   storecodeHint: null,
 
-  // access token อยู่ใน memory เท่านั้น (ไม่ persist)
   accessToken: null,
   setAccessToken: (token) => set({ accessToken: token }),
 
-  // กันหน้าเด้งตอน refresh
-  hasHydrated: false, // persist โหลด user จาก localStorage เสร็จแล้วหรือยัง
-  authReady: false, // เช็ค/รีเฟรช token เสร็จแล้วหรือยัง
-  refreshing: false, // กำลังเรียก refresh-token อยู่ไหม
+  hasHydrated: false,
+  authReady: false,
+  refreshing: false,
   authInitStarted: false,
 
   setHasHydrated: (v) => set({ hasHydrated: v }),
@@ -67,7 +63,6 @@ const BmrStore = (set, get) => ({
     return res;
   },
 
-  //  REFRESH ACCESS TOKEN (ใช้ตอน reload หน้า) 
   refreshAccessToken: async () => {
     await ensureCsrfToken();
     const csrfToken = getCookieValue("csrfToken");
@@ -110,7 +105,6 @@ const BmrStore = (set, get) => ({
     return res;
   },
 
-  // INIT AUTH: เรียกตอนเปิดเว็บ/รีเฟรช เพื่อรอ refresh-token ให้เสร็จก่อนค่อยตัดสินใจ
   initAuth: async () => {
     const { authInitStarted, refreshing, authReady, accessToken, user } = get();
 
@@ -120,20 +114,15 @@ const BmrStore = (set, get) => ({
     set({ authInitStarted: true, refreshing: true });
 
     try {
-      // ถ้ามี token อยู่แล้ว ถือว่า ready
       if (accessToken && user) {
         set({ authReady: true, refreshing: false });
         return;
       }
 
-      // ลอง refresh-token เสมอ (ถ้ามี cookie จะผ่าน ถ้าไม่มีก็ 401 แล้วเคลียร์เอง)
       await get().refreshAccessToken();
-      // ถ้าต้องการชัวร์มากขึ้นค่อยเปิดบรรทัดนี้
-      // await get().fetchCurrentUser();
 
       set({ authReady: true, refreshing: false });
     } catch {
-      // refresh ไม่ผ่าน → เคลียร์สถานะให้ไปหน้า login ได้แบบไม่กระพริบ
       set({
         user: null,
         storecodeHint: null,
@@ -168,19 +157,16 @@ const BmrStore = (set, get) => ({
 
       const deleteRequest = indexedDB.deleteDatabase("dashboardDataDB");
       deleteRequest.onsuccess = () =>
-        // console.log("IndexedDB deleted successfully");
-
-      window.location.replace("/");
+        window.location.replace("/");
     }
   },
 });
 
 const useBmrStore = create(
-  persist(BmrStore, {
+  persist(bmrStore, {
     name: "bmr-store",
     storage: createJSONStorage(() => localStorage),
     partialize: (state) => ({
-      // เก็บเฉพาะ storecode ที่จำเป็นต่อการผูกสาขา
       storecodeHint: state.storecodeHint,
     }),
     onRehydrateStorage: () => (state, error) => {
@@ -188,7 +174,6 @@ const useBmrStore = create(
         console.error("rehydrate error:", error);
       }
 
-      // hydrate เสร็จแล้วแน่นอน
       state?.setHasHydrated?.(true);
     },
   })
