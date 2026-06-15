@@ -16,7 +16,7 @@ export default function PogRequestModal({
     branch_code,
     branchName: initialBranchName = "",
     barcode,
-    productName,
+    item_name,
     currentShelf,
     currentRow,
     currentIndex,
@@ -270,14 +270,14 @@ export default function PogRequestModal({
                 branch_code,
                 action,
                 barcode,
-                productName,
+                item_name,
                 fromShelf: currentShelf,
                 fromRow: currentRow,
                 fromIndex: currentIndex,
                 toShelf: action !== "delete" ? toShelf : null,
                 toRow: action !== "delete" ? Number(toRow) : null,
                 toIndex: action !== "delete" ? Number(toIndex) : null,
-                swapBarcode: null,
+                swap_barcode: null,
                 note,
             });
 
@@ -338,7 +338,7 @@ export default function PogRequestModal({
                             {/* Product Info */}
                             <div className="p-3 rounded-xl bg-slate-50 border">
                                 <div className="text-sm text-slate-500">สินค้าที่เลือก</div>
-                                <div className="text-base font-semibold text-slate-800 mt-1">{productName || "-"}</div>
+                                <div className="text-base font-semibold text-slate-800 mt-1">{item_name || "-"}</div>
                                 <div className="text-sm text-slate-600 mt-1">
                                     บาร์โค้ด: {barcode}
                                     {currentShelf && (

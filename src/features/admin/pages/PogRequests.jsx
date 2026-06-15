@@ -245,7 +245,7 @@ const EditPositionModal = ({ isOpen, onClose, item, onSave }) => {
                     <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                         <div className="flex items-center gap-2 text-sm text-slate-600 mb-1">
                             <Package size={16} />
-                            <span className="font-medium text-slate-900">{item.productName || item.barcode}</span>
+                            <span className="font-medium text-slate-900">{item.item_name || item.barcode}</span>
                         </div>
                         <div className="flex items-center gap-2 text-xs text-slate-500 pl-6">
                             <span>{item.barcode}</span> •
@@ -816,8 +816,8 @@ export default function PogRequests() {
                                                         </td>
                                                         <td className="px-6 py-4">
                                                             <div className="flex flex-col">
-                                                                <span className="text-sm font-medium text-slate-900 line-clamp-1" title={item.productName}>
-                                                                    {item.productName || item.barcode}
+                                                                <span className="text-sm font-medium text-slate-900 line-clamp-1" title={item.item_name}>
+                                                                    {item.item_name || item.barcode}
                                                                 </span>
                                                                 <span className="text-xs text-slate-500 flex items-center gap-1">
                                                                     <Package size={12} /> {item.barcode}

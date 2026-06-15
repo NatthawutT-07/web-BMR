@@ -124,7 +124,7 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
         branch_code={storecode}
         branchName={branchName}
         barcode={scannedBarcode}
-        productName={lookupRes?.product?.name}
+        item_name={lookupRes?.product?.name}
         currentShelf={primaryLoc?.shelf_code}
         currentRow={primaryLoc?.shelf_row_number}
         currentIndex={primaryLoc?.shelf_index_number}

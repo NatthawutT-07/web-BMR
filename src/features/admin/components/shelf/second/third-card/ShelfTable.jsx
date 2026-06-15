@@ -324,7 +324,7 @@ const ShelfTable = ({
         isOpen={deleteModal.isOpen}
         onClose={closeDeleteModal}
         onConfirm={confirmDelete}
-        productName={deleteModal.product?.item_name}
+        item_name={deleteModal.product?.item_name}
       />
 
       {/* TABLE */}

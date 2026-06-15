@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 
 const DeleteConfirmModal = React.memo(
-    ({ isOpen, onClose, onConfirm, productName }) => {
+    ({ isOpen, onClose, onConfirm, item_name }) => {
         const [deleting, setDeleting] = useState(false);
         const [deleted, setDeleted] = useState(false);
 
@@ -41,7 +41,7 @@ const DeleteConfirmModal = React.memo(
                                 ลบสำเร็จแล้ว
                             </h3>
                             <p className="text-sm text-gray-500 mt-1">
-                                "{productName || "-"}" ถูกลบออกแล้ว
+                                "{item_name || "-"}" ถูกลบออกแล้ว
                             </p>
                         </div>
                     ) : (
@@ -53,7 +53,7 @@ const DeleteConfirmModal = React.memo(
 
                             <p className="text-gray-600 mb-6">
                                 Delete{" "}
-                                <span className="font-semibold">"{productName || "-"}"</span>?
+                                <span className="font-semibold">"{item_name || "-"}"</span>?
                                 <br />
                                 <span className="text-red-600 text-sm">
                                     การดำเนินการนี้ไม่สามารถย้อนกลับได้

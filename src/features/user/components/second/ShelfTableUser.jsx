@@ -281,7 +281,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
           branch_code={storecode}
           branchName={branchName}
           barcode={selectedProduct?.barcode}
-          productName={selectedProduct?.item_name}
+          item_name={selectedProduct?.item_name}
           currentShelf={selectedProduct?.shelf_code}
           currentRow={selectedProduct?.shelf_row_number}
           currentIndex={selectedProduct?.shelf_index_number}

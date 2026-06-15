@@ -150,15 +150,15 @@ export default function PogRequestHistoryModal({ open, onClose, branch_code }) {
                                             {/* Product */}
                                             <td className="px-3 py-2 align-middle">
                                                 <div className="flex items-center gap-2 whitespace-nowrap">
-                                                    <span className="font-medium text-slate-800" title={item.productName}>
-                                                        {item.productName || "-"}
+                                                    <span className="font-medium text-slate-800" title={item.item_name}>
+                                                        {item.item_name || "-"}
                                                     </span>
                                                     <span className="text-[11px] text-slate-500 font-mono">
                                                         ({item.barcode})
                                                     </span>
-                                                    {item.swapBarcode && (
+                                                    {item.swap_barcode && (
                                                         <span className="text-[10px] text-slate-400 bg-slate-100 px-1 rounded border">
-                                                            ⇄ {item.swapBarcode}
+                                                            ⇄ {item.swap_barcode}
                                                         </span>
                                                     )}
                                                 </div>
