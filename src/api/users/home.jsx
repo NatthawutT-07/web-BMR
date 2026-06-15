@@ -8,7 +8,7 @@ import api from "../../utils/axios";
  */
 export const getTemplateAndProduct = async (branch_code) => {
   try {
-    const res = await api.post("/template-item", { branch_code });
+    const res = await api.post("/shelf-templates/items", { branch_code });
     return res.data; // { branch_code, branchName, items }
   } catch (error) {
     console.error("getTemplateAndProduct error:", error);

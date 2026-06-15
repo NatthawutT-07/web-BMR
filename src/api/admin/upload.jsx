@@ -28,11 +28,11 @@ export const uploadStockXLSX = (file, onProgress) =>
 
 // ShelfTemplate Shelf XLSX
 export const uploadTemplateXLSX = (file, onProgress) =>
-  uploadXLSX(api, file, "/upload-template", onProgress);
+  uploadXLSX(api, file, "/uploads/shelf-templates", onProgress);
 
 // SKU XLSX
 export const uploadItemSKUXLSX = (file, onProgress) =>
-  uploadXLSX(api, file, "/upload-sku", onProgress);
+  uploadXLSX(api, file, "/uploads/sku-positions", onProgress);
 
 // MinMaxAutoPO XLSX
 export const uploadItemMinMaxXLSX = (file, onProgress) =>
@@ -44,33 +44,33 @@ export const uploadMasterItemXLSX = (file, onProgress) =>
 
 // BillHeader
 export const uploadBillXLSX = (file, onProgress) =>
-  uploadXLSX(api, file, "/upload-bill", onProgress);
+  uploadXLSX(api, file, "/uploads/bills", onProgress);
 
 // Gourmet
 export const uploadGourmetXLSX = (file, onProgress) =>
-  uploadXLSX(api, file, "/upload-gourmets", onProgress);
+  uploadXLSX(api, file, "/uploads/gourmets", onProgress);
 
 // Clear Stock
 export const clearStock = async () => {
-  const res = await api.delete("/clear-stock");
+  const res = await api.delete("/system/clear/stock");
   return res.data;
 };
 
 // Clear SKU
 export const clearSku = async () => {
-  const res = await api.delete("/clear-sku");
+  const res = await api.delete("/system/clear/sku-positions");
   return res.data;
 };
 
 // Clear ShelfTemplate (Shelf)
 export const clearTemplate = async () => {
-  const res = await api.delete("/clear-template");
+  const res = await api.delete("/system/clear/shelf-templates");
   return res.data;
 };
 
 // Clear MinMaxAutoPO
 export const clearMinMax = async () => {
-  const res = await api.delete("/clear-minmax");
+  const res = await api.delete("/system/clear/minmax");
   return res.data;
 };
 

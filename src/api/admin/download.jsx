@@ -2,7 +2,7 @@ import api from "../../utils/axios";
 
 export const downloadTemplate = async (params) => {
   try {
-    const res = await api.get("/download-template", { params });
+    const res = await api.get("/downloads/shelf-templates", { params });
     return res.data;
   } catch (error) {
     console.error("Error fetching shelfTemplate:", error);
@@ -12,7 +12,7 @@ export const downloadTemplate = async (params) => {
 
 export const downloadSKU = async (params) => {
   try {
-    const res = await api.get("/download-sku", { params });
+    const res = await api.get("/downloads/sku-positions", { params });
     return res.data;
   } catch (error) {
     console.error("Error fetching SKU:", error);

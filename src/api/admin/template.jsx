@@ -5,7 +5,7 @@ import api from "../../utils/axios";   // IMPORTANT: ใช้ axios instance �
 // ------------------------------------------------------------
 export const getTemplate = async () => {
     try {
-        const response = await api.get("/shelf-template");
+        const response = await api.get("/shelf-templates");
         return response.data;
     } catch (error) {
         return error;
@@ -17,7 +17,7 @@ export const getTemplate = async () => {
 // ------------------------------------------------------------
 export const getSKU = async (branch_code) => {
     try {
-        const response = await api.post("/shelf-sku", { branch_code });
+        const response = await api.get("/sku-positions", { params: { branch_code } });
         return response.data;
     } catch (error) {
         return error;
@@ -27,7 +27,7 @@ export const getSKU = async (branch_code) => {
 // POST: Add a new item
 export const addTemplate = async (newItem) => {
     try {
-        const response = await api.post("/shelf-add", newItem);
+        const response = await api.post("/sku-positions", newItem);
         return {
             success: response.success,
             data: response.data,
@@ -43,7 +43,7 @@ export const addTemplate = async (newItem) => {
 // ------------------------------------------------------------
 export const deleteTemplate = async (product) => {
     try {
-        await api.delete("/shelf-delete", {
+        await api.delete("/sku-positions", {
             data: {
                 branch_code: product.branch_code,
                 shelf_code: product.shelf_code,
@@ -60,7 +60,7 @@ export const deleteTemplate = async (product) => {
 // PUT: Update products
 export const updateProducts = async (data) => {
     try {
-        const response = await api.put("/shelf-update", data);
+        const response = await api.put("/sku-positions/bulk", data);
         return {
             success: response.success,
             data: response.data,
@@ -77,7 +77,7 @@ export const updateProducts = async (data) => {
 // ------------------------------------------------------------
 export const getMasterItem = async (q) => {
     try {
-        const response = await api.get("/shelf-getMasterItem", { params: { q } });
+        const response = await api.get("/master-items", { params: { q } });
         return response.data; // { items: [...] }
     } catch (error) {
         return error;
@@ -89,7 +89,7 @@ export const getMasterItem = async (q) => {
 // ------------------------------------------------------------
 export const getShelfDashboardSummary = async () => {
     try {
-        const response = await api.get("/shelf-dashboard-summary");
+        const response = await api.get("/dashboards/shelf-summary");
         return {
             rows: response.data,
             ...response.meta
@@ -104,7 +104,7 @@ export const getShelfDashboardSummary = async () => {
 // ------------------------------------------------------------
 export const getShelfDashboardShelfSales = async (branch_code) => {
     try {
-        const response = await api.get("/shelf-dashboard-shelf-sales", {
+        const response = await api.get("/dashboards/shelf-sales", {
             params: { branch_code },
         });
         return response.data;
