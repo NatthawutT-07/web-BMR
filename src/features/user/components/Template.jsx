@@ -12,9 +12,9 @@ const ShelfFilterUser = React.lazy(() => import("./ShelfFilterUser"));
 // แยกบาร์โค้ดออกไปไฟล์ข้าง ๆ
 import TemplateBarcodePanel from "./TemplateBarcodePanel";
 
-/* =========================
+/* 
    Helpers: Thai/BKK datetime
-========================= */
+ */
 const fmtThaiDateTime = (value) => {
   if (!value) return "-";
   const d = new Date(value);
@@ -58,12 +58,12 @@ const ShelfTemplate = () => {
   // แสดงรูปภาพเต็มจอ
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // ===== Stock Meta (ยิงครั้งเดียว) =====
+  //  Stock Meta (ยิงครั้งเดียว) 
   const stockUpdatedAt = useStockMetaStore((s) => s.updatedAt);
   const stockStatus = useStockMetaStore((s) => s.status);
   const loadStockMetaOnce = useStockMetaStore((s) => s.loadOnce);
 
-  // ===== Print modal + print target =====
+  //  Print modal + print target 
   const [printModalOpen, setPrintModalOpen] = useState(false);
   const [printPick, setPrintPick] = useState([]);
   const [printAll, setPrintAll] = useState(true);
@@ -231,7 +231,7 @@ const ShelfTemplate = () => {
     }
   }, [searchText]);
 
-  // ===== Print flow =====
+  //  Print flow 
   const openPrintModal = () => {
     setPrintAll(true);
     setPrintPick([]);
@@ -260,7 +260,7 @@ const ShelfTemplate = () => {
   return (
     <div className="min-h-screen bg-slate-100 print:bg-white">
       <div className="max-w-8xl mx-auto px-3 sm:px-4 lg:px-8 py-1 sm:py-1 space-y-2 sm:space-y-2">
-        {/* ===== PRINT HEADER (แสดงเฉพาะตอนพิมพ์) ===== */}
+        {/*  PRINT HEADER (แสดงเฉพาะตอนพิมพ์)  */}
         <div className="hidden print:block pb-1 mb-1">
           <p className="text-xs sm:text-sm text-slate-500">
             สาขา: <span className="font-semibold text-slate-700">{storecode || "-"}</span>
@@ -322,7 +322,7 @@ const ShelfTemplate = () => {
           </div>
         </header>
 
-        {/* ===== PRINT MODAL ===== */}
+        {/*  PRINT MODAL  */}
         {printModalOpen && (
           <div className="fixed inset-0 z-[9999] flex items-center justify-center print:hidden">
             <div className="absolute inset-0 bg-black/40" onClick={() => setPrintModalOpen(false)} />

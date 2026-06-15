@@ -530,7 +530,7 @@ export default function PogRequests() {
         <div className="min-h-screen bg-slate-50/50 p-6 md:p-8">
             <div className="max-w-7xl mx-auto space-y-6">
 
-                {/* ==================== SUMMARY VIEW ==================== */}
+                {/*  SUMMARY VIEW  */}
                 {viewMode === 'summary' && (
                     <>
                         {/* Header */}
@@ -635,7 +635,7 @@ export default function PogRequests() {
                     </>
                 )}
 
-                {/* ==================== DETAIL VIEW (Per BranchMain) ==================== */}
+                {/*  DETAIL VIEW (Per BranchMain)  */}
                 {viewMode === 'detail' && selectedBranch && (
                     <>
                         {/* Header with Back Button */}

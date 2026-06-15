@@ -20,7 +20,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
     if (isMobile) closeMobile();
   };
 
-  // ---- Mobile Sidebar (Overlay) ----
+  //  Mobile Sidebar (Overlay) 
   if (isMobile) {
     return (
       <>
@@ -64,7 +64,7 @@ const SiderbarAdmin = ({ isMobile, isOpen, toggle, closeMobile }) => {
     );
   }
 
-  // ---- Desktop Sidebar (Collapsed / Expanded) ----
+  //  Desktop Sidebar (Collapsed / Expanded) 
   return (
     <div
       className={`

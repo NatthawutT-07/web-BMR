@@ -19,9 +19,9 @@ import ShelfSearchFilter from "./components/ShelfSearchFilter";
 import ShelfImageOverlay from "./components/ShelfImageOverlay";
 import ShelfImageThumb from "./components/ShelfImageThumb";
 
-/* ================================
+/* 
  * Helper: ช่วงเวลา 90 วันย้อนหลัง (ตามเวลาไทย, yesterday = end)
- * ================================ */
+ *  */
 const getBangkok90DaysRange = () => {
   const now = new Date();
   const bangkokNow = new Date(

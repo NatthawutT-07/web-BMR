@@ -24,9 +24,9 @@ const ShelfCard = ({
   const isImageOpen = false;
   const [localShelfProducts, setLocalShelfProducts] = useState([]);
 
-  /* ------------------------------------------------
+  /* 
    * OPTIMIZE: ใช้ useMemo() ลดการ filter/sort บ่อย ๆ
-   * ------------------------------------------------ */
+   *  */
   const filteredShelfProducts = useMemo(() => {
     return product
       .filter((p) => p.shelf_code === shelfTemplate.shelf_code)
@@ -37,9 +37,9 @@ const ShelfCard = ({
     setLocalShelfProducts(filteredShelfProducts);
   }, [filteredShelfProducts]);
 
-  /* ------------------------------------------------
+  /* 
    * Save after Edit
-   * ------------------------------------------------ */
+   *  */
   const handleSaveEdit = async (updatedProducts) => {
     setLocalShelfProducts(updatedProducts);
 

@@ -409,7 +409,7 @@ const UploadCSV = () => {
         <option value="ShelfTemplate">POG Shelf XLSX</option>
         <option value="SKU">POG SKU XLSX</option>
         <option value="">-</option>
-        <option value="Withdraw">Withdraw XLSX</option>
+        <option value="withdraw">Withdraw XLSX</option>
         <option value="stock">Stock XLSX</option>
         <option value="minMax">MinMaxAutoPO XLSX</option>
         <option value="masterItem">MasterItem XLSX</option>

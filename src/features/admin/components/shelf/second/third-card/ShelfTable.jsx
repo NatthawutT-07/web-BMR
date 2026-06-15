@@ -3,9 +3,9 @@ import { calcTotalSales, calcTotalWithdraw } from "../../../../../../utils/shelf
 import DeleteConfirmModal from "./DeleteConfirmModal";
 import AddProductModal from "./AddProductModal";
 
-/* ===========================
+/* 
    Helper: number formatter
-=========================== */
+ */
 const toNumber = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
@@ -34,9 +34,9 @@ const getNextAvailableIndex = (rowProducts = []) => {
 
 
 
-/* ===========================
+/* 
    Shelf Table (Main)
-=========================== */
+ */
 const ShelfTable = ({
   rows,
   shelfProducts,

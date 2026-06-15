@@ -15,9 +15,9 @@ const getCookieValue = (name) => {
   return match ? decodeURIComponent(match.split("=")[1] || "") : null;
 };
 
-// ======================
+// 
 //  REQUEST INTERCEPTOR
-// ======================
+// 
 api.interceptors.request.use((config) => {
   const token = useBmrStore.getState().accessToken;
   if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -26,9 +26,9 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
-// ======================
+// 
 //   RESPONSE INTERCEPTOR
-// ======================
+// 
 let isRefreshing = false;
 let queue = [];
 let isSessionExpiredHandling = false;

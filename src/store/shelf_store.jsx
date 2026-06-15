@@ -28,9 +28,9 @@ const useShelfStore = create(
       loading: false,
       actionLoading: false,
 
-      // =====================================================
+      // 
       //  BranchMain List
-      // =====================================================
+      // 
       fetchBranches: async () => {
         const { branches } = get();
         if (branches.length > 0) return;
@@ -49,9 +49,9 @@ const useShelfStore = create(
         }
       },
 
-      // =====================================================
+      // 
       //  Data Sync Dates
-      // =====================================================
+      // 
       fetchSyncDates: async () => {
         try {
           const res = await getSyncDates();
@@ -61,9 +61,9 @@ const useShelfStore = create(
         }
       },
 
-      // =====================================================
+      // 
       //  ShelfTemplate
-      // =====================================================
+      // 
       fetchTemplate: async () => {
         const { shelfTemplate } = get();
         if (shelfTemplate.length > 0) return;
@@ -82,10 +82,10 @@ const useShelfStore = create(
         }
       },
 
-      // =====================================================
+      // 
       //  Product by BranchMain
       // เปลี่ยนเป็น "replace ข้อมูลของสาขานั้น" กันของเก่าค้าง/ซ้อน
-      // =====================================================
+      // 
       fetchProduct: async (branch_code) => {
         const accessToken = useBmrStore.getState().accessToken;
         if (!accessToken) return;
@@ -107,9 +107,9 @@ const useShelfStore = create(
       },
 
 
-      // =====================================================
+      // 
       //  Add Product
-      // =====================================================
+      // 
       handleAddProduct: async (newItem) => {
         set({ actionLoading: true });
 
@@ -151,10 +151,10 @@ const useShelfStore = create(
         }
       },
 
-      // =====================================================
+      // 
       //  Delete Product
       // ลบด้วย id เป็นหลัก + reindex ใน state ให้ตรง backend ทันที
-      // =====================================================
+      // 
       handleDelete: async (productToDelete) => {
         set({ actionLoading: true });
 
@@ -185,9 +185,9 @@ const useShelfStore = create(
         }
       },
 
-      // =====================================================
+      // 
       //  Update Product
-      // =====================================================
+      // 
       handleUpdateProducts: async (updatedProducts) => {
         set({ actionLoading: true });
 
@@ -220,9 +220,9 @@ const useShelfStore = create(
           set({ actionLoading: false });
         }
       },
-      // =====================================================
+      // 
       //  UI STATE (Merged from store_shelf_manager_store)
-      // =====================================================
+      // 
       selectedbranch_code: "",
       submittedbranch_code: "",
       selectedShelves: [],

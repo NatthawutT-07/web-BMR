@@ -45,7 +45,7 @@ const BmrStore = (set, get) => ({
   setAuthReady: (v) => set({ authReady: v }),
   setRefreshing: (v) => set({ refreshing: v }),
 
-  // ---------- LOGIN ----------
+  //  LOGIN 
   actionLogin: async (form) => {
     await ensureCsrfToken();
     const res = await api.post("/login", form, { withCredentials: true });
@@ -67,7 +67,7 @@ const BmrStore = (set, get) => ({
     return res;
   },
 
-  // ---------- REFRESH ACCESS TOKEN (ใช้ตอน reload หน้า) ----------
+  //  REFRESH ACCESS TOKEN (ใช้ตอน reload หน้า) 
   refreshAccessToken: async () => {
     await ensureCsrfToken();
     const csrfToken = getCookieValue("csrfToken");
@@ -94,7 +94,7 @@ const BmrStore = (set, get) => ({
     return newToken;
   },
 
-  // ---------- CURRENT USER ----------
+  //  CURRENT USER 
   fetchCurrentUser: async () => {
     const res = await api.post("/current-user");
     const user = res.data.user;
@@ -145,7 +145,7 @@ const BmrStore = (set, get) => ({
     }
   },
 
-  // ---------- LOGOUT ----------
+  //  LOGOUT 
   logout: async () => {
     try {
       await ensureCsrfToken();

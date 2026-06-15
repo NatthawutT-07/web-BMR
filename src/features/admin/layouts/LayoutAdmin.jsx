@@ -10,7 +10,7 @@ const LayoutAdmin = () => {
 
   const location = useLocation();
 
-  // ---- Detect screen size ----
+  //  Detect screen size 
   useEffect(() => {
     const resizeHandler = () => {
       setIsMobile(window.innerWidth < 1024);
@@ -19,7 +19,7 @@ const LayoutAdmin = () => {
     return () => window.removeEventListener("resize", resizeHandler);
   }, []);
 
-  // ---- Auto-close sidebar when route changes ----
+  //  Auto-close sidebar when route changes 
   useEffect(() => {
     if (isMobile) {
       setSidebarOpen(false);

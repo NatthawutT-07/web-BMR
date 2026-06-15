@@ -1,8 +1,8 @@
 import api from "../../utils/axios";   // IMPORTANT: ใช้ axios instance เท่านั้น
 
-// ------------------------------------------------------------
+// 
 // GET: ShelfTemplate
-// ------------------------------------------------------------
+// 
 export const getTemplate = async () => {
     try {
         const response = await api.get("/shelf-templates");
@@ -12,9 +12,9 @@ export const getTemplate = async () => {
     }
 };
 
-// ------------------------------------------------------------
+// 
 // POST: SKU (สินค้าตาม branchMain)
-// ------------------------------------------------------------
+// 
 export const getSKU = async (branch_code) => {
     try {
         const response = await api.get("/sku-positions", { params: { branch_code } });
@@ -38,9 +38,9 @@ export const addTemplate = async (newItem) => {
     }
 };
 
-// ------------------------------------------------------------
+// 
 // DELETE: Delete product
-// ------------------------------------------------------------
+// 
 export const deleteTemplate = async (product) => {
     try {
         await api.delete("/sku-positions", {
@@ -72,9 +72,9 @@ export const updateProducts = async (data) => {
 };
 
 
-// ------------------------------------------------------------
+// 
 // GET: Master items by barcode/name/item_code
-// ------------------------------------------------------------
+// 
 export const getMasterItem = async (q) => {
     try {
         const response = await api.get("/master-items", { params: { q } });
@@ -84,9 +84,9 @@ export const getMasterItem = async (q) => {
     }
 };
 
-// ------------------------------------------------------------
+// 
 // GET: Shelf dashboard summary (all branches)
-// ------------------------------------------------------------
+// 
 export const getShelfDashboardSummary = async () => {
     try {
         const response = await api.get("/dashboards/shelf-summary");
@@ -99,9 +99,9 @@ export const getShelfDashboardSummary = async () => {
     }
 };
 
-// ------------------------------------------------------------
+// 
 // GET: Shelf dashboard shelf sales (per branchMain)
-// ------------------------------------------------------------
+// 
 export const getShelfDashboardShelfSales = async (branch_code) => {
     try {
         const response = await api.get("/dashboards/shelf-sales", {

@@ -22,9 +22,9 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
   const [editedProducts, setEditedProducts] = useState([]);
   const [activeId, setActiveId] = useState(null);
 
-  /* --------------------------------------------
+  /* 
    * เปิด Modal → โหลดข้อมูลทีเดียว
-   * -------------------------------------------- */
+   *  */
   useEffect(() => {
     if (isOpen) {
       setOriginalProducts(shelfProducts);
@@ -32,18 +32,18 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
     }
   }, [isOpen, shelfProducts]);
 
-  /* --------------------------------------------
+  /* 
    * SENSOR ใช้แค่ Pointer → เบาที่สุด
-   * -------------------------------------------- */
+   *  */
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: { distance: 5 },
     })
   );
 
-  /* --------------------------------------------
+  /* 
    * Group by Row → memo ลดการคำนวณ 90%
-   * -------------------------------------------- */
+   *  */
   const groupedByRow = useMemo(() => {
     const groups = {};
     for (const p of editedProducts) {
@@ -60,9 +60,9 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
     [shelf_total_row]
   );
 
-  /* --------------------------------------------
+  /* 
    * DRAG LOGIC (เลือกเฉพาะเฉพาะจุดที่จำเป็น)
-   * -------------------------------------------- */
+   *  */
   const handleDragStart = useCallback((event) => {
     setActiveId(event.active.id);
   }, []);
@@ -197,9 +197,9 @@ const EditShelfModal = ({ isOpen, onClose, onSave, shelfProducts, shelf_code, sh
     return editedProducts.find((p) => p.item_code === activeId);
   }, [activeId, editedProducts]);
 
-  /* --------------------------------------------
+  /* 
    * SAVE / CANCEL
-   * -------------------------------------------- */
+   *  */
   const handleSave = useCallback(() => onSave(editedProducts), [editedProducts, onSave]);
   const handleCancel = useCallback(() => {
     setEditedProducts(originalProducts);
