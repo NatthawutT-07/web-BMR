@@ -153,7 +153,7 @@ export default function ShelfChangeNotification({ branch_code }) {
                                                         {actionConf.label}
                                                     </span>
                                                     <span className="text-sm font-semibold text-slate-600 bg-slate-100 px-2 py-1 rounded-lg">
-                                                        Shelf: {log.shelfCode}
+                                                        Shelf: {log.shelf_code}
                                                     </span>
                                                 </div>
                                                 <button
@@ -197,7 +197,7 @@ export default function ShelfChangeNotification({ branch_code }) {
                                                     <div className="flex items-center justify-around px-4 py-4 bg-white">
                                                         <div className="flex flex-col items-center flex-1">
                                                             <span className="text-[10px] text-slate-400 mb-1">Shelf</span>
-                                                            <span className="text-lg font-bold text-slate-800">{log.shelfCode}</span>
+                                                            <span className="text-lg font-bold text-slate-800">{log.shelf_code}</span>
                                                         </div>
                                                         <div className="w-px h-8 bg-slate-100"></div>
                                                         <div className="flex flex-col items-center flex-1">
@@ -222,7 +222,7 @@ export default function ShelfChangeNotification({ branch_code }) {
                                                     <div className="flex items-center justify-around px-4 py-4 bg-white">
                                                         <div className="flex flex-col items-center flex-1">
                                                             <span className="text-[10px] text-slate-400 mb-1">Shelf</span>
-                                                            <span className="text-lg font-bold text-slate-800">{log.shelfCode}</span>
+                                                            <span className="text-lg font-bold text-slate-800">{log.shelf_code}</span>
                                                         </div>
                                                         <div className="w-px h-8 bg-slate-100"></div>
                                                         <div className="flex flex-col items-center flex-1">
@@ -249,7 +249,7 @@ export default function ShelfChangeNotification({ branch_code }) {
                                                         <div className="text-[10px] text-slate-400 font-medium w-10">จาก</div>
                                                         <div className="flex flex-col items-center flex-1">
                                                             <span className="text-[10px] text-slate-400 mb-0.5">Shelf</span>
-                                                            <span className="text-base font-bold text-slate-500">{log.shelfCode}</span>
+                                                            <span className="text-base font-bold text-slate-500">{log.shelf_code}</span>
                                                         </div>
                                                         <div className="w-px h-7 bg-slate-200"></div>
                                                         <div className="flex flex-col items-center flex-1">
@@ -267,7 +267,7 @@ export default function ShelfChangeNotification({ branch_code }) {
                                                         <div className="text-[10px] text-blue-600 font-bold w-10">ไป</div>
                                                         <div className="flex flex-col items-center flex-1">
                                                             <span className="text-[10px] text-slate-400 mb-0.5">Shelf</span>
-                                                            <span className="text-lg font-bold text-slate-800">{log.shelfCode}</span>
+                                                            <span className="text-lg font-bold text-slate-800">{log.shelf_code}</span>
                                                         </div>
                                                         <div className="w-px h-7 bg-slate-100"></div>
                                                         <div className="flex flex-col items-center flex-1">

@@ -9,8 +9,8 @@ const AddProductModal = React.memo(
         onSubmit,
         nextIndex,
         branch_code,
-        shelfCode,
-        rowNo,
+        shelf_code,
+        shelf_row_number,
         shelfProducts = [],
         onIncNextIndex,
     }) => {
@@ -159,10 +159,10 @@ const AddProductModal = React.memo(
                 shelf_life_days: selected.shelf_life_days ?? null,
                 selling_price_vat: selected.selling_price_vat ?? null,
 
-                index: nextIndex,
+                shelf_index_number: nextIndex,
                 branch_code,
-                shelfCode,
-                rowNo,
+                shelf_code,
+                shelf_row_number,
             };
 
             setSaving(true);
@@ -407,10 +407,10 @@ const AddProductModal = React.memo(
                                             Branch: <b>{branch_code}</b>
                                         </span>
                                         <span>
-                                            Shelf: <b>{shelfCode}</b>
+                                            Shelf: <b>{shelf_code}</b>
                                         </span>
                                         <span>
-                                            Row: <b>{rowNo}</b>
+                                            Row: <b>{shelf_row_number}</b>
                                         </span>
                                         <span>
                                             Index: <b>{nextIndex}</b>

@@ -313,12 +313,12 @@ const ShelfDashboard = () => {
                                   <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                     {shelfSales.map((shelf) => (
                                       <div
-                                        key={shelf.shelfCode}
+                                        key={shelf.shelf_code}
                                         className="bg-white p-3 rounded border border-slate-200 shadow-sm"
                                       >
                                         <div className="flex justify-between items-center mb-2 pb-2 border-b border-slate-100">
                                           <div className="font-semibold text-slate-800 text-sm">
-                                            {shelf.shelfCode}
+                                            {shelf.shelf_code}
                                           </div>
                                           <div className="text-xs bg-slate-100 px-2 py-0.5 rounded text-slate-600">
                                             {fmtNumber(shelf.skuCount)} SKU

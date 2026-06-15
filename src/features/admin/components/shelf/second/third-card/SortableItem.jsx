@@ -2,7 +2,7 @@ import React from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-const SortableItem = React.memo(({ item, index }) => {
+const SortableItem = React.memo(({ item, shelf_index_number }) => {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id: item.item_code });
 

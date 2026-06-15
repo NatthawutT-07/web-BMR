@@ -46,10 +46,10 @@ export const deleteTemplate = async (product) => {
         await api.delete("/shelf-delete", {
             data: {
                 branch_code: product.branch_code,
-                shelfCode: product.shelfCode,
-                rowNo: product.rowNo,
+                shelf_code: product.shelf_code,
+                shelf_row_number: product.shelf_row_number,
                 item_code: product.item_code,
-                index: product.index,
+                shelf_index_number: product.shelf_index_number,
             },
         });
     } catch (error) {

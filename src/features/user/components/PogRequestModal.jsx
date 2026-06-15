@@ -57,7 +57,7 @@ export default function PogRequestModal({
 
             // Merge API data กับ initialShelves
             const merged = apiShelves.map(apiShelf => {
-                const propsShelf = initialShelves.find(s => s.shelfCode === apiShelf.shelfCode);
+                const propsShelf = initialShelves.find(s => s.shelf_code === apiShelf.shelf_code);
                 return {
                     ...apiShelf,
                     items: propsShelf?.items?.length > 0 ? propsShelf.items : apiShelf.items || []
@@ -125,13 +125,13 @@ export default function PogRequestModal({
     // คำนวณ available rows สำหรับ shelf ที่เลือก
     const selectedShelfData = useMemo(() => {
         if (!toShelf) return null;
-        return availableShelves.find(s => s.shelfCode === toShelf);
+        return availableShelves.find(s => s.shelf_code === toShelf);
     }, [toShelf, availableShelves]);
 
     const availableRows = useMemo(() => {
         if (!selectedShelfData) return [];
-        const rowQty = Number(selectedShelfData.rowQty || 0);
-        return Array.from({ length: rowQty }, (_, i) => i + 1);
+        const shelf_total_row = Number(selectedShelfData.shelf_total_row || 0);
+        return Array.from({ length: shelf_total_row }, (_, i) => i + 1);
     }, [selectedShelfData]);
 
     // คำนวณ available index สำหรับ row ที่เลือก (current items + 1 for new)
@@ -141,7 +141,7 @@ export default function PogRequestModal({
         // นับจำนวน items ใน row นี้
         const items = selectedShelfData.items || [];
         const rowNum = Number(toRow);
-        const itemsInRow = items.filter(item => Number(item.rowNo) === rowNum);
+        const itemsInRow = items.filter(item => Number(item.shelf_row_number) === rowNum);
         const maxIndex = itemsInRow.length;
 
         // แสดง 1 ถึง maxIndex+1 (new position)
@@ -160,10 +160,10 @@ export default function PogRequestModal({
             for (const item of items) {
                 if (String(item.barcode || "").trim() === bc) {
                     return {
-                        shelfCode: shelf.shelfCode,
-                        shelfName: shelf.fullName || shelf.shelfCode,
-                        rowNo: item.rowNo,
-                        index: item.index,
+                        shelf_code: shelf.shelf_code,
+                        shelfName: shelf.shelf_name || shelf.shelf_code,
+                        shelf_row_number: item.shelf_row_number,
+                        shelf_index_number: item.shelf_index_number,
                     };
                 }
             }
@@ -213,7 +213,7 @@ export default function PogRequestModal({
             try {
                 const saved = localStorage.getItem(LAST_ADD_POSITION_KEY);
                 if (saved) {
-                    const { shelf, row, index } = JSON.parse(saved);
+                    const { shelf, row, shelf_index_number } = JSON.parse(saved);
 
                     if (shelf) setToShelf(shelf);
                     if (row) setToRow(String(row));
@@ -251,7 +251,7 @@ export default function PogRequestModal({
 
         // Block duplicate add
         if (isDuplicateAdd) {
-            setError(`สินค้านี้มีอยู่ในสาขาแล้ว (${existingLocationForBarcode?.shelfCode} / ชั้น ${existingLocationForBarcode?.rowNo} / ลำดับ ${existingLocationForBarcode?.index}) ไม่สามารถเพิ่มซ้ำได้`);
+            setError(`สินค้านี้มีอยู่ในสาขาแล้ว (${existingLocationForBarcode?.shelf_code} / ชั้น ${existingLocationForBarcode?.shelf_row_number} / ลำดับ ${existingLocationForBarcode?.shelf_index_number}) ไม่สามารถเพิ่มซ้ำได้`);
             return;
         }
 
@@ -289,7 +289,7 @@ export default function PogRequestModal({
                     localStorage.setItem(LAST_ADD_POSITION_KEY, JSON.stringify({
                         shelf: toShelf,
                         row: Number(toRow),
-                        index: Number(toIndex)
+                        shelf_index_number: Number(toIndex)
                     }));
                 } catch (e) {
                     console.error("Failed to save last position:", e);
@@ -420,8 +420,8 @@ export default function PogRequestModal({
                                                     <span className={!toShelf ? "text-slate-500" : ""}>
                                                         {toShelf
                                                             ? (() => {
-                                                                const s = availableShelves.find(sh => sh.shelfCode === toShelf);
-                                                                return s ? `${s.shelfCode} - ${s.fullName || s.shelfCode}` : toShelf;
+                                                                const s = availableShelves.find(sh => sh.shelf_code === toShelf);
+                                                                return s ? `${s.shelf_code} - ${s.shelf_name || s.shelf_code}` : toShelf;
                                                             })()
                                                             : `-- เลือกชั้นวาง (${availableShelves.length} ชั้นวาง) --`}
                                                     </span>
@@ -438,20 +438,20 @@ export default function PogRequestModal({
                                                         <ul className="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                                                             {availableShelves.map((shelf) => (
                                                                 <li
-                                                                    key={shelf.shelfCode}
-                                                                    className={`relative cursor-pointer select-none py-2 pl-3 pr-9 hover:bg-emerald-50 ${toShelf === shelf.shelfCode ? 'text-emerald-900 bg-emerald-50 font-medium' : 'text-slate-700'
+                                                                    key={shelf.shelf_code}
+                                                                    className={`relative cursor-pointer select-none py-2 pl-3 pr-9 hover:bg-emerald-50 ${toShelf === shelf.shelf_code ? 'text-emerald-900 bg-emerald-50 font-medium' : 'text-slate-700'
                                                                         }`}
                                                                     onClick={() => {
-                                                                        setToShelf(shelf.shelfCode);
+                                                                        setToShelf(shelf.shelf_code);
                                                                         setToRow("");
                                                                         setToIndex("");
                                                                         setIsShelfDropdownOpen(false);
                                                                     }}
                                                                 >
-                                                                    <span className={`block truncate ${toShelf === shelf.shelfCode ? 'font-semibold' : 'font-normal'}`}>
-                                                                        {shelf.shelfCode} - {shelf.fullName || shelf.shelfCode}
+                                                                    <span className={`block truncate ${toShelf === shelf.shelf_code ? 'font-semibold' : 'font-normal'}`}>
+                                                                        {shelf.shelf_code} - {shelf.shelf_name || shelf.shelf_code}
                                                                     </span>
-                                                                    {toShelf === shelf.shelfCode && (
+                                                                    {toShelf === shelf.shelf_code && (
                                                                         <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-emerald-600">
                                                                             ✓
                                                                         </span>

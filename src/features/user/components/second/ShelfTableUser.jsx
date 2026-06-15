@@ -10,30 +10,30 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
     () => (Array.isArray(shelfProducts) ? shelfProducts : []),
     [shelfProducts]
   );
-  // เอาเฉพาะตัวที่มี rowNo
+  // เอาเฉพาะตัวที่มี shelf_row_number
   const valid = useMemo(
-    () => safeShelfProducts.filter((p) => p.rowNo !== undefined),
+    () => safeShelfProducts.filter((p) => p.shelf_row_number !== undefined),
     [safeShelfProducts]
   );
 
   // จำนวนแถวทั้งหมด (Row)
   const rowCount = useMemo(() => {
     if (!valid.length) return 0;
-    return Math.max(...valid.map((p) => p.rowNo || 0), 0);
+    return Math.max(...valid.map((p) => p.shelf_row_number || 0), 0);
   }, [valid]);
 
-  // group ตาม rowNo
+  // group ตาม shelf_row_number
   const groupedRows = useMemo(() => {
     const result = {};
     valid.forEach((p) => {
-      const rowNo = p.rowNo || 0;
-      if (!result[rowNo]) result[rowNo] = [];
-      result[rowNo].push(p);
+      const shelf_row_number = p.shelf_row_number || 0;
+      if (!result[shelf_row_number]) result[shelf_row_number] = [];
+      result[shelf_row_number].push(p);
     });
 
     // sort index ในแต่ละ row ให้เป็นระเบียบ
-    Object.keys(result).forEach((rowNo) => {
-      result[rowNo].sort((a, b) => (a.index || 0) - (b.index || 0));
+    Object.keys(result).forEach((shelf_row_number) => {
+      result[shelf_row_number].sort((a, b) => (a.shelf_index_number || 0) - (b.shelf_index_number || 0));
     });
 
     return result;
@@ -111,17 +111,17 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
           )}
 
           {Array.from({ length: rowCount }).map((_, idx) => {
-            const rowNo = idx + 1;
-            const items = groupedRows[rowNo] || [];
+            const shelf_row_number = idx + 1;
+            const items = groupedRows[shelf_row_number] || [];
 
             return (
-              <React.Fragment key={rowNo}>
+              <React.Fragment key={shelf_row_number}>
                 <tr className="bg-blue-100 print:bg-slate-200">
                   <td
                     colSpan={16}
                     className="border px-3 py-2 print:py-[2px] font-bold text-left text-blue-800"
                   >
-                    ชั้นที่ {rowNo}
+                    ชั้นที่ {shelf_row_number}
                   </td>
                 </tr>
 
@@ -138,11 +138,11 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
 
                     return (
                       <tr
-                        key={`${rowNo}-${p.item_code || i}`}
+                        key={`${shelf_row_number}-${p.item_code || i}`}
                         className={`${bgClass} group`}
                       >
                         <td className="border p-1 print:px-[2px] text-center align-middle">
-                          {zeroToDash(p.index)}
+                          {zeroToDash(p.shelf_index_number)}
                         </td>
 
                         <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle">
@@ -282,9 +282,9 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
           branchName={branchName}
           barcode={selectedProduct?.barcode}
           productName={selectedProduct?.item_name}
-          currentShelf={selectedProduct?.shelfCode}
-          currentRow={selectedProduct?.rowNo}
-          currentIndex={selectedProduct?.index}
+          currentShelf={selectedProduct?.shelf_code}
+          currentRow={selectedProduct?.shelf_row_number}
+          currentIndex={selectedProduct?.shelf_index_number}
           availableShelves={availableShelves}
         />
       )}

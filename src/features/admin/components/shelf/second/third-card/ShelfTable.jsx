@@ -23,7 +23,7 @@ const getSafeStockCost = (p) => {
 const getNextAvailableIndex = (rowProducts = []) => {
   const used = new Set(
     rowProducts
-      .map((p) => Number(p.index))
+      .map((p) => Number(p.shelf_index_number))
       .filter((n) => Number.isFinite(n) && n > 0)
   );
 
@@ -42,7 +42,7 @@ const ShelfTable = ({
   shelfProducts,
   onDelete,
   onAdd,
-  shelfCode,
+  shelf_code,
   branch_code,
   duplicateCodes,
 }) => {
@@ -53,7 +53,7 @@ const ShelfTable = ({
 
   const [addModal, setAddModal] = useState({
     isOpen: false,
-    rowNo: null,
+    shelf_row_number: null,
     nextIndex: 1,
   });
 
@@ -61,14 +61,14 @@ const ShelfTable = ({
   const productsByRow = useMemo(() => {
     const map = {};
     shelfProducts.forEach((p) => {
-      if (!map[p.rowNo]) map[p.rowNo] = [];
-      map[p.rowNo].push(p);
+      if (!map[p.shelf_row_number]) map[p.shelf_row_number] = [];
+      map[p.shelf_row_number].push(p);
     });
 
-    Object.keys(map).forEach((rowNo) => {
-      map[rowNo].sort((a, b) => Number(a.index) - Number(b.index));
+    Object.keys(map).forEach((shelf_row_number) => {
+      map[shelf_row_number].sort((a, b) => Number(a.shelf_index_number) - Number(b.shelf_index_number));
 
-      map[rowNo] = map[rowNo].map((p, idx) => ({
+      map[shelf_row_number] = map[shelf_row_number].map((p, idx) => ({
         ...p,
         displayIndex: idx + 1,
       }));
@@ -87,10 +87,10 @@ const ShelfTable = ({
 
   /* Action callbacks */
   const handleAddClick = useCallback(
-    (rowNo) => {
-      const row = productsByRow[rowNo] || [];
+    (shelf_row_number) => {
+      const row = productsByRow[shelf_row_number] || [];
       const nextIndex = getNextAvailableIndex(row);
-      setAddModal({ isOpen: true, rowNo, nextIndex });
+      setAddModal({ isOpen: true, shelf_row_number, nextIndex });
     },
     [productsByRow]
   );
@@ -131,24 +131,24 @@ const ShelfTable = ({
   }, []);
 
   /* Render table row (per RowNo) */
-  const renderRow = (rowNo) => {
-    const rowProducts = productsByRow[rowNo] || [];
+  const renderRow = (shelf_row_number) => {
+    const rowProducts = productsByRow[shelf_row_number] || [];
 
     const totalRowStock = rowProducts.reduce((sum, p) => sum + getSafeStockCost(p), 0);
     const totalRowSales = calcTotalSales(rowProducts);
     const totalRowWithdraw = calcTotalWithdraw(rowProducts);
 
     return (
-      <React.Fragment key={`row-${rowNo}`}>
+      <React.Fragment key={`row-${shelf_row_number}`}>
         {/* Row header */}
         <tr className="bg-blue-50">
           <td colSpan={19} className="p-2 border font-semibold italic">
-            ➤ Row: {rowNo}
+            ➤ Row: {shelf_row_number}
           </td>
 
           <td className="p-2 border text-center">
             <button
-              onClick={() => handleAddClick(rowNo)}
+              onClick={() => handleAddClick(shelf_row_number)}
               className="px-3 py-1 bg-green-400 text-white rounded hover:bg-green-600"
             >
               ➕
@@ -163,7 +163,7 @@ const ShelfTable = ({
 
             const rowKey = prod.id
               ? `prod-${prod.id}`
-              : `prod-${prod.item_code}-${prod.index}`;
+              : `prod-${prod.item_code}-${prod.shelf_index_number}`;
 
             const code = prod.item_code ? String(prod.item_code) : prod.barcode ? String(prod.barcode) : null;
             const isDuplicate = code && duplicateCodes?.has(code);
@@ -172,7 +172,7 @@ const ShelfTable = ({
             return (
               <tr key={rowKey} className={rowBg}>
                 <td className="p-1 border text-center w-10">
-                  {prod.displayIndex ?? prod.index}
+                  {prod.displayIndex ?? prod.shelf_index_number}
                 </td>
 
                 <td className="p-1 border text-center w-24 whitespace-nowrap">
@@ -285,7 +285,7 @@ const ShelfTable = ({
           <td colSpan={12}></td>
 
           <td colSpan={3} className="p-2 border text-right">
-            Total Row {rowNo}
+            Total Row {shelf_row_number}
           </td>
 
           <td className="p-2 border text-yellow-600 text-right">
@@ -310,13 +310,13 @@ const ShelfTable = ({
     <>
       <AddProductModal
         isOpen={addModal.isOpen}
-        onClose={() => setAddModal({ isOpen: false, rowNo: null, nextIndex: 1 })}
+        onClose={() => setAddModal({ isOpen: false, shelf_row_number: null, nextIndex: 1 })}
         onSubmit={handleAddSubmit}
         nextIndex={addModal.nextIndex}
         onIncNextIndex={incNextIndex}
         branch_code={branch_code}
-        shelfCode={shelfCode}
-        rowNo={addModal.rowNo}
+        shelf_code={shelf_code}
+        shelf_row_number={addModal.shelf_row_number}
         shelfProducts={shelfProducts}
       />
 

@@ -62,13 +62,13 @@ const ShelfDashboard = ({
           {branchSummary.length > 0 ? (
             branchSummary.map((s) => (
               <div
-                key={s.shelfCode}
-                className={`grid grid-cols-4 px-2 py-2 ${s.shelfCode === "TOTAL"
+                key={s.shelf_code}
+                className={`grid grid-cols-4 px-2 py-2 ${s.shelf_code === "TOTAL"
                   ? "bg-slate-100 font-semibold sticky bottom-0"
                   : "hover:bg-slate-50"
                   }`}
               >
-                <span className="font-medium">{s.shelfCode}</span>
+                <span className="font-medium">{s.shelf_code}</span>
                 <span className="text-right text-yellow-700">
                   {fmtMoney2(s.totalStockCost)}
                 </span>

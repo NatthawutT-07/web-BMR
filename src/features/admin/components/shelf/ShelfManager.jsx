@@ -108,10 +108,10 @@ const ShelfManager = () => {
     if (!branchProduct || branchProduct.length === 0) return [];
     const summaryMap = {};
     branchProduct.forEach((p) => {
-      const shelf = p.shelfCode || p.shelf_code;
+      const shelf = p.shelf_code || p.shelf_code;
       if (!shelf) return;
       if (!summaryMap[shelf]) {
-        summaryMap[shelf] = { shelfCode: shelf, totalStockCost: 0, totalSales: 0, totalWithdraw: 0 };
+        summaryMap[shelf] = { shelf_code: shelf, totalStockCost: 0, totalSales: 0, totalWithdraw: 0 };
       }
       const quantity_stock = p.quantity_stock ?? p.stock_qty ?? 0;
       const purchasePrice = p.purchase_price ?? p.purchase_price_ex_vat ?? 0;
@@ -128,7 +128,7 @@ const ShelfManager = () => {
       acc.totalSales += s.totalSales;
       acc.totalWithdraw += s.totalWithdraw;
       return acc;
-    }, { shelfCode: "TOTAL", totalStockCost: 0, totalSales: 0, totalWithdraw: 0 });
+    }, { shelf_code: "TOTAL", totalStockCost: 0, totalSales: 0, totalWithdraw: 0 });
     return [...summaryList, totalRow];
   }, [branchProduct]);
 
@@ -153,9 +153,9 @@ const ShelfManager = () => {
 
   const displayedTemplates = useMemo(() => {
     const base = selectedShelves.length > 0
-      ? filteredTemplate.filter((t) => selectedShelves.includes(t.shelfCode))
+      ? filteredTemplate.filter((t) => selectedShelves.includes(t.shelf_code))
       : filteredTemplate;
-    return [...base].sort((a, b) => String(a.shelfCode || "").localeCompare(String(b.shelfCode || "")));
+    return [...base].sort((a, b) => String(a.shelf_code || "").localeCompare(String(b.shelf_code || "")));
   }, [filteredTemplate, selectedShelves]);
 
   const handleSearch = (value) => {
@@ -171,7 +171,7 @@ const ShelfManager = () => {
         const barcode = (p.barcode || p.item_code || "").toString();
         return brand.includes(text) || barcode.includes(text);
       })
-      .sort((a, b) => String(a.shelfCode || "").localeCompare(String(b.shelfCode || "")));
+      .sort((a, b) => String(a.shelf_code || "").localeCompare(String(b.shelf_code || "")));
     setSearchResult(found);
   };
 
@@ -232,7 +232,7 @@ const ShelfManager = () => {
           <Suspense fallback={<div className="text-gray-500 text-sm mt-4">Loading shelf detail...</div>}>
             {displayedTemplates.map((t) => (
               <ShelfCard
-                key={t.shelfCode}
+                key={t.shelf_code}
                 template={t}
                 product={branchProduct}
                 duplicateCodes={duplicateCodes}

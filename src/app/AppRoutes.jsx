@@ -37,7 +37,7 @@ const router = createBrowserRouter([
         path: "/",
         children: [
             {
-                index: true,
+                shelf_index_number: true,
                 element: <ProtectGuest element={<LoginPage />} />,
             },
         ],
@@ -48,7 +48,7 @@ const router = createBrowserRouter([
         path: "/sys-ahFvi1hmPw3iKCn",
         element: <ProtectRouteAdmin element={<LayoutAdmin />} />,
         children: [
-            { index: true, element: <Suspense fallback={<PageLoader />}><Dashboard /></Suspense> },
+            { shelf_index_number: true, element: <Suspense fallback={<PageLoader />}><Dashboard /></Suspense> },
             { path: "qW3eR7tY2u", element: <Suspense fallback={<PageLoader />}><Template /></Suspense> },
             { path: "pA9sD4fG6h", element: <Suspense fallback={<PageLoader />}><ShelfDashboard /></Suspense> },
             { path: "zX5cV8bN1m", element: <Suspense fallback={<PageLoader />}><Upload /></Suspense> },
@@ -62,7 +62,7 @@ const router = createBrowserRouter([
     {
         path: "/xY7zA3bC9d/:storecode",
         element: <ProtectRouteUser element={<LayoutUser />} />,
-        children: [{ index: true, element: <Suspense fallback={<PageLoader />}><Home /></Suspense> }],
+        children: [{ shelf_index_number: true, element: <Suspense fallback={<PageLoader />}><Home /></Suspense> }],
     },
 ]);
 

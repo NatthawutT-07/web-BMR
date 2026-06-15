@@ -143,31 +143,31 @@ const Template = () => {
     });
   }, [mode, jumpShelfCode]);
 
-  // Group ตาม shelfCode
+  // Group ตาม shelf_code
   const groupedShelves = useMemo(() => {
     if (!data.length) return [];
 
     const groups = data.reduce((acc, item) => {
-      const code = item.shelfCode || "-";
+      const code = item.shelf_code || "-";
       if (!acc[code]) acc[code] = [];
       acc[code].push(item);
       return acc;
     }, {});
 
-    return Object.keys(groups).map((shelfCode) => {
-      const items = groups[shelfCode];
+    return Object.keys(groups).map((shelf_code) => {
+      const items = groups[shelf_code];
       const rowNumbers = items
-        .map((i) => i.rowNo || 1)
+        .map((i) => i.shelf_row_number || 1)
         .filter((n) => typeof n === "number");
-      const rowQty = rowNumbers.length ? Math.max(...rowNumbers) : 1;
+      const shelf_total_row = rowNumbers.length ? Math.max(...rowNumbers) : 1;
 
       return {
-        shelfCode,
-        fullName: items[0]?.fullName || "N/A",
-        rowQty,
+        shelf_code,
+        shelf_name: items[0]?.shelf_name || "N/A",
+        shelf_total_row,
         shelfProducts: items.sort(
           (a, b) =>
-            (a.rowNo || 0) - (b.rowNo || 0) || (a.index || 0) - (b.index || 0)
+            (a.shelf_row_number || 0) - (b.shelf_row_number || 0) || (a.shelf_index_number || 0) - (b.shelf_index_number || 0)
         ),
       };
     });
@@ -197,12 +197,12 @@ const Template = () => {
     let base = groupedShelves;
 
     if (isPrinting && Array.isArray(printTargetShelves) && printTargetShelves.length > 0) {
-      base = base.filter((s) => printTargetShelves.includes(s.shelfCode));
+      base = base.filter((s) => printTargetShelves.includes(s.shelf_code));
     }
 
     if (!isPrinting) {
       base = base.filter(
-        (shelf) => selectedShelves.length === 0 || selectedShelves.includes(shelf.shelfCode)
+        (shelf) => selectedShelves.length === 0 || selectedShelves.includes(shelf.shelf_code)
       );
     }
 
@@ -255,7 +255,7 @@ const Template = () => {
     setPrintPick((prev) => (prev.includes(code) ? prev.filter((x) => x !== code) : [...prev, code]));
   };
 
-  const allShelfCodes = useMemo(() => groupedShelves.map((s) => s.shelfCode), [groupedShelves]);
+  const allShelfCodes = useMemo(() => groupedShelves.map((s) => s.shelf_code), [groupedShelves]);
 
   return (
     <div className="min-h-screen bg-slate-100 print:bg-white">
@@ -434,19 +434,19 @@ const Template = () => {
             storecode={storecode}
             branchName={branchName}
             availableShelves={groupedShelves.map(s => ({
-              shelfCode: s.shelfCode,
-              fullName: s.fullName,
-              rowQty: s.rowQty,
+              shelf_code: s.shelf_code,
+              shelf_name: s.shelf_name,
+              shelf_total_row: s.shelf_total_row,
               items: s.shelfProducts // for calculating available indices
             }))}
-            onGoShelf={(shelfCode) => {
+            onGoShelf={(shelf_code) => {
               setMode("shelf");
-              setSelectedShelves([shelfCode]);
+              setSelectedShelves([shelf_code]);
               setSearchText("");
-              setJumpShelfCode(shelfCode);
+              setJumpShelfCode(shelf_code);
 
               // สั่งเปิดการ์ด shelf นี้ 1 ครั้ง
-              setOpenShelfOnce({ code: shelfCode, nonce: Date.now() });
+              setOpenShelfOnce({ code: shelf_code, nonce: Date.now() });
             }}
           />
         )}
@@ -501,32 +501,32 @@ const Template = () => {
                       <div className="space-y-3">
                         {groupedShelves.map((shelf) => (
                           <div
-                            key={shelf.shelfCode}
+                            key={shelf.shelf_code}
                             className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm transition-all hover:shadow-md"
                           >
                             <div className="flex items-center gap-2 pb-2 border-b border-dashed border-slate-200">
                               <span className="text-xl flex-shrink-0">📦</span>
                               <div className="flex-1 min-w-0 flex items-center whitespace-nowrap overflow-x-auto scrollbar-hide">
                                 <span className="font-bold text-blue-700 text-base">
-                                  {shelf.shelfCode}
+                                  {shelf.shelf_code}
                                 </span>
-                                {shelf.fullName && (
+                                {shelf.shelf_name && (
                                   <span className="text-sm text-slate-600 ml-1">
-                                    - {shelf.fullName}
+                                    - {shelf.shelf_name}
                                   </span>
                                 )}
                               </div>
                               <span className="text-xs bg-blue-100 text-blue-700 px-2.5 py-1 rounded-full font-bold flex-shrink-0 whitespace-nowrap">
-                                {shelf.rowQty} ชั้น
+                                {shelf.shelf_total_row} ชั้น
                               </span>
                             </div>
 
                             {/* รายการแต่ละ Row */}
                             <div className="mt-2 space-y-1.5">
-                              {Array.from({ length: shelf.rowQty }).map((_, idx) => {
-                                const rowNo = idx + 1;
+                              {Array.from({ length: shelf.shelf_total_row }).map((_, idx) => {
+                                const shelf_row_number = idx + 1;
                                 const rowProducts = shelf.shelfProducts.filter(
-                                  (p) => (p.rowNo || 0) === rowNo
+                                  (p) => (p.shelf_row_number || 0) === shelf_row_number
                                 );
                                 const rowColors = [
                                   'bg-amber-50 border-amber-200 text-amber-800',
@@ -540,14 +540,14 @@ const Template = () => {
 
                                 return (
                                   <div
-                                    key={rowNo}
+                                    key={shelf_row_number}
                                     className={`flex items-center justify-between px-3 py-2.5 rounded-lg border ${colorClass}`}
                                   >
                                     <div className="flex items-center gap-3">
                                       <div className="w-7 h-7 rounded-full bg-white/80 flex items-center justify-center text-sm font-extrabold shadow-sm border border-current/10">
-                                        {rowNo}
+                                        {shelf_row_number}
                                       </div>
-                                      <span className="text-sm font-semibold opacity-80">ชั้นที่ {rowNo}</span>
+                                      <span className="text-sm font-semibold opacity-80">ชั้นที่ {shelf_row_number}</span>
                                     </div>
                                     <span className="text-xs font-bold bg-white/60 px-2.5 py-1 rounded-full">
                                       {rowProducts.length} รายการ
@@ -568,7 +568,7 @@ const Template = () => {
                       <div className="space-y-4">
                         <Suspense fallback={<div className="text-sm text-gray-500">Loading filter...</div>}>
                           <ShelfFilterUser
-                            shelves={groupedShelves.map((s) => s.shelfCode)}
+                            shelves={groupedShelves.map((s) => s.shelf_code)}
                             selectedShelves={selectedShelves}
                             onToggle={(code) =>
                               setSelectedShelves((prev) =>
@@ -618,21 +618,21 @@ const Template = () => {
               <Suspense fallback={<div className="text-sm text-gray-500">Loading shelves...</div>}>
                 {displayedShelves.map((shelf) => (
                   <div
-                    key={shelf.shelfCode}
+                    key={shelf.shelf_code}
                     ref={(el) => {
-                      if (el) shelfRefs.current[shelf.shelfCode] = el;
+                      if (el) shelfRefs.current[shelf.shelf_code] = el;
                     }}
                   >
                     <ShelfCardUser
                       template={{ ...shelf, shelfProducts: shelf.matchedProducts }}
                       autoOpen={searchText.length > 0}
                       isPrinting={isPrinting}
-                      openNonce={openShelfOnce.code === shelf.shelfCode ? openShelfOnce.nonce : 0}
+                      openNonce={openShelfOnce.code === shelf.shelf_code ? openShelfOnce.nonce : 0}
                       branchName={branchName}
                       availableShelves={groupedShelves.map(s => ({
-                        shelfCode: s.shelfCode,
-                        fullName: s.fullName,
-                        rowQty: s.rowQty,
+                        shelf_code: s.shelf_code,
+                        shelf_name: s.shelf_name,
+                        shelf_total_row: s.shelf_total_row,
                         items: s.shelfProducts
                       }))}
                       duplicateCodes={duplicateCodes}

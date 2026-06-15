@@ -30,13 +30,13 @@ const ShelfFilter = React.memo(
 
         {/* Shelves grid */}
         <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
-          {uniqueShelves.map((shelfCode) => {
-            const isSelected = selectedShelves.includes(shelfCode);
+          {uniqueShelves.map((shelf_code) => {
+            const isSelected = selectedShelves.includes(shelf_code);
             return (
               <button
-                key={shelfCode}
+                key={shelf_code}
                 type="button"
-                onClick={() => onToggle(shelfCode)}
+                onClick={() => onToggle(shelf_code)}
                 className={`
                   w-full aspect-square rounded-lg text-xs font-bold text-center transition-all flex items-center justify-center
                   ${isSelected
@@ -44,7 +44,7 @@ const ShelfFilter = React.memo(
                     : 'bg-white text-slate-600 border border-slate-200 hover:bg-blue-50 hover:border-blue-200'}
                 `}
               >
-                {shelfCode}
+                {shelf_code}
               </button>
             );
           })}

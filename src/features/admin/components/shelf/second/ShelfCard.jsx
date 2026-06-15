@@ -29,9 +29,9 @@ const ShelfCard = ({
    * ------------------------------------------------ */
   const filteredShelfProducts = useMemo(() => {
     return product
-      .filter((p) => p.shelfCode === template.shelfCode)
-      .sort((a, b) => Number(a.index) - Number(b.index));
-  }, [product, template.shelfCode]);
+      .filter((p) => p.shelf_code === template.shelf_code)
+      .sort((a, b) => Number(a.shelf_index_number) - Number(b.shelf_index_number));
+  }, [product, template.shelf_code]);
 
   useEffect(() => {
     setLocalShelfProducts(filteredShelfProducts);
@@ -76,7 +76,7 @@ const ShelfCard = ({
 
           {!isImageOpen && (
             <h2 className="text-xl font-semibold">
-              Shelf: {template.shelfCode} - {template.fullName} ({template.rowQty} Rows)
+              Shelf: {template.shelf_code} - {template.shelf_name} ({template.shelf_total_row} Rows)
             </h2>
           )}
         </div>
@@ -122,7 +122,7 @@ const ShelfCard = ({
           }
         >
           <ShelfTable
-            rows={template.rowQty}
+            rows={template.shelf_total_row}
             shelfProducts={localShelfProducts}
             onDelete={(p) => {
               setLocalShelfProducts((prev) => prev.filter((prod) => prod !== p));
@@ -132,7 +132,7 @@ const ShelfCard = ({
               setLocalShelfProducts((prev) => [...prev, p]);
               if (onAdd) onAdd(p);
             }}
-            shelfCode={template.shelfCode}
+            shelf_code={template.shelf_code}
             branch_code={template.branch_code}
             duplicateCodes={duplicateCodes}
           />
@@ -152,8 +152,8 @@ const ShelfCard = ({
           onClose={() => setIsEditOpen(false)}
           onSave={handleSaveEdit}
           shelfProducts={localShelfProducts}
-          shelfCode={template.shelfCode}
-          rowQty={template.rowQty}
+          shelf_code={template.shelf_code}
+          shelf_total_row={template.shelf_total_row}
         />
       </Suspense>
     </div>

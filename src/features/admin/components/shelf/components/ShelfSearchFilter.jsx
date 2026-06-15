@@ -22,7 +22,7 @@ const ShelfSearchFilter = ({
           {filteredTemplate.length > 0 && !loading ? (
             <Suspense fallback={<div className="text-sm text-gray-500">Loading filter...</div>}>
               <ShelfFilter
-                shelves={filteredTemplate.map((t) => t.shelfCode)}
+                shelves={filteredTemplate.map((t) => t.shelf_code)}
                 selectedShelves={selectedShelves}
                 onToggle={toggleShelfFilter}
                 onClear={handleClearFilter}
@@ -58,11 +58,11 @@ const ShelfSearchFilter = ({
                       key={idx}
                       className="flex gap-3 items-center p-2 border-b last:border-b-0 hover:bg-blue-50 cursor-pointer rounded transition-colors"
                       onClick={() =>
-                        item.shelfCode && setSelectedShelves([item.shelfCode])
+                        item.shelf_code && setSelectedShelves([item.shelf_code])
                       }
                     >
                       <span className="font-semibold text-blue-700 whitespace-nowrap text-xs bg-blue-100 px-2 py-0.5 rounded">
-                        {item.shelfCode}/R{item.rowNo}/I{item.index}
+                        {item.shelf_code}/R{item.shelf_row_number}/I{item.shelf_index_number}
                       </span>
 
                       <span className="text-xs break-all text-slate-600">

@@ -16,9 +16,9 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
     [template.shelfProducts]
   );
 
-  const shelfCode = template.shelfCode || "-";
-  const fullName = template.fullName || "";
-  const rowQty = template.rowQty || 1;
+  const shelf_code = template.shelf_code || "-";
+  const shelf_name = template.shelf_name || "";
+  const shelf_total_row = template.shelf_total_row || 1;
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -95,7 +95,7 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
         "
       >
         <h2 className="text-base sm:text-lg font-bold text-slate-800 text-left">
-          {shelfCode}{fullName ? ` - ${fullName}` : ""} <span className="text-slate-500 font-normal">({rowQty} ชั้น)</span>
+          {shelf_code}{shelf_name ? ` - ${shelf_name}` : ""} <span className="text-slate-500 font-normal">({shelf_total_row} ชั้น)</span>
         </h2>
 
         <div

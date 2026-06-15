@@ -10,11 +10,11 @@ import useBmrStore from "./bmr_store";
 // ใช้ id เป็นหลัก ถ้ามี (กัน index โยก)
 const getDeleteKey = (p) => {
   if (p?.id != null) return `id:${p.id}`;
-  return `cmp:${p.branch_code}-${p.shelfCode}-${p.rowNo}-${p.item_code}-${p.index}`;
+  return `cmp:${p.branch_code}-${p.shelf_code}-${p.shelf_row_number}-${p.item_code}-${p.shelf_index_number}`;
 };
 
 const sameRow = (a, b) =>
-  a.branch_code === b.branch_code && a.shelfCode === b.shelfCode && Number(a.rowNo) === Number(b.rowNo);
+  a.branch_code === b.branch_code && a.shelf_code === b.shelf_code && Number(a.shelf_row_number) === Number(b.shelf_row_number);
 
 const useShelfStore = create(
   persist(
@@ -135,10 +135,10 @@ const useShelfStore = create(
             }
 
             // fallback กันซ้ำแบบเดิม
-            const key = `${updatedItem.branch_code}-${updatedItem.shelfCode}-${updatedItem.rowNo}-${updatedItem.item_code}-${updatedItem.index}`;
+            const key = `${updatedItem.branch_code}-${updatedItem.shelf_code}-${updatedItem.shelf_row_number}-${updatedItem.item_code}-${updatedItem.shelf_index_number}`;
             const exists = state.product.some(
               (p) =>
-                `${p.branch_code}-${p.shelfCode}-${p.rowNo}-${p.item_code}-${p.index}` === key
+                `${p.branch_code}-${p.shelf_code}-${p.shelf_row_number}-${p.item_code}-${p.shelf_index_number}` === key
             );
             if (exists) return state;
             return { product: [...state.product, updatedItem] };
@@ -170,8 +170,8 @@ const useShelfStore = create(
             // 2) reindex เฉพาะ row เดียวกัน (ให้ index ใน state ตรงกับ backend ที่ reindex)
             const rowItems = kept
               .filter((p) => sameRow(p, productToDelete))
-              .sort((a, b) => Number(a.index) - Number(b.index))
-              .map((p, i) => ({ ...p, index: i + 1 }));
+              .sort((a, b) => Number(a.shelf_index_number) - Number(b.shelf_index_number))
+              .map((p, i) => ({ ...p, shelf_index_number: i + 1 }));
 
             const other = kept.filter((p) => !sameRow(p, productToDelete));
 
@@ -197,16 +197,16 @@ const useShelfStore = create(
           if (res.success) {
             set((state) => {
               const updatedMap = new Map(
-                updatedProducts.map((p) => [`${p.branch_code}-${p.shelfCode}-${p.item_code}`, p])
+                updatedProducts.map((p) => [`${p.branch_code}-${p.shelf_code}-${p.item_code}`, p])
               );
 
               const merged = state.product.map((p) => {
-                const key = `${p.branch_code}-${p.shelfCode}-${p.item_code}`;
+                const key = `${p.branch_code}-${p.shelf_code}-${p.item_code}`;
                 return updatedMap.get(key) || p;
               });
 
               const unique = Array.from(
-                new Map(merged.map((p) => [`${p.branch_code}-${p.shelfCode}-${p.item_code}`, p])).values()
+                new Map(merged.map((p) => [`${p.branch_code}-${p.shelf_code}-${p.item_code}`, p])).values()
               );
 
               return { product: unique };

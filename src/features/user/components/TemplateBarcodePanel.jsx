@@ -27,10 +27,10 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
     const l = lookupRes?.locations?.[0];
     if (!l) return null;
     return {
-      shelfCode: l.shelfCode,
+      shelf_code: l.shelf_code,
       shelfName: l.shelfName,
-      rowNo: Number(l.rowNo || 0),
-      index: Number(l.index || 0),
+      shelf_row_number: Number(l.shelf_row_number || 0),
+      shelf_index_number: Number(l.shelf_index_number || 0),
     };
   }, [lookupRes]);
 
@@ -125,9 +125,9 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
         branchName={branchName}
         barcode={scannedBarcode}
         productName={lookupRes?.product?.name}
-        currentShelf={primaryLoc?.shelfCode}
-        currentRow={primaryLoc?.rowNo}
-        currentIndex={primaryLoc?.index}
+        currentShelf={primaryLoc?.shelf_code}
+        currentRow={primaryLoc?.shelf_row_number}
+        currentIndex={primaryLoc?.shelf_index_number}
         initialAction={requestAction}
         availableShelves={availableShelves}
       />
@@ -318,17 +318,17 @@ const TemplateBarcodePanel = ({ storecode, branchName, availableShelves = [] }) 
                     <div className="flex items-center justify-between px-4 py-5 bg-white relative">
                       <div className="flex flex-col items-center flex-1">
                         <span className="text-xs text-slate-400 mb-1">Shelf</span>
-                        <span className="text-lg font-bold text-slate-800">{primaryLoc.shelfCode}</span>
+                        <span className="text-lg font-bold text-slate-800">{primaryLoc.shelf_code}</span>
                       </div>
                       <div className="w-px h-8 bg-slate-100"></div>
                       <div className="flex flex-col items-center flex-1">
                         <span className="text-xs text-slate-400 mb-1">ชั้นที่</span>
-                        <span className="text-lg font-bold text-slate-800">{primaryLoc.rowNo}</span>
+                        <span className="text-lg font-bold text-slate-800">{primaryLoc.shelf_row_number}</span>
                       </div>
                       <div className="w-px h-8 bg-slate-100"></div>
                       <div className="flex flex-col items-center flex-1">
                         <span className="text-xs text-slate-400 mb-1">ลำดับ</span>
-                        <span className="text-lg font-bold text-slate-800">{primaryLoc.index}</span>
+                        <span className="text-lg font-bold text-slate-800">{primaryLoc.shelf_index_number}</span>
                       </div>
                     </div>
 
