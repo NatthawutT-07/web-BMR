@@ -4,7 +4,7 @@ const FileNotes = ({ fileType, loading, actions }) => {
   const { onClearTemplate, onClearSku, onClearStock, onClearMinMax } = actions;
 
   switch (fileType) {
-    case "Template":
+    case "ShelfTemplate":
       return (
         <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
           <strong className="font-semibold">หมายเหตุการอัปโหลด (POG Shelf):</strong>
@@ -46,7 +46,7 @@ const FileNotes = ({ fileType, loading, actions }) => {
         </div>
       );
 
-    case "withdraw":
+    case "Withdraw":
       return (
         <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
           <strong className="font-semibold">หมายเหตุการอัปโหลด (Withdraw):</strong>
@@ -81,7 +81,7 @@ const FileNotes = ({ fileType, loading, actions }) => {
     case "minMax":
       return (
         <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
-          <strong className="font-semibold">หมายเหตุการอัปโหลด (ItemMinMax):</strong>
+          <strong className="font-semibold">หมายเหตุการอัปโหลด (MinMaxAutoPO):</strong>
           <ul className="list-disc ml-5 mt-1 space-y-1 text-xs text-blue-700">
             <li>ระบบทำงานแบบ <strong className="font-semibold">เพิ่มข้อมูลใหม่และอัปเดตทับข้อมูลเดิม</strong> (ไม่มีการลบข้อมูลทิ้ง)</li>
             <li>ใช้รหัสสาขาและรหัสสินค้า เป็นตัวตรวจสอบ หากตรงกันจะอัปเดตค่า Min/Max ใหม่</li>
@@ -92,7 +92,7 @@ const FileNotes = ({ fileType, loading, actions }) => {
               disabled={loading}
               className="px-4 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded shadow-sm transition-colors"
             >
-              เคลียร์ข้อมูล ItemMinMax ทั้งหมด
+              เคลียร์ข้อมูล MinMaxAutoPO ทั้งหมด
             </button>
           </div>
         </div>
@@ -109,10 +109,10 @@ const FileNotes = ({ fileType, loading, actions }) => {
         </div>
       );
 
-    case "bill":
+    case "billHeader":
       return (
         <div className="mb-4 text-sm text-blue-800 bg-blue-50 p-3 rounded-md border border-blue-200">
-          <strong className="font-semibold">หมายเหตุการอัปโหลด (Bill):</strong>
+          <strong className="font-semibold">หมายเหตุการอัปโหลด (BillHeader):</strong>
           <ul className="list-disc ml-5 mt-1 space-y-1 text-xs text-blue-700">
             <li>ระบบจะข้ามเลขที่บิลที่มีอยู่แล้วในระบบ (กันบิลซ้ำ)</li>
             <li><strong className="font-semibold">เพิ่มข้อมูลใหม่โดยอัตโนมัติ:</strong> หากพบรหัสสาขา, ช่องทางการขาย, สินค้า, หรือลูกค้าใหม่ในไฟล์ จะถูกสร้างขึ้นใหม่อัตโนมัติ</li>

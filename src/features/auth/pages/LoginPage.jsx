@@ -14,7 +14,7 @@ function LoginPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedBranch, setSelectedBranch] = useState("");
-  const [loginMode, setLoginMode] = useState("branch");
+  const [loginMode, setLoginMode] = useState("branchMain");
   const [manualUser, setManualUser] = useState("");
   const [manualPassword, setManualPassword] = useState("");
 
@@ -145,7 +145,7 @@ function LoginPage() {
         </div>
         <div className=" rounded-xl border border-emerald-100 bg-emerald-50/60 p-4">
           <div className="space-y-3">
-            {loginMode === "branch" && (
+            {loginMode === "branchMain" && (
               <div className="relative">
                 <button
                   type="button"
@@ -235,11 +235,11 @@ function LoginPage() {
               type="button"
               disabled={
                 isSubmitting ||
-                (loginMode === "branch" && !selectedBranch) ||
+                (loginMode === "branchMain" && !selectedBranch) ||
                 (loginMode === "manual" && (!manualUser || !manualPassword))
               }
               onClick={() => {
-                if (loginMode === "branch") {
+                if (loginMode === "branchMain") {
                   handleBranchLogin(selectedBranch);
                 } else {
                   handleManualLogin(manualUser, manualPassword);
@@ -253,7 +253,7 @@ function LoginPage() {
               <button
                 type="button"
                 onClick={() => {
-                  setLoginMode("branch");
+                  setLoginMode("branchMain");
                   setErrorMsg("");
                 }}
                 className="underline-offset-2 hover:underline"

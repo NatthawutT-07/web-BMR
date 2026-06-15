@@ -21,7 +21,7 @@ const useShelfStore = create(
     (set, get) => ({
       // --- STATE ---
       branches: [],
-      template: [],
+      shelfTemplate: [],
       product: [],
       syncDates: null,
 
@@ -29,7 +29,7 @@ const useShelfStore = create(
       actionLoading: false,
 
       // =====================================================
-      //  Branch List
+      //  BranchMain List
       // =====================================================
       fetchBranches: async () => {
         const { branches } = get();
@@ -62,11 +62,11 @@ const useShelfStore = create(
       },
 
       // =====================================================
-      //  Template
+      //  ShelfTemplate
       // =====================================================
       fetchTemplate: async () => {
-        const { template } = get();
-        if (template.length > 0) return;
+        const { shelfTemplate } = get();
+        if (shelfTemplate.length > 0) return;
 
         const accessToken = useBmrStore.getState().accessToken;
         if (!accessToken) return;
@@ -74,16 +74,16 @@ const useShelfStore = create(
         set({ loading: true });
         try {
           const res = await getTemplate();
-          set({ template: res });
+          set({ shelfTemplate: res });
         } catch (error) {
-          logger.error("Fetch template failed", error);
+          logger.error("Fetch shelfTemplate failed", error);
         } finally {
           set({ loading: false });
         }
       },
 
       // =====================================================
-      //  Product by Branch
+      //  Product by BranchMain
       // เปลี่ยนเป็น "replace ข้อมูลของสาขานั้น" กันของเก่าค้าง/ซ้อน
       // =====================================================
       fetchProduct: async (branch_code) => {

@@ -1,10 +1,10 @@
 import React from 'react'
-import Template from '../components/Template'
+import ShelfTemplate from '../components/Template'
 
 const Home = () => {
   return (
     <div>
-      <Template/>
+      <ShelfTemplate/>
     </div>
   )
 }

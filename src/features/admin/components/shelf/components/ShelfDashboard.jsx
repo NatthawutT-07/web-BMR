@@ -45,7 +45,7 @@ const ShelfDashboard = ({
               MinMax : {formatBangkokDateTime(syncDates?.minMax?.updatedAt)}
             </p>
             <p>
-              Bill : {formatBangkokDateTime(syncDates?.dashboard?.updatedAt)} | 
+              BillHeader : {formatBangkokDateTime(syncDates?.dashboard?.updatedAt)} | 
               Withdraw : {formatBangkokDateTime(syncDates?.withdraw?.updatedAt)}
             </p>
           </div>

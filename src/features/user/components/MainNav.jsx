@@ -108,7 +108,7 @@ function MainNav() {
       const branchColIndex = header.indexOf("รหัสสาขา");
       const dataRows = raw.slice(headerRowIndex + 1);
 
-      // ดึง unique branch codes จากไฟล์
+      // ดึง unique branchMain codes จากไฟล์
       const uniqueBranches = [
         ...new Set(
           dataRows

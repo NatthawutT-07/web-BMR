@@ -5,7 +5,7 @@ export const downloadTemplate = async (params) => {
     const res = await api.get("/download-template", { params });
     return res.data;
   } catch (error) {
-    console.error("Error fetching template:", error);
+    console.error("Error fetching shelfTemplate:", error);
     throw error;
   }
 };

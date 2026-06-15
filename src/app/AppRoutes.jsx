@@ -15,7 +15,7 @@ import ProtectGuest from "../routes/ProtectGuest";
 const Home = lazy(() => import("../features/user/pages/Home"));
 const Dashboard = lazy(() => import("../features/admin/pages/Dashboard"));
 const Upload = lazy(() => import("../features/admin/pages/Upload"));
-const Template = lazy(() => import("../features/admin/pages/Template"));
+const ShelfTemplate = lazy(() => import("../features/admin/pages/Template"));
 const ShelfDashboard = lazy(() => import("../features/admin/pages/ShelfDashboard"));
 const PogRequests = lazy(() => import("../features/admin/pages/PogRequests"));
 const BranchAckStatus = lazy(() => import("../features/admin/pages/BranchAckStatus"));
@@ -49,7 +49,7 @@ const router = createBrowserRouter([
         element: <ProtectRouteAdmin element={<LayoutAdmin />} />,
         children: [
             { shelf_index_number: true, element: <Suspense fallback={<PageLoader />}><Dashboard /></Suspense> },
-            { path: "qW3eR7tY2u", element: <Suspense fallback={<PageLoader />}><Template /></Suspense> },
+            { path: "qW3eR7tY2u", element: <Suspense fallback={<PageLoader />}><ShelfTemplate /></Suspense> },
             { path: "pA9sD4fG6h", element: <Suspense fallback={<PageLoader />}><ShelfDashboard /></Suspense> },
             { path: "zX5cV8bN1m", element: <Suspense fallback={<PageLoader />}><Upload /></Suspense> },
             { path: "aS3dF7gH2j", element: <Suspense fallback={<PageLoader />}><PogRequests /></Suspense> },

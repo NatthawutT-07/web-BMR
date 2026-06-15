@@ -14,7 +14,7 @@ const ShelfImageOverlay = ({
     >
       <img
         src={imageUrl}
-        alt="Branch Fullscreen"
+        alt="BranchMain Fullscreen"
         className="max-w-full max-h-full object-contain"
         onClick={(e) => e.stopPropagation()}
       />

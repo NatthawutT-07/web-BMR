@@ -6,7 +6,7 @@ const ShelfImageThumb = ({ imageUrl, onImageClick }) => {
       {imageUrl ? (
         <img
           src={imageUrl}
-          alt="Branch"
+          alt="BranchMain"
           className="w-full max-w-[260px] h-auto object-contain rounded-lg shadow-sm border bg-slate-50 cursor-pointer hover:scale-105 transition-transform"
           loading="lazy"
           onClick={onImageClick}

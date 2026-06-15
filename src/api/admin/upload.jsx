@@ -26,7 +26,7 @@ export const uploadWithdrawXLSX = (file, onProgress) =>
 export const uploadStockXLSX = (file, onProgress) =>
   uploadXLSX(api, file, "/upload-stock", onProgress);
 
-// Template Shelf XLSX
+// ShelfTemplate Shelf XLSX
 export const uploadTemplateXLSX = (file, onProgress) =>
   uploadXLSX(api, file, "/upload-template", onProgress);
 
@@ -34,7 +34,7 @@ export const uploadTemplateXLSX = (file, onProgress) =>
 export const uploadItemSKUXLSX = (file, onProgress) =>
   uploadXLSX(api, file, "/upload-sku", onProgress);
 
-// ItemMinMax XLSX
+// MinMaxAutoPO XLSX
 export const uploadItemMinMaxXLSX = (file, onProgress) =>
   uploadXLSX(api, file, "/upload-minmax", onProgress);
 
@@ -42,7 +42,7 @@ export const uploadItemMinMaxXLSX = (file, onProgress) =>
 export const uploadMasterItemXLSX = (file, onProgress) =>
   uploadXLSX(api, file, "/upload-masterItem", onProgress);
 
-// Bill
+// BillHeader
 export const uploadBillXLSX = (file, onProgress) =>
   uploadXLSX(api, file, "/upload-bill", onProgress);
 
@@ -62,13 +62,13 @@ export const clearSku = async () => {
   return res.data;
 };
 
-// Clear Template (Shelf)
+// Clear ShelfTemplate (Shelf)
 export const clearTemplate = async () => {
   const res = await api.delete("/clear-template");
   return res.data;
 };
 
-// Clear ItemMinMax
+// Clear MinMaxAutoPO
 export const clearMinMax = async () => {
   const res = await api.delete("/clear-minmax");
   return res.data;

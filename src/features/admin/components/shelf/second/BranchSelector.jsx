@@ -70,9 +70,9 @@ const BranchSelector = React.memo(
             className="border border-slate-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white flex-1 min-w-[200px]"
           >
             <option value="">-- เลือกสาขา --</option>
-            {sortedBranches.map((branch, idx) => (
-              <option key={branch.branch_code ?? idx} value={branch.branch_code}>
-                {branch.branch_code} - {branch.branch_name}
+            {sortedBranches.map((branchMain, idx) => (
+              <option key={branchMain.branch_code ?? idx} value={branchMain.branch_code}>
+                {branchMain.branch_code} - {branchMain.branch_name}
               </option>
             ))}
           </select>
@@ -104,7 +104,7 @@ const BranchSelector = React.memo(
           )}
         </div>
 
-        {/* Selected branch info (subtle) */}
+        {/* Selected branchMain info (subtle) */}
         {/* {okLocked && selectedBranch && (
           <div className="mt-2 text-xs text-slate-500">
             กำลังดู: <span className="font-medium text-slate-700">{selectedBranch.branch_code} - {selectedBranch.branch_name}</span>

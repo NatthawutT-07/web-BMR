@@ -11,7 +11,7 @@ const ShelfTable = lazy(() => import("./third-card/ShelfTable"));
 const EditShelfModal = lazy(() => import("./third-card/EditShelfModal"));
 
 const ShelfCard = ({
-  template,
+  shelfTemplate,
   product,
   duplicateCodes,
   onAdd,
@@ -29,9 +29,9 @@ const ShelfCard = ({
    * ------------------------------------------------ */
   const filteredShelfProducts = useMemo(() => {
     return product
-      .filter((p) => p.shelf_code === template.shelf_code)
+      .filter((p) => p.shelf_code === shelfTemplate.shelf_code)
       .sort((a, b) => Number(a.shelf_index_number) - Number(b.shelf_index_number));
-  }, [product, template.shelf_code]);
+  }, [product, shelfTemplate.shelf_code]);
 
   useEffect(() => {
     setLocalShelfProducts(filteredShelfProducts);
@@ -76,7 +76,7 @@ const ShelfCard = ({
 
           {!isImageOpen && (
             <h2 className="text-xl font-semibold">
-              Shelf: {template.shelf_code} - {template.shelf_name} ({template.shelf_total_row} Rows)
+              Shelf: {shelfTemplate.shelf_code} - {shelfTemplate.shelf_name} ({shelfTemplate.shelf_total_row} Rows)
             </h2>
           )}
         </div>
@@ -122,7 +122,7 @@ const ShelfCard = ({
           }
         >
           <ShelfTable
-            rows={template.shelf_total_row}
+            rows={shelfTemplate.shelf_total_row}
             shelfProducts={localShelfProducts}
             onDelete={(p) => {
               setLocalShelfProducts((prev) => prev.filter((prod) => prod !== p));
@@ -132,8 +132,8 @@ const ShelfCard = ({
               setLocalShelfProducts((prev) => [...prev, p]);
               if (onAdd) onAdd(p);
             }}
-            shelf_code={template.shelf_code}
-            branch_code={template.branch_code}
+            shelf_code={shelfTemplate.shelf_code}
+            branch_code={shelfTemplate.branch_code}
             duplicateCodes={duplicateCodes}
           />
         </Suspense>
@@ -152,8 +152,8 @@ const ShelfCard = ({
           onClose={() => setIsEditOpen(false)}
           onSave={handleSaveEdit}
           shelfProducts={localShelfProducts}
-          shelf_code={template.shelf_code}
-          shelf_total_row={template.shelf_total_row}
+          shelf_code={shelfTemplate.shelf_code}
+          shelf_total_row={shelfTemplate.shelf_total_row}
         />
       </Suspense>
     </div>

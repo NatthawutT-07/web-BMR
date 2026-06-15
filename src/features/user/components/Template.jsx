@@ -1,5 +1,5 @@
 
-// Template.jsx
+// ShelfTemplate.jsx
 import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import useBmrStore from "../../../store/bmr_store";
 import useStockMetaStore from "../../../store/stock_meta_store";
@@ -41,7 +41,7 @@ const fmtThaiDateTime = (value) => {
 
 const cx = (...a) => a.filter(Boolean).join(" ");
 
-const Template = () => {
+const ShelfTemplate = () => {
   const storecode = useBmrStore((s) => s.user?.storecode);
 
   const [data, setData] = useState([]);
@@ -77,7 +77,7 @@ const Template = () => {
   // สั่ง “เปิดการ์ด shelf” 1 ครั้ง เมื่อมาจาก barcode
   const [openShelfOnce, setOpenShelfOnce] = useState({ code: null, nonce: 0 });
 
-  // โหลด Template + Product
+  // โหลด ShelfTemplate + Product
   useEffect(() => {
     if (!storecode) return;
 
@@ -88,7 +88,7 @@ const Template = () => {
         setBranchName(payload?.branchName ?? null);
         setData(Array.isArray(payload?.items) ? payload.items : []);
       } catch (e) {
-        console.error("Template Load Error:", e);
+        console.error("ShelfTemplate Load Error:", e);
         setBranchName(null);
         setData([]);
       } finally {
@@ -460,7 +460,7 @@ const Template = () => {
               <section className="w-full print:hidden">
                 <div className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border flex flex-col xl:flex-row gap-6 mx-auto w-full max-w-[1400px]">
 
-                  {/* LEFT: Branch Image */}
+                  {/* LEFT: BranchMain Image */}
                   <div
                     className="flex justify-center xl:justify-start xl:w-[260px] flex-shrink-0 cursor-pointer transition-transform hover:scale-105 active:scale-95"
                     onClick={() => setIsFullscreen(true)}
@@ -468,7 +468,7 @@ const Template = () => {
                     <div
                       className="w-full max-w-[260px] aspect-[4/3] bg-contain bg-center bg-no-repeat rounded-lg shadow-sm border bg-slate-50 select-none"
                       style={{ backgroundImage: `url('/images/branch/${storecode?.toUpperCase()}.png')` }}
-                      aria-label={`Branch ${storecode}`}
+                      aria-label={`BranchMain ${storecode}`}
                     />
                   </div>
 
@@ -481,7 +481,7 @@ const Template = () => {
                     >
                       <img
                         src={`/images/branch/${storecode?.toUpperCase()}.png`}
-                        alt={`Branch ${storecode}`}
+                        alt={`BranchMain ${storecode}`}
                         className="max-w-full max-h-full object-contain select-none shadow-2xl rounded-xl"
                         draggable={false}
                       />
@@ -624,7 +624,7 @@ const Template = () => {
                     }}
                   >
                     <ShelfCardUser
-                      template={{ ...shelf, shelfProducts: shelf.matchedProducts }}
+                      shelfTemplate={{ ...shelf, shelfProducts: shelf.matchedProducts }}
                       autoOpen={searchText.length > 0}
                       isPrinting={isPrinting}
                       openNonce={openShelfOnce.code === shelf.shelf_code ? openShelfOnce.nonce : 0}
@@ -648,4 +648,4 @@ const Template = () => {
   );
 };
 
-export default Template;
+export default ShelfTemplate;

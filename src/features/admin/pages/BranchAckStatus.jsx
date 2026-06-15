@@ -229,30 +229,30 @@ export default function BranchAckStatus() {
                                     <tr><td colSpan="5" className="p-12 text-center text-slate-500">กำลังโหลด...</td></tr>
                                 ) : filteredBranches.length === 0 ? (
                                     <tr><td colSpan="5" className="p-12 text-center text-slate-400">ไม่พบข้อมูล</td></tr>
-                                ) : filteredBranches.map((branch) => (
+                                ) : filteredBranches.map((branchMain) => (
                                     <tr
-                                        key={branch.branch_code}
-                                        className={`transition-colors hover:bg-slate-50 ${branch.pending > 0 ? 'bg-amber-50/30' : ''}`}
+                                        key={branchMain.branch_code}
+                                        className={`transition-colors hover:bg-slate-50 ${branchMain.pending > 0 ? 'bg-amber-50/30' : ''}`}
                                     >
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
-                                                <div className={`p-2 rounded-lg ${branch.pending > 0 ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500"}`}>
+                                                <div className={`p-2 rounded-lg ${branchMain.pending > 0 ? "bg-amber-100 text-amber-600" : "bg-slate-100 text-slate-500"}`}>
                                                     <Building2 size={18} />
                                                 </div>
                                                 <div>
                                                     <div className="font-medium text-slate-800">
-                                                        {branchMap[branch.branch_code] || branch.branch_code}
+                                                        {branchMap[branchMain.branch_code] || branchMain.branch_code}
                                                     </div>
                                                     <div className="text-xs text-slate-400 font-mono">
-                                                        {branch.branch_code}
+                                                        {branchMain.branch_code}
                                                     </div>
                                                 </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            {branch.pending > 0 ? (
+                                            {branchMain.pending > 0 ? (
                                                 <span className="inline-flex items-center justify-center min-w-[32px] h-6 px-2 text-xs font-bold text-white bg-rose-500 rounded-full shadow-sm shadow-rose-200">
-                                                    {branch.pending}
+                                                    {branchMain.pending}
                                                 </span>
                                             ) : (
                                                 <span className="text-slate-300">-</span>
@@ -260,17 +260,17 @@ export default function BranchAckStatus() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <span className="text-slate-600 font-medium">
-                                                {branch.acknowledged || 0}
+                                                {branchMain.acknowledged || 0}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-500">
                                             <div className="flex items-center gap-1.5">
                                                 <Clock size={14} className="text-slate-400" />
-                                                {formatDate(branch.lastChange)}
+                                                {formatDate(branchMain.lastChange)}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            {branch.status === "completed" ? (
+                                            {branchMain.status === "completed" ? (
                                                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
                                                     <CheckCircle2 size={14} />
                                                     เรียบร้อย

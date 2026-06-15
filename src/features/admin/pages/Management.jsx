@@ -127,7 +127,7 @@ const Management = () => {
       setIsAddingBranch(false);
       fetchBranches();
     } catch (err) {
-      console.error("Error saving branch:", err);
+      console.error("Error saving branchMain:", err);
       alert(err.message || "ไม่สามารถบันทึกข้อมูลสาขาได้");
     }
   };
@@ -139,7 +139,7 @@ const Management = () => {
       await api.delete(`/branches/${id}`);
       fetchBranches();
     } catch (err) {
-      console.error("Error deleting branch:", err);
+      console.error("Error deleting branchMain:", err);
       alert(err.message || "ไม่สามารถลบสาขาได้ เนื่องจากอาจมีข้อมูลอื่นอ้างอิงอยู่");
     }
   };
@@ -172,7 +172,7 @@ const Management = () => {
             }`}
         >
           <Store size={16} />
-          จัดการสาขา (Branch)
+          จัดการสาขา (BranchMain)
         </button>
       </div>
 
@@ -333,7 +333,7 @@ const Management = () => {
             {(isAddingBranch || isEditingBranch) && (
               <div className="mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap gap-4 items-end">
                 <div className="flex-1 min-w-[200px]">
-                  <label className="block text-xs font-medium text-slate-500 mb-1">รหัสสาขา (Branch Code)</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">รหัสสาขา (BranchMain Code)</label>
                   <input
                     type="text"
                     value={branchForm.branch_code}
@@ -343,7 +343,7 @@ const Management = () => {
                   />
                 </div>
                 <div className="flex-[2] min-w-[200px]">
-                  <label className="block text-xs font-medium text-slate-500 mb-1">ชื่อสาขา (Branch Name)</label>
+                  <label className="block text-xs font-medium text-slate-500 mb-1">ชื่อสาขา (BranchMain Name)</label>
                   <input
                     type="text"
                     value={branchForm.branch_name}
@@ -389,17 +389,17 @@ const Management = () => {
                       <td colSpan="4" className="px-6 py-8 text-center text-slate-500">ไม่พบข้อมูลสาขา</td>
                     </tr>
                   ) : (
-                    branches.map((branch, index) => (
-                      <tr key={branch.id} className="hover:bg-slate-50/50">
+                    branches.map((branchMain, index) => (
+                      <tr key={branchMain.id} className="hover:bg-slate-50/50">
                         <td className="px-6 py-4 text-slate-500">{index + 1}</td>
-                        <td className="px-6 py-4 font-semibold text-slate-800">{branch.branch_code}</td>
-                        <td className="px-6 py-4 text-slate-700">{branch.branch_name}</td>
+                        <td className="px-6 py-4 font-semibold text-slate-800">{branchMain.branch_code}</td>
+                        <td className="px-6 py-4 text-slate-700">{branchMain.branch_name}</td>
                         <td className="px-6 py-4 text-center">
                           <div className="flex items-center justify-center gap-2">
                             <button
                               onClick={() => {
-                                setBranchForm({ branch_code: branch.branch_code, branch_name: branch.branch_name });
-                                setIsEditingBranch(branch.id);
+                                setBranchForm({ branch_code: branchMain.branch_code, branch_name: branchMain.branch_name });
+                                setIsEditingBranch(branchMain.id);
                                 setIsAddingBranch(false);
                               }}
                               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition-colors"
@@ -408,7 +408,7 @@ const Management = () => {
                               <Pencil size={18} />
                             </button>
                             <button
-                              onClick={() => handleDeleteBranch(branch.id)}
+                              onClick={() => handleDeleteBranch(branchMain.id)}
                               className="p-1.5 text-rose-600 hover:bg-rose-50 rounded transition-colors"
                               title="ลบ"
                             >

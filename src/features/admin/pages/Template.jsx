@@ -3,7 +3,7 @@ import ShelfManager from '../components/shelf/ShelfManager'
 import HeaderAdmin from '../components/nav/HeaderAdmin'
 
 
-const Template = () => {
+const ShelfTemplate = () => {
     return (
         <div>
             {/* <HeaderAdmin /> */}
@@ -15,4 +15,4 @@ const Template = () => {
     )
 }
 
-export default Template
+export default ShelfTemplate

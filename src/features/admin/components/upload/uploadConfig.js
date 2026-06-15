@@ -1,18 +1,18 @@
 export const FILE_TYPE_CONFIG = {
-  Template: {
+  ShelfTemplate: {
     label: "POG Shelf XLSX",
-    syncKey: "template",
-    uploadFnKey: "Template",
+    syncKey: "shelfTemplate",
+    uploadFnKey: "ShelfTemplate",
   },
   SKU: {
     label: "POG SKU XLSX",
-    syncKey: "sku",
+    syncKey: "skuPosition",
     uploadFnKey: "SKU",
   },
   withdraw: {
     label: "Withdraw XLSX",
-    syncKey: "withdraw",
-    uploadFnKey: "withdraw",
+    syncKey: "Withdraw",
+    uploadFnKey: "Withdraw",
   },
   stock: {
     label: "Stock XLSX",
@@ -20,7 +20,7 @@ export const FILE_TYPE_CONFIG = {
     uploadFnKey: "stock",
   },
   minMax: {
-    label: "ItemMinMax XLSX",
+    label: "MinMaxAutoPO XLSX",
     syncKey: "minMax",
     uploadFnKey: "minMax",
   },
@@ -29,10 +29,10 @@ export const FILE_TYPE_CONFIG = {
     syncKey: "masterItem",
     uploadFnKey: "masterItem",
   },
-  bill: {
-    label: "Bill XLSX",
+  billHeader: {
+    label: "BillHeader XLSX",
     syncKey: "dashboard",
-    uploadFnKey: "bill",
+    uploadFnKey: "billHeader",
   },
   gourmet: {
     label: "Gourmet Sales XLSX",

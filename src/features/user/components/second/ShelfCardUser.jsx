@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import ShelfTableUser from "./ShelfTableUser";
 
-// รับ isPrinting + openNonce จาก parent (Template)
+// รับ isPrinting + openNonce จาก parent (ShelfTemplate)
 const ShelfCardUser = React.memo(function ShelfCardUser({
-  template,
+  shelfTemplate,
   autoOpen,
   isPrinting,
   openNonce,
@@ -12,13 +12,13 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
   duplicateCodes,
 }) {
   const shelfProducts = useMemo(
-    () => (Array.isArray(template.shelfProducts) ? template.shelfProducts : []),
-    [template.shelfProducts]
+    () => (Array.isArray(shelfTemplate.shelfProducts) ? shelfTemplate.shelfProducts : []),
+    [shelfTemplate.shelfProducts]
   );
 
-  const shelf_code = template.shelf_code || "-";
-  const shelf_name = template.shelf_name || "";
-  const shelf_total_row = template.shelf_total_row || 1;
+  const shelf_code = shelfTemplate.shelf_code || "-";
+  const shelf_name = shelfTemplate.shelf_name || "";
+  const shelf_total_row = shelfTemplate.shelf_total_row || 1;
 
   const [isOpen, setIsOpen] = useState(false);
 

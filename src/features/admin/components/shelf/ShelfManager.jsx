@@ -45,7 +45,7 @@ const ShelfManager = () => {
   const accessToken = useBmrStore((s) => s.accessToken);
 
   const {
-    branches, fetchBranches, template, fetchTemplate, product, fetchProduct,
+    branches, fetchBranches, shelfTemplate, fetchTemplate, product, fetchProduct,
     loading, actionLoading, handleAddProduct, handleDelete, handleUpdateProducts,
     syncDates, fetchSyncDates,
     selectedbranch_code, setSelectedbranch_code,
@@ -137,7 +137,7 @@ const ShelfManager = () => {
     if (!selectedbranch_code) return;
     setOkLocked(true);
     fetchProduct(selectedbranch_code);
-    const matched = (template || []).filter(item => String(item.branch_code) === String(selectedbranch_code));
+    const matched = (shelfTemplate || []).filter(item => String(item.branch_code) === String(selectedbranch_code));
     setFilteredTemplate(matched);
     setSubmittedbranch_code(selectedbranch_code);
     setSelectedShelves([]);
@@ -233,7 +233,7 @@ const ShelfManager = () => {
             {displayedTemplates.map((t) => (
               <ShelfCard
                 key={t.shelf_code}
-                template={t}
+                shelfTemplate={t}
                 product={branchProduct}
                 duplicateCodes={duplicateCodes}
                 onAdd={handleAddProduct}

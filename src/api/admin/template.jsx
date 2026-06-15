@@ -1,7 +1,7 @@
 import api from "../../utils/axios";   // IMPORTANT: ใช้ axios instance เท่านั้น
 
 // ------------------------------------------------------------
-// GET: Template
+// GET: ShelfTemplate
 // ------------------------------------------------------------
 export const getTemplate = async () => {
     try {
@@ -13,7 +13,7 @@ export const getTemplate = async () => {
 };
 
 // ------------------------------------------------------------
-// POST: SKU (สินค้าตาม branch)
+// POST: SKU (สินค้าตาม branchMain)
 // ------------------------------------------------------------
 export const getSKU = async (branch_code) => {
     try {
@@ -100,7 +100,7 @@ export const getShelfDashboardSummary = async () => {
 };
 
 // ------------------------------------------------------------
-// GET: Shelf dashboard shelf sales (per branch)
+// GET: Shelf dashboard shelf sales (per branchMain)
 // ------------------------------------------------------------
 export const getShelfDashboardShelfSales = async (branch_code) => {
     try {

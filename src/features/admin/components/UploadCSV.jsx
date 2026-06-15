@@ -31,11 +31,11 @@ import { FILE_TYPE_CONFIG } from "./upload/uploadConfig";
 const uploadFunctions = {
   withdraw: uploadWithdrawXLSX,
   stock: uploadStockXLSX,
-  Template: uploadTemplateXLSX,
+  ShelfTemplate: uploadTemplateXLSX,
   SKU: uploadItemSKUXLSX,
   minMax: uploadItemMinMaxXLSX,
   masterItem: uploadMasterItemXLSX,
-  bill: uploadBillXLSX,
+  billHeader: uploadBillXLSX,
   gourmet: uploadGourmetXLSX,
 };
 
@@ -254,15 +254,15 @@ const UploadCSV = () => {
   };
 
   const handleClearMinMax = async () => {
-    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูล ItemMinMax ทั้งหมดในระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
+    if (!window.confirm("คุณแน่ใจหรือไม่ว่าต้องการลบข้อมูล MinMaxAutoPO ทั้งหมดในระบบ? การกระทำนี้ไม่สามารถย้อนกลับได้")) return;
 
     setLoading(true);
     try {
       await clearMinMax();
-      toast.success("ลบข้อมูล ItemMinMax ทั้งหมดเรียบร้อยแล้ว");
+      toast.success("ลบข้อมูล MinMaxAutoPO ทั้งหมดเรียบร้อยแล้ว");
       fetchSyncDates();
     } catch (err) {
-      toast.error(`ลบข้อมูล ItemMinMax ล้มเหลว: ${err.message || "Clear ItemMinMax failed"}`);
+      toast.error(`ลบข้อมูล MinMaxAutoPO ล้มเหลว: ${err.message || "Clear MinMaxAutoPO failed"}`);
     } finally {
       setLoading(false);
     }
@@ -332,7 +332,7 @@ const UploadCSV = () => {
         {fileType === "SKU" && (
           <div className="mt-6 mb-2">
             <label className="block text-sm font-semibold mb-2 text-gray-700">
-              Filter by Branch (Download)
+              Filter by BranchMain (Download)
             </label>
             <select
               value={selectedBranch}
@@ -355,13 +355,13 @@ const UploadCSV = () => {
         )}
 
         {/* DOWNLOAD TEMPLATE */}
-        {fileType === "Template" && (
+        {fileType === "ShelfTemplate" && (
           <button
             disabled={loading}
             onClick={() => downloadXLSXFile("POG_Shelf_Template.xlsx", downloadTemplate)}
             className="mt-4 w-full py-2 bg-blue-600 text-white rounded"
           >
-            Download POG Shelf Template XLSX
+            Download POG Shelf ShelfTemplate XLSX
           </button>
         )}
 
@@ -376,7 +376,7 @@ const UploadCSV = () => {
             }
             className="mt-4 w-full py-2 bg-blue-600 text-white rounded"
           >
-            Download POG SKU Template XLSX
+            Download POG SKU ShelfTemplate XLSX
           </button>
         )}
       </div>
@@ -406,14 +406,14 @@ const UploadCSV = () => {
         disabled={loading}
       >
         <option value="">-- Select --</option>
-        <option value="Template">POG Shelf XLSX</option>
+        <option value="ShelfTemplate">POG Shelf XLSX</option>
         <option value="SKU">POG SKU XLSX</option>
         <option value="">-</option>
-        <option value="withdraw">Withdraw XLSX</option>
+        <option value="Withdraw">Withdraw XLSX</option>
         <option value="stock">Stock XLSX</option>
-        <option value="minMax">ItemMinMax XLSX</option>
+        <option value="minMax">MinMaxAutoPO XLSX</option>
         <option value="masterItem">MasterItem XLSX</option>
-        <option value="bill">Bill XLSX</option>
+        <option value="billHeader">BillHeader XLSX</option>
         <option value="gourmet">Gourmet XLSX</option>
       </select>
 
@@ -440,8 +440,8 @@ const UploadCSV = () => {
             <div>
               <div className="font-bold text-sm">สำเร็จ</div>
               <div className="text-xs mt-1">
-                {selectedFileType === "bill"
-                  ? `Sales Bill import completed: ${successRows.toLocaleString()} bills imported, ${skippedRows.toLocaleString()} duplicates skipped`
+                {selectedFileType === "billHeader"
+                  ? `Sales BillHeader import completed: ${successRows.toLocaleString()} bills imported, ${skippedRows.toLocaleString()} duplicates skipped`
                   : `${FILE_TYPE_CONFIG[selectedFileType]?.label || "Data"} import completed: ${successRows.toLocaleString()} rows imported`}
               </div>
             </div>

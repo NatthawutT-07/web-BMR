@@ -189,7 +189,7 @@ const ShelfDashboard = () => {
           <SummaryCard label="มูลค่า Stock" value={fmtMoney2(totals.stockCost)} color="yellow" />
         </div>
 
-        {/* Branch Table */}
+        {/* BranchMain Table */}
         <div className="bg-white rounded-lg shadow-sm border border-slate-200">
           {loading ? (
             <div className="p-8 text-center text-slate-500 flex flex-col items-center gap-2">

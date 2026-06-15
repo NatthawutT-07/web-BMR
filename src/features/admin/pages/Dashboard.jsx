@@ -33,7 +33,7 @@ const Dashboard = () => {
     },
     {
       key: "qA8zW2sX7e",
-      title: "Branch Status",
+      title: "BranchMain Status",
       desc: "ตรวจสอบสถานะการรับทราบ POG ของแต่ละสาขา",
       color: "from-emerald-400 to-emerald-500",
       badge: "Status",
@@ -42,7 +42,7 @@ const Dashboard = () => {
     {
       key: "zX5cV8bN1m",
       title: "Upload XLSX",
-      desc: "อัปโหลดไฟล์ข้อมูล (SKU, Template)",
+      desc: "อัปโหลดไฟล์ข้อมูล (SKU, ShelfTemplate)",
       color: "from-rose-400 to-rose-500",
       badge: "Upload",
       icon: <FileUp size={20} />,

@@ -290,7 +290,7 @@ export default function PogRequests() {
     const [branchStats, setBranchStats] = useState({}); // Branch-level pending stats
     const [branches, setBranches] = useState([]); // Dynamic branches from API
 
-    // View mode: 'summary' = branch cards, 'detail' = single branch requests
+    // View mode: 'summary' = branchMain cards, 'detail' = single branchMain requests
     const [viewMode, setViewMode] = useState('summary');
     const [selectedBranch, setSelectedBranch] = useState(null);
 
@@ -329,7 +329,7 @@ export default function PogRequests() {
         }
     }, []);
 
-    // Load detail data for selected branch
+    // Load detail data for selected branchMain
     const loadData = useCallback(async () => {
         if (viewMode === 'summary' || !selectedBranch) return;
 
@@ -370,7 +370,7 @@ export default function PogRequests() {
         setPage(1);
     }, [filterStatus, filterAction, filterShelf, filterRow]);
 
-    // Enter branch detail view
+    // Enter branchMain detail view
     const enterBranchDetail = (branch_code) => {
         setSelectedBranch(branch_code);
         setViewMode('detail');
@@ -388,7 +388,7 @@ export default function PogRequests() {
 
     const availableRows = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
-    // Helper to get branch name
+    // Helper to get branchMain name
     const getBranchName = (code) => {
         const b = branches.find(b => b.branch_code === code);
         return b ? b.branch_name : code;
@@ -560,7 +560,7 @@ export default function PogRequests() {
                             ))}
                         </div>
 
-                        {/* Branch Cards - Click to Enter */}
+                        {/* BranchMain Cards - Click to Enter */}
                         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-2">
@@ -635,7 +635,7 @@ export default function PogRequests() {
                     </>
                 )}
 
-                {/* ==================== DETAIL VIEW (Per Branch) ==================== */}
+                {/* ==================== DETAIL VIEW (Per BranchMain) ==================== */}
                 {viewMode === 'detail' && selectedBranch && (
                     <>
                         {/* Header with Back Button */}

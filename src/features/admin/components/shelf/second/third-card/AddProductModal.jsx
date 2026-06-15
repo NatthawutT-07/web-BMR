@@ -404,7 +404,7 @@ const AddProductModal = React.memo(
                                 <div className="text-xs text-gray-600">
                                     <div className="flex flex-wrap gap-x-6 gap-y-1">
                                         <span>
-                                            Branch: <b>{branch_code}</b>
+                                            BranchMain: <b>{branch_code}</b>
                                         </span>
                                         <span>
                                             Shelf: <b>{shelf_code}</b>
