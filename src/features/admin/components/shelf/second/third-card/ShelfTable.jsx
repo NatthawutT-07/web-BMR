@@ -14,7 +14,7 @@ const toNumber = (v) => {
 // คำนวณ Stock Cost ต่อรายการ โดยถ้า quantity_stock < 0 ⇒ ใช้ 0 แทนในการคิดต้นทุน
 const getSafeStockCost = (p) => {
   const qtyRaw = toNumber(p.quantity_stock ?? 0);
-  const unit = toNumber(p.purchasePriceExcVAT ?? 0);
+  const unit = toNumber(p.purchase_price ?? 0);
   const qtyForCost = qtyRaw < 0 ? 0 : qtyRaw;
   return qtyForCost * unit;
 };
@@ -187,28 +187,28 @@ const ShelfTable = ({
 
                 <td
                   className="p-1 border whitespace-nowrap text-ellipsis overflow-hidden max-w-[320px]"
-                  title={prod.nameProduct ?? "-"}
+                  title={prod.item_name ?? "-"}
                 >
-                  {prod.nameProduct ?? "-"}
+                  {prod.item_name ?? "-"}
                 </td>
 
                 <td
                   className="p-1 border text-left whitespace-nowrap text-ellipsis overflow-hidden max-w-[200px]"
-                  title={prod.groupName ?? "-"}
+                  title={prod.group_name ?? "-"}
                 >
-                  {prod.groupName ?? "-"}
+                  {prod.group_name ?? "-"}
                 </td>
 
                 <td className="p-1 border whitespace-nowrap text-ellipsis overflow-hidden max-w-[160px]">
-                  {prod.nameBrand ?? "-"}
+                  {prod.brand_name ?? "-"}
                 </td>
 
                 <td className="border text-center w-12">
-                  {prod.shelfLife ?? "-"}
+                  {prod.shelf_life_days ?? "-"}
                 </td>
 
                 <td className="p-1 border text-center w-16">
-                  {prod.salesPriceIncVAT ?? "-"}
+                  {prod.selling_price_vat ?? "-"}
                 </td>
 
                 <td className="p-1 border text-center w-14 text-green-600 font-semibold">
@@ -242,7 +242,7 @@ const ShelfTable = ({
 
 
                 <td className="p-1 border text-right w-16">
-                  {formatMoney2(prod.purchasePriceExcVAT)}
+                  {formatMoney2(prod.purchase_price)}
                 </td>
 
                 <td className="p-1 border text-right w-20 text-yellow-600">
@@ -324,7 +324,7 @@ const ShelfTable = ({
         isOpen={deleteModal.isOpen}
         onClose={closeDeleteModal}
         onConfirm={confirmDelete}
-        productName={deleteModal.product?.nameProduct}
+        productName={deleteModal.product?.item_name}
       />
 
       {/* TABLE */}

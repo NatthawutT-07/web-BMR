@@ -154,10 +154,10 @@ const AddProductModal = React.memo(
             const payload = {
                 item_code: codeNum,
                 barcode: selected.barcode ?? null,
-                nameProduct: selected.nameProduct ?? null,
-                nameBrand: selected.nameBrand ?? null,
-                shelfLife: selected.shelfLife ?? null,
-                salesPriceIncVAT: selected.salesPriceIncVAT ?? null,
+                item_name: selected.item_name ?? null,
+                brand_name: selected.brand_name ?? null,
+                shelf_life_days: selected.shelf_life_days ?? null,
+                selling_price_vat: selected.selling_price_vat ?? null,
 
                 index: nextIndex,
                 branch_code,
@@ -369,15 +369,15 @@ const AddProductModal = React.memo(
                                                         </td>
                                                         <td
                                                             className="px-2 py-2 max-w-[520px] whitespace-nowrap overflow-hidden text-ellipsis"
-                                                            title={it.nameProduct || ""}
+                                                            title={it.item_name || ""}
                                                         >
-                                                            {it.nameProduct || "-"}
+                                                            {it.item_name || "-"}
                                                         </td>
                                                         <td
                                                             className="px-2 py-2 max-w-[220px] whitespace-nowrap overflow-hidden text-ellipsis"
-                                                            title={it.nameBrand || ""}
+                                                            title={it.brand_name || ""}
                                                         >
-                                                            {it.nameBrand || "-"}
+                                                            {it.brand_name || "-"}
                                                         </td>
                                                         <td className="px-2 py-2 text-center">
                                                             <button
@@ -420,8 +420,8 @@ const AddProductModal = React.memo(
                                     <div className="mt-2">
                                         Selected:{" "}
                                         <b>
-                                            {selected?.nameProduct
-                                                ? `${selected.nameProduct} (${selected.item_code})`
+                                            {selected?.item_name
+                                                ? `${selected.item_name} (${selected.item_code})`
                                                 : "-"}
                                         </b>
                                         {selected?.barcode ? (

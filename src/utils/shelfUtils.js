@@ -8,7 +8,7 @@ export const calcTotalWithdraw = (items) =>
 export const calcTotalStockCost = (items) =>
   items.reduce((sum, i) => {
     const qty = Number(i.quantity_stock ?? 0);
-    const price = Number(i.purchasePriceExcVAT ?? 0);
+    const price = Number(i.purchase_price ?? 0);
     const safeQty = qty < 0 ? 0 : qty;
     return sum + (safeQty * price);
   }, 0);

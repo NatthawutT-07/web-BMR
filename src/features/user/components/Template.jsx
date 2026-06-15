@@ -211,7 +211,7 @@ const Template = () => {
         const matched = shelf.shelfProducts.filter((item) => {
           if (!qRaw) return true;
           const barcodeStr = item.barcode != null ? String(item.barcode) : "";
-          const brandStr = item.nameBrand != null ? String(item.nameBrand).toLowerCase() : "";
+          const brandStr = item.brand_name != null ? String(item.brand_name).toLowerCase() : "";
           return barcodeStr.includes(qRaw) || brandStr.includes(q);
         });
 

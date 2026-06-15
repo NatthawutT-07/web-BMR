@@ -33,7 +33,7 @@ const SortableItem = React.memo(({ item, index }) => {
 
       {/* Product Name */}
       <div className="whitespace-nowrap overflow-hidden text-gray-700 text-sm">
-        {item.nameProduct}
+        {item.item_name}
       </div>
 
       {/* Brand */}
@@ -41,7 +41,7 @@ const SortableItem = React.memo(({ item, index }) => {
         className="text-left text-gray-700 text-sm overflow-hidden whitespace-nowrap text-ellipsis"
         style={{ maxWidth: "150px" }}
       >
-        {item.nameBrand ?? "-"}
+        {item.brand_name ?? "-"}
       </div>
     </div>
   );

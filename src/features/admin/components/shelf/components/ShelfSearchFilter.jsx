@@ -66,7 +66,7 @@ const ShelfSearchFilter = ({
                       </span>
 
                       <span className="text-xs break-all text-slate-600">
-                        {item.barcode} • {item.nameProduct} • {item.nameBrand}
+                        {item.barcode} • {item.item_name} • {item.brand_name}
                       </span>
                     </div>
                   ))

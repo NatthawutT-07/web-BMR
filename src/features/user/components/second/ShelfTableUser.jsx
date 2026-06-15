@@ -166,9 +166,9 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                             shadow-[1px_0_0_0_#e2e8f0] print:shadow-none
                             ${baseBg} ${printBg} ${groupHoverBg}
                           `}
-                          title={p.nameProduct}
+                          title={p.item_name}
                         >
-                          {p.nameProduct}
+                          {p.item_name}
                         </td>
 
 
@@ -181,17 +181,17 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                             print:whitespace-normal print:max-w-none
                             hidden lg:table-cell print:table-cell
                           "
-                          title={p.nameBrand}
+                          title={p.brand_name}
                         >
-                          {p.nameBrand}
+                          {p.brand_name}
                         </td>
 
                         <td className="border p-1 print:px-[2px] text-center align-middle">
-                          {zeroToDash(p.shelfLife)}
+                          {zeroToDash(p.shelf_life_days)}
                         </td>
 
                         <td className="border p-1 print:px-[2px] text-center align-middle">
-                          {zeroToDash(p.salesPriceIncVAT)}
+                          {zeroToDash(p.selling_price_vat)}
                         </td>
 
                         {/* ⭐ 3M Qty (รวม 3 เดือน ปัดเป็น int) */}
@@ -281,7 +281,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
           branch_code={storecode}
           branchName={branchName}
           barcode={selectedProduct?.barcode}
-          productName={selectedProduct?.nameProduct}
+          productName={selectedProduct?.item_name}
           currentShelf={selectedProduct?.shelfCode}
           currentRow={selectedProduct?.rowNo}
           currentIndex={selectedProduct?.index}

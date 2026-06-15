@@ -114,7 +114,7 @@ const ShelfManager = () => {
         summaryMap[shelf] = { shelfCode: shelf, totalStockCost: 0, totalSales: 0, totalWithdraw: 0 };
       }
       const quantity_stock = p.quantity_stock ?? p.stock_qty ?? 0;
-      const purchasePrice = p.purchasePriceExcVAT ?? p.purchase_price_ex_vat ?? 0;
+      const purchasePrice = p.purchase_price ?? p.purchase_price_ex_vat ?? 0;
       const salesTotal = p.total_sales_rounding_no_end_discount ?? p.sales_total_price ?? 0;
       const withdrawVal = p.value_withdraw ?? p.withdraw_value ?? 0;
 
@@ -167,7 +167,7 @@ const ShelfManager = () => {
     const text = value.toLowerCase();
     const found = (branchProduct || [])
       .filter((p) => {
-        const brand = (p.nameBrand || p.product_brand || "").toLowerCase();
+        const brand = (p.brand_name || p.product_brand || "").toLowerCase();
         const barcode = (p.barcode || p.item_code || "").toString();
         return brand.includes(text) || barcode.includes(text);
       })
