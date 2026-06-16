@@ -272,7 +272,7 @@ const AddProductModal = React.memo(
                                     type="button"
                                     onClick={() => setCameraOpen(true)}
                                     disabled={saving || checking}
-                                    className="px-3 py-2 rounded text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 disabled:bg-slate-200 disabled:text-slate-500"
+                                    className="sm:hidden px-3 py-2 rounded text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 disabled:bg-slate-200 disabled:text-slate-500"
                                     title="สแกนบาร์โค้ดด้วยกล้อง"
                                 >
                                     Camera
@@ -294,6 +294,11 @@ const AddProductModal = React.memo(
                             </div>
 
                             <div className="mt-1 text-[12px] text-gray-500 flex items-center gap-2">
+                                <span className="hidden sm:inline-flex items-center gap-1.5 rounded-md border border-red-200 bg-red-50 px-2 py-1 text-[11px] font-semibold text-red-700">
+                                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                                    พร้อมรับสแกนจากเครื่องยิงบาร์โค้ด
+                                </span>
+
                                 <span>
                                     {query.trim().length < 2
                                         ? "Enter at least 2 characters and click Check"

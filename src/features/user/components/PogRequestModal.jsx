@@ -270,28 +270,35 @@ export default function PogRequestModal({
 
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/50" onClick={handleClose} />
-            <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-xl border flex flex-col max-h-[85vh]">
+            <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm pointer-events-auto" onClick={handleClose} />
+            <div className="relative w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-slate-200/80 flex flex-col max-h-[85vh] pointer-events-auto overflow-hidden transform transition-all">
                 {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b bg-emerald-50 flex-shrink-0 rounded-t-2xl">
+                <div className="flex items-center justify-between px-5 py-4 border-b border-emerald-100 bg-emerald-50/70 flex-shrink-0">
                     <div>
-                        <div className="text-base font-semibold text-emerald-800">แจ้งขอเปลี่ยนแปลง</div>
-                        <div className="text-sm text-emerald-700 mt-0.5">
+                        <div className="text-base font-bold text-emerald-900">แจ้งขอเปลี่ยนแปลง</div>
+                        <div className="text-[11px] text-emerald-700 mt-0.5">
                             สาขา: {branch_code}{branchName ? ` - ${branchName}` : ""}
                         </div>
                     </div>
-
+                    <button
+                        type="button"
+                        className="text-emerald-700 hover:text-emerald-900 rounded-lg p-1 hover:bg-emerald-100/50 transition-colors"
+                        onClick={handleClose}
+                        aria-label="close"
+                    >
+                        <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                    </button>
                 </div>
 
-                <div className="p-4 space-y-4 overflow-y-auto flex-grow">
+                <div className="p-5 space-y-4 overflow-y-auto flex-grow">
                     {/* Success state */}
                     {success ? (
                         <div className="text-center py-8">
-                            <div className="text-lg font-semibold text-emerald-700">ส่งคำขอสำเร็จ!</div>
-                            <div className="text-sm text-slate-600 mt-1">รอดำเนินการ</div>
+                            <div className="text-lg font-bold text-emerald-700">ส่งคำขอสำเร็จ!</div>
+                            <div className="text-sm text-slate-500 mt-1">คำขอของคุณได้รับการบันทึกและรอดำเนินการ</div>
                             <button
                                 onClick={handleClose}
-                                className="mt-4 px-6 py-2 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-500"
+                                className="mt-5 px-6 py-2 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-500 transition-colors shadow-sm"
                             >
                                 ปิด
                             </button>
@@ -299,20 +306,25 @@ export default function PogRequestModal({
                     ) : (
                         <>
                             {/* Product Info */}
-                            <div className="p-3 rounded-xl bg-slate-50 border">
-                                <div className="text-sm text-slate-500">สินค้าที่เลือก</div>
-                                <div className="text-base font-semibold text-slate-800 mt-1">{item_name || "-"}</div>
-                                <div className="text-sm text-slate-600 mt-1">
-                                    บาร์โค้ด: {barcode}
-                                    {currentShelf && (
-                                        <> • ตำแหน่งปัจจุบัน: {currentShelf} / ชั้น {currentRow} / ลำดับ {currentIndex}</>
-                                    )}
+                            <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 flex justify-between items-start gap-4 shadow-sm">
+                                <div className="min-w-0 flex-1">
+                                    <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">สินค้าที่เลือก</div>
+                                    <div className="text-sm font-bold text-slate-900 leading-snug break-words">{item_name || "-"}</div>
+                                    <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 mt-2 text-[11px] text-slate-500">
+                                        <span>บาร์โค้ด: {barcode}</span>
+                                        {currentShelf && (
+                                            <>
+                                                <span>•</span>
+                                                <span>ตำแหน่งปัจจุบัน: {currentShelf} / ชั้น {currentRow} / ลำดับ {currentIndex}</span>
+                                            </>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Action Selection */}
                             <div>
-                                <div className="text-sm font-semibold text-slate-800 mb-2">เลือกประเภท</div>
+                                <div className="text-sm font-bold text-slate-800 mb-2">เลือกประเภท</div>
                                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                                     {ACTION_OPTIONS.map((opt) => {
                                         // Disable conditions
@@ -332,15 +344,15 @@ export default function PogRequestModal({
                                                 className={cx(
                                                     "w-full text-left p-3 rounded-xl border-2 transition",
                                                     isActive
-                                                        ? (opt.value === 'add' ? "border-emerald-500 bg-emerald-50" :
-                                                           opt.value === 'move' ? "border-blue-500 bg-blue-50" :
-                                                           "border-rose-500 bg-rose-50")
+                                                        ? (opt.value === 'add' ? "border-emerald-500 bg-emerald-50/50" :
+                                                           opt.value === 'move' ? "border-blue-500 bg-blue-50/50" :
+                                                           "border-rose-500 bg-rose-50/50")
                                                         : isDisabled
-                                                            ? "border-slate-200 bg-slate-100 opacity-50 cursor-not-allowed"
+                                                            ? "border-slate-200 bg-slate-100/50 opacity-50 cursor-not-allowed"
                                                             : "border-slate-200 hover:border-slate-300"
                                                 )}
                                             >
-                                                <div className={cx("font-semibold text-sm", (isDisabled && !isActive) && "text-slate-400", isActive && (opt.value === 'add' ? "text-emerald-700" : opt.value === 'move' ? "text-blue-700" : "text-rose-700"))}>{opt.label}</div>
+                                                <div className={cx("font-bold text-sm", (isDisabled && !isActive) && "text-slate-400", isActive && (opt.value === 'add' ? "text-emerald-700" : opt.value === 'move' ? "text-blue-700" : "text-rose-700"))}>{opt.label}</div>
                                                 <div className={cx("text-xs mt-0.5", (isDisabled && !isActive) ? "text-slate-400" : "text-slate-500")}>{opt.desc}</div>
                                             </button>
                                         );
@@ -351,25 +363,25 @@ export default function PogRequestModal({
                             {/* Target Position (for add/move) */}
                             {(action === "add" || action === "move") && (
                                 <div className={cx(
-                                    "p-3 rounded-xl border space-y-3",
-                                    action === "add" ? "bg-emerald-50 border-emerald-200" : "bg-blue-50 border-blue-200"
+                                    "p-4 rounded-xl border space-y-3",
+                                    action === "add" ? "bg-emerald-50/30 border-emerald-200" : "bg-blue-50/30 border-blue-200"
                                 )}>
                                     <div className={cx(
-                                        "text-sm font-semibold",
+                                        "text-sm font-bold",
                                         action === "add" ? "text-emerald-800" : "text-blue-800"
                                     )}>
                                         {action === "add" ? "ตำแหน่งที่ต้องการเพิ่ม" : "ตำแหน่งปลายทาง (ย้ายไป)"}
                                     </div>
 
                                     {/* Shelf Selector */}
-                                    <div>
-                                        <label className="text-sm text-slate-600">ชั้นวาง</label>
+                                    <div className="space-y-1">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">ชั้นวาง</label>
                                         {shelvesLoading ? (
-                                            <div className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-slate-100 text-slate-500">
+                                            <div className="w-full px-3 py-2.5 border rounded-xl text-sm bg-slate-100 text-slate-500">
                                                 กำลังโหลดข้อมูลชั้นวาง...
                                             </div>
                                         ) : availableShelves.length === 0 ? (
-                                            <div className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-slate-50 text-slate-700">
+                                            <div className="w-full px-3 py-2.5 border rounded-xl text-sm bg-slate-50 text-slate-700">
                                                 ไม่พบข้อมูลชั้นวางในสาขานี้
                                             </div>
                                         ) : (
@@ -377,9 +389,9 @@ export default function PogRequestModal({
                                                 <button
                                                     type="button"
                                                     onClick={() => setIsShelfDropdownOpen(!isShelfDropdownOpen)}
-                                                    className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-sm text-slate-700 focus:border-emerald-400 focus:outline-none focus:ring-2 focus:ring-emerald-200 flex items-center justify-between"
+                                                    className="w-full rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-left text-sm text-slate-700 focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-100 flex items-center justify-between transition-all"
                                                 >
-                                                    <span className={!toShelf ? "text-slate-500" : ""}>
+                                                    <span className={!toShelf ? "text-slate-400" : "font-semibold text-slate-800"}>
                                                         {toShelf
                                                             ? (() => {
                                                                 const s = availableShelves.find(sh => sh.shelf_code === toShelf);
@@ -397,7 +409,7 @@ export default function PogRequestModal({
                                                             className="fixed inset-0 z-10"
                                                             onClick={() => setIsShelfDropdownOpen(false)}
                                                         />
-                                                        <ul className="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto rounded-lg border border-slate-200 bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
+                                                        <ul className="absolute z-20 mt-1 w-full max-h-60 overflow-y-auto rounded-xl border border-slate-200 bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm">
                                                             {availableShelves.map((shelf) => (
                                                                 <li
                                                                     key={shelf.shelf_code}
@@ -429,8 +441,8 @@ export default function PogRequestModal({
 
                                     <div className="grid grid-cols-2 gap-3">
                                         {/* Row Selector */}
-                                        <div>
-                                            <label className="text-sm text-slate-600">ชั้นที่</label>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">ชั้นที่</label>
                                             <select
                                                 value={toRow}
                                                 onChange={(e) => {
@@ -438,7 +450,7 @@ export default function PogRequestModal({
                                                     setToIndex("");
                                                 }}
                                                 disabled={!toShelf || availableRows.length === 0}
-                                                className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-white disabled:bg-slate-100"
+                                                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white disabled:bg-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all font-semibold text-slate-800"
                                             >
                                                 <option value="">-- เลือกชั้น --</option>
                                                 {availableRows.map((row) => (
@@ -453,13 +465,13 @@ export default function PogRequestModal({
                                         </div>
 
                                         {/* Index Selector */}
-                                        <div>
-                                            <label className="text-sm text-slate-600">ลำดับ</label>
+                                        <div className="space-y-1">
+                                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">ลำดับ</label>
                                             <select
                                                 value={toIndex}
                                                 onChange={(e) => setToIndex(e.target.value)}
                                                 disabled={!toRow || availableIndices.length === 0}
-                                                className="w-full mt-1 px-3 py-2.5 border rounded-lg text-sm bg-white disabled:bg-slate-100"
+                                                className="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm bg-white disabled:bg-slate-100 focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all font-semibold text-slate-800"
                                             >
                                                 <option value="">-- เลือกลำดับ --</option>
                                                 {availableIndices.map((idx) => (
@@ -474,7 +486,7 @@ export default function PogRequestModal({
                                     {/* Info about selected position */}
                                     {toShelf && toRow && toIndex && (
                                         <div className={cx(
-                                            "text-xs px-3 py-2 rounded-lg border",
+                                            "text-xs px-3 py-2.5 rounded-xl border shadow-sm font-semibold",
                                             isSamePosition
                                                 ? "text-rose-700 bg-rose-100 border-rose-200"
                                                 : action === "add" ? "text-emerald-700 bg-emerald-100 border-emerald-200" : "text-blue-700 bg-blue-100 border-blue-200"
@@ -487,7 +499,7 @@ export default function PogRequestModal({
                                                 <>
                                                     📍 ตำแหน่งที่เลือก: <strong>{toShelf} / ชั้น {toRow} / ลำดับ {toIndex}</strong>
                                                     {Number(toIndex) === availableIndices.length && (
-                                                        <span className="ml-2 text-emerald-600 font-medium">(ตำแหน่งใหม่)</span>
+                                                        <span className="ml-2 text-emerald-600 font-bold">(ตำแหน่งใหม่)</span>
                                                     )}
                                                 </>
                                             )}
@@ -497,31 +509,31 @@ export default function PogRequestModal({
                             )}
 
                             {/* Note */}
-                            <div>
-                                <label className="text-sm font-semibold text-slate-800">หมายเหตุ (ถ้ามี)</label>
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-slate-800">หมายเหตุ (ถ้ามี)</label>
                                 <textarea
                                     value={note}
                                     onChange={(e) => setNote(e.target.value)}
-                                    placeholder="ระบุเหตุผลหรือรายละเอียดเพิ่มเติม..."
+                                    placeholder="ระบุเหตุผล..."
                                     rows={2}
                                     maxLength={50}
-                                    className="w-full mt-1 px-3 py-2 border rounded-lg text-sm resize-none"
+                                    className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm resize-none focus:outline-none focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 transition-all"
                                 />
                             </div>
 
                             {/* Error */}
                             {error && (
-                                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700">
+                                <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-700 font-medium">
                                     {error}
                                 </div>
                             )}
 
                             {/* Actions */}
-                            <div className="flex gap-2 pt-2">
+                            <div className="flex gap-2 pt-3 border-t border-slate-100 mt-4">
                                 <button
                                     type="button"
                                     onClick={handleClose}
-                                    className="flex-1 px-4 py-3 rounded-xl font-semibold text-sm border bg-white hover:bg-slate-50"
+                                    className="flex-1 px-4 py-2.5 rounded-xl font-bold text-sm border bg-white hover:bg-slate-50 transition-colors"
                                 >
                                     ยกเลิก
                                 </button>
@@ -529,7 +541,7 @@ export default function PogRequestModal({
                                     type="button"
                                     onClick={handleSubmit}
                                     disabled={loading || !action || isDuplicateAdd || isSamePosition}
-                                    className="flex-1 px-4 py-3 rounded-xl font-semibold text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50"
+                                    className="flex-1 px-4 py-2.5 rounded-xl font-bold text-sm bg-emerald-600 text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors shadow-sm"
                                 >
                                     {loading ? "กำลังส่ง..." : "ส่งคำขอ"}
                                 </button>

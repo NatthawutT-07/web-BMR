@@ -5,6 +5,26 @@ import { BarcodeFormat, DecodeHintType } from "@zxing/library";
 
 const cx = (...a) => a.filter(Boolean).join(" ");
 
+const POSSIBLE_BARCODE_FORMATS = [
+  BarcodeFormat.EAN_13,
+  BarcodeFormat.EAN_8,
+  BarcodeFormat.UPC_A,
+  BarcodeFormat.UPC_E,
+  BarcodeFormat.CODE_128,
+  BarcodeFormat.CODE_39,
+  BarcodeFormat.ITF,
+];
+
+const normalizeBarcodeText = (value) => {
+  const raw = String(value || "").trim();
+  const digits = raw.replace(/\D/g, "");
+  return {
+    raw,
+    digits,
+    code: digits || raw,
+  };
+};
+
 export default function CameraBarcodeScannerModal({ open, onClose, onDetected }) {
   const videoRef = useRef(null);
   const readerRef = useRef(null);
@@ -32,6 +52,7 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
 
     const hints = new Map();
     hints.set(DecodeHintType.TRY_HARDER, true);
+    hints.set(DecodeHintType.POSSIBLE_FORMATS, POSSIBLE_BARCODE_FORMATS);
 
     const reader = new BrowserMultiFormatReader(hints, 500);
     readerRef.current = reader;
@@ -58,19 +79,17 @@ export default function CameraBarcodeScannerModal({ open, onClose, onDetected })
             if (stopped) return;
             if (!result) return;
 
-            const raw = String(result.getText() || "").trim();
-            if (!raw) return;
+            const { raw, digits, code } = normalizeBarcodeText(result.getText());
+            if (!code) return;
 
-            const digits = raw.replace(/\D/g, "");
             setLiveText(raw);
             setLiveDigits(digits);
 
             const now = Date.now();
-            const key = digits || raw;
-            if (lastRef.current.code === key && now - lastRef.current.ts < 1200) return;
-            lastRef.current = { code: key, ts: now };
+            if (lastRef.current.code === code && now - lastRef.current.ts < 1200) return;
+            lastRef.current = { code, ts: now };
 
-            onDetectedRef.current?.(digits || raw);
+            onDetectedRef.current?.(code);
 
             setTimeout(() => {
               onCloseRef.current?.();
