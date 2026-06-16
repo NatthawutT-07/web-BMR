@@ -41,7 +41,7 @@ const Dashboard = () => {
     {
       key: "zX5cV8bN1m",
       title: "Upload XLSX",
-      desc: "อัปโหลดไฟล์ข้อมูล (SKU, ShelfTemplate)",
+      desc: "อัปโหลดไฟล์ข้อมูล",
       color: "from-rose-400 to-rose-500",
       badge: "Upload",
       icon: <FileUp size={20} />,
@@ -62,9 +62,9 @@ const Dashboard = () => {
         {/* Header */}
         <header className="mb-2 md:mb-2 text-center">
           <p className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/80 border border-slate-200 text-[11px] uppercase tracking-[0.16em] text-slate-500 shadow-sm mb-2">
-            BMR POG Admin Console
+            Planogram Admin Console
           </p>
-        
+
         </header>
 
         {/* Main card */}
@@ -74,13 +74,7 @@ const Dashboard = () => {
               <h2 className="text-sm font-medium text-slate-800">
                 Quick access
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
-                กดเลือกเมนูที่ต้องการได้เลย ไม่ต้องผ่านหลายหน้า
-              </p>
-            </div>
-            <div className="hidden md:flex items-center gap-1 text-[11px] text-emerald-600">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_0_3px_rgba(52,211,153,0.4)]" />
-              <span>Online</span>
+
             </div>
           </div>
 
@@ -135,7 +129,7 @@ const Dashboard = () => {
                 {/* Arrow */}
                 <div className="flex items-center gap-1 text-[11px] md:text-xs text-slate-400">
                   <span className="hidden md:inline group-hover:text-slate-600">
-                    เปิดดู
+                    View
                   </span>
                   <span className="text-slate-400 group-hover:text-sky-500 group-hover:translate-x-0.5 transform transition-transform">
                     →
@@ -145,15 +139,7 @@ const Dashboard = () => {
             ))}
           </div>
 
-          {/* Footer hint */}
-          <div className="mt-4 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[11px] text-slate-500">
-              Tip: เมนูทั้งหมดอยู่ในแถบด้านซ้ายด้วย สามารถเปลี่ยนหน้าได้ทุกเมื่อ
-            </p>
-            <span className="text-[11px] text-slate-400">
-              BMR POG Admin
-            </span>
-          </div>
+       
         </div>
       </div>
     </div>

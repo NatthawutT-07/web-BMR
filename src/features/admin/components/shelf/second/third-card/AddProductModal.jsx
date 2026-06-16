@@ -260,7 +260,7 @@ const AddProductModal = React.memo(
                                     value={query}
                                     onChange={(e) => handleChangeQuery(e.target.value)}
                                     onKeyDown={onKeyDownInput}
-                                    placeholder="885xxxxxxxx / ชื่อสินค้า / แบรนด์"
+                                    placeholder="Barcode / Product / Brand"
                                     className={`flex-1 border rounded px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-300 ${error ? "border-red-300" : "border-gray-300"
                                         }`}
                                     autoFocus
@@ -275,7 +275,7 @@ const AddProductModal = React.memo(
                                     className="px-3 py-2 rounded text-sm font-medium bg-amber-500 text-white hover:bg-amber-600 disabled:bg-slate-200 disabled:text-slate-500"
                                     title="สแกนบาร์โค้ดด้วยกล้อง"
                                 >
-                                    📷
+                                    Camera
                                 </button>
 
                                 <button
@@ -296,15 +296,15 @@ const AddProductModal = React.memo(
                             <div className="mt-1 text-[12px] text-gray-500 flex items-center gap-2">
                                 <span>
                                     {query.trim().length < 2
-                                        ? "พิมพ์อย่างน้อย 2 ตัวอักษร แล้วกด Check"
+                                        ? "Enter at least 2 characters and click Check"
                                         : isFreshChecked
-                                            ? `เช็คแล้ว • พบ ${results.length} รายการ`
-                                            : "ยังไม่เช็ค / ข้อความเปลี่ยนแล้ว"}
+                                            ? `Checked • Found ${results.length} items`
+                                            : "Not checked / Text changed"}
                                 </span>
 
                                 {saving && (
                                     <span className="text-emerald-700 font-medium">
-                                        • กำลังบันทึก...
+                                        • Saving...
                                     </span>
                                 )}
 
@@ -341,8 +341,8 @@ const AddProductModal = React.memo(
                                                     className="px-2 py-4 text-center text-gray-500"
                                                 >
                                                     {isFreshChecked
-                                                        ? "ไม่พบรายการที่ตรงกัน"
-                                                        : "กด Check เพื่อดึงรายการ"}
+                                                        ? "No matching items found"
+                                                        : "Click Check to fetch items"}
                                                 </td>
                                             </tr>
                                         ) : (

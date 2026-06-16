@@ -4,12 +4,12 @@ const SyncStatusInfo = ({ syncInfo }) => {
   if (!syncInfo || !syncInfo.updatedAt) {
     return (
       <div className="text-xs text-slate-500 bg-white px-2 py-1 rounded border shadow-sm">
-        อัปโหลดล่าสุด: <span className="font-medium text-slate-700">ยังไม่มีข้อมูล</span>
+        last updated: <span className="font-medium text-slate-700">N/A</span>
       </div>
     );
   }
 
-  let lastUpdateStr = "วันที่ไม่ถูกต้อง";
+  let lastUpdateStr = "Invalid date";
   try {
     const dateObj = new Date(syncInfo.updatedAt);
     lastUpdateStr = dateObj.toLocaleString("th-TH", {
@@ -27,9 +27,9 @@ const SyncStatusInfo = ({ syncInfo }) => {
 
   return (
     <div className="text-xs text-slate-500 bg-white px-2 py-1 rounded border shadow-sm">
-      อัปโหลดล่าสุด: <span className="font-medium text-slate-700">{lastUpdateStr}</span>
+      last updated: <span className="font-medium text-slate-700">{lastUpdateStr}</span>
       {syncInfo.rowCount > 0 && (
-        <span className="ml-1 text-emerald-600">({syncInfo.rowCount.toLocaleString()} แถว)</span>
+        <span className="ml-1 text-emerald-600">({syncInfo.rowCount.toLocaleString()} rows)</span>
       )}
     </div>
   );

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, Layers3 } from "lucide-react";
 import ShelfTableUser from "./ShelfTableUser";
 
 const ShelfCardUser = React.memo(function ShelfCardUser({
@@ -64,11 +65,12 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
   const toggleOpen = () => setIsOpen((o) => !o);
 
   const shouldRenderTable = isOpen || isPrinting;
+  const itemCount = shelfProducts.length;
 
   return (
     <div
       className="
-        border rounded-lg bg-white mb-4
+        border border-slate-200 rounded-lg bg-white mb-4
         shadow-sm hover:shadow-md transition-shadow duration-200
         print:shadow-none print:border-black
       "
@@ -78,27 +80,37 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
         type="button"
         onClick={toggleOpen}
         className="
-          w-full flex justify-between items-center
-          px-3 sm:px-4 py-2 sm:py-3
+          w-full flex justify-between items-center gap-3
+          px-3 sm:px-4 py-3
           cursor-pointer select-none
-          hover:bg-gray-50 active:bg-gray-100
+          hover:bg-slate-50 active:bg-slate-100
           rounded-t-lg
         "
       >
-        <h2 className="text-base sm:text-lg font-bold text-slate-800 text-left">
-          {shelf_code}{shelf_name ? ` - ${shelf_name}` : ""} <span className="text-slate-500 font-normal">({shelf_total_row} ชั้น)</span>
-        </h2>
+        <div className="flex min-w-0 items-center gap-3 text-left">
+          <div className="hidden h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-emerald-50 text-emerald-700 sm:flex">
+            <Layers3 className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex items-center gap-2">
+            <h2 className="truncate text-base font-bold text-slate-800 sm:text-lg">
+              {shelf_code}{shelf_name ? ` - ${shelf_name}` : ""}
+            </h2>
+            <span className="inline-flex items-center gap-2 text-xs text-slate-500 flex-shrink-0">
+              <span>{shelf_total_row} ชั้น</span>
+              <span className="h-1 w-1 rounded-full bg-slate-300" />
+              <span>{itemCount} รายการ</span>
+            </span>
+          </div>
+        </div>
 
         <div
           className={`
-            ml-2 print:hidden text-slate-500
+            ml-2 flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-500 print:hidden
             transition-transform duration-300 ease-out
             ${isOpen ? "rotate-180" : "rotate-0"}
           `}
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
+          <ChevronDown className="h-5 w-5" />
         </div>
       </button>
 

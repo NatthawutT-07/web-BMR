@@ -170,10 +170,17 @@ const ShelfManager = () => {
     if (code) fetchProduct(code);
   };
 
+  const handleRefreshAll = () => {
+    fetchBranches();
+    fetchTemplate();
+    fetchSyncDates();
+    handleRefreshProduct();
+  };
+
   const imageUrl = submittedbranch_code ? `/images/branch/${submittedbranch_code}.png` : "";
 
   return (
-    <div className="container mx-auto p-3 sm:p-6 space-y-6">
+    <div className="container mx-auto p-3 sm:p-6 space-y-4">
       <ShelfHeader
         branches={branches}
         selectedbranch_code={selectedbranch_code}
@@ -182,6 +189,7 @@ const ShelfManager = () => {
         setOkLocked={setOkLocked}
         handleSubmit={handleSubmit}
         handleRefreshProduct={handleRefreshProduct}
+        handleRefreshAll={handleRefreshAll}
         loading={loading}
         actionLoading={actionLoading}
       />

@@ -10,6 +10,7 @@ const ShelfHeader = ({
   setOkLocked, 
   handleSubmit, 
   handleRefreshProduct,
+  handleRefreshAll,
   loading,
   actionLoading
 }) => {
@@ -33,6 +34,9 @@ const ShelfHeader = ({
             okLocked={okLocked}
             onSubmit={handleSubmit}
             onRefreshProduct={handleRefreshProduct}
+            onRefreshAll={handleRefreshAll}
+            loading={loading}
+            actionLoading={actionLoading}
           />
         </Suspense>
       </div>

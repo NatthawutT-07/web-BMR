@@ -35,10 +35,10 @@ const DeleteConfirmModal = React.memo(
                         <div className="text-center py-4">
                             <div className="text-4xl mb-3"></div>
                             <h3 className="text-lg font-semibold text-emerald-700">
-                                ลบสำเร็จแล้ว
+                                Delete Successful
                             </h3>
                             <p className="text-sm text-gray-500 mt-1">
-                                "{item_name || "-"}" ถูกลบออกแล้ว
+                                "{item_name || "-"}" deleted successfully.
                             </p>
                         </div>
                     ) : (
@@ -52,7 +52,7 @@ const DeleteConfirmModal = React.memo(
                                 <span className="font-semibold">"{item_name || "-"}"</span>?
                                 <br />
                                 <span className="text-red-600 text-sm">
-                                    การดำเนินการนี้ไม่สามารถย้อนกลับได้
+                                    This action cannot be undone.
                                 </span>
                             </p>
 
@@ -74,7 +74,7 @@ const DeleteConfirmModal = React.memo(
                                 >
                                     {deleting ? (
                                         <>
-                                            <span className="animate-spin">⏳</span> กำลังลบ...
+                                            <span className="animate-spin">⏳</span> Deleting...
                                         </>
                                     ) : (
                                         "Delete"

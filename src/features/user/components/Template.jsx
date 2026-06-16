@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef, Suspense } from "react";
+import { Box, Maximize2, Printer, Search, X } from "lucide-react";
 import useBmrStore from "../../../store/bmr_store";
 import useStockMetaStore from "../../../store/stock_meta_store";
 import { getTemplateAndProduct } from "../../../api/users/home";
@@ -33,6 +34,15 @@ const fmtThaiDateTime = (value) => {
 };
 
 const cx = (...a) => a.filter(Boolean).join(" ");
+
+const rowToneClasses = [
+  "bg-amber-50 border-amber-200 text-amber-900",
+  "bg-emerald-50 border-emerald-200 text-emerald-900",
+  "bg-sky-50 border-sky-200 text-sky-900",
+  "bg-violet-50 border-violet-200 text-violet-900",
+  "bg-rose-50 border-rose-200 text-rose-900",
+  "bg-cyan-50 border-cyan-200 text-cyan-900",
+];
 
 const ShelfTemplate = () => {
   const storecode = useBmrStore((s) => s.user?.storecode);
@@ -200,11 +210,17 @@ const ShelfTemplate = () => {
   useEffect(() => {
     const q = searchText.trim();
     if (q.length === 1) {
-      setSearchHint("พิมพ์อย่างน้อย 2 ตัวอักษรเพื่อค้นหา");
+      setSearchHint("พิมพ์อย่างน้อย 2 ตัวอักษรเพื่อค้นหาให้แม่นยำขึ้น");
     } else {
       setSearchHint("");
     }
   }, [searchText]);
+
+  const overviewShelves = useMemo(() => {
+    return groupedShelves.filter(
+      (shelf) => selectedShelves.length === 0 || selectedShelves.includes(shelf.shelf_code)
+    );
+  }, [groupedShelves, selectedShelves]);
 
   //  Print flow 
   const openPrintModal = () => {
@@ -232,9 +248,16 @@ const ShelfTemplate = () => {
 
   const allShelfCodes = useMemo(() => groupedShelves.map((s) => s.shelf_code), [groupedShelves]);
 
+  const openShelfFromOverview = (shelfCode) => {
+    setSelectedShelves([shelfCode]);
+    setSearchText("");
+    setJumpShelfCode(shelfCode);
+    setOpenShelfOnce({ code: shelfCode, nonce: Date.now() });
+  };
+
   return (
-    <div className="min-h-screen bg-slate-100 print:bg-white">
-      <div className="max-w-8xl mx-auto px-3 sm:px-4 lg:px-8 py-1 sm:py-1 space-y-2 sm:space-y-2">
+    <div className="min-h-screen overflow-x-hidden bg-slate-100 print:bg-white">
+      <div className="mx-auto w-full max-w-[1920px] px-3 py-1 sm:px-4 sm:py-1 lg:px-6 space-y-2 sm:space-y-2">
         {/*  PRINT HEADER */}
         <div className="hidden print:block pb-1 mb-1">
           <p className="text-xs sm:text-sm text-slate-500">
@@ -288,8 +311,9 @@ const ShelfTemplate = () => {
               <button
                 type="button"
                 onClick={openPrintModal}
-                className="inline-flex items-center justify-center px-4 py-2.5 rounded-lg text-sm font-semibold bg-slate-700 text-white hover:bg-slate-600 shadow-sm transition-colors"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold bg-slate-700 text-white hover:bg-slate-600 shadow-sm transition-colors"
               >
+                <Printer className="h-4 w-4" />
                 พิมพ์
               </button>
             )}
@@ -306,11 +330,11 @@ const ShelfTemplate = () => {
                   <div className="text-sm font-semibold text-slate-800">เลือก Shelf ที่ต้องการพิมพ์</div>
                 </div>
                 <button
-                  className="text-slate-500 hover:text-slate-700 text-lg leading-none"
+                  className="rounded-lg p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
                   onClick={() => setPrintModalOpen(false)}
                   aria-label="close"
                 >
-                  ✕
+                  <X className="h-5 w-5" />
                 </button>
               </div>
 
@@ -429,18 +453,21 @@ const ShelfTemplate = () => {
 
             {!loading && groupedShelves.length > 0 && (
               <section className="w-full print:hidden">
-                <div className="bg-white p-4 lg:p-6 rounded-xl shadow-sm border flex flex-col xl:flex-row gap-6 mx-auto w-full max-w-[1400px]">
+                <div className="mx-auto grid w-full max-w-full grid-cols-1 gap-4 overflow-hidden rounded-xl border bg-white p-4 shadow-sm lg:p-5 xl:grid-cols-[minmax(220px,300px)_minmax(0,1fr)_minmax(280px,360px)]">
 
                   {/* LEFT */}
                   <div
-                    className="flex justify-center xl:justify-start xl:w-[260px] flex-shrink-0 cursor-pointer transition-transform hover:scale-105 active:scale-95"
+                    className="group relative min-w-0 cursor-pointer"
                     onClick={() => setIsFullscreen(true)}
                   >
                     <div
-                      className="w-full max-w-[260px] aspect-[4/3] bg-contain bg-center bg-no-repeat rounded-lg shadow-sm border bg-slate-50 select-none"
+                      className="mx-auto h-[360px] w-full max-w-[300px] bg-contain bg-center bg-no-repeat rounded-lg border bg-slate-50 shadow-sm select-none transition-transform group-hover:scale-[1.01] md:h-[440px] xl:h-[500px]"
                       style={{ backgroundImage: `url('/images/branch/${storecode?.toUpperCase()}.png')` }}
                       aria-label={`BranchMain ${storecode}`}
                     />
+                    <div className="absolute right-3 top-3 rounded-full bg-white/90 p-2 text-slate-700 shadow-sm opacity-0 transition-opacity group-hover:opacity-100">
+                      <Maximize2 className="h-4 w-4" />
+                    </div>
                   </div>
 
                   {/* Fullscreen Image Overlay */}
@@ -460,23 +487,35 @@ const ShelfTemplate = () => {
                   )}
 
                   {/* CENTER */}
-                  <div className="flex-1 flex flex-col">
+                  <div className="min-w-0">
                     <div
-                      className="bg-gradient-to-b from-emerald-50 to-white border-2 border-emerald-200 rounded-xl p-4 shadow-inner 
-                      max-h-[420px] md:max-h-[480px] w-full overflow-y-auto"
+                      className="h-[440px] w-full overflow-y-auto rounded-xl border-2 border-emerald-200 bg-gradient-to-b from-emerald-50 to-white p-4 shadow-inner xl:h-[500px]"
                     >
-                      <h3 className="font-bold text-emerald-800 mb-3 text-base text-center flex items-center justify-center gap-2 sticky top-0 bg-emerald-50/95 py-2 -mt-2 z-10 backdrop-blur-sm">
-                        โครงสร้างชั้นสินค้าในสาขา
-                      </h3>
+                      <div className="sticky top-0 z-10 -mx-1 -mt-2 mb-3 bg-emerald-50/95 px-1 py-2 backdrop-blur-sm">
+                        <h3 className="font-bold text-emerald-800 text-base text-center">
+                          โครงสร้างชั้นสินค้าในสาขา
+                        </h3>
+                        <p className="mt-1 text-center text-xs text-emerald-700/80">
+                          {overviewShelves.length} Shelf / {overviewShelves.reduce((sum, shelf) => sum + shelf.shelf_total_row, 0)} ชั้น
+                        </p>
+                      </div>
 
                       <div className="space-y-3">
-                        {groupedShelves.map((shelf) => (
-                          <div
+                        {overviewShelves.length === 0 && (
+                          <div className="rounded-lg border border-dashed border-emerald-200 bg-white/80 p-6 text-center text-sm text-slate-500">
+                            ไม่พบ Shelf ตาม Filter ที่เลือก
+                          </div>
+                        )}
+
+                        {overviewShelves.map((shelf) => (
+                          <button
+                            type="button"
                             key={shelf.shelf_code}
-                            className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm transition-all hover:shadow-md"
+                            onClick={() => openShelfFromOverview(shelf.shelf_code)}
+                            className="w-full bg-white rounded-lg p-3 border border-slate-200 shadow-sm text-left transition-all hover:border-emerald-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-300"
                           >
                             <div className="flex items-center gap-2 pb-2 border-b border-dashed border-slate-200">
-                              <span className="text-xl flex-shrink-0">📦</span>
+                              <Box className="h-5 w-5 flex-shrink-0 text-amber-600" />
                               <div className="flex-1 min-w-0 flex items-center whitespace-nowrap overflow-x-auto scrollbar-hide">
                                 <span className="font-bold text-blue-700 text-base">
                                   {shelf.shelf_code}
@@ -498,43 +537,35 @@ const ShelfTemplate = () => {
                                 const rowProducts = shelf.shelfProducts.filter(
                                   (p) => (p.shelf_row_number || 0) === shelf_row_number
                                 );
-                                const rowColors = [
-                                  'bg-amber-50 border-amber-200 text-amber-800',
-                                  'bg-emerald-50 border-emerald-200 text-emerald-800',
-                                  'bg-sky-50 border-sky-200 text-sky-800',
-                                  'bg-violet-50 border-violet-200 text-violet-800',
-                                  'bg-rose-50 border-rose-200 text-rose-800',
-                                  'bg-cyan-50 border-cyan-200 text-cyan-800',
-                                ];
-                                const colorClass = rowColors[idx % rowColors.length];
+                                const colorClass = rowToneClasses[idx % rowToneClasses.length];
 
                                 return (
                                   <div
                                     key={shelf_row_number}
-                                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg border ${colorClass}`}
+                                    className={`flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border ${colorClass}`}
                                   >
-                                    <div className="flex items-center gap-3">
-                                      <div className="w-7 h-7 rounded-full bg-white/80 flex items-center justify-center text-sm font-extrabold shadow-sm border border-current/10">
+                                    <div className="flex min-w-0 items-center gap-3">
+                                      <div className="w-7 h-7 flex-shrink-0 rounded-full bg-white/85 flex items-center justify-center text-sm font-extrabold shadow-sm border border-current/10">
                                         {shelf_row_number}
                                       </div>
-                                      <span className="text-sm font-semibold opacity-80">ชั้นที่ {shelf_row_number}</span>
+                                      <span className="truncate text-sm font-semibold opacity-90">ชั้นที่ {shelf_row_number}</span>
                                     </div>
-                                    <span className="text-xs font-bold bg-white/60 px-2.5 py-1 rounded-full">
+                                    <span className="flex-shrink-0 text-xs font-bold bg-white/70 px-2.5 py-1 rounded-full">
                                       {rowProducts.length} รายการ
                                     </span>
                                   </div>
                                 );
                               })}
                             </div>
-                          </div>
+                          </button>
                         ))}
                       </div>
                     </div>
                   </div>
 
                   {/* RIGHT */}
-                  <div className="xl:w-[320px] 2xl:w-[380px] flex-shrink-0 flex flex-col gap-4">
-                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-200 h-full">
+                  <div className="min-w-0">
+                    <div className="h-full rounded-xl border border-slate-200 bg-slate-50 p-4">
                       <div className="space-y-4">
                         <Suspense fallback={<div className="text-sm text-gray-500">Loading filter...</div>}>
                           <ShelfFilterUser
@@ -551,16 +582,28 @@ const ShelfTemplate = () => {
 
                         <div className="pt-4 border-t border-slate-200">
                           <label className="text-xs font-semibold text-slate-500 mb-1.5 block">ค้นหาสินค้าในหน้านี้</label>
-                          <input
-                            type="text"
-                            placeholder="พิมพ์ชื่อแบรนด์ หรือเลขบาร์โค้ด..."
-                            className="w-full px-4 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
-                            value={searchText}
-                            onChange={(e) => setSearchText(e.target.value)}
-                          />
+                          <div className="relative">
+                            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                            <input
+                              type="text"
+                              placeholder="พิมพ์ชื่อแบรนด์ หรือเลขบาร์โค้ด..."
+                              className="w-full px-10 py-2.5 bg-white border border-slate-300 rounded-lg shadow-sm text-sm focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
+                              value={searchText}
+                              onChange={(e) => setSearchText(e.target.value)}
+                            />
+                            {searchText && (
+                              <button
+                                type="button"
+                                onClick={() => setSearchText("")}
+                                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                aria-label="ล้างคำค้นหา"
+                              >
+                                <X className="h-4 w-4" />
+                              </button>
+                            )}
+                          </div>
                           {searchHint && (
                             <div className="mt-2 text-xs text-amber-600 bg-amber-50 p-2 rounded-lg border border-amber-100 flex items-start gap-1">
-                              <span>⚠️</span>
                               <span>{searchHint}</span>
                             </div>
                           )}

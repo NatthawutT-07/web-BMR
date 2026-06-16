@@ -1,874 +1,799 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../../../utils/axios";
 import {
-    Filter, RefreshCw, CheckCircle2, XCircle, Clock,
-    Trash2, Edit2, Check, X,
-    AlertCircle, Package, MapPin,
-    Store, LayoutGrid, Layers, ArrowLeft, ChevronRight
+  AlertCircle,
+  ArrowLeft,
+  Check,
+  CheckCircle2,
+  ChevronRight,
+  Clock,
+  Edit2,
+  Filter,
+  Layers,
+  LayoutGrid,
+  MapPin,
+  Package,
+  RefreshCw,
+  Search,
+  Store,
+  Trash2,
+  X,
+  XCircle,
 } from "lucide-react";
 
-// Constants & Styles
-
 const STATUS_STYLES = {
-    pending: {
-        label: "รอดำเนินการ",
-        icon: <Clock size={16} />,
-        bg: "bg-amber-50",
-        text: "text-amber-700",
-        border: "border-amber-200",
-        indicator: "bg-amber-500"
-    },
-    rejected: {
-        label: "ปฏิเสธ",
-        icon: <XCircle size={16} />,
-        bg: "bg-rose-50",
-        text: "text-rose-700",
-        border: "border-rose-200",
-        indicator: "bg-rose-500"
-    },
-    completed: {
-        label: "เสร็จสิ้น",
-        icon: <CheckCircle2 size={16} />,
-        bg: "bg-emerald-50",
-        text: "text-emerald-700",
-        border: "border-emerald-200",
-        indicator: "bg-emerald-500"
-    },
+  pending: {
+    label: "Pending",
+    icon: Clock,
+    bg: "bg-amber-50",
+    text: "text-amber-700",
+    border: "border-amber-200",
+    ring: "ring-amber-200",
+    indicator: "bg-amber-500",
+  },
+  rejected: {
+    label: "Rejected",
+    icon: XCircle,
+    bg: "bg-rose-50",
+    text: "text-rose-700",
+    border: "border-rose-200",
+    ring: "ring-rose-200",
+    indicator: "bg-rose-500",
+  },
+  completed: {
+    label: "Completed",
+    icon: CheckCircle2,
+    bg: "bg-emerald-50",
+    text: "text-emerald-700",
+    border: "border-emerald-200",
+    ring: "ring-emerald-200",
+    indicator: "bg-emerald-500",
+  },
 };
 
 const ACTION_STYLES = {
-    add: { label: "เพิ่มสินค้า", badge: "bg-emerald-100 text-emerald-800" },
-    move: { label: "ย้ายสินค้า", badge: "bg-blue-100 text-blue-800" },
-    delete: { label: "ลบสินค้า", badge: "bg-rose-100 text-rose-800" },
+  add: { label: "Add", badge: "bg-emerald-100 text-emerald-800 border-emerald-200" },
+  move: { label: "Move", badge: "bg-blue-100 text-blue-800 border-blue-200" },
+  delete: { label: "Delete", badge: "bg-rose-100 text-rose-800 border-rose-200" },
 };
+
+const availableRows = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 const formatDate = (dateStr) => {
-    if (!dateStr) return "-";
-    return new Date(dateStr).toLocaleDateString("th-TH", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+  if (!dateStr) return "-";
+  return new Date(dateStr).toLocaleString("th-TH", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 };
 
-// Sub-Components
+const StatusPill = ({ status }) => {
+  const style = STATUS_STYLES[status] || STATUS_STYLES.pending;
+  const Icon = style.icon;
+
+  return (
+    <span className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] font-semibold ${style.bg} ${style.text} ${style.border}`}>
+      <Icon size={13} />
+      {style.label}
+    </span>
+  );
+};
 
 const StatCard = ({ count, type, active, onClick }) => {
-    const style = STATUS_STYLES[type];
-    const isClickable = onClick && typeof onClick === 'function';
-    const Tag = isClickable ? 'button' : 'div';
-    return (
-        <Tag
-            {...(isClickable ? { onClick } : {})}
-            className={`
-                relative overflow-hidden rounded-xl border p-4 transition-all duration-200 text-left w-full
-                ${active
-                    ? `bg-white shadow-md ring-2 ring-offset-1 ${style.text.replace('text', 'ring')}`
-                    : `bg-white border-slate-200 text-slate-500 ${isClickable ? 'hover:bg-slate-50 hover:text-slate-700 cursor-pointer' : ''}`
-                }
-            `}
-        >
-            <div className={`absolute left-0 top-0 bottom-0 w-1 ${style.indicator}`} />
-            <div className="flex items-center justify-between mb-2">
-                <span className={`text-sm font-medium ${active ? style.text : "text-slate-600"}`}>
-                    {style.label}
-                </span>
-                <div className={`p-1.5 rounded-full ${style.bg} ${style.text}`}>
-                    {style.icon}
-                </div>
-            </div>
-            <div className="text-2xl font-bold text-slate-800">
-                {count.toLocaleString()}
-            </div>
-        </Tag>
-    );
+  const style = STATUS_STYLES[type];
+  const Icon = style.icon;
+  const Tag = onClick ? "button" : "div";
+
+  return (
+    <Tag
+      onClick={onClick}
+      className={`relative w-full overflow-hidden rounded-xl border bg-white p-4 text-left transition-all ${active ? `shadow-sm ring-2 ring-offset-1 ${style.ring} ${style.border}` : "border-slate-200 hover:border-slate-300"
+        } ${onClick ? "cursor-pointer hover:bg-slate-50" : ""}`}
+    >
+      <div className={`absolute bottom-0 left-0 top-0 w-1 ${style.indicator}`} />
+      <div className="flex items-center justify-between gap-3">
+        <span className={`text-sm font-medium ${style.text}`}>{style.label}</span>
+        <span className={`rounded-lg p-2 ${style.bg} ${style.text}`}>
+          <Icon size={18} />
+        </span>
+      </div>
+      <div className="mt-3 text-3xl font-bold tabular-nums text-slate-900">{Number(count || 0).toLocaleString()}</div>
+    </Tag>
+  );
 };
 
-// Modals
+const EmptyState = ({ icon = CheckCircle2, title, desc }) => (
+  <div className="flex flex-col items-center justify-center px-4 py-8 text-center">
+    <div className="rounded-full bg-slate-100 p-3 text-slate-400">
+      {React.createElement(icon, { size: 28 })}
+    </div>
+    <p className="mt-3 font-medium text-slate-700">{title}</p>
+    {desc && <p className="mt-1 text-sm text-slate-500">{desc}</p>}
+  </div>
+);
 
 const RejectReasonModal = ({ isOpen, onClose, onConfirm, count = 1 }) => {
-    const [reason, setReason] = useState("");
-    const [submitting, setSubmitting] = useState(false);
+  const [reason, setReason] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-    if (!isOpen) return null;
+  useEffect(() => {
+    if (!isOpen) setReason("");
+  }, [isOpen]);
 
-    const handleConfirm = async () => {
-        setSubmitting(true);
-        await onConfirm(reason);
-        setSubmitting(false);
-        setReason("");
-        onClose();
-    };
+  if (!isOpen) return null;
 
-    return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
-                    <div className="p-2 bg-rose-100 text-rose-600 rounded-full">
-                        <AlertCircle size={20} />
-                    </div>
-                    <div>
-                        <h3 className="font-semibold text-slate-900">ยืนยันการปฏิเสธ</h3>
-                        <p className="text-sm text-slate-500">
-                            {count > 1 ? `กำลังปฏิเสธ ${count} รายการ` : "กำลังปฏิเสธรายการนี้"}
-                        </p>
-                    </div>
-                </div>
+  const handleConfirm = async () => {
+    setSubmitting(true);
+    try {
+      await onConfirm(reason);
+      onClose();
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-                <div className="p-6">
-                    <label className="block text-sm font-medium text-slate-700 mb-2">
-                        เหตุผล (ไม่บังคับ)
-                    </label>
-                    <textarea
-                        value={reason}
-                        onChange={(e) => setReason(e.target.value)}
-                        placeholder="ระบุสาเหตุที่ปฏิเสธ..."
-                        className="w-full px-4 py-3 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500 transition-all resize-none h-32"
-                    />
-                </div>
-
-                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                    <button
-                        onClick={onClose}
-                        disabled={submitting}
-                        className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-lg transition-colors"
-                    >
-                        ยกเลิก
-                    </button>
-                    <button
-                        onClick={handleConfirm}
-                        disabled={submitting}
-                        className="px-4 py-2 text-sm font-medium text-white bg-rose-600 hover:bg-rose-700 rounded-lg shadow-sm shadow-rose-200 transition-all flex items-center gap-2"
-                    >
-                        {submitting ? "กำลังบันทึก..." : "ยืนยันปฏิเสธ"}
-                    </button>
-                </div>
-            </div>
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center gap-3 border-b border-slate-100 bg-slate-50 px-6 py-4">
+          <div className="rounded-full bg-rose-100 p-2 text-rose-600">
+            <AlertCircle size={20} />
+          </div>
+          <div>
+            <h3 className="font-semibold text-slate-900">Confirm Rejection</h3>
+            <p className="text-sm text-slate-500">{count > 1 ? `Rejecting ${count} items` : "Rejecting this item"}</p>
+          </div>
         </div>
-    );
+        <div className="p-6">
+          <label className="mb-2 block text-sm font-medium text-slate-700">Reason (Optional)</label>
+          <textarea
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="ระบุเหตุผล..."
+            className="h-32 w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-sm outline-none transition-all focus:border-rose-500 focus:ring-2 focus:ring-rose-100"
+          />
+        </div>
+        <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+          <button onClick={onClose} disabled={submitting} className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-60">
+            Cancel
+          </button>
+          <button onClick={handleConfirm} disabled={submitting} className="inline-flex items-center gap-2 rounded-lg bg-rose-600 px-4 py-2 text-sm font-medium text-white hover:bg-rose-700 disabled:opacity-60">
+            {submitting ? "Confirming..." : "Reject"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const EditPositionModal = ({ isOpen, onClose, item, onSave }) => {
-    const [formData, setFormData] = useState({
-        toShelf: "", toRow: "", toIndex: "",
-        fromShelf: "", fromRow: "", fromIndex: "",
-    });
-    const [saving, setSaving] = useState(false);
+  const [formData, setFormData] = useState({
+    toShelf: "",
+    toRow: "",
+    toIndex: "",
+    fromShelf: "",
+    fromRow: "",
+    fromIndex: "",
+  });
+  const [saving, setSaving] = useState(false);
 
-    useEffect(() => {
-        if (item && isOpen) {
-            setFormData({
-                toShelf: item.toShelf || "",
-                toRow: item.toRow || "",
-                toIndex: item.toIndex || "",
-                fromShelf: item.fromShelf || "",
-                fromRow: item.fromRow || "",
-                fromIndex: item.fromIndex || "",
-            });
-        }
-    }, [item, isOpen]);
+  useEffect(() => {
+    if (item && isOpen) {
+      setFormData({
+        toShelf: item.toShelf || "",
+        toRow: item.toRow || "",
+        toIndex: item.toIndex || "",
+        fromShelf: item.fromShelf || "",
+        fromRow: item.fromRow || "",
+        fromIndex: item.fromIndex || "",
+      });
+    }
+  }, [item, isOpen]);
 
-    const handleChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+  if (!isOpen || !item) return null;
 
-    const handleSave = async () => {
-        setSaving(true);
-        try {
-            await onSave(item.id, formData);
-            onClose();
-        } catch (e) {
-            alert(`Error: ${e.message}`);
-        } finally {
-            setSaving(false);
-        }
-    };
+  const handleChange = (field, value) => setFormData((prev) => ({ ...prev, [field]: value }));
+  const showFrom = ["move", "delete"].includes(item.action);
+  const showTo = ["add", "move"].includes(item.action);
 
-    if (!isOpen || !item) return null;
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      await onSave(item.id, formData);
+      onClose();
+    } catch (e) {
+      alert(`Error: ${e.message}`);
+    } finally {
+      setSaving(false);
+    }
+  };
 
-    const showFrom = ["move", "delete"].includes(item.action);
-    const showTo = ["add", "move"].includes(item.action);
-
-    const PositionFields = ({ title, prefix }) => (
-        <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
-            <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                <MapPin size={16} className="text-slate-400" /> {title}
-            </h4>
-            <div className="grid grid-cols-3 gap-3">
-                <div>
-                    <label className="text-xs text-slate-500 mb-1 block">Shelf</label>
-                    <input
-                        type="text"
-                        value={formData[`${prefix}Shelf`]}
-                        onChange={(e) => handleChange(`${prefix}Shelf`, e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none"
-                        placeholder="A1"
-                    />
-                </div>
-                <div>
-                    <label className="text-xs text-slate-500 mb-1 block">Row</label>
-                    <select
-                        value={formData[`${prefix}Row`]}
-                        onChange={(e) => handleChange(`${prefix}Row`, e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none"
-                    >
-                        <option value="">-</option>
-                        {[...Array(10)].map((_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
-                    </select>
-                </div>
-                <div>
-                    <label className="text-xs text-slate-500 mb-1 block">Index</label>
-                    <select
-                        value={formData[`${prefix}Index`]}
-                        onChange={(e) => handleChange(`${prefix}Index`, e.target.value)}
-                        className="w-full px-3 py-2 border rounded-lg text-sm bg-white focus:ring-2 focus:ring-blue-100 focus:border-blue-400 outline-none"
-                    >
-                        <option value="">-</option>
-                        {[...Array(20)].map((_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
-                    </select>
-                </div>
-            </div>
+  const PositionFields = ({ title, prefix }) => (
+    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+      <h4 className="mb-3 flex items-center gap-2 text-sm font-semibold text-slate-700">
+        <MapPin size={16} className="text-slate-400" />
+        {title}
+      </h4>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">Shelf</label>
+          <input value={formData[`${prefix}Shelf`]} onChange={(e) => handleChange(`${prefix}Shelf`, e.target.value.toUpperCase())} className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" placeholder="A1" />
         </div>
-    );
-
-    return (
-        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-xl max-w-lg w-full overflow-hidden">
-                <div className="px-6 py-4 border-b border-slate-100 bg-white">
-                    <h3 className="font-semibold text-slate-900 flex items-center gap-2">
-                        <Edit2 size={18} className="text-blue-500" />
-                        แก้ไขตำแหน่ง
-                    </h3>
-                </div>
-
-                <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
-                    <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
-                        <div className="flex items-center gap-2 text-sm text-slate-600 mb-1">
-                            <Package size={16} />
-                            <span className="font-medium text-slate-900">{item.item_name || item.barcode}</span>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-slate-500 pl-6">
-                            <span>{item.barcode}</span> •
-                            <span className={`px-1.5 py-0.5 rounded ${ACTION_STYLES[item.action]?.badge || 'bg-slate-200'}`}>
-                                {ACTION_STYLES[item.action]?.label || item.action}
-                            </span>
-                        </div>
-                    </div>
-
-                    {showFrom && <PositionFields title="ตำแหน่งเดิม (From)" prefix="from" />}
-                    {showTo && <PositionFields title="ตำแหน่งใหม่ (To)" prefix="to" />}
-                </div>
-
-                <div className="px-6 py-4 bg-slate-50 border-t border-slate-100 flex justify-end gap-3">
-                    <button onClick={onClose} disabled={saving} className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-200 rounded-lg">
-                        ยกเลิก
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm"
-                    >
-                        {saving ? "บันทึก..." : "บันทึกการเปลี่ยนแปลง"}
-                    </button>
-                </div>
-            </div>
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">Row</label>
+          <select value={formData[`${prefix}Row`]} onChange={(e) => handleChange(`${prefix}Row`, e.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <option value="">-</option>
+            {availableRows.map((row) => <option key={row} value={row}>{row}</option>)}
+          </select>
         </div>
-    );
+        <div>
+          <label className="mb-1 block text-xs text-slate-500">Index</label>
+          <select value={formData[`${prefix}Index`]} onChange={(e) => handleChange(`${prefix}Index`, e.target.value)} className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100">
+            <option value="">-</option>
+            {Array.from({ length: 20 }, (_, idx) => idx + 1).map((index) => <option key={index} value={index}>{index}</option>)}
+          </select>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+      <div className="w-full max-w-xl overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div className="border-b border-slate-100 px-6 py-4">
+          <h3 className="flex items-center gap-2 font-semibold text-slate-900">
+            <Edit2 size={18} className="text-blue-500" />
+              Edit Position
+          </h3>
+        </div>
+        <div className="max-h-[70vh] space-y-4 overflow-y-auto p-6">
+          <div className="rounded-xl border border-slate-200 bg-white p-4">
+            <div className="flex items-start gap-3">
+              <Package size={18} className="mt-0.5 text-slate-400" />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-slate-900">{item.item_name || item.barcode}</p>
+                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-slate-500">
+                  <span className="font-mono">{item.barcode}</span>
+                  <span className={`rounded-full border px-2 py-0.5 font-medium ${ACTION_STYLES[item.action]?.badge || "bg-slate-100 text-slate-700 border-slate-200"}`}>
+                    {ACTION_STYLES[item.action]?.label || item.action}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+          {showFrom && <PositionFields title="Original Position (From)" prefix="from" />}
+          {showTo && <PositionFields title="New Position (To)" prefix="to" />}
+        </div>
+        <div className="flex justify-end gap-3 border-t border-slate-100 bg-slate-50 px-6 py-4">
+          <button onClick={onClose} disabled={saving} className="rounded-lg px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 disabled:opacity-60">Cancel</button>
+          <button onClick={handleSave} disabled={saving} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60">
+            {saving ? "Saving..." : "Save Changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 };
 
-// Main Page
-
 export default function PogRequests() {
-    const [loading, setLoading] = useState(false);
-    const [data, setData] = useState([]);
-    const [filterStatus, setFilterStatus] = useState("pending");
-    const [filterAction, setFilterAction] = useState("");
-    const [filterShelf, setFilterShelf] = useState("");
-    const [filterRow, setFilterRow] = useState("");
-    const [updating, setUpdating] = useState(null);
-    const [stats, setStats] = useState({ pending: 0, rejected: 0, completed: 0 });
-    const [branchStats, setBranchStats] = useState({});
-    const [branches, setBranches] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [data, setData] = useState([]);
+  const [filterStatus, setFilterStatus] = useState("pending");
+  const [filterAction, setFilterAction] = useState("");
+  const [filterShelf, setFilterShelf] = useState("");
+  const [filterRow, setFilterRow] = useState("");
+  const [updating, setUpdating] = useState(null);
+  const [stats, setStats] = useState({ pending: 0, rejected: 0, completed: 0 });
+  const [branchStats, setBranchStats] = useState({});
+  const [branches, setBranches] = useState([]);
+  const [branchSearch, setBranchSearch] = useState("");
+  const [viewMode, setViewMode] = useState("summary");
+  const [selectedBranch, setSelectedBranch] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const [selectedIds, setSelectedIds] = useState(new Set());
+  const [bulkUpdating, setBulkUpdating] = useState(false);
+  const [rejectModal, setRejectModal] = useState({ open: false, ids: [], count: 0 });
+  const [editModal, setEditModal] = useState({ open: false, item: null });
 
-    const [viewMode, setViewMode] = useState('summary');
-    const [selectedBranch, setSelectedBranch] = useState(null);
+  const loadBranches = useCallback(async () => {
+    try {
+      const res = await api.get("/branches");
+      setBranches(res.data || []);
+    } catch (err) {
+      console.error("Load branches error:", err);
+    }
+  }, []);
 
-    const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-    const [totalItems, setTotalItems] = useState(0);
+  const loadSummary = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/pog-requests", { params: { limit: 1, _t: Date.now() } });
+      if (res.meta?.stats) setStats(res.meta.stats);
+      if (res.meta?.branchStats) setBranchStats(res.meta.branchStats);
+    } catch (e) {
+      console.error("Load summary error:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-    const [selectedIds, setSelectedIds] = useState(new Set());
-    const [bulkUpdating, setBulkUpdating] = useState(false);
+  const loadData = useCallback(async () => {
+    if (viewMode === "summary" || !selectedBranch) return;
 
-    // Modals
-    const [rejectModal, setRejectModal] = useState({ open: false, ids: [], count: 0 });
-    const [editModal, setEditModal] = useState({ open: false, item: null });
+    setLoading(true);
+    try {
+      const params = { limit: 50, page, branch_code: selectedBranch, _t: Date.now() };
+      if (filterStatus) params.status = filterStatus;
+      if (filterAction) params.action = filterAction;
+      if (filterShelf) params.shelf = filterShelf;
+      if (filterRow) params.row = filterRow;
 
-    const loadBranches = useCallback(async () => {
-        try {
-            const res = await api.get("/branches");
-            setBranches(res.data || []);
-        } catch (err) {
-            console.error("Load branches error:", err);
-        }
-    }, []);
+      const res = await api.get("/pog-requests", { params });
+      setData(res.data || []);
+      setTotalPages(res.meta?.totalPages || 1);
+      setTotalItems(res.meta?.total || 0);
+      if (res.meta?.stats) setStats(res.meta.stats);
+      if (res.meta?.branchStats) setBranchStats(res.meta.branchStats);
+      setSelectedIds(new Set());
+    } catch (e) {
+      console.error("Load POG requests error:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, [filterAction, filterRow, filterShelf, filterStatus, page, selectedBranch, viewMode]);
 
-    const loadSummary = useCallback(async () => {
-        setLoading(true);
-        try {
-            const res = await api.get("/pog-requests", { params: { limit: 1, _t: Date.now() } });
-            if (res.meta?.stats) setStats(res.meta.stats);
-            if (res.meta?.branchStats) setBranchStats(res.meta.branchStats);
-        } catch (e) {
-            console.error("Load summary error:", e);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
+  useEffect(() => { loadBranches(); }, [loadBranches]);
+  useEffect(() => { viewMode === "summary" ? loadSummary() : loadData(); }, [loadData, loadSummary, viewMode]);
+  useEffect(() => { setPage(1); }, [filterStatus, filterAction, filterShelf, filterRow]);
 
-    const loadData = useCallback(async () => {
-        if (viewMode === 'summary' || !selectedBranch) return;
+  const getBranchName = useCallback((code) => {
+    const branch = branches.find((item) => item.branch_code === code);
+    return branch ? branch.branch_name : code;
+  }, [branches]);
 
-        setLoading(true);
-        try {
-            const params = { limit: 50, page, branch_code: selectedBranch, _t: Date.now() };
-            if (filterStatus) params.status = filterStatus;
-            if (filterAction) params.action = filterAction;
-            if (filterShelf) params.shelf = filterShelf;
-            if (filterRow) params.row = filterRow;
+  const branchCards = useMemo(() => {
+    const keyword = branchSearch.trim().toLowerCase();
+    return Object.entries(branchStats)
+      .map(([branch_code, bStats]) => ({ branch_code, name: getBranchName(branch_code), ...bStats }))
+      .filter((branch) => {
+        if (!keyword) return true;
+        return branch.branch_code.toLowerCase().includes(keyword) || String(branch.name || "").toLowerCase().includes(keyword);
+      })
+      .sort((a, b) => (b.total || 0) - (a.total || 0));
+  }, [branchSearch, branchStats, getBranchName]);
 
-            const res = await api.get("/pog-requests", { params });
-            setData(res.data || []);
-            setTotalPages(res.meta?.totalPages || 1);
-            setTotalItems(res.meta?.total || 0);
-            if (res.meta?.stats) setStats(res.meta.stats);
-            if (res.meta?.branchStats) setBranchStats(res.meta.branchStats);
+  const visibleData = data;
+  const pendingVisibleData = visibleData.filter((item) => item.status === "pending");
+  const allPendingSelected = pendingVisibleData.length > 0 && pendingVisibleData.every((item) => selectedIds.has(item.id));
 
-            setSelectedIds(new Set());
-        } catch (e) {
-            console.error("Load POG requests error:", e);
-        } finally {
-            setLoading(false);
-        }
-    }, [viewMode, selectedBranch, filterStatus, filterAction, filterShelf, filterRow, page]);
+  const enterBranchDetail = (branch_code) => {
+    setSelectedBranch(branch_code);
+    setViewMode("detail");
+    setPage(1);
+    setSelectedIds(new Set());
+  };
 
-    useEffect(() => { loadBranches(); }, [loadBranches]);
+  const backToSummary = () => {
+    setViewMode("summary");
+    setSelectedBranch(null);
+    setData([]);
+    setSelectedIds(new Set());
+  };
 
-    useEffect(() => {
-        if (viewMode === 'summary') {
-            loadSummary();
-        } else {
-            loadData();
-        }
-    }, [viewMode, loadSummary, loadData]);
+  const toggleSelectAllVisible = () => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (allPendingSelected) pendingVisibleData.forEach((item) => next.delete(item.id));
+      else pendingVisibleData.forEach((item) => next.add(item.id));
+      return next;
+    });
+  };
 
-    useEffect(() => {
-        setPage(1);
-    }, [filterStatus, filterAction, filterShelf, filterRow]);
+  const updateStatus = async (id, newStatus, reason = null) => {
+    setUpdating(id);
+    try {
+      const payload = { status: newStatus, ...(reason && { rejectReason: reason }) };
+      const res = await api.patch(`/pog-requests/${id}`, payload);
 
-    const enterBranchDetail = (branch_code) => {
-        setSelectedBranch(branch_code);
-        setViewMode('detail');
-        setPage(1);
+      if (res.ok) {
+        setData((prev) => prev.map((item) => item.id === id ? { ...item, status: newStatus, note: reason || item.note } : item));
+        setSelectedIds((prev) => {
+          const next = new Set(prev);
+          next.delete(id);
+          return next;
+        });
+        setStats((prev) => {
+          const next = { ...prev };
+          const item = data.find((d) => d.id === id);
+          if (item && item.status !== newStatus) {
+            if (next[item.status] > 0) next[item.status] -= 1;
+            next[newStatus] = (next[newStatus] || 0) + 1;
+          }
+          return next;
+        });
+      }
+      return { success: true };
+    } catch (e) {
+      return { success: false, message: e.message || "Failed" };
+    } finally {
+      setUpdating(null);
+    }
+  };
+
+  const handleBulkApprove = async () => {
+    const ids = [...selectedIds];
+    if (ids.length === 0) return;
+    if (!confirm(`Approve ${ids.length} items?`)) return;
+
+    setBulkUpdating(true);
+    try {
+      const res = await api.post("/pog-requests/bulk-approve", { ids });
+      if (res.ok) {
+        const successCount = res.data.successCount || ids.length;
+        setData((prev) => prev.map((item) => ids.includes(item.id) ? { ...item, status: "completed" } : item));
+        setStats((prev) => ({ ...prev, pending: Math.max(0, prev.pending - successCount), completed: prev.completed + successCount }));
         setSelectedIds(new Set());
-    };
+        alert(`Successfully approved ${successCount} items`);
+      }
+    } catch (e) {
+      alert(`Error: ${e.message}`);
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
 
-    const backToSummary = () => {
-        setViewMode('summary');
-        setSelectedBranch(null);
-        setData([]);
-        setSelectedIds(new Set());
-    };
+  const handleApproveAllPending = async () => {
+    const pending = visibleData.filter((item) => item.status === "pending");
+    if (pending.length === 0) return alert("No pending items on this page");
+    if (!confirm(`Approve all ${pending.length} items on this page?`)) return;
 
-    const availableRows = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    setBulkUpdating(true);
+    try {
+      const res = await api.post("/pog-requests/bulk-approve", { ids: pending.map((item) => item.id) });
+      if (res.ok) {
+        const successCount = res.data.successCount || pending.length;
+        setData((prev) => prev.map((item) => item.status === "pending" ? { ...item, status: "completed" } : item));
+        setStats((prev) => ({ ...prev, pending: Math.max(0, prev.pending - successCount), completed: prev.completed + successCount }));
+        alert(`Successfully approved ${successCount} items`);
+      }
+    } catch (e) {
+      const msg = e.response?.data?.message || e.message;
+      alert(`Error: ${msg}`);
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
 
-    const getBranchName = (code) => {
-        const b = branches.find(b => b.branch_code === code);
-        return b ? b.branch_name : code;
-    };
+  const handleBulkReject = () => {
+    const ids = [...selectedIds];
+    if (ids.length > 0) setRejectModal({ open: true, ids, count: ids.length });
+  };
 
-    const visibleData = data;
+  const confirmBulkReject = async (reason) => {
+    setBulkUpdating(true);
+    for (const id of rejectModal.ids) await updateStatus(id, "rejected", reason);
+    setBulkUpdating(false);
+    setSelectedIds(new Set());
+  };
 
-    const updateStatus = async (id, newStatus, reason = null) => {
-        setUpdating(id);
-        try {
-            const payload = { status: newStatus, ...(reason && { rejectReason: reason }) };
-            const res = await api.patch(`/pog-requests/${id}`, payload);
+  const deleteRequest = async (id) => {
+    if (!confirm("Delete ?")) return;
+    try {
+      await api.delete(`/pog-requests/${id}`);
+      setData((prev) => prev.filter((item) => item.id !== id));
+      loadData();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to delete");
+    }
+  };
 
-            if (res.ok) {
-                setData(prev => prev.map(item => item.id === id ? { ...item, status: newStatus, note: reason || item.note } : item));
-                setStats(prev => {
-                    const next = { ...prev };
-                    const item = data.find(d => d.id === id);
-                    if (item && item.status !== newStatus) {
-                        if (next[item.status] > 0) next[item.status]--;
-                        next[newStatus] = (next[newStatus] || 0) + 1;
-                    }
-                    return next;
-                });
-            }
-            return { success: true };
-        } catch (e) {
-            return { success: false, message: e.message || "Failed" };
-        } finally {
-            setUpdating(null);
-        }
-    };
-
-    // Bulk Actions
-    const handleBulkApprove = async () => {
-        const ids = [...selectedIds];
-        if (ids.length === 0) return;
-        if (!confirm(`ยืนยันอนุมัติ ${ids.length} รายการ?`)) return;
-
-        setBulkUpdating(true);
-        try {
-            const res = await api.post("/pog-requests/bulk-approve", { ids });
-            if (res.ok) {
-                setData(prev => prev.map(d => ids.includes(d.id) ? { ...d, status: "completed" } : d));
-                const successCount = res.data.successCount || ids.length;
-                setStats(prev => ({
-                    ...prev,
-                    pending: Math.max(0, prev.pending - successCount),
-                    completed: prev.completed + successCount
-                }));
-                setSelectedIds(new Set());
-                alert(`สำเร็จ ${successCount} รายการ`);
-            }
-        } catch (e) {
-            const msg = e.message;
-            alert(`Error: ${msg}`);
-        } finally {
-            setBulkUpdating(false);
-        }
-    };
-
-    const handleApproveAllPending = async () => {
-        const pending = visibleData.filter(d => d.status === 'pending');
-        if (pending.length === 0) return alert("ไม่มีรายการรอดำเนินการบนหน้านี้");
-        if (!confirm(`อนุมัติทั้งหมด ${pending.length} รายการในหน้านี้?`)) return;
-
-        setBulkUpdating(true);
-        try {
-            const res = await api.post("/pog-requests/bulk-approve", { ids: pending.map(p => p.id) });
-            if (res.ok) {
-                setData(prev => prev.map(d => d.status === 'pending' ? { ...d, status: "completed" } : d));
-                const successCount = res.data.successCount || pending.length;
-                setStats(prev => ({
-                    ...prev,
-                    pending: Math.max(0, prev.pending - successCount),
-                    completed: prev.completed + successCount
-                }));
-                alert(`อนุมัติ ${successCount} รายการเรียบร้อย`);
-            }
-        } catch (e) {
-            const msg = e.response?.data?.message || e.message;
-            alert(`Error: ${msg}`);
-        } finally {
-            setBulkUpdating(false);
-        }
-    };
-
-    const handleBulkReject = () => {
-        const ids = [...selectedIds];
-        if (ids.length === 0) return;
-        setRejectModal({ open: true, ids, count: ids.length });
-    };
-
-    const confirmBulkReject = async (reason) => {
-        setBulkUpdating(true);
-        for (const id of rejectModal.ids) {
-            await updateStatus(id, "rejected", reason);
-        }
-        setBulkUpdating(false);
-        setSelectedIds(new Set());
-    };
-
-    const deleteRequest = async (id) => {
-        if (!confirm("ต้องการลบรายการนี้?")) return;
-        try {
-            await api.delete(`/pog-requests/${id}`);
-            setData(prev => prev.filter(d => d.id !== id));
-            loadData();
-        } catch (e) {
-            console.error(e);
-            alert("ลบไม่สำเร็จ");
-        }
-    };
-
-    // Helper to render Position
-    const PositionCell = ({ item }) => {
-        const renderPos = (s, r, i) => s ? `${s}-${r}-${i}` : '-';
-        return (
-            <div className="flex flex-col gap-1 text-xs">
-                {item.fromShelf && (
-                    <div className="flex items-center gap-1 text-slate-500">
-                        <span className="w-8">จาก:</span>
-                        <span className="font-mono bg-slate-100 px-1.5 py-0.5 rounded">{renderPos(item.fromShelf, item.fromRow, item.fromIndex)}</span>
-                    </div>
-                )}
-                {item.toShelf && (
-                    <div className="flex items-center gap-1 text-slate-700 font-medium">
-                        <span className="w-8">ไป:</span>
-                        <span className="font-mono bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">{renderPos(item.toShelf, item.toRow, item.toIndex)}</span>
-                    </div>
-                )}
-            </div>
-        );
-    };
+  const PositionCell = ({ item }) => {
+    const renderPos = (s, r, i) => s ? `${s}-${r || "-"}-${i || "-"}` : "-";
 
     return (
-        <div className="min-h-screen bg-slate-50/50 p-6 md:p-8">
-            <div className="max-w-7xl mx-auto space-y-6">
+      <div className="flex flex-col gap-0.5 text-[11px]">
+        {item.fromShelf && (
+          <div className="flex items-center gap-2 text-slate-500">
+            <span className="w-8 shrink-0">From</span>
+            <span className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-slate-700">{renderPos(item.fromShelf, item.fromRow, item.fromIndex)}</span>
+          </div>
+        )}
+        {item.toShelf && (
+          <div className="flex items-center gap-2 text-slate-700">
+            <span className="w-8 shrink-0">To</span>
+            <span className="rounded bg-blue-50 px-1.5 py-0.5 font-mono font-medium text-blue-700">{renderPos(item.toShelf, item.toRow, item.toIndex)}</span>
+          </div>
+        )}
+        {!item.fromShelf && !item.toShelf && <span className="text-slate-400">-</span>}
+      </div>
+    );
+  };
 
-                {/*  SUMMARY VIEW  */}
-                {viewMode === 'summary' && (
-                    <>
-                        {/* Header */}
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div>
-                                <h1 className="text-2xl font-bold text-slate-800 tracking-tight">คำขอเปลี่ยนแปลงจากหน้าสาขา</h1>
-                            </div>
-                            <button
-                                onClick={loadSummary}
-                                className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                title="รีเฟรชข้อมูล"
-                            >
-                                <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
-                            </button>
-                        </div>
-
-                        {/* Overall Stats */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            {["pending", "rejected", "completed"].map(type => (
-                                <StatCard
-                                    key={type}
-                                    type={type}
-                                    count={stats[type] || 0}
-                                    active={false}
-                                    onClick={null}
-                                />
-                            ))}
-                        </div>
-
-                        {/* BranchMain Cards - Click to Enter */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-2">
-                                    <Store className="w-5 h-5 text-blue-600" />
-                                </div>
-                                <span className="text-xs text-slate-500">คลิกเพื่อเข้าดูรายละเอียดและอนุมัติ</span>
-                            </div>
-
-                            {Object.keys(branchStats).length === 0 ? (
-                                <div className="text-center py-12 text-slate-400">
-                                    <CheckCircle2 size={48} className="mx-auto mb-3 text-emerald-300" />
-                                    <p className="font-medium">ไม่มีคำขอรอดำเนินการ</p>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                                    {Object.entries(branchStats)
-                                        .sort(([, a], [, b]) => b.total - a.total)
-                                        .map(([branch_code, bStats]) => (
-                                            <button
-                                                key={branch_code}
-                                                onClick={() => enterBranchDetail(branch_code)}
-                                                className="bg-gradient-to-br from-slate-50 to-white border border-slate-200 rounded-xl p-4 text-left hover:shadow-md hover:border-blue-300 hover:from-blue-50 hover:to-white transition-all group"
-                                            >
-                                                <div className="flex items-start justify-between">
-                                                    <div>
-                                                        {/* <h4 className="font-semibold text-slate-800 group-hover:text-blue-700">
-                                                        {branch_code} - {getBranchName(branch_code)}
-                                                    </h4> */}
-                                                        <span className="text-sm text-slate-800">{branch_code} - {getBranchName(branch_code)}</span>
-                                                    </div>
-                                                    <div className="flex items-center gap-1">
-                                                        <span className="text-2xl font-bold text-amber-600">{bStats.total}</span>
-                                                        <ChevronRight size={20} className="text-slate-400 group-hover:text-blue-500 transition-colors" />
-                                                    </div>
-                                                </div>
-                                                <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-100">
-                                                    {bStats.add > 0 && (
-                                                        <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full font-medium">
-                                                            +{bStats.add} เพิ่ม
-                                                        </span>
-                                                    )}
-                                                    {bStats.move > 0 && (
-                                                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">
-                                                            ⇄{bStats.move} ย้าย
-                                                        </span>
-                                                    )}
-                                                    {bStats.delete > 0 && (
-                                                        <span className="text-xs bg-rose-100 text-rose-700 px-2 py-1 rounded-full font-medium">
-                                                            -{bStats.delete} ลบ
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </button>
-                                        ))}
-                                </div>
-                            )}
-                        </div>
-                    </>
-                )}
-
-                {/*  DETAIL VIEW  */}
-                {viewMode === 'detail' && selectedBranch && (
-                    <>
-                        {/* Header with Back Button */}
-                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                            <div className="flex items-center gap-4">
-                                <button
-                                    onClick={backToSummary}
-                                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                    title="กลับไปหน้าสรุป"
-                                >
-                                    <ArrowLeft size={24} />
-                                </button>
-                                <div>
-                                    <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
-                                        {getBranchName(selectedBranch)}
-                                    </h1>
-                                    <p className="text-slate-500 text-sm mt-1">
-                                        รหัสสาขา: {selectedBranch} • คำขอรอดำเนินการ: {branchStats[selectedBranch]?.total || 0} รายการ
-                                    </p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                {/* Status Filter Tabs */}
-                                <div className="flex items-center gap-1 bg-white p-1.5 rounded-xl shadow-sm border border-slate-200">
-                                    {["pending", "rejected", "completed"].map(type => {
-                                        const style = STATUS_STYLES[type];
-                                        return (
-                                            <button
-                                                key={type}
-                                                onClick={() => setFilterStatus(type)}
-                                                className={`px-3 py-1.5 rounded-lg text-sm font-medium flex items-center gap-1.5 transition-all ${filterStatus === type
-                                                    ? `${style.bg} ${style.text} shadow-sm`
-                                                    : 'text-slate-500 hover:bg-slate-50'
-                                                    }`}
-                                            >
-                                                {style.icon}
-                                                {style.label}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                                <button
-                                    onClick={loadData}
-                                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                    title="รีเฟรชข้อมูล"
-                                >
-                                    <RefreshCw size={20} className={loading ? "animate-spin" : ""} />
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Toolbar */}
-                        <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 space-y-4">
-                            <div className="flex flex-wrap items-center justify-between gap-3">
-                                <div className="flex flex-wrap items-center gap-3">
-                                    <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[140px]">
-                                        <Filter size={16} className="text-slate-400" />
-                                        <select
-                                            value={filterAction}
-                                            onChange={e => setFilterAction(e.target.value)}
-                                            className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
-                                        >
-                                            <option value="">Action ทั้งหมด</option>
-                                            <option value="add">เพิ่มสินค้า</option>
-                                            <option value="move">ย้ายสินค้า</option>
-                                            <option value="delete">ลบสินค้า</option>
-                                        </select>
-                                    </div>
-
-                                    <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg w-full max-w-[150px]">
-                                        <Layers size={16} className="text-slate-400" />
-                                        <input
-                                            type="text"
-                                            placeholder="ค้นหา Shelf"
-                                            defaultValue={filterShelf}
-                                            onBlur={e => setFilterShelf(e.target.value.trim().toUpperCase())}
-                                            onKeyDown={e => {
-                                                if (e.key === 'Enter') setFilterShelf(e.currentTarget.value.trim().toUpperCase());
-                                            }}
-                                            className="bg-transparent text-sm w-full outline-none text-slate-700 placeholder:text-slate-400"
-                                        />
-                                    </div>
-
-                                    <div className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg min-w-[100px]">
-                                        <LayoutGrid size={16} className="text-slate-400" />
-                                        <select
-                                            value={filterRow}
-                                            onChange={e => setFilterRow(e.target.value)}
-                                            className="bg-transparent text-sm w-full outline-none text-slate-700 cursor-pointer"
-                                        >
-                                            <option value="">Row</option>
-                                            {availableRows.map(r => <option key={r} value={r}>Row {r}</option>)}
-                                        </select>
-                                    </div>
-                                </div>
-                                
-                                {/* ย้ายปุ่มอนุมัติทั้งหมด (สาขานี้) มาอยู่ด้านขวา */}
-                                {filterStatus === 'pending' && visibleData.length > 0 && selectedIds.size === 0 && (
-                                    <button
-                                        onClick={handleApproveAllPending}
-                                        disabled={bulkUpdating}
-                                        className="px-4 py-2 text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
-                                    >
-                                        <CheckCircle2 size={16} /> อนุมัติทั้งหมด (สาขานี้)
-                                    </button>
-                                )}
-                            </div>
-
-                            {/* Bulk Actions Bar */}
-                            {filterStatus === 'pending' && visibleData.length > 0 && selectedIds.size > 0 && (
-                                <div className="flex items-center justify-between pt-3 border-t border-slate-100 animate-in slide-in-from-top-2">
-                                    <div className="flex items-center gap-2">
-                                        <button
-                                            onClick={handleBulkReject}
-                                            disabled={bulkUpdating}
-                                            className="px-4 py-2 text-sm font-medium text-rose-600 bg-rose-50 hover:bg-rose-100 rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
-                                        >
-                                            <X size={16} /> ปฏิเสธที่เลือก
-                                        </button>
-                                        <button
-                                            onClick={handleBulkApprove}
-                                            disabled={bulkUpdating}
-                                            className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-700 shadow-sm hover:shadow rounded-lg flex items-center gap-2 transition-all disabled:opacity-50"
-                                        >
-                                            <Check size={16} /> อนุมัติที่เลือก
-                                        </button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Table */}
-                        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse">
-                                    <thead>
-                                        <tr className="bg-slate-50 border-b border-slate-200 text-slate-600 text-xs uppercase tracking-wider font-semibold">
-                                            <th className="px-6 py-4 w-12 text-center">#</th>
-                                            <th className="px-6 py-4">Action</th>
-                                            <th className="px-6 py-4">สินค้า</th>
-                                            <th className="px-6 py-4">ตำแหน่ง</th>
-                                            <th className="px-6 py-4">สถานะ</th>
-                                            <th className="px-6 py-4 w-20 text-center">จัดการ</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100">
-                                        {loading ? (
-                                            <tr><td colSpan="6" className="p-8 text-center text-slate-500">Loading...</td></tr>
-                                        ) : visibleData.length === 0 ? (
-                                            <tr><td colSpan="6" className="p-12 text-center text-slate-400">ไม่พบข้อมูล</td></tr>
-                                        ) : (
-                                            visibleData.map((item, idx) => {
-                                                const isSelected = selectedIds.has(item.id);
-                                                return (
-                                                    <tr key={item.id} className={`group transition-colors hover:bg-slate-50/80 ${isSelected ? 'bg-blue-50/50' : ''}`}>
-                                                        <td className="px-6 py-4 text-center">
-                                                            {item.status === 'pending' ? (
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={isSelected}
-                                                                    onChange={() => {
-                                                                        const newSet = new Set(selectedIds);
-                                                                        if (newSet.has(item.id)) newSet.delete(item.id);
-                                                                        else newSet.add(item.id);
-                                                                        setSelectedIds(newSet);
-                                                                    }}
-                                                                    className="w-5 h-5 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                                                                />
-                                                            ) : (
-                                                                <span className="text-slate-400 text-xs">{idx + 1}</span>
-                                                            )}
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <span className={`inline-flex items-center px-2 py-1 rounded text-xs font-medium ${ACTION_STYLES[item.action]?.badge || 'bg-gray-100 text-gray-800'}`}>
-                                                                {ACTION_STYLES[item.action]?.label || item.action}
-                                                            </span>
-                                                            <div className="text-xs text-slate-400 mt-1">{formatDate(item.createdAt)}</div>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex flex-col">
-                                                                <span className="text-sm font-medium text-slate-900 line-clamp-1" title={item.item_name}>
-                                                                    {item.item_name || item.barcode}
-                                                                </span>
-                                                                <span className="text-xs text-slate-500 flex items-center gap-1">
-                                                                    <Package size={12} /> {item.barcode}
-                                                                </span>
-                                                            </div>
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <PositionCell item={item} />
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${STATUS_STYLES[item.status]?.bg} ${STATUS_STYLES[item.status]?.text}`}>
-                                                                {STATUS_STYLES[item.status]?.icon}
-                                                                {STATUS_STYLES[item.status]?.label}
-                                                            </span>
-                                                            {item.status === 'rejected' && item.note && (
-                                                                <div className="text-xs text-rose-500 mt-1 truncate max-w-[120px]" title={item.note}>{item.note}</div>
-                                                            )}
-                                                        </td>
-                                                        <td className="px-6 py-4">
-                                                            <div className="flex items-center justify-end gap-1">
-                                                                {item.status === 'pending' ? (
-                                                                    <>
-                                                                        <button onClick={() => updateStatus(item.id, "completed")} disabled={updating === item.id} className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-lg" title="อนุมัติ"><Check size={18} /></button>
-                                                                        <button onClick={() => setEditModal({ open: true, item })} className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" title="แก้ไข"><Edit2 size={18} /></button>
-                                                                        <button onClick={() => setRejectModal({ open: true, ids: [item.id], count: 1 })} className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg" title="ปฏิเสธ"><X size={18} /></button>
-                                                                    </>
-                                                                ) : (
-                                                                    <button onClick={() => deleteRequest(item.id)} className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg" title="ลบ"><Trash2 size={18} /></button>
-                                                                )}
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                );
-                                            })
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-                            {/* Pagination */}
-                            {totalPages > 0 && (
-                                <div className="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between text-sm text-slate-600">
-                                    <div>แสดง {visibleData.length} รายการ (จากทั้งหมด {totalItems})</div>
-                                    <div className="flex items-center gap-2">
-                                        <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50">ก่อนหน้า</button>
-                                        <span className="font-medium px-2">หน้า {page} / {totalPages}</span>
-                                        <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white hover:bg-slate-50 disabled:opacity-50">ถัดไป</button>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </>
-                )}
-
+  return (
+    <div className="min-h-screen bg-slate-50/70 p-4 md:p-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        {viewMode === "summary" && (
+          <>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+                <div>
+                  <div className="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
+                    <Store size={26} />
+                    POG Requests
+                  </div>
+                </div>
+                <button onClick={loadSummary} disabled={loading} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-60">
+                  <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                  Refresh
+                </button>
+              </div>
             </div>
 
-            <RejectReasonModal
-                isOpen={rejectModal.open}
-                onClose={() => setRejectModal({ open: false, ids: [], count: 0 })}
-                onConfirm={rejectModal.count > 1 ? confirmBulkReject : (reason) => updateStatus(rejectModal.ids[0], "rejected", reason)}
-                count={rejectModal.count}
-            />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+              {["pending", "rejected", "completed"].map((type) => (
+                <StatCard key={type} type={type} count={stats[type] || 0} />
+              ))}
+            </div>
 
-            <EditPositionModal
-                isOpen={editModal.open}
-                onClose={() => setEditModal({ open: false, item: null })}
-                item={editModal.item}
-                onSave={async (id, data) => {
-                    const res = await api.put(`/pog-requests/${id}/position`, data);
-                    if (res.ok) {
-                        setData(prev => prev.map(d => d.id === id ? { ...d, ...data } : d));
-                        alert("แก้ไขสำเร็จ");
-                    }
-                }}
-            />
-        </div>
-    );
+            <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="flex flex-col gap-3 border-b border-slate-100 p-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <h2 className="flex items-center gap-2 font-semibold text-slate-900">
+                    <Store size={18} className="text-blue-600" />
+                    Requests by Branch
+                  </h2> 
+                  <p className="mt-1 text-sm text-slate-500">คลิกการ์ดสาขาเพื่อดูรายการและดำเนินการ</p>
+                </div>
+                <div className="relative w-full md:w-80">
+                  <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input value={branchSearch} onChange={(e) => setBranchSearch(e.target.value)} placeholder="Search branches..." className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100" />
+                </div>
+              </div>
+
+              {loading ? (
+                <EmptyState icon={RefreshCw} title="Loading..." />
+              ) : branchCards.length === 0 ? (
+                <EmptyState title="No pending requests" desc={branchSearch ? "Try changing the search query" : "There are no requests from branches at the moment"} />
+              ) : (
+                <div className="grid grid-cols-1 gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {branchCards.map((branch) => (
+                    <button key={branch.branch_code} onClick={() => enterBranchDetail(branch.branch_code)} className="group rounded-xl border border-slate-200 bg-white p-4 text-left transition-all hover:border-blue-300 hover:bg-blue-50/40 hover:shadow-md">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-slate-900 group-hover:text-blue-700">{branch.name}</p>
+                          <p className="mt-1 font-mono text-xs text-slate-500">{branch.branch_code}</p>
+                        </div>
+                        <div className="flex shrink-0 items-center gap-1">
+                          <span className="text-3xl font-bold tabular-nums text-amber-600">{branch.total || 0}</span>
+                          <ChevronRight size={20} className="text-slate-400 transition-colors group-hover:text-blue-500" />
+                        </div>
+                      </div>
+                      <div className="mt-4 grid grid-cols-3 gap-2 border-t border-slate-100 pt-3">
+                        <div className="rounded-lg bg-emerald-50 px-2 py-2 text-center">
+                          <div className="text-sm font-bold tabular-nums text-emerald-700">{branch.add || 0}</div>
+                          <div className="text-[11px] text-emerald-700">Add</div>
+                        </div>
+                        <div className="rounded-lg bg-blue-50 px-2 py-2 text-center">
+                          <div className="text-sm font-bold tabular-nums text-blue-700">{branch.move || 0}</div>
+                          <div className="text-[11px] text-blue-700">Move</div>
+                        </div>
+                        <div className="rounded-lg bg-rose-50 px-2 py-2 text-center">
+                          <div className="text-sm font-bold tabular-nums text-rose-700">{branch.delete || 0}</div>
+                          <div className="text-[11px] text-rose-700">Delete</div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {viewMode === "detail" && selectedBranch && (
+          <>
+            <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+              <div className="flex flex-col justify-between gap-4 lg:flex-row lg:items-start">
+                <div className="flex items-start gap-3">
+                  <button onClick={backToSummary} className="rounded-lg border border-slate-200 p-2 text-slate-500 hover:bg-blue-50 hover:text-blue-700" title="กลับหน้าสรุป">
+                    <ArrowLeft size={20} />
+                  </button>
+                  <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-slate-900">{getBranchName(selectedBranch)}</h1>
+                    <p className="mt-1 text-sm text-slate-500">Branch: {selectedBranch} · Total Requests: {branchStats[selectedBranch]?.total || totalItems || 0} items</p>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 p-1">
+                    {["pending", "rejected", "completed"].map((type) => {
+                      const style = STATUS_STYLES[type];
+                      const Icon = style.icon;
+                      return (
+                        <button key={type} onClick={() => setFilterStatus(type)} className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all ${filterStatus === type ? `bg-white shadow-sm ${style.text}` : "text-slate-500 hover:bg-white hover:text-slate-700"}`}>
+                          <Icon size={15} />
+                          {style.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <button onClick={loadData} disabled={loading} className="inline-flex items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-600 hover:bg-blue-50 hover:text-blue-700 disabled:opacity-60">
+                    <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                    Refresh
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-col justify-between gap-3 lg:flex-row lg:items-center">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                  <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <Filter size={16} className="text-slate-400" />
+                    <select value={filterAction} onChange={(e) => setFilterAction(e.target.value)} className="w-full bg-transparent text-sm text-slate-700 outline-none">
+                      <option value="">All Actions</option>
+                      <option value="add">Add</option>
+                      <option value="move">Move</option>
+                      <option value="delete">Delete</option>
+                    </select>
+                  </label>
+                  <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <Layers size={16} className="text-slate-400" />
+                    <input value={filterShelf} onChange={(e) => setFilterShelf(e.target.value.trim().toUpperCase())} placeholder="Shelf" className="w-full bg-transparent text-sm text-slate-700 outline-none placeholder:text-slate-400" />
+                  </label>
+                  <label className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                    <LayoutGrid size={16} className="text-slate-400" />
+                    <select value={filterRow} onChange={(e) => setFilterRow(e.target.value)} className="w-full bg-transparent text-sm text-slate-700 outline-none">
+                      <option value="">All Rows</option>
+                      {availableRows.map((row) => <option key={row} value={row}>Row {row}</option>)}
+                    </select>
+                  </label>
+                </div>
+
+                {filterStatus === "pending" && visibleData.length > 0 && selectedIds.size === 0 && (
+                  <button onClick={handleApproveAllPending} disabled={bulkUpdating} className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-60">
+                    <CheckCircle2 size={16} />
+                    Approve All on This Page
+                  </button>
+                )}
+              </div>
+
+              {filterStatus === "pending" && selectedIds.size > 0 && (
+                <div className="mt-4 flex flex-col justify-between gap-3 rounded-xl border border-blue-100 bg-blue-50 p-3 sm:flex-row sm:items-center">
+                  <span className="text-sm font-medium text-blue-800">Selected {selectedIds.size} items</span>
+                  <div className="flex flex-wrap gap-2">
+                    <button onClick={handleBulkReject} disabled={bulkUpdating} className="inline-flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 disabled:opacity-60">
+                      <X size={16} />
+                      Reject Selected
+                    </button>
+                    <button onClick={handleBulkApprove} disabled={bulkUpdating} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60">
+                      <Check size={16} />
+                      Approve Selected
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[840px] border-collapse text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-200 bg-slate-50 text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                      <th className="w-12 px-4 py-2.5 text-center">
+                        {filterStatus === "pending" && pendingVisibleData.length > 0 ? (
+                          <input type="checkbox" checked={allPendingSelected} onChange={toggleSelectAllVisible} className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                        ) : "#"}
+                      </th>
+                      <th className="px-4 py-2.5">Action</th>
+                      <th className="px-4 py-2.5">Product</th>
+                      <th className="px-4 py-2.5">Position</th>
+                      <th className="px-4 py-2.5">Status</th>
+                      <th className="w-24 px-4 py-2.5 text-right">Manage</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {loading ? (
+                      <tr><td colSpan="6"><EmptyState icon={RefreshCw} title="Loading data..." /></td></tr>
+                    ) : visibleData.length === 0 ? (
+                      <tr><td colSpan="6"><EmptyState icon={Package} title="No data found" desc="Try changing the filter or refresh the data" /></td></tr>
+                    ) : visibleData.map((item, idx) => {
+                      const isSelected = selectedIds.has(item.id);
+                      return (
+                        <tr key={item.id} className={`transition-colors hover:bg-slate-50 ${isSelected ? "bg-blue-50/60" : ""}`}>
+                          <td className="px-4 py-2 text-center">
+                            {item.status === "pending" ? (
+                              <input
+                                type="checkbox"
+                                checked={isSelected}
+                                onChange={() => {
+                                  const next = new Set(selectedIds);
+                                  next.has(item.id) ? next.delete(item.id) : next.add(item.id);
+                                  setSelectedIds(next);
+                                }}
+                                className="h-4 w-4 cursor-pointer rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                              />
+                            ) : (
+                              <span className="text-[11px] text-slate-400">{idx + 1}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-2">
+                            <span className={`inline-flex rounded-full border px-2 py-0.5 text-[11px] font-semibold ${ACTION_STYLES[item.action]?.badge || "bg-slate-100 text-slate-700 border-slate-200"}`}>
+                              {ACTION_STYLES[item.action]?.label || item.action}
+                            </span>
+                            <div className="mt-0.5 text-[11px] text-slate-400">{formatDate(item.createdAt)}</div>
+                          </td>
+                          <td className="px-4 py-2">
+                            <div className="max-w-[260px]">
+                              <p className="truncate text-xs font-semibold text-slate-900" title={item.item_name}>{item.item_name || item.barcode}</p>
+                              <p className="mt-0.5 flex items-center gap-1 text-[11px] text-slate-500">
+                                <Package size={11} />
+                                <span className="font-mono">{item.barcode}</span>
+                              </p>
+                            </div>
+                          </td>
+                          <td className="px-4 py-2"><PositionCell item={item} /></td>
+                          <td className="px-4 py-2">
+                            <StatusPill status={item.status} />
+                            {item.status === "rejected" && item.note && <div className="mt-0.5 max-w-[160px] truncate text-[11px] text-rose-500" title={item.note}>{item.note}</div>}
+                          </td>
+                          <td className="px-4 py-2">
+                            <div className="flex items-center justify-end gap-1">
+                              {item.status === "pending" ? (
+                                <>
+                                  <button onClick={() => updateStatus(item.id, "completed")} disabled={updating === item.id} className="rounded-md p-1.5 text-emerald-600 hover:bg-emerald-50 disabled:opacity-50" title="Approve"><Check size={16} /></button>
+                                  <button onClick={() => setEditModal({ open: true, item })} className="rounded-md p-1.5 text-blue-600 hover:bg-blue-50" title="Edit"><Edit2 size={16} /></button>
+                                  <button onClick={() => setRejectModal({ open: true, ids: [item.id], count: 1 })} className="rounded-md p-1.5 text-rose-600 hover:bg-rose-50" title="Reject"><X size={16} /></button>
+                                </>
+                              ) : (
+                                <button onClick={() => deleteRequest(item.id)} className="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600" title="Delete"><Trash2 size={16} /></button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex flex-col gap-2 border-t border-slate-200 bg-slate-50 p-3 text-xs text-slate-600 sm:flex-row sm:items-center sm:justify-between">
+                <div></div>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => setPage((value) => Math.max(1, value - 1))} disabled={page === 1} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 hover:bg-slate-50 disabled:opacity-50">Previous</button>
+                  <span className="px-2 font-medium">Page {page} of {totalPages}</span>
+                  <button onClick={() => setPage((value) => Math.min(totalPages, value + 1))} disabled={page === totalPages} className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 hover:bg-slate-50 disabled:opacity-50">Next</button>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+
+      <RejectReasonModal
+        isOpen={rejectModal.open}
+        onClose={() => setRejectModal({ open: false, ids: [], count: 0 })}
+        onConfirm={rejectModal.count > 1 ? confirmBulkReject : (reason) => updateStatus(rejectModal.ids[0], "rejected", reason)}
+        count={rejectModal.count}
+      />
+
+      <EditPositionModal
+        isOpen={editModal.open}
+        onClose={() => setEditModal({ open: false, item: null })}
+        item={editModal.item}
+        onSave={async (id, form) => {
+          const res = await api.put(`/pog-requests/${id}/position`, form);
+          if (res.ok) {
+            setData((prev) => prev.map((item) => item.id === id ? { ...item, ...form } : item));
+            alert("Edit successful");
+          }
+        }}
+      />
+    </div>
+  );
 }

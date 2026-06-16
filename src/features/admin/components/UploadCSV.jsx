@@ -369,13 +369,17 @@ const UploadCSV = () => {
   };
 
   const totalRows = uploadResult 
-    ? (uploadResult.raw_rows || uploadResult.inserted || uploadResult.parsed_rows || 0)
+    ? (uploadResult.raw_rows || uploadResult.parsed_rows || uploadResult.unique_rows || uploadResult.inserted || 0)
     : 0;
   const successRows = uploadResult 
-    ? (uploadResult.bills_created !== undefined ? uploadResult.bills_created : (uploadResult.inserted || 0))
+    ? (uploadResult.bills_created !== undefined
+      ? uploadResult.bills_created
+      : (uploadResult.inserted || 0) + (uploadResult.updated || 0))
     : 0;
   const skippedRows = uploadResult 
-    ? (uploadResult.bills_skipped !== undefined ? uploadResult.bills_skipped : 0)
+    ? (uploadResult.bills_skipped !== undefined
+      ? uploadResult.bills_skipped
+      : (uploadResult.skipped || 0) + (uploadResult.duplicate_rows || 0))
     : 0;
 
   return (

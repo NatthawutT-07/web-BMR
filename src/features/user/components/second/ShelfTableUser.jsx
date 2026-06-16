@@ -42,14 +42,14 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
   };
 
   if (!Array.isArray(shelfProducts)) {
-    return <div className="text-xs text-red-500">Invalid data.</div>;
+    return <div className="text-xs text-red-500">ข้อมูลสินค้าไม่ถูกต้อง</div>;
   }
 
   return (
-    <div className="overflow-x-auto w-full max-w-6xl mx-auto px-1 sm:px-3 print:px-0 print:max-w-none print:overflow-visible">
+    <div className="overflow-x-auto w-full max-w-none mx-auto px-1 sm:px-3 print:px-0 print:max-w-none print:overflow-visible">
       <table
         className="
-          w-full border text-[11px] sm:text-xs lg:text-sm text-gray-700
+          w-full min-w-[980px] border text-[11px] sm:text-xs lg:text-sm text-gray-700
           print:text-[8px] print:leading-tight
         "
       >
@@ -86,7 +86,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
               Pack
             </th>
             <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
-              สต็อค
+              สต็อก
             </th>
             {/* <th className="border px-1 py-2 text-center print:hidden align-middle font-semibold text-slate-600">
               ทำรายการ
@@ -101,7 +101,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                 colSpan={16}
                 className="border p-1 text-center text-gray-500 text-xs"
               >
-                No products.
+                ไม่มีสินค้าใน Shelf นี้
               </td>
             </tr>
           )}
@@ -234,7 +234,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                       colSpan={16}
                       className="border p-1 print:py-[2px] text-center text-gray-500 text-xs"
                     >
-                      No products in this row
+                      ไม่มีสินค้าในชั้นนี้
                     </td>
                   </tr>
                 )}
