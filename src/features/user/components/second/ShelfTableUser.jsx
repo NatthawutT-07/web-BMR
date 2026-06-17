@@ -6,6 +6,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
   const storecode = useBmrStore((s) => s.user?.storecode);
   const [pogRequestOpen, setPogRequestOpen] = useState(false);
   const [selectedProduct] = useState(null);
+  const [auditChecks, setAuditChecks] = useState({});
   const safeShelfProducts = useMemo(
     () => (Array.isArray(shelfProducts) ? shelfProducts : []),
     [shelfProducts]
@@ -41,18 +42,38 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
     return v;
   };
 
+  const getAuditKey = (p, rowNumber, rowIndex) => {
+    const productCode = p.item_code || p.barcode || rowIndex;
+    return `${rowNumber}-${productCode}`;
+  };
+
   if (!Array.isArray(shelfProducts)) {
     return <div className="text-xs text-red-500">ข้อมูลสินค้าไม่ถูกต้อง</div>;
   }
 
   return (
-    <div className="overflow-x-auto w-full max-w-none mx-auto px-1 sm:px-3 print:px-0 print:max-w-none print:overflow-visible">
+    <div className="print-shelf-table-wrap overflow-x-auto w-full max-w-none mx-auto px-1 sm:px-3 print:px-0 print:max-w-none print:overflow-visible">
       <table
         className="
-          w-full min-w-[980px] border text-[11px] sm:text-xs lg:text-sm text-gray-700
+          print-shelf-table w-full min-w-[1080px] border text-[11px] sm:text-xs lg:text-sm text-gray-700
+          print:min-w-0
           print:text-[8px] print:leading-tight
         "
       >
+        <colgroup>
+          <col className="w-[4%]" />
+          <col className="w-[12%]" />
+          <col className="w-[7%]" />
+          <col className="w-[28%]" />
+          <col className="w-[12%]" />
+          <col className="w-[6%]" />
+          <col className="w-[6%]" />
+          <col className="w-[4%]" />
+          <col className="w-[4%]" />
+          <col className="w-[4%]" />
+          <col className="w-[5%]" />
+          <col className="w-[8%]" />
+        </colgroup>
         <thead className="bg-slate-100 sticky top-0 z-20 print:static">
           <tr>
             <th className="border px-1 py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
@@ -88,6 +109,9 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
             <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
               สต็อก
             </th>
+            <th className="border py-2 text-center print:px-[2px] align-middle font-semibold text-slate-600">
+              ตรวจสอบ
+            </th>
             {/* <th className="border px-1 py-2 text-center print:hidden align-middle font-semibold text-slate-600">
               ทำรายการ
             </th> */}
@@ -98,7 +122,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
           {rowCount === 0 && (
             <tr>
               <td
-                colSpan={16}
+                colSpan={12}
                 className="border p-1 text-center text-gray-500 text-xs"
               >
                 ไม่มีสินค้าใน Shelf นี้
@@ -114,7 +138,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
               <React.Fragment key={shelf_row_number}>
                 <tr className="bg-blue-100 print:bg-slate-200">
                   <td
-                    colSpan={16}
+                    colSpan={12}
                     className="border px-3 py-2 print:py-[2px] font-bold text-left text-blue-800"
                   >
                     ชั้นที่ {shelf_row_number}
@@ -125,6 +149,8 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                   items.map((p, i) => {
                     const code = p.item_code ? String(p.item_code) : p.barcode ? String(p.barcode) : null;
                     const isDuplicate = code && duplicateCodes?.has(code);
+                    const auditKey = getAuditKey(p, shelf_row_number, i);
+                    const auditValue = auditChecks[auditKey] || "";
 
                     const baseBg = isDuplicate ? "bg-yellow-200" : (i % 2 ? "bg-gray-50" : "bg-white");
                     const hoverBg = isDuplicate ? "hover:bg-yellow-400" : "hover:bg-emerald-100";
@@ -137,15 +163,15 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                         key={`${shelf_row_number}-${p.item_code || i}`}
                         className={`${bgClass} group`}
                       >
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                        <td className="border p-1 print:px-[2px] text-center align-middle print-nowrap">
                           {zeroToDash(p.shelf_index_number)}
                         </td>
 
-                        <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle">
+                        <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle print-nowrap">
                           {zeroToDash(p.barcode)}
                         </td>
 
-                        <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle hidden lg:table-cell print:table-cell">
+                        <td className="border p-1 print:px-[2px] text-center whitespace-nowrap align-middle hidden lg:table-cell print:table-cell print-nowrap">
                           {p.item_code
                             ? p.item_code
                             : "-"}
@@ -155,6 +181,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                         <td
                           className={`
                             border p-1 print:px-[2px] align-middle
+                            print-product-name
                             whitespace-nowrap
                             min-w-[240px] sm:min-w-[230px] lg:min-w-[260px]
                             print:min-w-0
@@ -182,38 +209,54 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                           {p.brand_name}
                         </td>
 
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                        <td className="border p-1 print:px-[2px] text-center align-middle print-nowrap">
                           {zeroToDash(p.shelf_life_days)}
                         </td>
 
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                        <td className="border p-1 print:px-[2px] text-center align-middle print-nowrap">
                           {zeroToDash(p.selling_price_vat)}
                         </td>
 
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                        <td className="border p-1 print:px-[2px] text-center align-middle print-nowrap">
                           {zeroToDash(p.min_stock)}
                         </td>
 
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                        <td className="border p-1 print:px-[2px] text-center align-middle print-nowrap">
                           {zeroToDash(p.max_stock)}
                         </td>
 
-                        <td className="border p-1 print:px-[2px] text-center align-middle">
+                        <td className="border p-1 print:px-[2px] text-center align-middle print-nowrap">
                           {zeroToDash(p.pack_order)}
                         </td>
 
-                        <td className="border p-1 print:px-[2px] text-center text-yellow-700 align-middle font-semibold">
+                        <td className="border p-1 print:px-[2px] text-center text-yellow-700 align-middle font-semibold print-nowrap">
                           {zeroToDash(p.quantity_stock)}
                         </td>
 
-                        {/* Audit: บนจอ = checkbox, PDF = กล่องติ๊ก */}
-                        {/* <td className="border p-1 print:px-[2px] text-center align-middle">
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 accent-emerald-600 print:hidden cursor-pointer"
-                          />
-                          <span className="hidden print:inline-block">☐</span>
-                        </td> */}
+                        <td className="border p-1 print:px-[2px] text-center align-middle print-nowrap">
+                          <label className="inline-flex h-4 min-w-7 cursor-pointer items-center justify-center print:hidden">
+                            <input
+                              type="checkbox"
+                              checked={auditValue === "checked"}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setAuditChecks((prev) => {
+                                  if (!checked) {
+                                    const next = { ...prev };
+                                    delete next[auditKey];
+                                    return next;
+                                  }
+                                  return { ...prev, [auditKey]: "checked" };
+                                });
+                              }}
+                              className="h-4 w-4 cursor-pointer align-middle accent-emerald-600"
+                              aria-label="audit check status"
+                            />
+                          </label>
+                          <span className="hidden text-sm font-bold text-slate-700 print:inline-block">
+                            {auditValue === "checked" ? "☑" : "☐"}
+                          </span>
+                        </td>
 
                         {/* <td className="border text-center align-middle print:hidden">
                           <button
@@ -231,7 +274,7 @@ const ShelfTableUser = ({ shelfProducts = [], branchName = "", availableShelves 
                 ) : (
                   <tr>
                     <td
-                      colSpan={16}
+                      colSpan={12}
                       className="border p-1 print:py-[2px] text-center text-gray-500 text-xs"
                     >
                       ไม่มีสินค้าในชั้นนี้

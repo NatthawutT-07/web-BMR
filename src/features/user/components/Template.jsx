@@ -256,10 +256,10 @@ const ShelfTemplate = () => {
   };
 
   return (
-    <div className="min-h-screen overflow-x-hidden bg-slate-100 print:bg-white">
-      <div className="mx-auto w-full max-w-[1920px] px-3 py-1 sm:px-4 sm:py-1 lg:px-6 space-y-2 sm:space-y-2">
+    <div className="print-page-shell min-h-screen overflow-x-hidden bg-slate-100 print:bg-white">
+      <div className="print-content-shell mx-auto w-full max-w-[1920px] px-3 py-1 sm:px-4 sm:py-1 lg:px-6 space-y-2 sm:space-y-2">
         {/*  PRINT HEADER */}
-        <div className="hidden print:block pb-1 mb-1">
+        <div className="print-header hidden print:block pb-1 mb-1">
           <p className="text-xs sm:text-sm text-slate-500">
             สาขา: <span className="font-semibold text-slate-700">{storecode || "-"}</span>
             {branchName ? <span className="ml-2 text-slate-600">({branchName})</span> : null}

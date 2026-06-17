@@ -70,6 +70,7 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
   return (
     <div
       className="
+        print-shelf-card
         border border-slate-200 rounded-lg bg-white mb-4
         shadow-sm hover:shadow-md transition-shadow duration-200
         print:shadow-none print:border-black
@@ -118,6 +119,7 @@ const ShelfCardUser = React.memo(function ShelfCardUser({
       <div
         ref={contentRef}
         className="
+          print-shelf-card-content
           px-2 sm:px-3 pb-3 sm:pb-4
           overflow-hidden
           transition-[max-height,opacity] duration-300 ease-out
