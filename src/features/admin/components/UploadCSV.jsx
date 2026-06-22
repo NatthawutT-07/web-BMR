@@ -403,7 +403,7 @@ const UploadCSV = () => {
         <option value="minMax">MinMaxAutoPO XLSX</option>
         <option value="masterItem">MasterItem XLSX</option>
         <option value="billHeader">BillHeader XLSX</option>
-        <option value="gourmet">Gourmet XLSX</option>
+        {/* <option value="gourmet">Gourmet XLSX</option> */}
       </select>
 
       {selectedFileType && renderFileUploadForm(selectedFileType)}
